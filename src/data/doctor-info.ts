@@ -17,7 +17,7 @@ export const doctorInfo = {
     bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado. Com mais de 10 anos de experiência, dedica-se a proporcionar cuidado oftalmológico personalizado e acessível.',
     contact: {
         whatsapp: '+5511947038078',
-        email: 'dr.philipe@svlentes.shop',
+        email: 'dr.philipe@svlentes.com.br',
         clinicAddress: 'Rua Joaquim Floriano, 466 - Itaim Bibi, São Paulo, SP'
     },
     socialProof: {
@@ -77,8 +77,8 @@ export const clinicInfo = {
     contact: {
         phone: '+55 11 3456-7890',
         whatsapp: '+55 11 94703-8078',
-        email: 'contato@svlentes.shop',
-        website: 'https://svlentes.shop'
+        email: 'contato@svlentes.com.br',
+        website: 'https://svlentes.com.br'
     },
     businessHours: {
         weekdays: 'Segunda a Sexta: 8h às 18h',

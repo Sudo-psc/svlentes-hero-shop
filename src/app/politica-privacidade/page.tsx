@@ -123,7 +123,7 @@ export default function PrivacyPolicyPage() {
                                     Para exercer seus direitos ou esclarecer dúvidas sobre esta política:
                                 </p>
                                 <ul className="list-disc pl-6 mb-4">
-                                    <li><strong>E-mail:</strong> <a href="mailto:privacidade@svlentes.shop" className="text-blue-600 hover:underline">privacidade@svlentes.shop</a></li>
+                                    <li><strong>E-mail:</strong> <a href="mailto:privacidade@svlentes.com.br" className="text-blue-600 hover:underline">privacidade@svlentes.com.br</a></li>
                                     <li><strong>WhatsApp:</strong> Através do botão no site</li>
                                     <li><strong>Responsável:</strong> Dr. Philipe Saraiva Cruz (CRM 65.870)</li>
                                 </ul>

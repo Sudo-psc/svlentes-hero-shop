@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     title: 'Agendamento Confirmado - SVlentes',
     description: 'Seu agendamento de consulta foi confirmado. Nossa equipe entrará em contato em breve.',
     alternates: {
-        canonical: 'https://svlentes.shop/agendamento-confirmado',
+        canonical: 'https://svlentes.com.br/agendamento-confirmado',
     },
     robots: {
         index: false,
@@ -20,9 +20,9 @@ export default function AgendamentoConfirmadoLayout({
     children: React.ReactNode
 }) {
     const breadcrumbData = generateBreadcrumbStructuredData([
-        { name: 'Início', url: 'https://svlentes.shop' },
-        { name: 'Agendar Consulta', url: 'https://svlentes.shop/agendar-consulta' },
-        { name: 'Confirmado', url: 'https://svlentes.shop/agendamento-confirmado' }
+        { name: 'Início', url: 'https://svlentes.com.br' },
+        { name: 'Agendar Consulta', url: 'https://svlentes.com.br/agendar-consulta' },
+        { name: 'Confirmado', url: 'https://svlentes.com.br/agendamento-confirmado' }
     ])
 
     return (

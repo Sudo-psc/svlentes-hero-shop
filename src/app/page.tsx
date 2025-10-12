@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
-import { MetricsStrip } from '@/components/sections/MetricsStrip'
 import { QuickStartSection } from '@/components/sections/QuickStartSection'
 
 export const metadata: Metadata = {
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
         'clínica oftalmológica Itaim Bibi'
     ],
     alternates: {
-        canonical: 'https://svlentes.shop',
+        canonical: 'https://svlentes.com.br',
     },
 }
 
@@ -30,11 +29,6 @@ export default function HomePage() {
             {/* Hero Section - Vídeo em largura total */}
             <section id="hero">
                 <VideoHeroSection />
-            </section>
-
-            {/* Metrics Strip - Consolidado após Hero */}
-            <section className="bg-white">
-                <MetricsStrip />
             </section>
 
             {/* Quick Start Section - Novo fluxo */}

@@ -9,7 +9,7 @@ Allow: /calculadora
 Allow: /perguntas-frequentes
 
 # Sitemap
-Sitemap: https://svlentes.shop/sitemap.xml
+Sitemap: https://svlentes.com.br/sitemap.xml
 
 # Bloquear acesso a áreas administrativas
 Disallow: /admin/
@@ -25,4 +25,4 @@ Disallow: /.well-known/
 Crawl-delay: 1
 
 # Host (opcional)
-Host: svlentes.shop
+Host: svlentes.com.br

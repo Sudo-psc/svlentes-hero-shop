@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: 'Pagamento Realizado com Sucesso - SVlentes',
     description: 'Seu pagamento foi processado com sucesso. Bem-vindo à SVlentes! Suas lentes de contato serão enviadas conforme seu plano.',
     alternates: {
-        canonical: 'https://svlentes.shop/success',
+        canonical: 'https://svlentes.com.br/success',
     },
     robots: {
         index: false,
@@ -23,8 +23,8 @@ export default function SuccessLayout({
     children: React.ReactNode
 }) {
     const breadcrumbData = generateBreadcrumbStructuredData([
-        { name: 'Início', url: 'https://svlentes.shop' },
-        { name: 'Sucesso', url: 'https://svlentes.shop/success' }
+        { name: 'Início', url: 'https://svlentes.com.br' },
+        { name: 'Sucesso', url: 'https://svlentes.com.br/success' }
     ])
 
     return (

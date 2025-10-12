@@ -13,8 +13,8 @@ export const organizationSchema = {
   '@type': 'Organization',
   name: 'SV Lentes - Saraiva Vision',
   alternateName: 'Saraiva Vision Care LTDA',
-  url: 'https://svlentes.shop',
-  logo: 'https://svlentes.shop/icones/logosv.webp',
+  url: 'https://svlentes.com.br',
+  logo: 'https://svlentes.com.br/icones/logosv.webp',
   description: 'Pioneiro no Brasil em assinatura de lentes de contato com acompanhamento médico especializado',
   foundingDate: '2010',
   email: clinicInfo.contact.email,
@@ -46,13 +46,13 @@ export const organizationSchema = {
 export const medicalBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'MedicalBusiness',
-  '@id': 'https://svlentes.shop/#medicalbusiness',
+  '@id': 'https://svlentes.com.br/#medicalbusiness',
   name: 'SV Lentes - Clínica Oftalmológica',
-  image: 'https://svlentes.shop/icones/logosv.webp',
+  image: 'https://svlentes.com.br/icones/logosv.webp',
   priceRange: 'R$ 99 - R$ 249',
   telephone: clinicInfo.contact.phone,
   email: clinicInfo.contact.email,
-  url: 'https://svlentes.shop',
+  url: 'https://svlentes.com.br',
   address: {
     '@type': 'PostalAddress',
     streetAddress: clinicInfo.address.street,
@@ -124,9 +124,9 @@ export const medicalBusinessSchema = {
 export const physicianSchema = {
   '@context': 'https://schema.org',
   '@type': 'Physician',
-  '@id': 'https://svlentes.shop/#physician',
+  '@id': 'https://svlentes.com.br/#physician',
   name: doctorInfo.name,
-  image: 'https://svlentes.shop/icones/drphilipe_perfil.jpeg',
+  image: 'https://svlentes.com.br/icones/drphilipe_perfil.jpeg',
   jobTitle: 'Oftalmologista',
   description: `${doctorInfo.specialty} com ${doctorInfo.experience}`,
   alumniOf: {
@@ -229,9 +229,9 @@ export const faqPageSchema = {
 export const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
-  '@id': 'https://svlentes.shop/#localbusiness',
+  '@id': 'https://svlentes.com.br/#localbusiness',
   name: 'SV Lentes - Saraiva Vision',
-  image: 'https://svlentes.shop/icones/logosv.webp',
+  image: 'https://svlentes.com.br/icones/logosv.webp',
   telephone: clinicInfo.contact.phone,
   email: clinicInfo.contact.email,
   address: {
@@ -247,7 +247,7 @@ export const localBusinessSchema = {
     latitude: -19.7898,
     longitude: -42.1395
   },
-  url: 'https://svlentes.shop',
+  url: 'https://svlentes.com.br',
   priceRange: 'R$ 99 - R$ 249',
   openingHoursSpecification: [
     {

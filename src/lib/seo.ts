@@ -5,7 +5,7 @@ import { featuredFAQ } from '@/data/faq-data'
 
 // Base metadata configuration
 export const baseMetadata: Metadata = {
-    metadataBase: new URL('https://svlentes.shop'),
+    metadataBase: new URL('https://svlentes.com.br'),
     title: {
         default: 'SV Lentes - Nunca mais fique sem lentes | Assinatura com Acompanhamento Médico',
         template: '%s | SV Lentes'
@@ -24,11 +24,11 @@ export const baseMetadata: Metadata = {
         'telemedicina',
         'entrega domicilio',
         'SV Lentes',
-        'svlentes.shop'
+        'svlentes.com.br'
     ],
     authors: [{
         name: doctorInfo.name,
-        url: 'https://svlentes.shop'
+        url: 'https://svlentes.com.br'
     }],
     creator: doctorInfo.name,
     publisher: clinicInfo.name,
@@ -40,7 +40,7 @@ export const baseMetadata: Metadata = {
     openGraph: {
         type: 'website',
         locale: 'pt_BR',
-        url: 'https://svlentes.shop',
+        url: 'https://svlentes.com.br',
         siteName: 'SV Lentes',
         title: 'SV Lentes - Nunca mais fique sem lentes | Assinatura com Acompanhamento Médico',
         description: 'Pioneiro no Brasil em assinatura de lentes de contato com acompanhamento médico especializado. Dr. Philipe Saraiva Cruz - CRM 69.870. Economia de até 40%.',
@@ -78,7 +78,7 @@ export const baseMetadata: Metadata = {
         google: process.env.GOOGLE_VERIFICATION_CODE,
     },
     alternates: {
-        canonical: 'https://svlentes.shop',
+        canonical: 'https://svlentes.com.br',
     },
     category: 'healthcare',
 }
@@ -91,9 +91,9 @@ export function generateMedicalBusinessStructuredData() {
         name: clinicInfo.name,
         alternateName: clinicInfo.fullName,
         description: 'Serviço pioneiro no Brasil de assinatura de lentes de contato com acompanhamento médico especializado',
-        url: 'https://svlentes.shop',
-        logo: 'https://svlentes.shop/images/logo.png',
-        image: 'https://svlentes.shop/images/og-image.jpg',
+        url: 'https://svlentes.com.br',
+        logo: 'https://svlentes.com.br/images/logo.png',
+        image: 'https://svlentes.com.br/images/og-image.jpg',
         telephone: clinicInfo.contact.phone,
         email: clinicInfo.contact.email,
         address: {
@@ -129,7 +129,7 @@ export function generateMedicalBusinessStructuredData() {
             alumniOf: 'Universidade Federal',
             memberOf: 'Sociedade Brasileira de Oftalmologia',
             yearsOfExperience: 15,
-            image: `https://svlentes.shop${doctorInfo.photo}`,
+            image: `https://svlentes.com.br${doctorInfo.photo}`,
             description: doctorInfo.bio
         },
         hasOfferCatalog: {
@@ -218,7 +218,7 @@ export function generateServiceStructuredData() {
         },
         availableChannel: {
             '@type': 'ServiceChannel',
-            serviceUrl: 'https://svlentes.shop',
+            serviceUrl: 'https://svlentes.com.br',
             serviceSmsNumber: clinicInfo.contact.whatsapp,
             servicePhone: clinicInfo.contact.phone
         },
@@ -254,8 +254,8 @@ export function generateOrganizationStructuredData() {
         '@type': 'Organization',
         name: clinicInfo.name,
         alternateName: clinicInfo.fullName,
-        url: 'https://svlentes.shop',
-        logo: 'https://svlentes.shop/images/logo.png',
+        url: 'https://svlentes.com.br',
+        logo: 'https://svlentes.com.br/images/logo.png',
         contactPoint: {
             '@type': 'ContactPoint',
             telephone: clinicInfo.contact.phone,
@@ -264,8 +264,8 @@ export function generateOrganizationStructuredData() {
             availableLanguage: 'Portuguese'
         },
         sameAs: [
-            'https://www.instagram.com/svlentes.shop',
-            'https://www.facebook.com/svlentes.shop',
+            'https://www.instagram.com/svlentes.com.br',
+            'https://www.facebook.com/svlentes.com.br',
             'https://www.linkedin.com/company/svlentes'
         ],
         address: {
@@ -286,12 +286,12 @@ export function generateWebSiteStructuredData() {
         '@type': 'WebSite',
         name: 'SV Lentes',
         alternateName: 'SV Lentes',
-        url: 'https://svlentes.shop',
+        url: 'https://svlentes.com.br',
         potentialAction: {
             '@type': 'SearchAction',
             target: {
                 '@type': 'EntryPoint',
-                urlTemplate: 'https://svlentes.shop/search?q={search_term_string}'
+                urlTemplate: 'https://svlentes.com.br/search?q={search_term_string}'
             },
             'query-input': 'required name=search_term_string'
         }
