@@ -18,7 +18,8 @@ import {
     FileText,
     Heart,
     MessageCircle,
-    Settings
+    Settings,
+    Download
 } from 'lucide-react'
 
 interface FooterProps {
@@ -47,6 +48,7 @@ export function Footer({ className }: FooterProps) {
         { name: 'Como Funciona', href: '#como-funciona' },
         { name: 'FAQ', href: '#perguntas-frequentes' },
         { name: 'Programa de Indicação', href: '#programa-indicacao' },
+        { name: 'Manual do Paciente (PDF)', href: '/ManualPacienteLentesContato2025.pdf', download: true, icon: 'download' },
     ]
 
     const legalLinks = [
@@ -144,8 +146,13 @@ export function Footer({ className }: FooterProps) {
                                         <a
                                             href={link.href}
                                             className="text-gray-300 hover:text-primary-400 transition-colors duration-200 flex items-center group text-sm"
+                                            {...(link.download ? { download: '', target: '_blank', rel: 'noopener noreferrer' } : {})}
                                         >
-                                            <span className="w-1.5 h-1.5 bg-primary-500 rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></span>
+                                            {link.icon === 'download' ? (
+                                                <Download className="w-3.5 h-3.5 mr-2 group-hover:text-primary-400 transition-colors" aria-hidden="true" />
+                                            ) : (
+                                                <span className="w-1.5 h-1.5 bg-primary-500 rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></span>
+                                            )}
                                             {link.name}
                                         </a>
                                     </li>
