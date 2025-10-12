@@ -10,10 +10,10 @@ interface LogoProps {
 }
 
 const SIZE_CONFIG = {
-  sm: { width: 140, height: 48, textSize: 'text-lg', src: '/logosv-md.webp' },
-  md: { width: 200, height: 68, textSize: 'text-2xl', src: '/logosv-lg.webp' },
-  lg: { width: 280, height: 95, textSize: 'text-3xl', src: '/logosv-xl.webp' },
-  xl: { width: 360, height: 120, textSize: 'text-4xl', src: '/logosv-xl.webp' }
+  sm: { width: 140, height: 48, textSize: 'text-lg', src: '/logo_animado.gif' },
+  md: { width: 200, height: 68, textSize: 'text-2xl', src: '/logo_animado.gif' },
+  lg: { width: 280, height: 95, textSize: 'text-3xl', src: '/logo_animado.gif' },
+  xl: { width: 360, height: 120, textSize: 'text-4xl', src: '/logo_animado.gif' }
 }
 
 export function Logo({
