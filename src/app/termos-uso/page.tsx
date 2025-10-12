@@ -49,7 +49,7 @@ export default function TermosUsoPage() {
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Responsabilidade Médica</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
                                 Todos os serviços médicos são prestados pelo Dr. Philipe Saraiva Cruz, médico oftalmologista
-                                devidamente registrado no Conselho Regional de Medicina de São Paulo sob o número CRM 69.870.
+                                devidamente registrado no Conselho Regional de Medicina sob o número CRM 69.870.
                             </p>
                             <p className="text-gray-700 leading-relaxed">
                                 O uso de lentes de contato requer prescrição médica e acompanhamento profissional.
@@ -122,9 +122,9 @@ export default function TermosUsoPage() {
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-gray-700"><strong>SV Lentes - Serviços Oftalmológicos Especializados</strong></p>
                                 <p className="text-gray-700">CNPJ: 12.345.678/0001-90</p>
-                                <p className="text-gray-700">Endereço: Rua Joaquim Floriano, 466 - Itaim Bibi, São Paulo, SP</p>
-                                <p className="text-gray-700">CEP: 04534-002</p>
-                                <p className="text-gray-700">WhatsApp: (11) 94703-8078</p>
+                                <p className="text-gray-700">Endereço: Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG</p>
+                                <p className="text-gray-700">CEP: 35300-000</p>
+                                <p className="text-gray-700">WhatsApp: (33) 99860-1427</p>
                                 <p className="text-gray-700">Email: <a href="mailto:contato@svlentes.com.br" className="text-blue-600 hover:underline">contato@svlentes.com.br</a></p>
                             </div>
                         </section>
@@ -133,7 +133,7 @@ export default function TermosUsoPage() {
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Lei Aplicável</h2>
                             <p className="text-gray-700 leading-relaxed">
                                 Estes Termos de Uso são regidos pelas leis brasileiras.
-                                Qualquer disputa será resolvida no foro da comarca de São Paulo, SP.
+                                Qualquer disputa será resolvida no foro da comarca de Caratinga, MG.
                             </p>
                         </section>
                     </div>

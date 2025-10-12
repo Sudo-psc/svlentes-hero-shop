@@ -16,9 +16,9 @@ export const doctorInfo = {
     experience: '10+ anos de experiência em oftalmologia',
     bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado. Com mais de 10 anos de experiência, dedica-se a proporcionar cuidado oftalmológico personalizado e acessível.',
     contact: {
-        whatsapp: '+5511947038078',
+        whatsapp: '+5533998601427',
         email: 'dr.philipe@svlentes.com.br',
-        clinicAddress: 'Rua Joaquim Floriano, 466 - Itaim Bibi, São Paulo, SP'
+        clinicAddress: 'Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG'
     },
     socialProof: {
         patientsServed: '5000+',
@@ -67,16 +67,16 @@ export const clinicInfo = {
     fullName: 'SV Lentes - Serviços Oftalmológicos Especializados',
     cnpj: '12.345.678/0001-90',
     address: {
-        street: 'Rua Joaquim Floriano, 466',
-        neighborhood: 'Itaim Bibi',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '04534-002',
+        street: 'Rua Catarina Maria Passos, 97',
+        neighborhood: 'Santa Zita',
+        city: 'Caratinga',
+        state: 'MG',
+        zipCode: '35300-000',
         country: 'Brasil'
     },
     contact: {
-        phone: '+55 11 3456-7890',
-        whatsapp: '+55 11 94703-8078',
+        phone: '+55 33 99860-1427',
+        whatsapp: '+55 33 99860-1427',
         email: 'contato@svlentes.com.br',
         website: 'https://svlentes.com.br'
     },
