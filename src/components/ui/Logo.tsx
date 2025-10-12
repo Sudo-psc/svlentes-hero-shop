@@ -91,7 +91,7 @@ export function Logo({
 
 // Predefined logo variants for common use cases
 export function LogoHeader() {
-  return <Logo variant="full" size="lg" priority showSubtitle className="hover:scale-105 transition-transform duration-200" />
+  return <Logo variant="full" size="lg" priority className="hover:scale-105 transition-transform duration-200" />
 }
 
 export function LogoFooter() {
