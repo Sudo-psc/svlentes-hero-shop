@@ -71,7 +71,7 @@ export const clinicInfo = {
         neighborhood: 'Santa Zita',
         city: 'Caratinga',
         state: 'MG',
-        zipCode: '35300-000',
+        zipCode: '35300-299',
         country: 'Brasil'
     },
     contact: {
