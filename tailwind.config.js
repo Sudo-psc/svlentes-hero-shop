@@ -24,30 +24,42 @@ module.exports = {
                 primary: {
                     DEFAULT: "hsl(var(--primary))",
                     foreground: "hsl(var(--primary-foreground))",
-                    50: '#f0f9ff',   /* Very light medical blue */
-                    100: '#e0f2fe',  /* Light medical blue */
-                    200: '#bae6fd',  /* Soft medical blue */
-                    300: '#7dd3fc',  /* Medium light medical blue */
-                    400: '#38bdf8',  /* Medium medical blue */
-                    500: '#0ea5e9',  /* Standard medical blue */
-                    600: '#0f4c75',  /* Deep medical blue (primary) */
-                    700: '#0c3d5a',  /* Darker medical blue */
-                    800: '#0a2e42',  /* Very dark medical blue */
-                    900: '#082030',  /* Deepest medical blue */
+                    50: '#ecfeff',   /* Very light cyan */
+                    100: '#cffafe',  /* Light cyan */
+                    200: '#a5f3fc',  /* Soft cyan */
+                    300: '#67e8f9',  /* Medium light cyan */
+                    400: '#22d3ee',  /* Medium cyan */
+                    500: '#06b6d4',  /* Standard cyan */
+                    600: '#0891b2',  /* Deep cyan (primary) */
+                    700: '#0e7490',  /* Darker cyan */
+                    800: '#155e75',  /* Very dark cyan */
+                    900: '#164e63',  /* Deepest cyan */
                 },
                 secondary: {
                     DEFAULT: "hsl(var(--secondary))",
                     foreground: "hsl(var(--secondary-foreground))",
-                    50: '#f8fafc',   /* Very light neutral */
-                    100: '#f1f5f9',  /* Light neutral */
-                    200: '#e2e8f0',  /* Soft neutral */
-                    300: '#cbd5e1',  /* Medium light neutral */
-                    400: '#94a3b8',  /* Medium neutral */
-                    500: '#64748b',  /* Standard neutral */
-                    600: '#475569',  /* Deep neutral */
-                    700: '#334155',  /* Darker neutral */
-                    800: '#1e293b',  /* Very dark neutral */
-                    900: '#0f172a',  /* Deepest neutral */
+                    50: '#f8fafc',   /* Very light silver */
+                    100: '#f1f5f9',  /* Light silver */
+                    200: '#e2e8f0',  /* Soft silver */
+                    300: '#cbd5e1',  /* Medium light silver */
+                    400: '#94a3b8',  /* Medium silver */
+                    500: '#64748b',  /* Standard silver */
+                    600: '#475569',  /* Deep silver */
+                    700: '#334155',  /* Darker silver */
+                    800: '#1e293b',  /* Very dark silver */
+                    900: '#0f172a',  /* Deepest silver */
+                },
+                silver: {
+                    50: '#fafafa',   /* Very light silver metallic */
+                    100: '#f5f5f5',  /* Light silver metallic */
+                    200: '#e5e5e5',  /* Soft silver metallic */
+                    300: '#d4d4d4',  /* Medium light silver metallic */
+                    400: '#a3a3a3',  /* Medium silver metallic */
+                    500: '#737373',  /* Standard silver metallic */
+                    600: '#525252',  /* Deep silver metallic */
+                    700: '#404040',  /* Darker silver metallic */
+                    800: '#262626',  /* Very dark silver metallic */
+                    900: '#171717',  /* Deepest silver metallic */
                 },
                 success: {
                     DEFAULT: "hsl(var(--success))",
