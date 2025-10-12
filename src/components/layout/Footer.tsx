@@ -123,8 +123,8 @@ export function Footer({ className }: FooterProps) {
                         {/* Contact CTA */}
                         <Button
                             onClick={handleWhatsAppContact}
-                            variant="whatsapp"
-                            className="w-full sm:w-auto flex items-center justify-center space-x-2"
+                            variant="default"
+                            className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white"
                             aria-label="Falar com especialista pelo WhatsApp"
                         >
                             <MessageCircle className="w-5 h-5" aria-hidden="true" />

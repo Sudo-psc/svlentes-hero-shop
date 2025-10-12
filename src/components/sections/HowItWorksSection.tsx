@@ -237,9 +237,8 @@ export function HowItWorksSection({ className = '' }: HowItWorksSectionProps) {
                 {/* Header */}
                 <div className="text-center mb-16">
                     <Badge
-                        variant="info"
-                        size="lg"
-                        className="mb-6"
+                        variant="secondary"
+                        className="mb-6 px-4 py-2 text-base"
                     >
                         <Play className="w-4 h-4 mr-2" />
                         Processo Simples

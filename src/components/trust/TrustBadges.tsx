@@ -36,9 +36,8 @@ export function TrustBadges({
                     )}
 
                     <Badge
-                        variant="success"
-                        size="sm"
-                        className={`${badge.color} transition-all duration-200 group-hover:scale-105`}
+                        variant="default"
+                        className={`${badge.color} transition-all duration-200 group-hover:scale-105 text-xs`}
                     >
                         {badge.name}
                     </Badge>

@@ -107,16 +107,16 @@ export function ColorPalette() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Button variant="primary" className="w-full">
+                        <Button variant="default" className="w-full bg-primary-600 hover:bg-primary-700 text-white">
                             Primary
                         </Button>
-                        <Button variant="success" className="w-full">
+                        <Button variant="default" className="w-full bg-success-600 hover:bg-success-700 text-white">
                             Success
                         </Button>
-                        <Button variant="warning" className="w-full">
+                        <Button variant="default" className="w-full bg-warning-600 hover:bg-warning-700 text-white">
                             Warning
                         </Button>
-                        <Button variant="whatsapp" className="w-full">
+                        <Button variant="default" className="w-full bg-green-600 hover:bg-green-700 text-white">
                             WhatsApp
                         </Button>
                     </div>

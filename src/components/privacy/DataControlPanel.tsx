@@ -222,11 +222,10 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
 
                                     <Button
                                         type="submit"
-                                        loading={isSubmitting}
-                                        disabled={!formData.email || !formData.requestType || !formData.userConsent}
+                                        disabled={!formData.email || !formData.requestType || !formData.userConsent || isSubmitting}
                                         className="w-full"
                                     >
-                                        Enviar Solicitação
+                                        {isSubmitting ? 'Enviando...' : 'Enviar Solicitação'}
                                     </Button>
                                 </form>
                             )}

@@ -220,15 +220,15 @@ export function DoctorCard({
                 {/* Key Credentials */}
                 <div className="space-y-2">
                     <div className="flex flex-wrap justify-center gap-2">
-                        <Badge variant="success" size="sm">
+                        <Badge variant="default" className="bg-success-50 text-success-700 border-success-200 text-xs">
                             <Heart className="w-3 h-3 mr-1" />
                             SBO
                         </Badge>
-                        <Badge variant="info" size="sm">
+                        <Badge variant="secondary" className="text-xs">
                             <GraduationCap className="w-3 h-3 mr-1" />
                             Especialista
                         </Badge>
-                        <Badge variant="default" size="sm">
+                        <Badge variant="default" className="text-xs">
                             <Users className="w-3 h-3 mr-1" />
                             5000+ pacientes
                         </Badge>

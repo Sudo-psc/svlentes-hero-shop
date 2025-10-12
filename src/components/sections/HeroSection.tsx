@@ -43,9 +43,8 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                         {/* Pioneer Badge */}
                         <div className="flex justify-center lg:justify-start">
                             <Badge
-                                variant="success"
-                                size="lg"
-                                className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm"
+                                variant="default"
+                                className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm px-4 py-2 text-base"
                             >
                                 <Award className="w-4 h-4 mr-2" />
                                 🏆 Pioneiro no Brasil

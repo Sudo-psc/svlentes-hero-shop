@@ -166,7 +166,7 @@ export function LensEducationSection() {
                                 <h4 className="font-semibold text-gray-900 mb-2">{lens.name}</h4>
                                 <p className="text-sm text-gray-600 mb-3">{lens.description}</p>
                                 <div className="flex items-center justify-between">
-                                    <Badge variant="default" size="sm">
+                                    <Badge variant="default" className="text-xs">
                                         {lens.replacementFrequency}
                                     </Badge>
                                     <ChevronRight className={`w-4 h-4 transition-transform ${selectedLens === lens.id ? 'rotate-90' : ''

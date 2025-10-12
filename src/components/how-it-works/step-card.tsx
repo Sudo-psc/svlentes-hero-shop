@@ -56,14 +56,14 @@ export function StepCard({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">Custo:</span>
-            <Badge variant="default" size="sm" className="bg-primary-50 text-primary-700 border-primary-200">
+            <Badge variant="default" className="bg-primary-50 text-primary-700 border-primary-200 text-xs">
               {cost}
             </Badge>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-700">Economia:</span>
-            <Badge variant="success" size="sm">
+            <Badge variant="default" className="bg-success-50 text-success-700 border-success-200 text-xs">
               {economy}
             </Badge>
           </div>

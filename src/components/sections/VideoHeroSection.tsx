@@ -1,8 +1,9 @@
 'use client'
 
 import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Star, TrendingUp, Shield } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 interface VideoHeroSectionProps {
@@ -67,10 +68,26 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
 
                 {/* Texto principal */}
                 <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 animate-fade-in">
+                    {/* Badge superior */}
+                    <div className="flex justify-center gap-3 flex-wrap">
+                        <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
+                            <Star className="w-4 h-4 mr-2 fill-yellow-400 text-yellow-400" />
+                            4.9/5 - Mais de 1.000 clientes
+                        </Badge>
+                        <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Economia de até 40%
+                        </Badge>
+                        <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
+                            <Shield className="w-4 h-4 mr-2" />
+                            CRM 69.870
+                        </Badge>
+                    </div>
+
                     <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-[1.1] drop-shadow-2xl tracking-tight">
                         Nunca mais fique
                         <br />
-                        <span className="text-primary-400 inline-block mt-2">sem lentes</span>
+                        <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent inline-block mt-2">sem lentes</span>
                     </h1>
 
                     <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white leading-relaxed max-w-4xl mx-auto drop-shadow-2xl font-semibold">

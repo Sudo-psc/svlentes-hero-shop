@@ -97,7 +97,7 @@ export function PricingCard({
 
         {/* CTA */}
         <Button
-          variant={highlighted ? "primary" : "outline"}
+          variant={highlighted ? "default" : "outline"}
           className="w-full"
           size="lg"
           onClick={onSelectPlan}

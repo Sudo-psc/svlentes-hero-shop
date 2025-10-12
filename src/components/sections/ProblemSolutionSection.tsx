@@ -34,9 +34,8 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                 {/* Header */}
                 <div className="text-center mb-16">
                     <Badge
-                        variant="warning"
-                        size="lg"
-                        className="mb-6"
+                        variant="destructive"
+                        className="mb-6 px-4 py-2 text-base"
                     >
                         <AlertTriangle className="w-4 h-4 mr-2" />
                         Problemas Comuns

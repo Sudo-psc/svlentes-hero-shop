@@ -89,10 +89,10 @@ export function ShadcnDemo() {
                             <Button variant="secondary">Secondary</Button>
                             <Button variant="outline">Outline</Button>
                             <Button variant="ghost">Ghost</Button>
-                            <Button variant="primary">Primary</Button>
-                            <Button variant="whatsapp">WhatsApp</Button>
-                            <Button variant="success">Success</Button>
-                            <Button variant="warning">Warning</Button>
+                            <Button variant="default" className="bg-primary-600 hover:bg-primary-700 text-white">Primary</Button>
+                            <Button variant="default" className="bg-green-600 hover:bg-green-700 text-white">WhatsApp</Button>
+                            <Button variant="default" className="bg-success-600 hover:bg-success-700 text-white">Success</Button>
+                            <Button variant="default" className="bg-warning-600 hover:bg-warning-700 text-white">Warning</Button>
                         </div>
 
                         <div className="space-y-2">
@@ -101,7 +101,7 @@ export function ShadcnDemo() {
                             <Button size="lg" className="w-full">Grande</Button>
                         </div>
 
-                        <Button loading className="w-full">
+                        <Button disabled className="w-full">
                             Carregando...
                         </Button>
                     </CardContent>

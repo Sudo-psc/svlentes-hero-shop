@@ -175,12 +175,11 @@ export function LeadCaptureForm({
 
                     <Button
                         type="submit"
-                        loading={isSubmitting}
-                        disabled={!watch('lgpdConsent')}
+                        disabled={!watch('lgpdConsent') || isSubmitting}
                         className="flex items-center space-x-2"
                     >
                         <MessageCircle className="w-4 h-4" />
-                        <span>Enviar</span>
+                        <span>{isSubmitting ? 'Enviando...' : 'Enviar'}</span>
                     </Button>
                 </div>
             </form>
@@ -281,13 +280,12 @@ export function LeadCaptureForm({
                     <Button
                         type="submit"
                         variant="outline"
-                        loading={isSubmitting}
-                        disabled={!watch('lgpdConsent')}
+                        disabled={!watch('lgpdConsent') || isSubmitting}
                         className="w-full flex items-center justify-center space-x-2 font-semibold text-base"
                         aria-label="Agendar consulta oftalmológica diretamente"
                     >
                         <Phone className="w-5 h-5" aria-hidden="true" />
-                        <span>Agendar Consulta Direta</span>
+                        <span>{isSubmitting ? 'Agendando...' : 'Agendar Consulta Direta'}</span>
                     </Button>
                 </div>
 
