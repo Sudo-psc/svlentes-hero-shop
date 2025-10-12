@@ -1,11 +1,11 @@
 {
-    "name": "SV Lentes - Saraiva Vision Oftalmologia",
+    "name": "SV Lentes - Nunca Mais Fique Sem Lentes",
     "short_name": "SV Lentes",
-    "description": "Assinatura de lentes de contato com acompanhamento médico especializado Dr. Philipe Saraiva Cruz",
-    "start_url": "/",
+    "description": "Assinatura de lentes de contato com acompanhamento médico especializado do Dr. Philipe Saraiva Cruz (CRM-MG 69.870). Economia de até 40%.",
+    "start_url": "https://svlentes.shop/",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#0066cc",
+    "theme_color": "#0f4c75",
     "orientation": "portrait-primary",
     "icons": [
         {
@@ -56,6 +56,30 @@
             "short_name": "Consulta",
             "description": "Agende sua consulta com Dr. Philipe Saraiva Cruz",
             "url": "/agendar-consulta",
+            "icons": [
+                {
+                    "src": "/android-chrome-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Calcular Economia",
+            "short_name": "Calcular",
+            "description": "Veja quanto você pode economizar",
+            "url": "/calculadora",
+            "icons": [
+                {
+                    "src": "/android-chrome-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Assinar Agora",
+            "short_name": "Assinar",
+            "description": "Escolha seu plano de assinatura",
+            "url": "/assinar",
             "icons": [
                 {
                     "src": "/android-chrome-192x192.png",
