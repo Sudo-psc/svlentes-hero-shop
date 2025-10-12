@@ -51,18 +51,18 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
         </div>
 
         {/* Assinatura SVlentes */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-800 mb-3">Assinatura SVlentes</h3>
+        <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+          <h3 className="font-semibold text-cyan-800 mb-3">Assinatura SVlentes</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-sm text-blue-700">Mensal:</span>
-              <span className="font-medium text-blue-800">
+              <span className="text-sm text-cyan-700">Mensal:</span>
+              <span className="font-medium text-cyan-800">
                 {formatCurrency(result.monthlySubscription)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-blue-700">Anual:</span>
-              <span className="font-medium text-blue-800">
+              <span className="text-sm text-cyan-700">Anual:</span>
+              <span className="font-medium text-cyan-800">
                 {formatCurrency(result.yearlySubscription)}
               </span>
             </div>
@@ -91,7 +91,7 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
                 A partir de {formatCurrency(recommendedPlan.priceMonthly)}/mês
               </div>
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+            <button className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-cyan-700 transition-colors">
               Ver Plano
             </button>
           </div>

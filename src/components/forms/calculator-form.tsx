@@ -40,7 +40,7 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
               key={lens.id}
               className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${
                 input.lensType === lens.id
-                  ? 'border-blue-600 bg-blue-50'
+                  ? 'border-cyan-600 bg-cyan-50'
                   : 'border-gray-300 bg-white hover:bg-gray-50'
               }`}
             >
@@ -60,7 +60,7 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
                 </div>
                 <div className={`h-4 w-4 rounded-full border-2 ${
                   input.lensType === lens.id
-                    ? 'border-blue-600 bg-blue-600'
+                    ? 'border-cyan-600 bg-cyan-600'
                     : 'border-gray-300'
                 }`}>
                   {input.lensType === lens.id && (
@@ -84,7 +84,7 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
               key={pattern.id}
               className={`relative flex cursor-pointer rounded-lg border p-4 focus:outline-none ${
                 input.usagePattern === pattern.id
-                  ? 'border-blue-600 bg-blue-50'
+                  ? 'border-cyan-600 bg-cyan-50'
                   : 'border-gray-300 bg-white hover:bg-gray-50'
               }`}
             >
@@ -107,7 +107,7 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
                 </div>
                 <div className={`h-4 w-4 rounded-full border-2 ${
                   input.usagePattern === pattern.id
-                    ? 'border-blue-600 bg-blue-600'
+                    ? 'border-cyan-600 bg-cyan-600'
                     : 'border-gray-300'
                 }`}>
                   {input.usagePattern === pattern.id && (
@@ -123,7 +123,7 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
       {/* Botão de Calcular */}
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        className="w-full bg-cyan-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-cyan-700 transition-colors"
       >
         Calcular Economia
       </button>
