@@ -99,9 +99,9 @@ Especialidade: Oftalmologia
 
 ## 📞 Contato
 
-- WhatsApp: +55 11 99999-9999
-- Email: contato@svlentes.com.br
-- Site: https://svlentes.com.br
+- WhatsApp: +55 33 99860-1427
+- Email: saraivavision@gmail.com
+- Site: https://svlentes.shop
 
 ## 📄 Licença
 
