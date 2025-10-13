@@ -50,3 +50,32 @@ export const planRecommendations = {
   regular: 'premium',
   daily: 'premium'
 };
+
+// Preços dos planos SV Lentes
+export const planPrices = {
+  basic: {
+    name: 'Plano Básico',
+    monthlyPrice: 89.90,
+    includedConsultations: 1,
+    description: 'Uso ocasional e acompanhamento básico'
+  },
+  premium: {
+    name: 'Plano Premium',
+    monthlyPrice: 149.90,
+    includedConsultations: 2,
+    description: 'Uso diário e acompanhamento completo'
+  }
+};
+
+// Preços médios de consultas oftalmológicas no mercado
+export const consultationPrices = {
+  market: {
+    consultation: 200.00, // Preço médio de consulta avulsa
+    followUp: 150.00,     // Preço médio de retorno
+    exam: 120.00          // Preço médio de exames complementares
+  },
+  svlentes: {
+    // As consultas já estão incluídas nos planos
+    includedInPlan: true
+  }
+};

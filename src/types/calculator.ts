@@ -18,6 +18,8 @@ export interface CalculatorInput {
   lensType: string;
   usagePattern: string;
   currentMonthlySpend?: number;
+  annualContactLensCost?: number;
+  annualConsultationCost?: number;
 }
 
 export interface CalculatorResult {
@@ -29,6 +31,10 @@ export interface CalculatorResult {
   yearlySavings: number;
   savingsPercentage: number;
   recommendedPlan: string;
+  totalCurrentAnnualCost?: number;
+  totalSVLentesAnnualCost?: number;
+  totalAnnualSavings?: number;
+  includedConsultations?: number;
 }
 
 export interface CalculatorProps {
