@@ -70,6 +70,13 @@ export interface AsaasPayment {
   postalService: boolean
   anticipated: boolean
   refunds?: AsaasRefund[]
+  pixTransaction?: {
+    qrCode: {
+      payload: string
+      encodedImage: string
+    }
+    expirationDate: string
+  }
 }
 
 export interface AsaasRefund {

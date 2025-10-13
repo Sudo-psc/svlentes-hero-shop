@@ -2,20 +2,24 @@
 
 Landing page para assinatura de lentes de contato com acompanhamento médico especializado.
 
+**Domínio de Produção**: [svlentes.com.br](https://svlentes.com.br)
+
 ## 🚀 Tecnologias
 
-- **Next.js 14** - Framework React com App Router
+- **Next.js 15** - Framework React com App Router
 - **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Framework CSS utilitário
-- **Stripe** - Processamento de pagamentos recorrentes
+- **Tailwind CSS v4** - Framework CSS utilitário
+- **Asaas API v3** - Gateway de pagamento brasileiro (PIX, Boleto, Cartão de Crédito)
 - **Zod** - Validação de schemas
 - **React Hook Form** - Gerenciamento de formulários
+- **Framer Motion** - Animações
+- **Playwright** - Testes E2E
 
 ## 📋 Pré-requisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - npm ou yarn
-- Conta no Stripe (para pagamentos)
+- Conta no Asaas (para pagamentos - [asaas.com](https://www.asaas.com))
 
 ## 🛠️ Instalação
 
@@ -37,7 +41,17 @@ yarn install
 cp .env.local.example .env.local
 ```
 
-4. Edite o arquivo `.env.local` com suas chaves do Stripe e outras configurações
+4. Edite o arquivo `.env.local` com suas chaves do Asaas e outras configurações:
+```bash
+# Asaas Payment Gateway
+ASAAS_ENV=sandbox
+ASAAS_API_KEY_SANDBOX=$aact_hmlg_your_sandbox_key
+ASAAS_API_KEY_PROD=$aact_prod_your_production_key
+
+# Application URLs
+NEXT_PUBLIC_APP_URL=https://svlentes.com.br
+NEXTAUTH_URL=https://svlentes.com.br
+```
 
 5. Execute o projeto em desenvolvimento
 ```bash
@@ -66,16 +80,17 @@ src/
 
 ## 🎯 Funcionalidades
 
-- [x] Estrutura base Next.js 14
-- [x] Configuração Tailwind CSS
+- [x] Estrutura base Next.js 15 com App Router
+- [x] Configuração Tailwind CSS v4
 - [x] Tipagem TypeScript completa
-- [ ] Hero Section com formulário de leads
-- [ ] Seção de planos e preços
-- [ ] Integração com Stripe
-- [ ] Calculadora de economia
-- [ ] FAQ interativo
-- [ ] Formulário de agendamento
-- [ ] Analytics e tracking
+- [x] Hero Section com formulário de leads
+- [x] Seção de planos e preços
+- [x] Integração com Asaas (PIX, Boleto, Cartão)
+- [x] Calculadora de economia
+- [x] FAQ interativo
+- [x] Sistema de testes (Jest + Playwright)
+- [x] Animações com Framer Motion
+- [x] LGPD compliance (política de privacidade)
 
 ## 🔧 Scripts Disponíveis
 

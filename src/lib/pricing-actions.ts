@@ -1,6 +1,5 @@
 'use client'
 
-import { stripeProducts } from './stripe'
 import { trackEvent, trackSubscriptionEvent } from './analytics'
 import { trackPlanSelection as trackPlanSelectionConversion, trackCheckoutStarted, trackConsultationBooked } from './conversion-tracking'
 
@@ -33,20 +32,24 @@ export interface ScheduleData {
 // Função para iniciar processo de assinatura
 export async function handleSubscription(data: SubscriptionData) {
     try {
-        // Obter o price ID correto baseado no plano e intervalo
-        const priceId = getPriceId(data.planId, data.billingInterval)
+        // Obter o valor do plano baseado no plano e intervalo
+        const planValue = getPriceId(data.planId, data.billingInterval)
 
-        if (!priceId) {
+        if (!planValue) {
             throw new Error('Plano não encontrado')
         }
 
-        // Preparar dados para a API de checkout
+        // Preparar dados para a API de checkout (Asaas)
         const checkoutData = {
-            priceId,
-            customerEmail: data.customerData?.email || data.leadData?.email || '',
-            customerName: data.customerData?.name || data.leadData?.nome || '',
-            customerPhone: data.customerData?.phone || data.leadData?.whatsapp || '',
-            planType: data.planId as 'basic' | 'premium' | 'vip',
+            planId: data.planId,
+            billingType: 'PIX' as const, // Default to PIX, can be overridden
+            value: planValue,
+            customerData: {
+                name: data.customerData?.name || data.leadData?.nome || '',
+                email: data.customerData?.email || data.leadData?.email || '',
+                phone: data.customerData?.phone || data.leadData?.whatsapp || '',
+                cpfCnpj: '', // Will be filled in the form
+            },
             billingInterval: data.billingInterval,
             leadData: data.leadData,
             source: 'pricing-section',
@@ -88,11 +91,8 @@ export async function handleSubscription(data: SubscriptionData) {
             billing_interval: data.billingInterval,
         })
 
-        // Redirecionar para o Stripe Checkout
-        if (result.url) {
-            window.location.href = result.url
-        }
-
+        // Para Asaas, retornar os dados da assinatura para processamento no frontend
+        // O frontend pode mostrar opções de pagamento (PIX, Boleto, Cartão)
         return result
 
     } catch (error) {
@@ -151,12 +151,18 @@ export async function handleScheduleConsultation(data: ScheduleData) {
     }
 }
 
-// Função auxiliar para obter price ID
-function getPriceId(planId: string, billingInterval: 'monthly' | 'annual'): string | null {
-    const plan = stripeProducts[planId as keyof typeof stripeProducts]
+// Função auxiliar para obter price ID (Asaas uses plan value directly)
+function getPriceId(planId: string, billingInterval: 'monthly' | 'annual'): number | null {
+    const prices = {
+        basic: { monthly: 89.90, annual: 899.90 },
+        premium: { monthly: 149.90, annual: 1499.90 },
+        vip: { monthly: 249.90, annual: 2499.90 },
+    }
+
+    const plan = prices[planId as keyof typeof prices]
     if (!plan) return null
 
-    return plan.prices[billingInterval] || null
+    return plan[billingInterval] || null
 }
 
 // Função auxiliar para obter preço do plano

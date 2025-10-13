@@ -130,6 +130,26 @@ export class AsaasClient {
         return this.request(`/customers/${customerId}`, 'DELETE')
     }
 
+    async listCustomers(filters?: {
+        email?: string
+        cpfCnpj?: string
+        offset?: number
+        limit?: number
+    }): Promise<{ data: any[]; totalCount: number }> {
+        const queryParams = new URLSearchParams()
+
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    queryParams.append(key, String(value))
+                }
+            })
+        }
+
+        const query = queryParams.toString()
+        return this.request(`/customers${query ? `?${query}` : ''}`, 'GET')
+    }
+
     async createPayment(paymentData: AsaasPayment): Promise<AsaasPaymentResponse> {
         return this.request('/payments', 'POST', paymentData)
     }

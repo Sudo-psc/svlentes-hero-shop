@@ -10,10 +10,10 @@ interface LogoProps {
 }
 
 const SIZE_CONFIG = {
-  sm: { width: 140, height: 48, textSize: 'text-lg', src: '/logo_animado.gif' },
-  md: { width: 200, height: 68, textSize: 'text-2xl', src: '/logo_animado.gif' },
-  lg: { width: 280, height: 95, textSize: 'text-3xl', src: '/logo_animado.gif' },
-  xl: { width: 360, height: 120, textSize: 'text-4xl', src: '/logo_animado.gif' }
+  sm: { width: 112, height: 38, textSize: 'text-lg', src: '/images/logo_transparent.png' },
+  md: { width: 160, height: 54, textSize: 'text-2xl', src: '/images/logo_transparent.png' },
+  lg: { width: 224, height: 76, textSize: 'text-3xl', src: '/images/logo_transparent.png' },
+  xl: { width: 288, height: 96, textSize: 'text-4xl', src: '/images/logo_transparent.png' }
 }
 
 export function Logo({
@@ -95,7 +95,21 @@ export function LogoHeader() {
 }
 
 export function LogoFooter() {
-  return <Logo variant="full" size="lg" className="mb-4 hover:scale-105 transition-transform duration-200" />
+  return (
+    <div className="relative flex-shrink-0 mb-4 hover:scale-105 transition-transform duration-200">
+      <Image
+        src="/images/logo_animado_backup.gif"
+        alt="SV Lentes - Saraiva Vision Oftalmologia"
+        width={224}
+        height={76}
+        priority={false}
+        className="object-contain drop-shadow-sm contrast-110 brightness-105"
+        quality={100}
+        sizes="(max-width: 768px) 224px, 224px"
+        unoptimized={true}
+      />
+    </div>
+  )
 }
 
 export function LogoMobile() {

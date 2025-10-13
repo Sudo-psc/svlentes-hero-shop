@@ -1,6 +1,9 @@
 import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
+import { LazySection } from '@/components/ui/LazySection'
 import { QuickStartSection } from '@/components/sections/QuickStartSection'
+import ReferralProgram from '@/components/sections/ReferralProgram'
+import { FinalCTA } from '@/components/sections/FinalCTA'
 
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
@@ -32,38 +35,20 @@ export default function HomePage() {
                 <VideoHeroSection />
             </section>
 
-            {/* Quick Start Section - Novo fluxo */}
+            {/* Seção com opções de calculadora e assinatura direta */}
             <section className="bg-gradient-to-br from-primary-600 to-primary-700">
                 <QuickStartSection />
             </section>
 
-            {/* Temporariamente comentado para debug */}
-            {/* <section id="planos-precos" className="bg-gray-50">
-                <LeadCaptureSection />
-            </section> */}
-            {/* <LazySection>
-                <ProblemSolutionSection />
-            </LazySection>
-
-            <LazySection>
-                <EconomySection />
-            </LazySection>
-
-            <LazySection>
-                <HowItWorksSection />
-            </LazySection>
-
+            {/* Programa de Indicação */}
             <LazySection>
                 <ReferralProgram />
             </LazySection>
 
-            <AddOns services={addOnsData} layout="cards" />
-
-            <FAQ />
-
+            {/* Nunca Mais Fique Sem Suas Lentes - CTA Final */}
             <LazySection>
                 <FinalCTA />
-            </LazySection> */}
+            </LazySection>
         </div>
     )
 }

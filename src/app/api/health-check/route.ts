@@ -4,17 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
-
-// Initialize Stripe only if API key is available
-const getStripeClient = () => {
-    if (!process.env.STRIPE_SECRET_KEY) {
-        return null
-    }
-    return new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: '2025-09-30.clover'
-    })
-}
 
 export async function GET(request: NextRequest) {
     const startTime = Date.now()
@@ -28,31 +17,40 @@ export async function GET(request: NextRequest) {
             uptime: process.uptime(),
             checks: {
                 database: { status: 'healthy' as string, responseTime: 0 },
-                stripe: { status: 'unknown' as string, responseTime: 0, error: undefined as string | undefined },
+                asaas: { status: 'unknown' as string, responseTime: 0, error: undefined as string | undefined },
                 memory: { status: 'healthy' as string, usage: 0 }
             }
         }
 
-        // Check Stripe connectivity
+        // Check Asaas connectivity
         try {
-            const stripe = getStripeClient()
-            if (!stripe) {
-                checks.checks.stripe = {
+            const asaasStart = Date.now()
+            // Check if Asaas environment variables are configured
+            const asaasEnv = process.env.ASAAS_ENV || 'sandbox'
+            const hasSandboxKey = !!process.env.ASAAS_API_KEY_SANDBOX
+            const hasProdKey = !!process.env.ASAAS_API_KEY_PROD
+
+            if (asaasEnv === 'production' && !hasProdKey) {
+                checks.checks.asaas = {
                     status: 'warning',
-                    responseTime: 0,
-                    error: 'Stripe not configured'
+                    responseTime: Date.now() - asaasStart,
+                    error: 'Asaas production key not configured'
+                }
+            } else if (asaasEnv === 'sandbox' && !hasSandboxKey) {
+                checks.checks.asaas = {
+                    status: 'warning',
+                    responseTime: Date.now() - asaasStart,
+                    error: 'Asaas sandbox key not configured'
                 }
             } else {
-                const stripeStart = Date.now()
-                // Only check if Stripe is configured, don't make API calls during build
-                checks.checks.stripe = {
+                checks.checks.asaas = {
                     status: 'healthy',
-                    responseTime: Date.now() - stripeStart,
+                    responseTime: Date.now() - asaasStart,
                     error: undefined
                 }
             }
         } catch (error) {
-            checks.checks.stripe = {
+            checks.checks.asaas = {
                 status: 'unhealthy',
                 responseTime: Date.now() - startTime,
                 error: error instanceof Error ? error.message : 'Unknown error'
