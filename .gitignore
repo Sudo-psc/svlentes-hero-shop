@@ -45,5 +45,16 @@ next-env.d.ts
 # OS
 Thumbs.db
 
+# Test artifacts
+playwright-report/
+test-results/
+.playwright/
+
+# Security
+.env.tmp
+*.key
+*.pem
+*.cert
+
 .github/instructions/kluster-code-verify.instructions.md
 .kluster
