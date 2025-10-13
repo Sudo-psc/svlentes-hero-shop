@@ -1,0 +1,36 @@
+[2025-10-13 16:17:46] Starting Nginx → Caddy migration...
+[2025-10-13 16:17:46] Running pre-flight checks...
+[2025-10-13 16:17:46] Validating Caddyfile...
+{"level":"info","ts":1760372266.7306404,"msg":"using config from file","file":"/root/svlentes-hero-shop/migration/Caddyfile"}
+{"level":"info","ts":1760372266.7334366,"msg":"adapted config to JSON","adapter":"caddyfile"}
+{"level":"info","ts":1760372266.7341635,"logger":"http.auto_https","msg":"server is listening only on the HTTPS port but has no TLS connection policies; adding one to enable TLS","server_name":"srv1","https_port":443}
+{"level":"info","ts":1760372266.7341933,"logger":"http.auto_https","msg":"enabling automatic HTTP->HTTPS redirects","server_name":"srv1"}
+{"level":"info","ts":1760372266.7342477,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc000640400"}
+{"level":"info","ts":1760372266.7381902,"logger":"http","msg":"servers shutting down with eternal grace period"}
+{"level":"info","ts":1760372266.7382612,"logger":"tls.cache.maintenance","msg":"stopped background certificate maintenance","cache":"0xc000640400"}
+Valid configuration
+[0;32m[SUCCESS][0m Pre-flight checks passed
+[2025-10-13 16:17:46] Created Caddy log directory with correct permissions
+[2025-10-13 16:17:46] Stopping Nginx...
+[0;32m[SUCCESS][0m Nginx stopped
+[2025-10-13 16:17:46] Deploying Caddyfile...
+[0;32m[SUCCESS][0m Caddyfile deployed to /etc/caddy/
+[2025-10-13 16:17:46] Starting Caddy...
+[0;32m[SUCCESS][0m Caddy started successfully
+[2025-10-13 16:17:50] Waiting 5 seconds for SSL certificates...
+[2025-10-13 16:17:55] Validating endpoints...
+[2025-10-13 16:17:55] Testing https://svlentes.com.br...
+[1;33m[WARNING][0m ✗ svlentes.com.br may have issues
+[2025-10-13 16:17:55] Testing https://svlentes.shop...
+[0;32m[SUCCESS][0m ✓ svlentes.shop redirect working
+[2025-10-13 16:17:55] Testing https://saraivavision-n8n.cloud...
+[1;33m[WARNING][0m ✗ n8n may have issues
+[1;33m[WARNING][0m Some endpoints failed validation. Check logs.
+[0;32m[SUCCESS][0m =========================================
+[0;32m[SUCCESS][0m  Migration Complete!
+[0;32m[SUCCESS][0m =========================================
+[2025-10-13 16:17:55] Next steps:
+[2025-10-13 16:17:55] 1. Check logs: journalctl -u caddy -f
+[2025-10-13 16:17:55] 2. Monitor SSL: ls -l /var/lib/caddy/certificates/
+[2025-10-13 16:17:55] 3. If issues occur, run: ./rollback-to-nginx.sh
+[2025-10-13 16:17:55] Migration log saved to: /root/svlentes-hero-shop/migration/migration-20251013_161746.log

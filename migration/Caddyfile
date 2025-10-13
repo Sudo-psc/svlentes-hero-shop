@@ -1,0 +1,98 @@
+# Caddyfile - Migration from Nginx
+# Generated: 2025-10-13 13:29:23 UTC
+# Caddy v2.10.2
+
+# Global Options
+{
+	# Email for Let's Encrypt notifications
+	email saraivavision@gmail.com
+
+	# Admin API on localhost only (security)
+	admin localhost:2019
+}
+
+# ============================================
+# 1. SVLentes Main Application
+# ============================================
+svlentes.com.br, www.svlentes.com.br {
+	# Reverse proxy to Next.js app (systemd service on port 5000)
+	reverse_proxy localhost:5000
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Static assets caching
+	@static {
+		path /_next/static/* *.jpg *.jpeg *.png *.gif *.ico *.webp *.svg *.woff *.woff2 *.ttf *.otf *.eot
+	}
+	handle @static {
+		header Cache-Control "public, max-age=31536000, immutable"
+		reverse_proxy localhost:5000
+	}
+
+	# Request size limit (10MB for file uploads)
+	request_body {
+		max_size 10MB
+	}
+
+	# Logs via systemd journal
+
+	# Error handling
+	handle_errors {
+		@502-504 expression {http.error.status_code} in [502, 503, 504]
+		respond @502-504 "Service temporarily unavailable. Please try again in a moment." 503
+	}
+}
+
+# ============================================
+# 2. SVLentes Alternative Domain (Redirect)
+# ============================================
+svlentes.shop, www.svlentes.shop {
+	# Permanent redirect to primary domain
+	redir https://svlentes.com.br{uri} permanent
+}
+
+# ============================================
+# 3. n8n Automation Platform
+# ============================================
+saraivavision-n8n.cloud, www.saraivavision-n8n.cloud {
+	# Reverse proxy to n8n Docker container (port 5678)
+	reverse_proxy localhost:5678 {
+		# Extended timeouts for long-running workflows
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+			dial_timeout 75s
+		}
+	}
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	# Request size limit (larger for n8n file uploads)
+	request_body {
+		max_size 50MB
+	}
+}
+
+# ============================================
+# Optional: Health Check Endpoint
+# ============================================
+:2020 {
+	respond /health 200 {
+		body "Caddy is running"
+	}
+}
