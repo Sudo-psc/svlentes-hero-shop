@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
 import { LazySection } from '@/components/ui/LazySection'
 import { QuickStartSection } from '@/components/sections/QuickStartSection'
+import { HowItWorksSection } from '@/components/sections/HowItWorksSection'
+import FAQ from '@/components/sections/FAQ'
 import ReferralProgram from '@/components/sections/ReferralProgram'
 import { FinalCTA } from '@/components/sections/FinalCTA'
 
@@ -36,17 +38,27 @@ export default function HomePage() {
             </section>
 
             {/* Seção com opções de calculadora e assinatura direta */}
-            <section className="bg-gradient-to-br from-primary-600 to-primary-700">
+            <section id="planos-precos" className="bg-gradient-to-br from-primary-600 to-primary-700">
                 <QuickStartSection />
             </section>
 
+            {/* Como Funciona */}
+            <LazySection id="como-funciona">
+                <HowItWorksSection />
+            </LazySection>
+
+            {/* Perguntas Frequentes */}
+            <LazySection id="perguntas-frequentes">
+                <FAQ />
+            </LazySection>
+
             {/* Programa de Indicação */}
-            <LazySection>
+            <LazySection id="programa-indicacao">
                 <ReferralProgram />
             </LazySection>
 
             {/* Nunca Mais Fique Sem Suas Lentes - CTA Final */}
-            <LazySection>
+            <LazySection id="contato">
                 <FinalCTA />
             </LazySection>
         </div>

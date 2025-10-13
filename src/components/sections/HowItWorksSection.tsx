@@ -231,7 +231,7 @@ export function HowItWorksSection({ className = '' }: HowItWorksSectionProps) {
     ]
 
     return (
-        <section className={`py-16 lg:py-24 bg-gradient-to-br from-gray-50 to-white ${className}`} id="como-funciona">
+        <section className={`py-16 lg:py-24 bg-gradient-to-br from-gray-50 to-white ${className}`}>
             <div className="container-custom">
 
                 {/* Header */}

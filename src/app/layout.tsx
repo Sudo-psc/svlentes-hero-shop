@@ -3,6 +3,7 @@ import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { WhatsAppFloat } from '@/components/layout/WhatsAppFloat'
 // import { StructuredData } from '@/components/seo/StructuredData'
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor'
 import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
@@ -74,6 +75,7 @@ export default function RootLayout({
                     </main>
                     <Footer />
                     <CookieConsent />
+                    <WhatsAppFloat />
                     <SmoothScroll />
                 </PrivacyProvider>
             </body>

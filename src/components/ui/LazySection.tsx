@@ -9,6 +9,7 @@ interface LazySectionProps {
     className?: string
     threshold?: number
     rootMargin?: string
+    id?: string
 }
 
 export function LazySection({
@@ -16,7 +17,8 @@ export function LazySection({
     fallback = <div className="h-96 bg-gray-100 animate-pulse rounded-lg" />,
     className = '',
     threshold = 0.1,
-    rootMargin = '100px'
+    rootMargin = '100px',
+    id
 }: LazySectionProps) {
     const ref = useRef<HTMLDivElement>(null)
     const { hasIntersected } = useIntersectionObserver(ref, {
@@ -25,7 +27,7 @@ export function LazySection({
     })
 
     return (
-        <div ref={ref} className={className}>
+        <div ref={ref} className={className} id={id}>
             {hasIntersected ? <>{children}</> : fallback}
         </div>
     )

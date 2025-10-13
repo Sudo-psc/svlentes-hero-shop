@@ -32,17 +32,6 @@ export function Footer({ className }: FooterProps) {
     const [showPrivacySettings, setShowPrivacySettings] = useState(false)
     const [showDataControl, setShowDataControl] = useState(false)
 
-    const handleWhatsAppContact = () => {
-        const message = `Olá! Entrei em contato através do site SV Lentes e gostaria de mais informações sobre o serviço de assinatura de lentes de contato com acompanhamento médico.`
-
-        const whatsappLink = generateWhatsAppLink(
-            clinicInfo.contact.whatsapp,
-            message
-        )
-
-        window.open(whatsappLink, '_blank')
-    }
-
     const quickLinks = [
         { name: 'Planos e Preços', href: '#planos-precos' },
         { name: 'Como Funciona', href: '#como-funciona' },
@@ -121,17 +110,6 @@ export function Footer({ className }: FooterProps) {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Contact CTA */}
-                        <Button
-                            onClick={handleWhatsAppContact}
-                            variant="default"
-                            className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white"
-                            aria-label="Falar com especialista pelo WhatsApp"
-                        >
-                            <MessageCircle className="w-5 h-5" aria-hidden="true" />
-                            <span>Falar com Especialista</span>
-                        </Button>
                     </div>
 
                     {/* Quick Links */}

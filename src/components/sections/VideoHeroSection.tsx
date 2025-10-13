@@ -67,52 +67,38 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6 sm:px-8 lg:px-12">
 
                 {/* Texto principal */}
-                <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 animate-fade-in">
-                    {/* Badge superior */}
-                    <div className="flex justify-center gap-3 flex-wrap">
-                        <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
-                            <Star className="w-4 h-4 mr-2 fill-yellow-400 text-yellow-400" />
-                            4.9/5 - Mais de 1.000 clientes
-                        </Badge>
-                        <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
-                            <TrendingUp className="w-4 h-4 mr-2" />
-                            Economia de até 40%
-                        </Badge>
-                        <Badge variant="secondary" className="bg-white/20 backdrop-blur-md text-white border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/30 transition-colors">
-                            <Shield className="w-4 h-4 mr-2" />
-                            CRM 69.870
-                        </Badge>
-                    </div>
-
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-[1.1] drop-shadow-2xl tracking-tight">
+                <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-fade-in">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] drop-shadow-2xl tracking-tight">
                         Nunca mais fique
                         <br />
                         <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent inline-block mt-2">sem lentes</span>
                     </h1>
 
-                    <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white leading-relaxed max-w-4xl mx-auto drop-shadow-2xl font-semibold">
-                        Acompanhamento médico + entrega automática em casa
+                    <p className="text-lg sm:text-xl md:text-2xl text-white leading-relaxed max-w-3xl mx-auto drop-shadow-lg">
+                        Assinatura de lentes com acompanhamento do Dr. Philipe Saraiva Cruz
                     </p>
 
-                    {/* CTAs */}
-                    <div className="flex flex-col sm:flex-row gap-5 sm:gap-6 justify-center items-center pt-6 sm:pt-8">
+                    <div className="flex items-center justify-center space-x-6 text-white text-sm">
+                        <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span>4.9/5 avaliação</span>
+                        </div>
+                        <div className="hidden sm:block w-px h-4 bg-white/30"></div>
+                        <div className="flex items-center space-x-1">
+                            <TrendingUp className="w-4 h-4" />
+                            <span>Até 40% economia</span>
+                        </div>
+                    </div>
+
+                    {/* Primary CTA only */}
+                    <div className="flex justify-center pt-4">
                         <Button
                             onClick={handleVerPlanos}
                             size="lg"
-                            className="w-full sm:w-auto min-w-[280px] bg-primary-600 hover:bg-primary-700 text-white font-bold text-xl py-7 px-10 shadow-2xl hover:shadow-primary-500/60 transform hover:scale-[1.08] transition-all duration-300 ring-2 ring-white/20 hover:ring-white/40"
-                            aria-label="Ver planos e preços"
+                            className="w-full sm:w-auto min-w-[240px] bg-primary-600 hover:bg-primary-700 text-white font-bold text-lg py-4 px-8 shadow-xl hover:shadow-primary-500/40 transform hover:scale-[1.05] transition-all duration-300 ring-2 ring-white/20 hover:ring-white/30"
+                            aria-label="Começar assinatura - CTA principal"
                         >
-                            Ver Planos e Preços
-                        </Button>
-
-                        <Button
-                            onClick={handleFalarEspecialista}
-                            variant="outline"
-                            size="lg"
-                            className="w-full sm:w-auto min-w-[280px] bg-white hover:bg-white text-gray-900 font-bold text-xl py-7 px-10 border-3 border-white shadow-2xl transform hover:scale-[1.08] transition-all duration-300 hover:bg-primary-50"
-                            aria-label="Falar com especialista"
-                        >
-                            Falar com Especialista
+                            Começar Assinatura
                         </Button>
                     </div>
                 </div>
@@ -124,7 +110,7 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
                     aria-label="Rolar para baixo"
                 >
                     <div className="flex flex-col items-center gap-2">
-                        <span className="text-sm font-medium drop-shadow-lg">Entenda como funciona</span>
+                        <span className="text-sm font-medium drop-shadow-lg">Veja como funciona</span>
                         <ChevronDown className="w-6 h-6" />
                     </div>
                 </button>
@@ -136,9 +122,9 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
                     onClick={handleVerPlanos}
                     size="lg"
                     className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-bold text-lg py-5 shadow-lg transform active:scale-95 transition-all duration-200"
-                    aria-label="Ver planos - Sticky CTA mobile"
+                    aria-label="Começar assinatura - Sticky CTA mobile"
                 >
-                    <span>Ver Planos e Preços</span>
+                    <span>Começar Assinatura</span>
                 </Button>
             </div>
         </section>

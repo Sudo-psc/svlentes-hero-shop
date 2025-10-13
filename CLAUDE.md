@@ -4,22 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Session Memory
 
-### Current Session (2025-01-13)
-**Session Start**: 2025-01-13
+### Current Session (2025-10-13)
+**Session Start**: 2025-10-13
 **Project State**:
 - Branch: master
-- Last Commit: 8866aff ("Update calculator colors to cyan scheme and add comprehensive tests")
-- Status: Clean working directory with new untracked assets (icons, images, Hero2.mp4)
-- Modified files: .env.local.example, CLAUDE.md
+- Last Commit: 34f0bdd ("style: reduce cookie consent size by 50% and change navbar button to cyan")
+- Status: Migration files created, Nginx currently active
+- Migration directory: Complete Nginx → Caddy migration prepared
 
-**Session Goals**: TBD (to be defined by user)
+**Session Goals**: Nginx to Caddy migration planning and execution
 
 **Recent Work History**:
-- Calculator color scheme updated to cyan palette
-- Comprehensive test coverage added
-- Patient manual PDF integration
-- Animated logo assets added
-- White footer with cyan/silver design implemented
+- Nginx → Caddy migration attempted (2025-10-13 15:17 UTC)
+- First attempt failed due to log file permissions
+- Successful rollback executed (~1 min downtime)
+- Problem identified and corrected (systemd journal logs)
+- AGENTS.md created/updated for AI agent guidance
+- Migration documentation completed (5 files in /migration/)
 
 **Session Context**: This is a production healthcare platform for SV Lentes contact lens subscription service.
 
@@ -44,6 +45,31 @@ npm run start           # Production server (port 5000)
 npm run lint            # ESLint checking
 ```
 
+### Production Service Management (Systemd)
+```bash
+# Next.js Application Service
+systemctl status svlentes-nextjs    # Check service status
+systemctl restart svlentes-nextjs   # Restart after deployment
+journalctl -u svlentes-nextjs -f    # View live logs
+
+# Reverse Proxy (Currently: Nginx)
+systemctl status nginx              # Check Nginx status
+nginx -t                            # Test configuration
+systemctl reload nginx              # Reload without downtime
+systemctl restart nginx             # Full restart
+
+# SSL Certificate Management (Nginx + Certbot)
+certbot certificates                # List SSL certificates
+certbot renew                       # Renew certificates
+certbot renew --dry-run             # Test auto-renewal
+
+# Caddy Migration (Prepared, awaiting execution)
+# See /root/svlentes-hero-shop/migration/ for migration scripts
+cd /root/svlentes-hero-shop/migration
+./migrate-to-caddy.sh               # Execute migration (with confirmation)
+./rollback-to-nginx.sh              # Emergency rollback if needed
+```
+
 ### Testing
 ```bash
 npm run test            # Run Jest unit tests
@@ -55,23 +81,21 @@ npm run test:e2e:headed # Playwright headed mode
 npm run test:e2e:debug  # Playwright debug mode
 ```
 
-### Deployment & Performance
-```bash
-npm run deploy:staging    # Deploy to staging environment
-npm run deploy:production # Deploy to production
-npm run deploy:rollback   # Rollback deployment
-npm run health-check      # Check application health
-npm run lighthouse        # Run Lighthouse CI
-```
-
 ### Asset Management
 ```bash
 npm run optimize:icons    # Optimize icon assets
 npm run optimize:logo     # Optimize logo files
 npm run generate:favicons # Generate favicon variants
 npm run icons:catalog     # View icon documentation
+npm run icons:watch       # Watch mode for icon updates
 npm run icons:update      # Update components with new icons
 npm run icons:analyze     # Analyze icon usage
+```
+
+### Health Monitoring
+```bash
+npm run health-check      # Check application health
+curl -f http://localhost:3000/api/health-check  # Manual health check
 ```
 
 ## Architecture
@@ -80,18 +104,27 @@ npm run icons:analyze     # Analyze icon usage
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── page.tsx           # Landing page (hero section)
+│   ├── page.tsx           # Main landing page
 │   ├── layout.tsx         # Root layout with metadata
 │   ├── globals.css        # Global styles and CSS variables
 │   ├── api/               # API routes
-│   │   ├── webhooks/      # Asaas payment webhooks
-│   │   ├── checkout-session/ # Stripe checkout sessions
+│   │   ├── webhooks/asaas/ # Asaas payment webhooks
+│   │   ├── asaas/         # Payment creation endpoints
 │   │   ├── monitoring/    # Health and performance endpoints
-│   │   └── whatsapp-redirect/ # WhatsApp integration
+│   │   ├── privacy/       # LGPD compliance endpoints
+│   │   ├── schedule-consultation/ # Appointment booking
+│   │   ├── whatsapp-redirect/ # WhatsApp integration
+│   │   ├── create-checkout/ # Checkout session creation
+│   │   └── health-check/  # Application health status
 │   ├── calculadora/       # Savings calculator page
 │   ├── assinar/          # Subscription signup flow
 │   ├── agendar-consulta/ # Consultation scheduling
-│   └── (other routes)    # Various landing pages
+│   ├── lentes-diarias/    # Daily lenses information
+│   ├── politica-privacidade/ # Privacy policy
+│   ├── termos-uso/        # Terms of service
+│   ├── success/           # Payment success page
+│   ├── cancel/            # Payment cancellation page
+│   └── agendamento-confirmado/ # Booking confirmation
 ├── components/
 │   ├── ui/                # shadcn/ui components
 │   ├── sections/          # Landing page sections
@@ -215,10 +248,59 @@ RESEND_API_KEY=<email-service-key>
 3. Check build: `npm run build`
 4. Health check: `npm run health-check`
 
-### Deployment
-- Production deployed via Vercel to svlentes.shop
-- Use deployment scripts: `npm run deploy:production`
-- Monitor via Vercel logs and `/api/monitoring/*` endpoints
+### Production Deployment
+- Deployed via systemd service to svlentes.com.br (primary) / svlentes.shop (redirect)
+- Build and restart: `npm run build && systemctl restart svlentes-nextjs`
+- Monitor via systemd logs: `journalctl -u svlentes-nextjs -f`
+- Health endpoints: `/api/health-check`, `/api/monitoring/*`
+
+### Deployment Workflow
+```bash
+# 1. Build the application
+npm run build
+
+# 2. Restart production service
+systemctl restart svlentes-nextjs
+
+# 3. Verify deployment
+curl -I https://svlentes.com.br
+journalctl -u svlentes-nextjs -n 50
+```
+
+### Reverse Proxy Migration (Nginx → Caddy)
+**Status:** Prepared and ready for execution  
+**Documentation:** `/root/svlentes-hero-shop/migration/`
+
+```bash
+# Execute migration (requires confirmation)
+cd /root/svlentes-hero-shop/migration
+sudo ./migrate-to-caddy.sh
+
+# If issues occur, rollback immediately
+sudo ./rollback-to-nginx.sh
+
+# Monitor Caddy logs (after migration)
+journalctl -u caddy -f
+
+# View migration status
+cat /root/svlentes-hero-shop/migration/STATUS.md
+```
+
+**Key Benefits:**
+- 85% less configuration (101 vs 663 lines)
+- Automatic SSL/TLS with zero maintenance
+- HTTP/3 support out-of-the-box
+- Zero-downtime certificate renewal
+- Logs via systemd journal (no file permissions issues)
+
+**Migration Files:**
+- `CADDY_MIGRATION.md` - Complete migration guide
+- `MIGRATION_PLAN.md` - Detailed execution plan
+- `MIGRATION_REVIEW.md` - Analysis of first attempt and corrections
+- `STATUS.md` - Current migration status
+- `Caddyfile` - Production-ready configuration (101 lines)
+- `migrate-to-caddy.sh` - Automated migration script
+- `rollback-to-nginx.sh` - Emergency rollback script (tested ✅)
 
 ## Regulatory Requirements
 

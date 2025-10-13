@@ -181,7 +181,7 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
                                 className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                             >
                                 <MessageCircle className="w-4 h-4" />
-                                <span>Conversar Agora</span>
+                                <span>Falar no WhatsApp</span>
                             </button>
                         </div>
                     </div>
@@ -192,25 +192,33 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    'fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group',
+                    'fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group px-4 py-3 min-w-[160px] md:min-w-[180px]',
                     isOpen && 'bg-gray-500 hover:bg-gray-600',
                     className
                 )}
-                aria-label={isOpen ? 'Fechar WhatsApp' : 'Abrir WhatsApp'}
+                aria-label={isOpen ? 'Fechar WhatsApp' : 'Falar no WhatsApp'}
             >
                 {isOpen ? (
                     <X className="w-6 h-6" />
                 ) : (
                     <>
-                        <MessageCircle className="w-6 h-6" />
+                        <MessageCircle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                        <span className="ml-2 text-xs md:text-sm font-medium whitespace-nowrap">
+                            <span className="hidden md:inline">
+                                Falar no WhatsApp
+                            </span>
+                            <span className="md:hidden">
+                                WhatsApp
+                            </span>
+                        </span>
                         {/* Pulse animation when online */}
                         {attendanceStatus.isOpen && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse-slow"></span>
+                            <span className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-green-400 rounded-full animate-pulse-slow"></span>
                         )}
                         {/* Notification badge */}
                         {showNotification && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                                <span className="w-2 h-2 bg-white rounded-full"></span>
+                            <span className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full"></span>
                             </span>
                         )}
                     </>

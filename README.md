@@ -2,7 +2,9 @@
 
 Landing page para assinatura de lentes de contato com acompanhamento médico especializado.
 
-**Domínio de Produção**: [svlentes.com.br](https://svlentes.com.br)
+**Domínio de Produção**: [svlentes.com.br](https://svlentes.com.br)  
+**n8n Automation**: [saraivavision-n8n.cloud](https://saraivavision-n8n.cloud)  
+**Reverse Proxy**: Caddy 2.10.2 (HTTPS automático)
 
 ## 🚀 Tecnologias
 

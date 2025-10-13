@@ -136,22 +136,11 @@ export function FinalCTA() {
                             className="bg-white text-primary-700 hover:bg-gray-50 font-semibold px-8 py-4 text-lg flex items-center space-x-2 shadow-lg"
                         >
                             <Calendar className="w-5 h-5" />
-                            <span>Agendar Consulta Gratuita</span>
+                            <span>Agende Sua Consulta</span>
                             <ArrowRight className="w-4 h-4" />
                         </Button>
 
-                        <Button
-                            onClick={handleWhatsAppClick}
-                            variant="outline"
-                            size="lg"
-                            className="border-white text-white hover:bg-white hover:text-primary-700 font-semibold px-8 py-4 text-lg flex items-center space-x-2 group"
-                        >
-                            <MessageCircle className="w-5 h-5 flex-shrink-0" />
-                            <span className="text-white group-hover:text-primary-700 transition-colors">
-                                Falar no WhatsApp
-                            </span>
-                        </Button>
-                    </div>
+                      </div>
 
                     {/* Formulário mobile */}
                     <div className="md:hidden">
@@ -163,26 +152,15 @@ export function FinalCTA() {
                                     className="w-full bg-white text-primary-700 hover:bg-gray-50 font-semibold py-4 text-lg flex items-center justify-center space-x-2 shadow-lg"
                                 >
                                     <Calendar className="w-5 h-5" />
-                                    <span>Quero Agendar Consulta</span>
+                                    <span>Agendar Consulta</span>
                                 </Button>
 
-                                <Button
-                                    onClick={handleWhatsAppClick}
-                                    variant="outline"
-                                    size="lg"
-                                    className="w-full border-white text-white hover:bg-white hover:text-primary-700 font-semibold py-4 text-lg flex items-center justify-center space-x-2 group"
-                                >
-                                    <MessageCircle className="w-5 h-5 flex-shrink-0" />
-                                    <span className="text-white group-hover:text-primary-700 transition-colors">
-                                        Falar no WhatsApp
-                                    </span>
-                                </Button>
-                            </div>
+                              </div>
                         ) : (
                             <div className="bg-white rounded-xl p-6">
                                 <div className="text-center mb-4">
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                        Agendar Consulta Gratuita
+                                        Agende Sua Consulta
                                     </h3>
                                     <p className="text-gray-600 text-sm">
                                         Preencha seus dados e entraremos em contato
