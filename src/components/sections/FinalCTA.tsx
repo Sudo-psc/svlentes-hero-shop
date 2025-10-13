@@ -144,10 +144,12 @@ export function FinalCTA() {
                             onClick={handleWhatsAppClick}
                             variant="outline"
                             size="lg"
-                            className="border-white text-white hover:bg-white hover:text-primary-700 font-semibold px-8 py-4 text-lg flex items-center space-x-2"
+                            className="border-white text-white hover:bg-white hover:text-primary-700 font-semibold px-8 py-4 text-lg flex items-center space-x-2 group"
                         >
-                            <MessageCircle className="w-5 h-5" />
-                            <span>Falar no WhatsApp</span>
+                            <MessageCircle className="w-5 h-5 flex-shrink-0" />
+                            <span className="text-white group-hover:text-primary-700 transition-colors">
+                                Falar no WhatsApp
+                            </span>
                         </Button>
                     </div>
 
@@ -168,10 +170,12 @@ export function FinalCTA() {
                                     onClick={handleWhatsAppClick}
                                     variant="outline"
                                     size="lg"
-                                    className="w-full border-white text-white hover:bg-white hover:text-primary-700 font-semibold py-4 text-lg flex items-center justify-center space-x-2"
+                                    className="w-full border-white text-white hover:bg-white hover:text-primary-700 font-semibold py-4 text-lg flex items-center justify-center space-x-2 group"
                                 >
-                                    <MessageCircle className="w-5 h-5" />
-                                    <span>Falar no WhatsApp</span>
+                                    <MessageCircle className="w-5 h-5 flex-shrink-0" />
+                                    <span className="text-white group-hover:text-primary-700 transition-colors">
+                                        Falar no WhatsApp
+                                    </span>
                                 </Button>
                             </div>
                         ) : (
