@@ -96,16 +96,16 @@ export function LogoHeader() {
 
 export function LogoFooter() {
   return (
-    <div className="relative flex-shrink-0 mb-4 hover:scale-105 transition-transform duration-200">
+    <div className="relative flex-shrink-0 mb-4">
       <Image
         src="/images/logo_animado_backup.gif"
         alt="SV Lentes - Saraiva Vision Oftalmologia"
-        width={224}
-        height={76}
+        width={270} // 224 * 1.2 = 268.8 ≈ 270
+        height={91} // 76 * 1.2 = 91.2 ≈ 91
         priority={false}
         className="object-contain drop-shadow-sm contrast-110 brightness-105"
         quality={100}
-        sizes="(max-width: 768px) 224px, 224px"
+        sizes="(max-width: 768px) 270px, 270px"
         unoptimized={true}
       />
     </div>
