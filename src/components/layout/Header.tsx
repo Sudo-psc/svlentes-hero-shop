@@ -106,7 +106,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     <div className="hidden md:flex items-center space-x-4">
                         <Button
                             onClick={handleAgendarConsulta}
-                            className="flex items-center space-x-2"
+                            className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
                             size="default"
                         >
                             <Phone className="w-4 h-4" />
@@ -150,7 +150,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                             <div className="px-4 pt-4 border-t border-gray-200">
                                 <Button
                                     onClick={handleAgendarConsulta}
-                                    className="w-full flex items-center justify-center space-x-2"
+                                    className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
                                     size="default"
                                 >
                                     <Phone className="w-4 h-4" />

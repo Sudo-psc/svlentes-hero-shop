@@ -83,26 +83,26 @@ export function CookieConsent() {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
-            <div className="max-w-7xl mx-auto p-4">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="max-w-7xl mx-auto p-2">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1">
                             Utilizamos cookies para melhorar sua experiência
                         </h3>
-                        <p className="text-sm text-gray-600 mb-4 lg:mb-0">
+                        <p className="text-xs text-gray-600 mb-2 lg:mb-0">
                             Utilizamos cookies essenciais para o funcionamento do site e cookies opcionais
                             para análise e marketing. Você pode escolher quais aceitar.
                         </p>
 
                         {showDetails && (
-                            <div className="mt-4 space-y-3">
+                            <div className="mt-2 space-y-2">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="necessary"
                                         checked={preferences.necessary}
                                         disabled
                                     />
-                                    <Label htmlFor="necessary" className="text-sm">
+                                    <Label htmlFor="necessary" className="text-xs">
                                         <strong>Cookies Necessários</strong> - Essenciais para o funcionamento do site
                                     </Label>
                                 </div>
@@ -113,7 +113,7 @@ export function CookieConsent() {
                                         checked={preferences.analytics}
                                         onChange={(e) => handlePreferenceChange('analytics', e.target.checked)}
                                     />
-                                    <Label htmlFor="analytics" className="text-sm">
+                                    <Label htmlFor="analytics" className="text-xs">
                                         <strong>Cookies de Análise</strong> - Nos ajudam a entender como você usa o site
                                     </Label>
                                 </div>
@@ -124,7 +124,7 @@ export function CookieConsent() {
                                         checked={preferences.marketing}
                                         onChange={(e) => handlePreferenceChange('marketing', e.target.checked)}
                                     />
-                                    <Label htmlFor="marketing" className="text-sm">
+                                    <Label htmlFor="marketing" className="text-xs">
                                         <strong>Cookies de Marketing</strong> - Para personalizar anúncios e comunicações
                                     </Label>
                                 </div>
@@ -132,13 +132,14 @@ export function CookieConsent() {
                         )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
+                    <div className="flex flex-col sm:flex-row gap-1 lg:ml-4">
                         {!showDetails ? (
                             <>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setShowDetails(true)}
+                                    className="px-2 py-1 text-xs h-7"
                                 >
                                     Personalizar
                                 </Button>
@@ -146,13 +147,14 @@ export function CookieConsent() {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleRejectAll}
+                                    className="px-2 py-1 text-xs h-7"
                                 >
                                     Rejeitar Opcionais
                                 </Button>
                                 <Button
                                     size="sm"
                                     onClick={handleAcceptAll}
-                                    className="bg-blue-600 hover:bg-blue-700"
+                                    className="bg-blue-600 hover:bg-blue-700 px-2 py-1 text-xs h-7"
                                 >
                                     Aceitar Todos
                                 </Button>
@@ -163,13 +165,14 @@ export function CookieConsent() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setShowDetails(false)}
+                                    className="px-2 py-1 text-xs h-7"
                                 >
                                     Voltar
                                 </Button>
                                 <Button
                                     size="sm"
                                     onClick={handleAcceptSelected}
-                                    className="bg-blue-600 hover:bg-blue-700"
+                                    className="bg-blue-600 hover:bg-blue-700 px-2 py-1 text-xs h-7"
                                 >
                                     Salvar Preferências
                                 </Button>
