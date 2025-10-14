@@ -270,7 +270,7 @@ export default function SuccessPage() {
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <a
-                            href="https://wa.me/5511947038078?text=Olá! Acabei de assinar a SVlentes e gostaria de tirar algumas dúvidas."
+                            href="https://wa.me/+553399898026?text=Olá! Acabei de assinar a SVlentes e gostaria de tirar algumas dúvidas."
                             target="_blank"
                             rel="noopener noreferrer"
                         >

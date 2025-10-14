@@ -102,7 +102,7 @@ export default function CancelPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <a
-                            href="https://wa.me/5511947038078?text=Olá! Estava tentando assinar a SVlentes mas tive um problema no pagamento. Podem me ajudar?"
+                            href="https://wa.me/+553399898026?text=Olá! Estava tentando assinar a SVlentes mas tive um problema no pagamento. Podem me ajudar?"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block"

@@ -192,7 +192,7 @@ src/
 ```bash
 # Application
 NEXT_PUBLIC_APP_URL=https://svlentes.shop
-NEXT_PUBLIC_WHATSAPP_NUMBER=5533998601427
+NEXT_PUBLIC_WHATSAPP_NUMBER=553399898026
 
 # Asaas Payment (Required for production)
 ASAAS_ENV=production
@@ -233,7 +233,7 @@ RESEND_API_KEY=<email-service-key>
 5. **WhatsApp Integration**: Direct contact with clinic
 
 ### Contact Information
-- **WhatsApp**: +55 33 99860-1427
+- **WhatsApp**: +55 33 99898-026
 - **Email**: saraivavision@gmail.com
 - **Website**: svlentes.shop
 - **Responsible Physician**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)

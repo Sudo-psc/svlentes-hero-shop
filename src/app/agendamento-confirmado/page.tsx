@@ -107,7 +107,7 @@ function AgendamentoConfirmadoContent() {
                             </div>
                             <div className="ml-4">
                                 <h3 className="font-semibold text-green-900">Dr. Philipe Saraiva Cruz</h3>
-                                <p className="text-green-700 text-sm">CRM 65.870 - Oftalmologista</p>
+                                <p className="text-green-700 text-sm">CRM 69.870 - Oftalmologista</p>
                                 <p className="text-green-600 text-sm">Especialista em lentes de contato</p>
                             </div>
                         </div>
@@ -190,7 +190,7 @@ function AgendamentoConfirmadoContent() {
                             const whatsappMessage = encodeURIComponent(
                                 `Olá! Acabei de fazer um agendamento no site da SVlentes. ID: ${schedulingDetails.id}. Gostaria de confirmar os detalhes.`
                             )
-                            window.open(`https://wa.me/5511999999999?text=${whatsappMessage}`, '_blank')
+                            window.open(`https://wa.me/+553399898026?text=${whatsappMessage}`, '_blank')
                         }}
                         className="w-full sm:w-auto"
                     >

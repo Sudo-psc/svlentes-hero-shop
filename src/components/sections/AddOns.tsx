@@ -281,7 +281,7 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                                 .filter(s => selectedAddOns.includes(s.id))
                                                 .map(s => s.name)
                                                 .join(', ')}`
-                                            window.open(`https://wa.me/5511947038078?text=${encodeURIComponent(message)}`)
+                                            window.open(`https://wa.me/+553399898026?text=${encodeURIComponent(message)}`)
                                         }}
                                     >
                                         Falar no WhatsApp
@@ -300,7 +300,7 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                 variant="outline"
                                 onClick={() => {
                                     // TODO: Integrar com WhatsApp para dúvidas
-                                    window.open('https://wa.me/5511947038078?text=Olá! Gostaria de saber mais sobre os serviços adicionais.')
+                                    window.open('https://wa.me/+553399898026?text=Olá! Gostaria de saber mais sobre os serviços adicionais.')
                                 }}
                             >
                                 Tenho dúvidas - Falar no WhatsApp

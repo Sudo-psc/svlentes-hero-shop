@@ -5,61 +5,61 @@ export const faqData: FAQItem[] = [
     {
         id: 'how-it-works',
         question: 'Como funciona o serviço de assinatura?',
-        answer: 'Você se cadastra, escolhe seu plano, e recebe suas lentes automaticamente em casa. O Dr. Philipe Saraiva Cruz acompanha sua saúde ocular através de consultas regulares e você nunca mais fica sem lentes.',
+        answer: 'Cadastre-se, escolha seu plano e receba lentes automaticamente em casa com acompanhamento médico do Dr. Philipe Saraiva Cruz.',
         category: 'geral'
     },
     {
         id: 'medical-follow-up',
         question: 'Como é feito o acompanhamento médico?',
-        answer: 'O Dr. Philipe Saraiva Cruz (CRM 69.870) realiza consultas regulares conforme seu plano, além de estar disponível para teleorientação. Você tem acesso a um especialista em oftalmologia sempre que precisar.',
+        answer: 'Consultas regulares + teleorientação com Dr. Philipe Saraiva Cruz (CRM 69.870), especialista em oftalmologia.',
         category: 'medico'
     },
     {
         id: 'lens-types',
         question: 'Que tipos de lentes vocês oferecem?',
-        answer: 'Trabalhamos com lentes de contato diárias, semanais e mensais das melhores marcas do mercado. O tipo ideal é definido durante sua consulta médica, considerando seu estilo de vida e necessidades.',
+        answer: 'Lentes diárias, semanais e mensais das melhores marcas. O tipo ideal é definido na consulta médica.',
         category: 'produto'
     },
     {
         id: 'prescription-needed',
         question: 'Preciso ter receita médica?',
-        answer: 'Sim, lentes de contato são dispositivos médicos que exigem prescrição. Se você não tem uma receita atualizada, podemos agendar uma consulta com o Dr. Philipe para avaliar suas necessidades.',
+        answer: 'Sim, lentes são dispositivos médicos. Sem receita atualizada? Agendamos consulta com Dr. Philipe.',
         category: 'medico'
     },
     {
         id: 'delivery-frequency',
         question: 'Com que frequência recebo as lentes?',
-        answer: 'Depende do seu plano: Básico (a cada 3 meses), Premium (mensal) ou VIP (quinzenal se necessário). Você sempre recebe antes de acabar suas lentes atuais.',
+        answer: 'Básico: 3 meses | Premium: mensal | VIP: quinzenal. Sempre antes de acabar.',
         category: 'entrega'
     },
     {
         id: 'cancellation-policy',
         question: 'Posso cancelar a qualquer momento?',
-        answer: 'Sim! Você pode pausar, alterar ou cancelar sua assinatura a qualquer momento sem multas ou taxas. Basta entrar em contato conosco pelo WhatsApp ou app.',
+        answer: 'Sim! Pause, altere ou cancele sem multas pelo WhatsApp ou app.',
         category: 'assinatura'
     },
     {
         id: 'emergency-replacement',
         question: 'E se eu perder ou danificar minhas lentes?',
-        answer: 'Nos planos Premium e VIP, você tem seguro incluído. No plano Básico, oferecemos reposição de emergência com desconto especial. Entre em contato e resolvemos rapidamente.',
+        answer: 'Premium/VIP: seguro incluído | Básico: reposição com desconto especial.',
         category: 'suporte'
     },
     {
         id: 'cost-savings',
         question: 'Quanto eu economizo com a assinatura?',
-        answer: 'Em média, nossos clientes economizam entre 30% a 40% comparado à compra avulsa. Use nossa calculadora para ver sua economia personalizada baseada no seu uso atual.',
+        answer: 'Economia média de 30-40% vs. compra avulsa. Use a calculadora para seu caso.',
         category: 'preco'
     },
     {
         id: 'first-time-user',
         question: 'Nunca usei lentes de contato. Vocês me ajudam?',
-        answer: 'Claro! O Dr. Philipe fará uma avaliação completa, ensinará como usar e cuidar das lentes, e acompanhará sua adaptação de perto. Você terá todo o suporte necessário.',
+        answer: 'Sim! Avaliação completa, treinamento e acompanhamento da adaptação com Dr. Philipe.',
         category: 'medico'
     },
     {
         id: 'coverage-area',
         question: 'Vocês atendem em todo o Brasil?',
-        answer: 'Sim! Fazemos entregas gratuitas em todo território nacional. As consultas podem ser presenciais (São Paulo) ou por telemedicina para outras regiões.',
+        answer: 'Sim! Entrega grátis nacional. Consultas presenciais (SP) ou telemedicina.',
         category: 'entrega'
     }
 ]
