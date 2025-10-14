@@ -305,9 +305,9 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                         </div>
 
                         {/* Benefits */}
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                            <h4 className="font-medium text-blue-900 mb-2">Benefícios Adicionais</h4>
-                            <ul className="text-sm text-blue-800 space-y-1">
+                        <div className="bg-primary-50 rounded-xl p-4 border border-primary-200">
+                            <h4 className="font-medium text-primary-900 mb-2">Benefícios Adicionais</h4>
+                            <ul className="text-sm text-primary-800 space-y-1">
                                 <li>✓ Acompanhamento médico com Dr. Philipe Saraiva Cruz</li>
                                 <li>✓ Entrega em casa sem custo adicional</li>
                                 <li>✓ Trocas garantidas e suporte prioritário</li>

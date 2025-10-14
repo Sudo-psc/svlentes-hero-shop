@@ -13,8 +13,8 @@ export const doctorInfo = {
         'Especialização em Lentes de Contato',
         'Membro da Sociedade Brasileira de Oftalmologia'
     ],
-    experience: '10+ anos de experiência em oftalmologia',
-    bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado. Com mais de 10 anos de experiência, dedica-se a proporcionar cuidado oftalmológico personalizado e acessível.',
+    experience: '5+ anos de experiência em oftalmologia',
+    bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado. Com mais de 5 anos de experiência, dedica-se a proporcionar cuidado oftalmológico personalizado e acessível.',
     contact: {
         whatsapp: '+5533998601427',
         email: 'dr.philipe@svlentes.com.br',
@@ -22,7 +22,7 @@ export const doctorInfo = {
     },
     socialProof: {
         patientsServed: '5000+',
-        yearsExperience: '10+',
+        yearsExperience: '5+',
         satisfactionRate: '98%',
         consultationsPerformed: '10000+'
     }
@@ -65,7 +65,7 @@ export const trustIndicators = {
 export const clinicInfo = {
     name: 'SV Lentes',
     fullName: 'SV Lentes - Serviços Oftalmológicos Especializados',
-    cnpj: '12.345.678/0001-90',
+    cnpj: '53.864.119/0001-79',
     address: {
         street: 'Rua Catarina Maria Passos, 97',
         neighborhood: 'Santa Zita',

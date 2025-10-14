@@ -296,7 +296,7 @@ export function LeadCaptureForm({
                             <Shield className="w-4 h-4" aria-hidden="true" />
                             <span className="font-medium">100% Seguro</span>
                         </div>
-                        <div className="flex items-center space-x-1.5 text-blue-700">
+                        <div className="flex items-center space-x-1.5 text-primary-700">
                             <CheckCircle className="w-4 h-4" aria-hidden="true" />
                             <span className="font-medium">Sem Compromisso</span>
                         </div>

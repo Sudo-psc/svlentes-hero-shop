@@ -271,8 +271,6 @@ export function Footer({ className }: FooterProps) {
                             <span>CNPJ: {clinicInfo.cnpj}</span>
                             <span aria-hidden="true">•</span>
                             <span>Responsável Técnico: {doctorInfo.crm}</span>
-                            <span aria-hidden="true">•</span>
-                            <span>Equipe: {doctorInfo.crmEquipe}</span>
                         </div>
                     </div>
                 </div>

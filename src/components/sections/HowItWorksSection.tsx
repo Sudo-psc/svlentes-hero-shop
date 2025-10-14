@@ -220,8 +220,8 @@ export function HowItWorksSection({ className = '' }: HowItWorksSectionProps) {
                                 <div className="text-sm text-green-700">Economia extra</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">R$ 800</div>
-                                <div className="text-sm text-blue-700">Em serviços médicos</div>
+                                <div className="text-2xl font-bold text-primary-600">R$ 800</div>
+                                <div className="text-sm text-primary-700">Em serviços médicos</div>
                             </div>
                         </div>
                     </div>

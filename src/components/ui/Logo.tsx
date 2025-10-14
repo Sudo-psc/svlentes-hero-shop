@@ -12,7 +12,7 @@ interface LogoProps {
 const SIZE_CONFIG = {
   sm: { width: 112, height: 38, textSize: 'text-lg', src: '/images/logo_transparent.png' },
   md: { width: 160, height: 54, textSize: 'text-2xl', src: '/images/logo_transparent.png' },
-  lg: { width: 224, height: 76, textSize: 'text-3xl', src: '/images/logo_transparent.png' },
+  lg: { width: 179, height: 61, textSize: 'text-3xl', src: '/images/logo_transparent.png' },
   xl: { width: 288, height: 96, textSize: 'text-4xl', src: '/images/logo_transparent.png' }
 }
 

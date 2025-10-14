@@ -16,9 +16,9 @@
         --popover: 0 0% 100%;
         --popover-foreground: 222.2 84% 4.9%;
 
-        /* Primary - Medical Blue (optimized for trust and professionalism) */
-        --primary: 214 88% 27%;
-        /* Deep medical blue #0f4c75 */
+        /* Primary - Cyan (modern and technological) */
+        --primary: 188 91% 42%;
+        /* Modern cyan #06b6d4 */
         --primary-foreground: 0 0% 98%;
 
         /* Secondary - Soft neutral for balance */
@@ -91,9 +91,9 @@
         --popover: 222.2 84% 8%;
         --popover-foreground: 210 40% 98%;
 
-        /* Primary - Lighter blue for dark mode */
-        --primary: 214 88% 65%;
-        /* Lighter medical blue for dark mode */
+        /* Primary - Lighter cyan for dark mode */
+        --primary: 188 91% 52%;
+        /* Lighter cyan for dark mode */
         --primary-foreground: 222.2 84% 4.9%;
 
         /* Secondary - Dark mode secondary */

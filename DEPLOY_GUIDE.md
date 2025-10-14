@@ -55,7 +55,7 @@ ASAAS_ENV=production
 ASAAS_API_KEY_PROD=<sua-chave-de-produção>
 
 # WhatsApp
-NEXT_PUBLIC_WHATSAPP_NUMBER=5533998601427
+NEXT_PUBLIC_WHATSAPP_NUMBER=553399898026
 ```
 
 #### Opcionais (mas recomendadas)

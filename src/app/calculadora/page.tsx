@@ -7,7 +7,7 @@ import { useEffect } from 'react'
 
 export default function CalculadoraPage() {
     return (
-        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-16">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-cyan-50 py-16">
             <div className="max-w-4xl mx-auto px-4">
                 {/* Header */}
                 <div className="text-center mb-12">
@@ -77,6 +77,6 @@ export default function CalculadoraPage() {
                     </Link>
                 </div>
             </div>
-        </main>
+        </div>
     )
 }

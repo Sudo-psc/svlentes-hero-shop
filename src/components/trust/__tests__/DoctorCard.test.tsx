@@ -10,7 +10,7 @@ const mockOpenWhatsApp = openWhatsAppWithContext as jest.MockedFunction<typeof o
 jest.mock('@/data/doctor-info', () => ({
     doctorInfo: {
         name: 'Dr. Philipe Saraiva Cruz',
-        crm: 'CRM 65.870',
+        crm: 'CRM 69.870',
         specialty: 'Oftalmologia',
         experience: '15+ anos de experiência',
         bio: 'Especialista em lentes de contato com mais de 15 anos de experiência.',
@@ -43,7 +43,7 @@ describe('DoctorCard', () => {
 
             // Check doctor name and credentials
             expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
-            expect(screen.getByText('CRM 65.870 | Oftalmologia')).toBeInTheDocument()
+            expect(screen.getByText('CRM 69.870 | Oftalmologia')).toBeInTheDocument()
             expect(screen.getByText('15+ anos de experiência')).toBeInTheDocument()
         })
 
@@ -109,7 +109,7 @@ describe('DoctorCard', () => {
 
             // Should show doctor name and CRM in compact format
             expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
-            expect(screen.getByText('CRM 65.870')).toBeInTheDocument()
+            expect(screen.getByText('CRM 69.870')).toBeInTheDocument()
         })
 
         it('renders WhatsApp button when showCTA is true', () => {
@@ -139,7 +139,7 @@ describe('DoctorCard', () => {
 
             // Should show all doctor information
             expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
-            expect(screen.getByText('CRM 65.870 | Oftalmologia')).toBeInTheDocument()
+            expect(screen.getByText('CRM 69.870 | Oftalmologia')).toBeInTheDocument()
             expect(screen.getByText('15+ anos de experiência')).toBeInTheDocument()
         })
 

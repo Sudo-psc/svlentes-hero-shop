@@ -38,7 +38,7 @@ ASAAS_API_KEY_PROD=<sua_chave>      # Chave de API do ambiente produção
 ASAAS_WEBHOOK_TOKEN=<token_secreto>  # Token para autenticar webhooks
 
 # Outras configurações opcionais
-NEXT_PUBLIC_WHATSAPP_NUMBER=5511947038078
+NEXT_PUBLIC_WHATSAPP_NUMBER=553399898026
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 

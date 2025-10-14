@@ -14,6 +14,7 @@ import { PrivacyProvider } from '@/components/privacy/PrivacyProvider'
 import { CookieConsent } from '@/components/privacy/CookieConsent'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
 import { CriticalCSS } from '@/components/performance/CriticalCSS'
+import { AuthProvider } from '@/contexts/AuthContext'
 import {
     baseMetadata,
     generateOrganizationStructuredData,
@@ -63,21 +64,23 @@ export default function RootLayout({
                 <meta name="format-detection" content="telephone=no" />
             </head>
             <body className="antialiased">
-                <PrivacyProvider>
-                    <ErrorHandler />
-                    <ServiceWorkerCleanup />
-                    <PerformanceMonitor />
-                    <ResourcePreloader />
-                    {/* <StructuredData data={[organizationData, websiteData]} /> */}
-                    <Header />
-                    <main className="pt-16 lg:pt-20">
-                        {children}
-                    </main>
-                    <Footer />
-                    <CookieConsent />
-                    <WhatsAppFloat />
-                    <SmoothScroll />
-                </PrivacyProvider>
+                <AuthProvider>
+                    <PrivacyProvider>
+                        <ErrorHandler />
+                        <ServiceWorkerCleanup />
+                        <PerformanceMonitor />
+                        <ResourcePreloader />
+                        {/* <StructuredData data={[organizationData, websiteData]} /> */}
+                        <Header />
+                        <main className="pt-16 lg:pt-20">
+                            {children}
+                        </main>
+                        <Footer />
+                        <CookieConsent />
+                        <WhatsAppFloat />
+                        <SmoothScroll />
+                    </PrivacyProvider>
+                </AuthProvider>
             </body>
         </html>
     )

@@ -109,7 +109,7 @@ export function FinalCTA() {
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                             {[
-                                'Acompanhamento médico com Dr. Philipe Saraiva Cruz (CRM 65.870)',
+                                'Acompanhamento médico com Dr. Philipe Saraiva Cruz (CRM 69.870)',
                                 'Entrega automática na sua casa, sem você se preocupar',
                                 'Economia de até 40% comparado à compra avulsa',
                                 'Flexibilidade total: pause, altere ou cancele quando quiser',

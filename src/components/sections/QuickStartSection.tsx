@@ -1,10 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Calculator, ShoppingCart, ArrowRight, Sparkles, CheckCircle2, Star, TrendingUp, Shield } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { ShoppingCart, ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 
 export function QuickStartSection() {
     return (
@@ -60,22 +58,7 @@ export function QuickStartSection() {
                     </p>
                 </div>
 
-                {/* Trust Strip */}
-                <div className="flex items-center justify-center space-x-8 text-white/80 text-sm border-t border-white/20 pt-8">
-                    <div className="flex items-center space-x-2">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>4.9/5 avaliação</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <TrendingUp className="w-4 h-4" />
-                        <span>Até 40% economia</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Shield className="w-4 h-4" />
-                        <span>CRM 69.870</span>
-                    </div>
-                </div>
-            </div>
+              </div>
         </div>
     )
 }

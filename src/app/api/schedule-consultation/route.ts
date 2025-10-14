@@ -129,7 +129,7 @@ async function sendEmailNotification(schedulingData: any) {
             preferredTime: schedulingData.scheduling.preferredTime,
             planName: schedulingData.selectedPlan,
             doctorName: 'Dr. Philipe Saraiva Cruz',
-            doctorCRM: 'CRM 65.870'
+            doctorCRM: 'CRM 69.870'
         }
     }
 
@@ -151,7 +151,7 @@ Seu agendamento foi recebido com sucesso:
 
 📅 *Data preferida:* ${new Date(schedulingData.scheduling.preferredDate).toLocaleDateString('pt-BR')}
 ⏰ *Período:* ${getTimeLabel(schedulingData.scheduling.preferredTime)}
-👨‍⚕️ *Médico:* Dr. Philipe Saraiva Cruz (CRM 65.870)
+👨‍⚕️ *Médico:* Dr. Philipe Saraiva Cruz (CRM 69.870)
 📋 *Tipo:* ${getConsultationTypeLabel(schedulingData.scheduling.consultationType)}
 
 📞 Nossa equipe entrará em contato em até 24h para confirmar o horário exato.

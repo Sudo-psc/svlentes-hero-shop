@@ -121,7 +121,7 @@ export default function TermosUsoPage() {
                             </p>
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-gray-700"><strong>SV Lentes - Serviços Oftalmológicos Especializados</strong></p>
-                                <p className="text-gray-700">CNPJ: 12.345.678/0001-90</p>
+                                <p className="text-gray-700">CNPJ: 53.864.119/0001-79</p>
                                 <p className="text-gray-700">Endereço: Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG</p>
                                 <p className="text-gray-700">CEP: 35300-299</p>
                                 <p className="text-gray-700">WhatsApp: (33) 99860-1427</p>

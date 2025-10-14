@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function AssinarPage() {
     return (
-        <main>
+        <div>
             <SubscriptionFlow />
-        </main>
+        </div>
     )
 }

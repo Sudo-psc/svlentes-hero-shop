@@ -79,8 +79,8 @@ export function HeroImage({ className = '', imageVariant = 'hero1' }: HeroImageP
 
                         <div className="text-center group">
                             <div className="flex items-center justify-center mb-2">
-                                <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
-                                    <Clock className="w-4 h-4 text-blue-600" />
+                                <div className="p-2 bg-primary-100 rounded-full group-hover:bg-primary-200 transition-colors">
+                                    <Clock className="w-4 h-4 text-primary-600" />
                                 </div>
                             </div>
                             <p className="text-xl font-bold text-gray-900">15+</p>

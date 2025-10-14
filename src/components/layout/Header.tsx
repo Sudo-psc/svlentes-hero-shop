@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { LogoHeader } from '@/components/ui/Logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
-import { Menu, X, Phone } from 'lucide-react'
+import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
 
 interface HeaderProps {
     className?: string
 }
 
 export function Header({ className }: HeaderProps) {
+    const { user, loading, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
@@ -37,10 +39,11 @@ export function Header({ className }: HeaderProps) {
     }, [])
 
     const navigation = [
-        { name: 'Planos', href: '#planos-precos' },
-        { name: 'Como Funciona', href: '#como-funciona' },
-        { name: 'FAQ', href: '#perguntas-frequentes' },
-        { name: 'Contato', href: '#contato' },
+        { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
+        { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
+        { name: 'Blog', href: '/blog', isAnchor: false },
+        { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
+        { name: 'Contato', href: '#contato', isAnchor: true },
     ]
 
     const handleNavClick = (href: string) => {
@@ -62,6 +65,15 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
         window.open(whatsappLink, '_blank')
     }
 
+    const handleLogin = () => {
+        window.location.href = '/area-assinante/login'
+    }
+
+    const handleLogout = async () => {
+        await signOut()
+        window.location.href = '/'
+    }
+
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
@@ -73,13 +85,9 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                 <div className="flex items-center justify-between h-16 lg:h-20">
                     {/* Logo */}
                     <a
-                        href="#hero"
-                        onClick={(e) => {
-                            e.preventDefault()
-                            scrollToSection('hero')
-                        }}
+                        href="/"
                         className="hover:opacity-90 transition-opacity"
-                        aria-label="SV Lentes - Ir para o início"
+                        aria-label="SV Lentes - Voltar para a página inicial"
                     >
                         <LogoHeader />
                     </a>
@@ -87,31 +95,76 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     {/* Navigation Desktop */}
                     <nav className="hidden md:flex items-center space-x-8">
                         {navigation.map((item) => (
-                            <a
-                                key={item.name}
-                                href={item.href}
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    handleNavClick(item.href)
-                                }}
-                                className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
-                            >
-                                {item.name}
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
-                            </a>
+                            item.isAnchor ? (
+                                <a
+                                    key={item.name}
+                                    href={item.href}
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        handleNavClick(item.href)
+                                    }}
+                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                >
+                                    {item.name}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
+                                </a>
+                            ) : (
+                                <a
+                                    key={item.name}
+                                    href={item.href}
+                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                >
+                                    {item.name}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
+                                </a>
+                            )
                         ))}
                     </nav>
 
                     {/* CTA Button Desktop */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <Button
-                            onClick={handleAgendarConsulta}
-                            className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
-                            size="default"
-                        >
-                            <Phone className="w-4 h-4" />
-                            <span>Agendar Consulta</span>
-                        </Button>
+                        {user ? (
+                            <>
+                                <Button
+                                    onClick={() => window.location.href = '/area-assinante/dashboard'}
+                                    variant="outline"
+                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                    size="default"
+                                >
+                                    <LayoutDashboard className="w-4 h-4" />
+                                    <span>Meu Painel</span>
+                                </Button>
+                                <Button
+                                    onClick={handleLogout}
+                                    variant="ghost"
+                                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                                    size="default"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span>Sair</span>
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button
+                                    onClick={handleAgendarConsulta}
+                                    className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
+                                    size="default"
+                                >
+                                    <Phone className="w-4 h-4" />
+                                    <span>Agendar Consulta</span>
+                                </Button>
+                                <Button
+                                    onClick={handleLogin}
+                                    variant="outline"
+                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                    size="default"
+                                >
+                                    <User className="w-4 h-4" />
+                                    <span>Área do Assinante</span>
+                                </Button>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -133,56 +186,79 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     <div className="md:hidden border-t border-gray-200 bg-white">
                         <div className="py-4 space-y-4">
                             {navigation.map((item) => (
-                                <a
-                                    key={item.name}
-                                    href={item.href}
-                                    onClick={(e) => {
-                                        e.preventDefault()
-                                        handleNavClick(item.href)
-                                    }}
-                                    className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
-                                >
-                                    {item.name}
-                                </a>
+                                item.isAnchor ? (
+                                    <a
+                                        key={item.name}
+                                        href={item.href}
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            handleNavClick(item.href)
+                                        }}
+                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                    >
+                                        {item.name}
+                                    </a>
+                                ) : (
+                                    <a
+                                        key={item.name}
+                                        href={item.href}
+                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                    >
+                                        {item.name}
+                                    </a>
+                                )
                             ))}
 
                             {/* Mobile CTA */}
-                            <div className="px-4 pt-4 border-t border-gray-200">
-                                <Button
-                                    onClick={handleAgendarConsulta}
-                                    className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
-                                    size="default"
-                                >
-                                    <Phone className="w-4 h-4" />
-                                    <span>Agendar Consulta</span>
-                                </Button>
+                            <div className="px-4 pt-4 border-t border-gray-200 space-y-3">
+                                {user ? (
+                                    <>
+                                        <Button
+                                            onClick={() => window.location.href = '/area-assinante/dashboard'}
+                                            variant="outline"
+                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                            size="default"
+                                        >
+                                            <LayoutDashboard className="w-4 h-4" />
+                                            <span>Meu Painel</span>
+                                        </Button>
+                                        <Button
+                                            onClick={handleLogout}
+                                            variant="ghost"
+                                            className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800"
+                                            size="default"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            <span>Sair</span>
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button
+                                            onClick={handleAgendarConsulta}
+                                            className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
+                                            size="default"
+                                        >
+                                            <Phone className="w-4 h-4" />
+                                            <span>Agendar Consulta</span>
+                                        </Button>
+                                        <Button
+                                            onClick={handleLogin}
+                                            variant="outline"
+                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                            size="default"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            <span>Área do Assinante</span>
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Trust Indicators Bar - Visible on scroll */}
-            {isScrolled && (
-                <div className="bg-primary-50 border-t border-primary-100 py-2">
-                    <div className="container-custom">
-                        <div className="flex items-center justify-center space-x-6 text-xs text-primary-700">
-                            <div className="flex items-center space-x-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                <span>CRM 69.870</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                <span>ANVISA</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                                <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                                <span>Pioneiro no Brasil</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </header>
+            </header>
     )
 }

@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 
 export const consultationMetadata: Metadata = {
     title: 'Agendar Consulta com Dr. Philipe Saraiva Cruz - SVlentes',
-    description: 'Agende sua consulta oftalmológica com o Dr. Philipe Saraiva Cruz (CRM 65.870) para iniciar sua assinatura de lentes de contato com acompanhamento médico especializado.',
+    description: 'Agende sua consulta oftalmológica com o Dr. Philipe Saraiva Cruz (CRM 69.870) para iniciar sua assinatura de lentes de contato com acompanhamento médico especializado.',
     alternates: {
         canonical: 'https://svlentes.com.br/agendar-consulta',
     },

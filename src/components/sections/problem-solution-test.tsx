@@ -25,7 +25,7 @@ export function ProblemSolutionTest() {
 
       <button
         onClick={runTests}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mb-4"
+        className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 mb-4"
       >
         Executar Testes
       </button>

@@ -37,7 +37,7 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                             <h3 className="text-lg font-semibold mb-4">1. Informações Gerais</h3>
                             <p className="mb-4">
                                 A SV Lentes, sob responsabilidade médica do Dr. Philipe Saraiva Cruz
-                                (CRM 65.870), está comprometida com a proteção da privacidade e dos dados pessoais
+                                (CRM 69.870), está comprometida com a proteção da privacidade e dos dados pessoais
                                 de nossos usuários, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018).
                             </p>
                         </section>
@@ -136,7 +136,7 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                             <ul className="list-disc pl-6 mb-4">
                                 <li><strong>E-mail:</strong> <a href="mailto:privacidade@svlentes.com.br" className="text-blue-600 hover:underline">privacidade@svlentes.com.br</a></li>
                                 <li><strong>WhatsApp:</strong> Através do botão no site</li>
-                                <li><strong>Responsável:</strong> Dr. Philipe Saraiva Cruz (CRM 65.870)</li>
+                                <li><strong>Responsável:</strong> Dr. Philipe Saraiva Cruz (CRM 69.870)</li>
                             </ul>
                         </section>
 

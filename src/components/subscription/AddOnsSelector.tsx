@@ -170,7 +170,7 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
             </div>
 
             {/* Total Summary */}
-            <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-6 border border-primary-200">
+            <div className="bg-gradient-to-r from-primary-50 to-cyan-50 rounded-xl p-6 border border-primary-200">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm text-gray-600 mb-1">

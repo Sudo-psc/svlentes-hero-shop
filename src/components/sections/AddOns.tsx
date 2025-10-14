@@ -42,7 +42,7 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
     const getTypeBadgeColor = (type: AddOn['type']) => {
         switch (type) {
             case 'consulta':
-                return 'bg-blue-100 text-blue-800'
+                return 'bg-primary-100 text-primary-800'
             case 'teleorientacao':
                 return 'bg-green-100 text-green-800'
             case 'seguro':
@@ -60,7 +60,7 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                 className={`
           relative flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all
           ${isSelected
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-primary-500 bg-primary-50'
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }
         `}
@@ -102,7 +102,7 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
             className={`
         relative p-4 rounded-xl border-2 cursor-pointer transition-all
         ${isSelected
-                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    ? 'border-primary-500 bg-primary-50 shadow-md'
                     : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-sm'
                 }
       `}
@@ -144,7 +144,7 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                         </div>
 
                         {isSelected && (
-                            <Badge className="bg-blue-100 text-blue-800">
+                            <Badge className="bg-primary-100 text-primary-800">
                                 Selecionado
                             </Badge>
                         )}
@@ -258,7 +258,7 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                     <span className="text-lg font-semibold text-gray-900">
                                         Total Mensal
                                     </span>
-                                    <span className="text-2xl font-bold text-blue-600">
+                                    <span className="text-2xl font-bold text-primary-600">
                                         {formatPrice(calculateTotal())}
                                     </span>
                                 </div>

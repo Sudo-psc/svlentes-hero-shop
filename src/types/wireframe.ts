@@ -20,7 +20,7 @@ export interface HeroSectionProps {
     ctaSecondary: string; // "Falar no WhatsApp"
     trustIndicators: {
         anvisa: string;
-        crm: string; // "CRM 65.870"
+        crm: string; // "CRM 69.870"
         outros: string[];
     };
     doctorCard: {
@@ -67,12 +67,16 @@ export interface HowItWorksProps {
 export interface PricingPlan {
     id: string;
     name: string;
+    badge?: string; // Badge do plano (ex: "Pioneiro no Brasil", "Premium")
+    popularBadge?: string; // Badge de destaque (ex: "Mais Popular")
+    description?: string; // Descrição detalhada do plano
     priceMonthly: number;
     priceAnnual: number;
     features: string[];
     recommended?: boolean;
     stripeProductId: string;
     stripePriceId: string;
+    asaasProductId?: string; // ID do produto no Asaas (gateway brasileiro)
     ctaText: string; // "Assinar" ou "Agendar"
 }
 

@@ -77,7 +77,7 @@ export function ProblemSolution() {
 
         {/* CTA Contextual */}
         <div className="mt-12 text-center">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 max-w-2xl mx-auto">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-8 max-w-2xl mx-auto">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
               Pronto para Resolver Esses Problemas?
             </h3>
@@ -86,7 +86,7 @@ export function ProblemSolution() {
             </p>
             <button
               onClick={handleSpecialistContact}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="bg-primary-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-primary-700 transition-colors"
             >
               Falar com um Especialista
             </button>

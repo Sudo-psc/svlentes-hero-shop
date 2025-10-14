@@ -1,65 +1,69 @@
 import { PricingPlan } from '@/types'
 
-// Planos de assinatura de lentes de contato
+// Planos de assinatura de lentes de contato baseados em Saraiva Vision
 export const pricingPlans: PricingPlan[] = [
     {
-        id: 'basic',
+        id: 'basico',
         name: 'Plano Básico',
-        priceMonthly: 99.00,
-        priceAnnual: 1089.00, // 1 mês grátis
+        badge: 'Pioneiro no Brasil',
+        priceMonthly: 89.00,
+        priceAnnual: 979.00, // 1 mês grátis
+        description: 'Plano básico de lentes de contato com acompanhamento 100% online via telemedicina.',
         features: [
-            'Lentes de contato mensais',
-            'Entrega a cada 3 meses',
-            'Acompanhamento médico básico',
-            'Suporte via WhatsApp',
-            'Frete grátis',
-            'Troca em caso de problema'
+            '12 pares de lentes gelatinosas asféricas',
+            '1 consulta de telemedicina por ano',
+            'Acompanhamento médico mensal online',
+            'Lembretes mensais de troca',
+            'Entrega em casa sem custo adicional',
+            'Atendimento em todo o Brasil'
         ],
         recommended: false,
         stripeProductId: 'prod_basic_svlentes',
         stripePriceId: 'price_basic_monthly',
+        asaasProductId: 'prod_basico_svlentes',
         ctaText: 'Assinar Plano Básico'
     },
     {
-        id: 'premium',
-        name: 'Plano Premium',
-        priceMonthly: 149.90,
-        priceAnnual: 1648.90, // 1 mês grátis
+        id: 'padrao',
+        name: 'Plano Padrão Online',
+        badge: 'RECOMENDADO',
+        popularBadge: 'Mais Popular',
+        priceMonthly: 119.00,
+        priceAnnual: 1309.00, // 1 mês grátis
+        description: 'Plano completo com lentes premium e acompanhamento online prioritário.',
         features: [
-            'Lentes de contato diárias ou mensais',
-            'Entrega mensal automática',
-            'Consulta médica semestral incluída',
-            'Teleorientação ilimitada',
-            'Suporte prioritário 24/7',
-            'Frete grátis express',
-            'Seguro contra perda/dano',
-            'App exclusivo para acompanhamento'
+            'Todos os benefícios do Plano Básico',
+            '13 pares de lentes gelatinosas premium',
+            '2 consultas de telemedicina por ano',
+            'Prioridade no agendamento',
+            'Frete expresso grátis',
+            'Suporte via WhatsApp 24/7'
         ],
         recommended: true,
-        stripeProductId: 'prod_premium_svlentes',
-        stripePriceId: 'price_premium_monthly',
-        ctaText: 'Assinar Premium'
+        stripeProductId: 'prod_standard_svlentes',
+        stripePriceId: 'price_standard_monthly',
+        asaasProductId: 'prod_padrao_svlentes',
+        ctaText: 'Assinar Plano Padrão'
     },
     {
-        id: 'vip',
-        name: 'Plano VIP',
-        priceMonthly: 249.90,
-        priceAnnual: 2749.00, // 1 mês grátis
+        id: 'premium',
+        name: 'Plano Premium Online',
+        badge: 'Premium',
+        priceMonthly: 149.00,
+        priceAnnual: 1639.00, // 1 mês grátis
+        description: 'Experiência VIP online com lentes multifocais e atendimento personalizado exclusivo.',
         features: [
-            'Lentes premium de última geração',
-            'Entrega quinzenal se necessário',
-            'Consultas médicas trimestrais',
-            'Exames oftalmológicos incluídos',
-            'Atendimento médico domiciliar',
-            'Concierge de saúde ocular',
-            'Seguro premium completo',
-            'Acesso a lentes especiais',
-            'Desconto em cirurgias'
+            'Todos os benefícios do Plano Padrão',
+            '14 pares de lentes premium multifocais',
+            '4 consultas de telemedicina por ano',
+            'Kit premium de higienização',
+            'Atendimento personalizado exclusivo'
         ],
         recommended: false,
-        stripeProductId: 'prod_vip_svlentes',
-        stripePriceId: 'price_vip_monthly',
-        ctaText: 'Assinar VIP'
+        stripeProductId: 'prod_premium_svlentes',
+        stripePriceId: 'price_premium_monthly',
+        asaasProductId: 'prod_premium_svlentes',
+        ctaText: 'Assinar Plano Premium'
     }
 ]
 
@@ -144,46 +148,116 @@ export const featureComparison = {
 // Benefícios gerais do serviço
 export const serviceBenefits = [
     {
-        id: 'convenience',
-        title: 'Conveniência Total',
-        description: 'Receba suas lentes em casa, sem precisar sair',
-        icon: '🏠',
+        id: 'economy',
+        title: 'Economia Garantida',
+        description: 'Economia de até 40% comparado à compra avulsa de lentes',
+        icon: '💰',
         highlight: true
     },
     {
         id: 'medical-care',
         title: 'Acompanhamento Médico',
-        description: 'Dr. Philipe Saraiva Cruz acompanha sua saúde ocular',
+        description: 'Acompanhamento médico especializado incluído em todos os planos',
         icon: '👨‍⚕️',
         highlight: true
     },
     {
-        id: 'economy',
-        title: 'Economia Garantida',
-        description: 'Até 40% mais barato que comprar avulso',
-        icon: '💰',
+        id: 'convenience',
+        title: 'Entrega Regular',
+        description: 'Entrega automática sem preocupação, sempre no prazo',
+        icon: '📦',
         highlight: true
     },
     {
         id: 'quality',
-        title: 'Qualidade Premium',
-        description: 'Apenas lentes de marcas reconhecidas mundialmente',
-        icon: '⭐',
-        highlight: false
-    },
-    {
-        id: 'flexibility',
-        title: 'Flexibilidade',
-        description: 'Pause, altere ou cancele quando quiser',
-        icon: '🔄',
+        title: 'Certificação ANVISA',
+        description: 'Lentes premium certificadas pela ANVISA, garantia de qualidade',
+        icon: '✅',
         highlight: false
     },
     {
         id: 'support',
-        title: 'Suporte Especializado',
-        description: 'Atendimento por profissionais da área',
-        icon: '📞',
+        title: 'Suporte Completo',
+        description: 'Suporte via WhatsApp e telemedicina sempre que precisar',
+        icon: '💬',
         highlight: false
+    },
+    {
+        id: 'flexibility',
+        title: 'Flexibilidade Total',
+        description: 'Pause ou cancele sua assinatura a qualquer momento sem burocracia',
+        icon: '🔄',
+        highlight: false
+    }
+]
+
+// Informações de cobertura geográfica
+export const coverageInfo = [
+    {
+        id: 'presencial',
+        icon: '📍',
+        title: 'Consultas Presenciais',
+        description: 'Disponíveis em Caratinga, Ipatinga e Belo Horizonte/MG',
+        locations: ['Caratinga/MG', 'Ipatinga/MG', 'Belo Horizonte/MG'],
+        nationwide: false
+    },
+    {
+        id: 'telemedicina',
+        icon: '🌐',
+        title: 'Telemedicina',
+        description: 'Válida em todo o território nacional',
+        nationwide: true
+    },
+    {
+        id: 'entrega',
+        icon: '📦',
+        title: 'Entrega de Lentes',
+        description: 'Válida em todo o território nacional via Correios',
+        nationwide: true
+    }
+]
+
+// FAQ específica de planos
+export const pricingFAQ = [
+    {
+        id: 'entrega',
+        question: 'Como funciona a entrega?',
+        answer: 'As lentes são entregadas mensalmente no seu endereço cadastrado, sem custo adicional de frete. Você recebe automaticamente antes de acabar suas lentes atuais, garantindo que nunca fique sem suas lentes de contato.'
+    },
+    {
+        id: 'consultas',
+        question: 'As consultas estão incluídas?',
+        answer: 'Sim! Todos os planos incluem consultas de acompanhamento com oftalmologista, tanto presenciais quanto por telemedicina, para garantir a saúde dos seus olhos. A quantidade de consultas varia de acordo com o plano escolhido.'
+    },
+    {
+        id: 'diferenca',
+        question: 'Qual a diferença entre os planos?',
+        answer: 'A principal diferença está na quantidade de lentes, frequência de consultas e benefícios adicionais. O Plano Padrão oferece mais consultas e telemedicina ilimitada. O Plano Premium inclui lentes multifocais, exames complementares e kit de higienização.'
+    },
+    {
+        id: 'cancelamento',
+        question: 'Posso cancelar a assinatura?',
+        answer: 'Sim, você pode pausar ou cancelar sua assinatura a qualquer momento, sem multas ou taxas de cancelamento. Basta entrar em contato através do portal do cliente ou via WhatsApp.'
+    },
+    {
+        id: 'pagamento',
+        question: 'Como funciona o pagamento?',
+        answer: 'Você pode pagar em até 12 vezes no cartão de crédito ou à vista com desconto via PIX ou boleto bancário. O pagamento é processado de forma segura através da plataforma Asaas.'
+    },
+    {
+        id: 'receita',
+        question: 'Preciso de receita médica?',
+        answer: 'Sim, para sua segurança e saúde ocular, é necessário ter uma receita médica válida. Se você ainda não tem, podemos agendar uma consulta de avaliação e adaptação de lentes de contato.'
+    },
+    {
+        id: 'qualidade',
+        question: 'As lentes são de qualidade?',
+        answer: 'Sim! Trabalhamos apenas com lentes de contato de marcas reconhecidas e certificadas pela ANVISA. Todas as lentes são embaladas individualmente e em ambiente estéril, garantindo máxima segurança e qualidade.'
+    },
+    {
+        id: 'acompanhamento',
+        question: 'Como funciona o acompanhamento médico?',
+        answer: 'Você terá acesso a consultas de acompanhamento com oftalmologista, tanto presenciais em nossas clínicas quanto por telemedicina. Além disso, oferecemos suporte via WhatsApp para dúvidas sobre uso e cuidados com as lentes.'
     }
 ]
 

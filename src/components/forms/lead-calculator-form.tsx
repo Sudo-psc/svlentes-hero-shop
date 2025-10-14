@@ -95,7 +95,7 @@ export function LeadCalculatorForm({ onLeadSubmit }: LeadCalculatorFormProps) {
                 {...register('nome')}
                 id="calculator-nome"
                 type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Seu nome completo"
               />
               {errors.nome && (
@@ -111,7 +111,7 @@ export function LeadCalculatorForm({ onLeadSubmit }: LeadCalculatorFormProps) {
                 {...register('whatsapp')}
                 id="calculator-whatsapp"
                 type="tel"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="(11) 99999-9999"
               />
               {errors.whatsapp && (
@@ -127,7 +127,7 @@ export function LeadCalculatorForm({ onLeadSubmit }: LeadCalculatorFormProps) {
                 {...register('email')}
                 id="calculator-email"
                 type="email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="seu@email.com"
               />
               {errors.email && (
@@ -140,11 +140,11 @@ export function LeadCalculatorForm({ onLeadSubmit }: LeadCalculatorFormProps) {
                 {...register('lgpdConsent')}
                 id="calculator-lgpd-consent"
                 type="checkbox"
-                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="mt-1 h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary"
               />
               <label htmlFor="lgpdConsent" className="ml-2 text-sm text-gray-600">
                 Concordo em receber informações sobre os serviços de assinatura de lentes de contato da SV Lentes e com o tratamento dos meus dados conforme a{' '}
-                <a href="/politica-privacidade" className="text-blue-600 hover:underline">
+                <a href="/politica-privacidade" className="text-primary-600 hover:underline">
                   Política de Privacidade
                 </a>
               </label>
@@ -156,7 +156,7 @@ export function LeadCalculatorForm({ onLeadSubmit }: LeadCalculatorFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? 'Enviando...' : 'Agendar Consulta'}
             </button>

@@ -278,7 +278,7 @@ export function LensEducationSection() {
                                         <ul className="space-y-2">
                                             {topic.tips.map((tip, index) => (
                                                 <li key={index} className="flex items-start">
-                                                    <AlertCircle className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                    <AlertCircle className="w-4 h-4 text-primary-500 mr-2 mt-0.5 flex-shrink-0" />
                                                     <span className="text-sm text-gray-700">{tip}</span>
                                                 </li>
                                             ))}
