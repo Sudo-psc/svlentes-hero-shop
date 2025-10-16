@@ -262,20 +262,21 @@ export class MLService {
     }
 
     // Calculate engagement rate per channel
-    notifications.forEach((notif) => {
+    notifications.forEach((notif: any) => {
       const hasEngagement = notif.interactions.some(
-        (i) => i.actionType === 'OPENED' || i.actionType === 'CLICKED'
+        (i: any) => i.actionType === 'OPENED' || i.actionType === 'CLICKED'
       )
       if (hasEngagement) {
-        channelHistory[notif.channel] = (channelHistory[notif.channel] || 0) + 1
+        const channel = notif.channel as NotificationChannel
+        channelHistory[channel] = (channelHistory[channel] || 0) + 1
       }
     })
 
     // Recent engagement
     const last7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const recentNotifs = notifications.filter((n) => n.createdAt >= last7d)
-    const recentEngagement = recentNotifs.filter((n) =>
-      n.interactions.some((i) => i.actionType === 'OPENED' || i.actionType === 'CLICKED')
+    const recentNotifs = notifications.filter((n: any) => n.createdAt >= last7d)
+    const recentEngagement = recentNotifs.filter((n: any) =>
+      n.interactions.some((i: any) => i.actionType === 'OPENED' || i.actionType === 'CLICKED')
     ).length
 
     const recentEngagementRate = recentNotifs.length > 0 ? recentEngagement / recentNotifs.length : 0
@@ -364,7 +365,7 @@ export class MLService {
     })
 
     const totalPredictions = predictions.length
-    const accuratePredictions = predictions.filter((p) => p.wasAccurate).length
+    const accuratePredictions = predictions.filter((p: any) => p.wasAccurate).length
 
     const accuracy = totalPredictions > 0 ? accuratePredictions / totalPredictions : 0
 

@@ -42,17 +42,17 @@ export class AnalyticsService {
 
     // Calculate global metrics
     const totalSent = notifications.length
-    const totalDelivered = notifications.filter((n) =>
-      n.interactions.some((i) => i.actionType === 'DELIVERED')
+    const totalDelivered = notifications.filter((n: any) =>
+      n.interactions.some((i: any) => i.actionType === 'DELIVERED')
     ).length
-    const totalOpened = notifications.filter((n) =>
-      n.interactions.some((i) => i.actionType === 'OPENED')
+    const totalOpened = notifications.filter((n: any) =>
+      n.interactions.some((i: any) => i.actionType === 'OPENED')
     ).length
-    const totalClicked = notifications.filter((n) =>
-      n.interactions.some((i) => i.actionType === 'CLICKED')
+    const totalClicked = notifications.filter((n: any) =>
+      n.interactions.some((i: any) => i.actionType === 'CLICKED')
     ).length
-    const totalConverted = notifications.filter((n) =>
-      n.interactions.some((i) => i.actionType === 'CONVERTED')
+    const totalConverted = notifications.filter((n: any) =>
+      n.interactions.some((i: any) => i.actionType === 'CONVERTED')
     ).length
 
     // Calculate rates
@@ -80,11 +80,11 @@ export class AnalyticsService {
     const byType: Record<NotificationType, any> = {} as any
 
     Object.values(NotificationType).forEach((type) => {
-      const typeNotifs = notifications.filter((n) => n.type === type)
+      const typeNotifs = notifications.filter((n: any) => n.type === type)
       byType[type] = {
         sent: typeNotifs.length,
-        opened: typeNotifs.filter((n) => n.interactions.some((i) => i.actionType === 'OPENED')).length,
-        converted: typeNotifs.filter((n) => n.interactions.some((i) => i.actionType === 'CONVERTED'))
+        opened: typeNotifs.filter((n: any) => n.interactions.some((i: any) => i.actionType === 'OPENED')).length,
+        converted: typeNotifs.filter((n: any) => n.interactions.some((i: any) => i.actionType === 'CONVERTED'))
           .length,
       }
     })
@@ -121,18 +121,18 @@ export class AnalyticsService {
     ]
 
     return channels.map((channel) => {
-      const channelNotifs = notifications.filter((n) => n.channel === channel)
+      const channelNotifs = notifications.filter((n: any) => n.channel === channel)
       const sent = channelNotifs.length
-      const delivered = channelNotifs.filter((n) =>
+      const delivered = channelNotifs.filter((n: any) =>
         n.interactions.some((i: any) => i.actionType === 'DELIVERED')
       ).length
-      const opened = channelNotifs.filter((n) =>
+      const opened = channelNotifs.filter((n: any) =>
         n.interactions.some((i: any) => i.actionType === 'OPENED')
       ).length
-      const clicked = channelNotifs.filter((n) =>
+      const clicked = channelNotifs.filter((n: any) =>
         n.interactions.some((i: any) => i.actionType === 'CLICKED')
       ).length
-      const failed = channelNotifs.filter((n) => n.status === 'FAILED').length
+      const failed = channelNotifs.filter((n: any) => n.status === 'FAILED').length
 
       const deliveryRate = sent > 0 ? delivered / sent : 0
       const openRate = sent > 0 ? opened / sent : 0

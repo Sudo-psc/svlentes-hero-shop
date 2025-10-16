@@ -122,7 +122,7 @@ export class NotificationService {
         html: notification.content,
       })
 
-      return result.success
+      return result && 'id' in result
     } catch (error) {
       console.error('Email send failed:', error)
       return false
@@ -134,20 +134,23 @@ export class NotificationService {
    */
   private async sendWhatsApp(notification: any): Promise<boolean> {
     try {
-      // Import WhatsApp service
-      const { sendWhatsAppMessage } = await import('@/lib/whatsapp')
+      // TODO: Import WhatsApp service when implemented
+      // const { sendWhatsAppMessage } = await import('@/lib/whatsapp')
       
       const phone = notification.user.phone || notification.metadata?.phone
       if (!phone) {
         throw new Error('Phone number not available')
       }
 
-      const result = await sendWhatsAppMessage({
-        to: phone,
-        message: notification.content,
-      })
+      // TODO: Uncomment when sendWhatsAppMessage is implemented
+      // const result = await sendWhatsAppMessage({
+      //   to: phone,
+      //   message: notification.content,
+      // })
+      // return result.success
 
-      return result.success
+      console.log('WhatsApp send not yet fully integrated:', { phone, content: notification.content })
+      return false
     } catch (error) {
       console.error('WhatsApp send failed:', error)
       return false
@@ -174,21 +177,24 @@ export class NotificationService {
   private async sendPush(notification: any): Promise<boolean> {
     try {
       // TODO: Implement push notification with Firebase
-      const { sendPushNotification } = await import('@/lib/firebase-admin')
+      // const { sendPushNotification } = await import('@/lib/firebase-admin')
       
       const token = notification.metadata?.pushToken
       if (!token) {
         throw new Error('Push token not available')
       }
 
-      const result = await sendPushNotification({
-        token,
-        title: notification.subject || 'Notification',
-        body: notification.content,
-        data: notification.metadata || {},
-      })
+      // TODO: Uncomment when sendPushNotification is implemented
+      // const result = await sendPushNotification({
+      //   token,
+      //   title: notification.subject || 'Notification',
+      //   body: notification.content,
+      //   data: notification.metadata || {},
+      // })
+      // return result.success
 
-      return result.success
+      console.log('Push notification not yet fully integrated:', { token })
+      return false
     } catch (error) {
       console.error('Push send failed:', error)
       return false
