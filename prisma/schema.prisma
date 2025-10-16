@@ -1,0 +1,238 @@
+// Prisma Schema for Intelligent Reminder System
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for reminder system
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  phone             String?
+  name              String?
+  preferences       Json?               // User notification preferences
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  notifications     Notification[]
+  interactions      Interaction[]
+  mlPredictions     MLPrediction[]
+  userBehavior      UserBehavior?
+  
+  @@map("users")
+}
+
+// User behavior analytics
+model UserBehavior {
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Engagement metrics by channel
+  emailOpenRate           Float     @default(0)
+  emailClickRate          Float     @default(0)
+  whatsappOpenRate        Float     @default(0)
+  whatsappClickRate       Float     @default(0)
+  smsOpenRate             Float     @default(0)
+  smsClickRate            Float     @default(0)
+  pushOpenRate            Float     @default(0)
+  pushClickRate           Float     @default(0)
+  
+  // Timing preferences
+  bestHourOfDay           Int?      // 0-23
+  averageResponseTime     Int?      // minutes
+  
+  // Frequency preferences
+  preferredFrequency      Int       @default(3) // notifications per day
+  currentFatigueScore     Float     @default(0) // 0-100
+  
+  // Conversion metrics
+  conversionRate          Float     @default(0)
+  
+  updatedAt               DateTime  @updatedAt
+  
+  @@map("user_behaviors")
+}
+
+// Notification channels enum
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+  PUSH
+}
+
+// Notification status enum
+enum NotificationStatus {
+  SCHEDULED
+  SENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  FAILED
+  CANCELLED
+}
+
+// Notification types enum
+enum NotificationType {
+  REMINDER
+  PROMOTION
+  UPDATE
+  ALERT
+}
+
+// Main notifications table
+model Notification {
+  id                String              @id @default(cuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  channel           NotificationChannel
+  type              NotificationType    @default(REMINDER)
+  
+  subject           String?
+  content           String
+  metadata          Json?               // Additional data like links, images, etc
+  
+  scheduledAt       DateTime
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  
+  status            NotificationStatus  @default(SCHEDULED)
+  errorMessage      String?
+  
+  // ML predictions used
+  predictedChannel  NotificationChannel?
+  predictionScore   Float?
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  interactions      Interaction[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([channel])
+  @@map("notifications")
+}
+
+// User interactions with notifications
+enum InteractionType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  DISMISSED
+  OPTED_OUT
+  CONVERTED
+}
+
+model Interaction {
+  id                String            @id @default(cuid())
+  notificationId    String
+  notification      Notification      @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  actionType        InteractionType
+  metadata          Json?             // Additional context
+  
+  timestamp         DateTime          @default(now())
+  
+  @@index([notificationId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("interactions")
+}
+
+// ML model predictions
+model MLPrediction {
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  predictedChannel    NotificationChannel
+  predictedTime       DateTime
+  confidenceScore     Float               // 0-1
+  
+  modelVersion        String
+  features            Json                // Features used for prediction
+  
+  // Validation
+  actualChannel       NotificationChannel?
+  actualTime          DateTime?
+  wasAccurate         Boolean?
+  
+  createdAt           DateTime            @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ml_predictions")
+}
+
+// Campaign management for bulk notifications
+model Campaign {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  
+  type              NotificationType
+  targetChannels    NotificationChannel[]
+  
+  content           Json                // Template and variables
+  
+  scheduledAt       DateTime
+  completedAt       DateTime?
+  
+  // Statistics
+  totalTargets      Int                 @default(0)
+  totalSent         Int                 @default(0)
+  totalDelivered    Int                 @default(0)
+  totalOpened       Int                 @default(0)
+  totalClicked      Int                 @default(0)
+  totalConverted    Int                 @default(0)
+  
+  status            String              @default("draft") // draft, scheduled, running, completed, cancelled
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@map("campaigns")
+}
+
+// Analytics aggregations for faster queries
+model AnalyticsSnapshot {
+  id                String              @id @default(cuid())
+  
+  date              DateTime            @unique
+  
+  // Global metrics
+  totalSent         Int                 @default(0)
+  totalDelivered    Int                 @default(0)
+  totalOpened       Int                 @default(0)
+  totalClicked      Int                 @default(0)
+  
+  // By channel
+  emailMetrics      Json?
+  whatsappMetrics   Json?
+  smsMetrics        Json?
+  pushMetrics       Json?
+  
+  // Engagement
+  avgResponseTime   Float?              // minutes
+  optOutRate        Float?              // percentage
+  
+  createdAt         DateTime            @default(now())
+  
+  @@index([date])
+  @@map("analytics_snapshots")
+}
