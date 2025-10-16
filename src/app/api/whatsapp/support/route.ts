@@ -1,9 +1,10 @@
 /**
  * WhatsApp Support Integration API
- * Main endpoint for customer support via WhatsApp with LangChain integration
+ * Main endpoint for customer support via WhatsApp with SendPulse integration
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getSendPulseClient } from '@/lib/sendpulse'
 
 // Webhook verification for WhatsApp Cloud API
 export async function GET(request: NextRequest) {
@@ -135,10 +136,24 @@ async function handleDirectMessage(body: any) {
       return NextResponse.json({ error: 'Missing customerPhone or message' }, { status: 400 })
     }
 
-    // Mock WhatsApp message sending
-    console.log(`Mock sending message to ${customerPhone}: ${message}`)
+    const client = getSendPulseClient()
+    const response = await client.sendTextMessage(customerPhone, message)
 
-    return NextResponse.json({ status: 'sent' })
+    if (!response.result) {
+      console.error(`Failed to send message to ${customerPhone}:`, response.error)
+      return NextResponse.json(
+        { error: response.error?.message || 'Failed to send message' },
+        { status: 500 }
+      )
+    }
+
+    console.log(`Message sent via SendPulse to ${customerPhone}:`, response.data)
+
+    return NextResponse.json({
+      status: 'sent',
+      messageId: response.data?.message_id,
+      timestamp: new Date().toISOString()
+    })
 
   } catch (error) {
     console.error('Error sending direct message:', error)
