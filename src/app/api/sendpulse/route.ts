@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Register SendPulse webhook
+ * Register SendPulse webhook (Brazilian API)
  */
 async function registerWebhook(body: any) {
   try {
@@ -87,12 +87,12 @@ async function registerWebhook(body: any) {
       )
     }
 
-    const result = await sendPulseClient.registerWebhook(webhookUrl)
+    const result = await sendPulseClient.setupWebhook(webhookUrl)
 
     return NextResponse.json({
       success: true,
       webhook: result,
-      message: 'Webhook registered successfully'
+      message: 'SendPulse webhook registered successfully'
     })
 
   } catch (error) {

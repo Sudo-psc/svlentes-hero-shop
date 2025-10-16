@@ -159,7 +159,17 @@ export function SupportAnalyticsDashboard() {
 
   const exportData = async () => {
     try {
-      const response = await fetch(`/api/analytics/support/export?timeRange=${selectedTimeRange}`)
+      const response = await fetch('/api/analytics/support', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'export',
+          data: { timeRange: selectedTimeRange }
+        })
+      })
+
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -262,7 +272,9 @@ export function SupportAnalyticsDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {((metrics.resolvedTickets / metrics.totalTickets) * 100).toFixed(1)}%
+                {metrics.totalTickets > 0
+                  ? ((metrics.resolvedTickets / metrics.totalTickets) * 100).toFixed(1)
+                  : '0.0'}%
               </div>
               <p className="text-xs text-muted-foreground">
                 {metrics.resolvedTickets} resolvidos
@@ -447,18 +459,18 @@ export function SupportAnalyticsDashboard() {
               <CardContent>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-cyan-600">
-                    {(metrics.firstContactResolution * 100).toFixed(1)}%
+                    {metrics.firstContactResolution.toFixed(1)}%
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    {metrics.firstContactResolution >= 0.7 ? 'Excelente' :
-                     metrics.firstContactResolution >= 0.5 ? 'Bom' :
-                     metrics.firstContactResolution >= 0.3 ? 'Regular' : 'Precisa Melhorar'}
+                    {metrics.firstContactResolution >= 70 ? 'Excelente' :
+                     metrics.firstContactResolution >= 50 ? 'Bom' :
+                     metrics.firstContactResolution >= 30 ? 'Regular' : 'Precisa Melhorar'}
                   </p>
                   <div className="mt-4">
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-cyan-600 h-2 rounded-full"
-                        style={{ width: `${metrics.firstContactResolution * 100}%` }}
+                        style={{ width: `${metrics.firstContactResolution}%` }}
                       ></div>
                     </div>
                   </div>

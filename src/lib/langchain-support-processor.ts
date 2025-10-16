@@ -71,13 +71,13 @@ HISTÓRICO RECENTE: {history}
 DADOS DO CLIENTE: {customerData}
 
 Forneça a análise no formato JSON:
-{
+{{
   "intent": "nome_da_intenção_específica",
   "category": "CATEGORIA",
   "priority": "PRIORIDADE",
   "confidence": 0.0,
   "escalationRequired": true/false,
-  "entities": {
+  "entities": {{
     "sentiment": "positive/negative/neutral",
     "urgency": "low/medium/high/critical",
     "emotions": ["emoção1", "emoção2"],
@@ -85,12 +85,12 @@ Forneça a análise no formato JSON:
     "mentionedProducts": ["produto1"],
     "mentionedOrders": ["pedido1"],
     "urgencyIndicators": ["indicador1"]
-  },
+  }},
   "suggestedActions": ["ação1", "ação2"],
   "responseStrategy": "automated/agent_required/escalation",
   "requiresImmediateAttention": true/false,
   "riskLevel": "low/medium/high/critical"
-}
+}}
 
 Seja específico e preciso na classificação. Considere o contexto do cliente.
 `
@@ -198,7 +198,7 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     this.initializeChains()
   }
 
-  private initializeChains() {
+  private initializeChains(): void {
     // Intent classification chain
     this.intentChain = RunnableSequence.from([
       PromptTemplate.fromTemplate(this.SUPPORT_INTENT_TEMPLATE),

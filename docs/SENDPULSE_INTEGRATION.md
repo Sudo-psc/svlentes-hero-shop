@@ -66,7 +66,7 @@ GET /api/sendpulse?action=account
 POST /api/sendpulse
 {
   "action": "register-webhook",
-  "webhookUrl": "https://your-domain.com/api/webhooks/sendpulse"
+  "webhookUrl": "https://svlentes.shop/api/webhooks/sendpulse"
 }
 ```
 
@@ -99,13 +99,47 @@ POST /api/sendpulse
 
 ### Webhook Endpoint
 
-#### Incoming Messages
-SendPulse sends messages to:
+#### Incoming Messages (Brazilian API)
+SendPulse sends WhatsApp messages to:
 ```
 POST /api/webhooks/sendpulse
 ```
 
-Webhook payload structure:
+Brazilian API webhook payload structure:
+```json
+{
+  "object": "whatsapp_business_account",
+  "entry": [{
+    "id": "business_account_id",
+    "changes": [{
+      "value": {
+        "messaging_product": "whatsapp",
+        "metadata": {
+          "phone_number_id": "your_phone_number_id"
+        },
+        "contacts": [{
+          "profile": {
+            "name": "Customer Name"
+          },
+          "wa_id": "553399898026"
+        }],
+        "messages": [{
+          "from": "553399898026",
+          "id": "msg_123",
+          "timestamp": "1705315400",
+          "text": {
+            "body": "Hello, I need help with my contact lenses"
+          },
+          "type": "text"
+        }]
+      },
+      "field": "messages"
+    }]
+  }]
+}
+```
+
+#### Legacy Webhook Format (for backward compatibility)
 ```json
 {
   "event": "message.new",

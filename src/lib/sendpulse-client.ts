@@ -78,11 +78,12 @@ export class SendPulseClient {
   constructor() {
     this.apiToken = process.env.SENDPULSE_API_TOKEN || ''
     this.webhookToken = process.env.SENDPULSE_WEBHOOK_TOKEN || ''
-    this.baseUrl = 'https://api.sendpulse.com/whatsapp'
+    // SendPulse Brazilian WhatsApp API uses different base URL
+    this.baseUrl = 'https://api.sendpulse.com/360/v1/whatsapp'
   }
 
   /**
-   * Send text message via SendPulse
+   * Send text message via SendPulse (Brazilian API format)
    */
   async sendMessage(params: SendPulseMessage): Promise<any> {
     try {
@@ -90,18 +91,25 @@ export class SendPulseClient {
         throw new Error('SendPulse API token not configured')
       }
 
-      // Clean phone number (remove non-digits)
-      const cleanPhone = params.phone.replace(/[^\d]/g, '')
-
-      const payload = {
-        phone: cleanPhone,
-        message: params.message,
-        ...(params.buttons && params.buttons.length > 0 && { buttons: params.buttons }),
-        ...(params.image && { image: params.image }),
-        ...(params.document && { document: params.document })
+      // Clean phone number (remove non-digits and add country code for Brazil)
+      let cleanPhone = params.phone.replace(/[^\d]/g, '')
+      if (cleanPhone.length === 11 && cleanPhone.startsWith('55')) {
+        // Already has country code
+      } else if (cleanPhone.length === 10) {
+        // Add Brazilian country code
+        cleanPhone = '55' + cleanPhone
       }
 
-      const response = await fetch(`${this.baseUrl}/contacts/sendMessage`, {
+      const payload = {
+        messaging_product: 'whatsapp',
+        to: cleanPhone,
+        type: 'text',
+        text: {
+          body: params.message
+        }
+      }
+
+      const response = await fetch(`${this.baseUrl}/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiToken}`,
@@ -112,7 +120,7 @@ export class SendPulseClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(`SendPulse API error: ${response.status} - ${errorData.error || response.statusText}`)
+        throw new Error(`SendPulse API error: ${response.status} - ${errorData.error?.message || response.statusText}`)
       }
 
       return await response.json()
@@ -124,26 +132,70 @@ export class SendPulseClient {
   }
 
   /**
-   * Send message with quick reply buttons
+   * Send message with quick reply buttons (Brazilian API format)
    */
   async sendMessageWithQuickReplies(
     phone: string,
     message: string,
     quickReplies: string[]
   ): Promise<any> {
-    const buttons = quickReplies.map(reply => ({
-      type: 'reply' as const,
-      reply: {
-        title: reply,
-        id: `option_${reply.toLowerCase().replace(/\s+/g, '_').substring(0, 20)}`
+    try {
+      if (!this.apiToken) {
+        throw new Error('SendPulse API token not configured')
       }
-    }))
 
-    return this.sendMessage({
-      phone,
-      message,
-      buttons
-    })
+      // Clean phone number (remove non-digits and add country code for Brazil)
+      let cleanPhone = phone.replace(/[^\d]/g, '')
+      if (cleanPhone.length === 11 && cleanPhone.startsWith('55')) {
+        // Already has country code
+      } else if (cleanPhone.length === 10) {
+        // Add Brazilian country code
+        cleanPhone = '55' + cleanPhone
+      }
+
+      const buttons = quickReplies.map((reply, index) => ({
+        type: 'reply',
+        reply: {
+          id: `option_${index + 1}`,
+          title: reply
+        }
+      }))
+
+      const payload = {
+        messaging_product: 'whatsapp',
+        to: cleanPhone,
+        type: 'interactive',
+        interactive: {
+          type: 'button',
+          body: {
+            text: message
+          },
+          action: {
+            buttons: buttons
+          }
+        }
+      }
+
+      const response = await fetch(`${this.baseUrl}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`SendPulse API error: ${response.status} - ${errorData.error?.message || response.statusText}`)
+      }
+
+      return await response.json()
+
+    } catch (error) {
+      console.error('Error sending SendPulse message with quick replies:', error)
+      throw error
+    }
   }
 
   /**
@@ -341,7 +393,7 @@ export class SendPulseClient {
   }
 
   /**
-   * Test API connection
+   * Test API connection (Brazilian API)
    */
   async testConnection(): Promise<boolean> {
     try {
@@ -360,7 +412,7 @@ export class SendPulseClient {
   }
 
   /**
-   * Get account information
+   * Get account information (Brazilian API)
    */
   async getAccountInfo(): Promise<any> {
     try {
@@ -378,6 +430,39 @@ export class SendPulseClient {
 
     } catch (error) {
       console.error('Error getting SendPulse account info:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Set up webhook for receiving messages (Brazilian API format)
+   */
+  async setupWebhook(webhookUrl: string): Promise<any> {
+    try {
+      const payload = {
+        url: webhookUrl,
+        name: 'SV Lentes WhatsApp Webhook',
+        events: ['messages']
+      }
+
+      const response = await fetch(`${this.baseUrl}/webhooks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`SendPulse API error: ${response.status} - ${errorData.error?.message || response.statusText}`)
+      }
+
+      return await response.json()
+
+    } catch (error) {
+      console.error('Error setting up SendPulse webhook:', error)
       throw error
     }
   }

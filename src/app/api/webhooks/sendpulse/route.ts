@@ -23,13 +23,19 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: 'Invalid verification' }, { status: 403 })
 }
 
-// Main webhook handler for SendPulse messages
+// Main webhook handler for SendPulse messages (Brazilian API)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     console.log('SendPulse webhook received:', body)
 
-    // Handle different SendPulse webhook events
+    // Handle SendPulse Brazilian API format
+    if (body.entry && body.entry[0]?.changes) {
+      await processSendPulseWhatsAppMessage(body)
+      return NextResponse.json({ status: 'processed' })
+    }
+
+    // Handle legacy events for backward compatibility
     if (body.event === 'message.new') {
       await processSendPulseMessage(body)
       return NextResponse.json({ status: 'processed' })
@@ -58,7 +64,96 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Process incoming SendPulse message
+ * Process SendPulse WhatsApp message (Brazilian API format)
+ */
+async function processSendPulseWhatsAppMessage(webhookData: any) {
+  try {
+    const entry = webhookData.entry?.[0]
+    if (!entry?.changes) return
+
+    for (const change of entry.changes) {
+      const messages = change.value?.messages
+      if (!messages) continue
+
+      for (const message of messages) {
+        await processWhatsAppMessage(message, change.value)
+      }
+    }
+  } catch (error) {
+    console.error('Error processing SendPulse WhatsApp message:', error)
+  }
+}
+
+/**
+ * Process individual WhatsApp message from SendPulse
+ */
+async function processWhatsAppMessage(message: any, metadata: any) {
+  try {
+    // Skip if message is from our own number
+    if (message.from === metadata.metadata?.phone_number_id) {
+      return
+    }
+
+    // Extract message content
+    const messageContent = extractMessageContent(message)
+    if (!messageContent) return
+
+    const customerPhone = message.from
+    const messageId = message.id
+    const customerName = metadata.contacts?.[0]?.profile?.name || 'Cliente'
+
+    // Get or create user profile
+    const userProfile = await getOrCreateUserProfile(metadata.contacts?.[0] || {}, customerPhone)
+
+    // Get conversation history
+    const conversationHistory = await getConversationHistory(customerPhone, 10)
+    const userHistory = await getUserSupportHistory(userProfile.id)
+
+    // Get current context
+    const context = {
+      userHistory,
+      previousTickets: userHistory.tickets || [],
+      subscriptionInfo: userProfile.subscription,
+      userProfile,
+      conversationHistory: conversationHistory.map(msg => msg.content),
+      lastIntent: userHistory.lastIntent
+    }
+
+    // Process message with LangChain
+    const processingResult = await langchainSupportProcessor.processSupportMessage(
+      messageContent,
+      context
+    )
+
+    // Store interaction
+    await storeInteraction({
+      messageId,
+      customerPhone,
+      content: messageContent,
+      intent: processingResult.intent,
+      response: processingResult.response,
+      escalationRequired: processingResult.escalationRequired,
+      ticketCreated: processingResult.ticketCreated,
+      userProfile
+    })
+
+    // Send response via SendPulse
+    await sendSendPulseResponse(customerPhone, processingResult, customerName)
+
+    // Handle escalation if required
+    if (processingResult.escalationRequired && processingResult.ticketCreated) {
+      await handleEscalationIfNeeded(customerPhone, processingResult, context)
+    }
+
+    console.log(`Processed SendPulse WhatsApp message from ${customerPhone}: ${processingResult.intent.name}`)
+
+  } catch (error) {
+    console.error('Error processing WhatsApp message:', error)
+  }
+}
+
+/**
+ * Process incoming SendPulse message (legacy format)
  */
 async function processSendPulseMessage(webhookData: any) {
   try {

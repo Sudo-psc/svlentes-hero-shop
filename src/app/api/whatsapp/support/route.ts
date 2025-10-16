@@ -101,15 +101,41 @@ async function processIncomingMessage(message: any, metadata: any) {
       previousTickets: userHistory.tickets || [],
       subscriptionInfo: userProfile.subscription,
       userProfile,
-      conversationHistory: conversationHistory.map(msg => msg.content),
+      conversationHistory: conversationHistory.map((msg: any) => msg.content),
       lastIntent: userHistory.lastIntent
     }
 
-    // Process message with LangChain
+    // Process message with LangChain - REAL INTEGRATION
     const processingResult = await langchainSupportProcessor.processSupportMessage(
       messageContent,
       context
     )
+
+    // Create ticket if actions indicate it's needed
+    let ticketId: string | undefined
+    if (processingResult.ticketCreated && processingResult.intent) {
+      const ticketData = {
+        customerPhone,
+        messageId,
+        originalMessage: messageContent,
+        intent: processingResult.intent.name,
+        category: processingResult.intent.category,
+        priority: processingResult.intent.priority,
+        subject: `WhatsApp: ${processingResult.intent.name}`,
+        description: messageContent,
+        userId: userProfile.id,
+        customerInfo: {
+          name: userProfile.name,
+          email: userProfile.email,
+          phone: customerPhone,
+          whatsapp: customerPhone,
+          userId: userProfile.id
+        }
+      }
+
+      const ticket = await supportTicketManager.createTicket(ticketData as any)
+      ticketId = ticket.ticket?.id
+    }
 
     // Store interaction
     await storeInteraction({
@@ -123,12 +149,12 @@ async function processIncomingMessage(message: any, metadata: any) {
       userProfile
     })
 
-    // Send response via WhatsApp
+    // Send response via WhatsApp with quick replies
     await sendWhatsAppResponse(customerPhone, processingResult)
 
     // Handle escalation if required
-    if (processingResult.escalationRequired && processingResult.ticketCreated) {
-      await handleEscalationIfNeeded(customerPhone, processingResult, context)
+    if (processingResult.escalationRequired && ticketId) {
+      await handleEscalationIfNeeded(customerPhone, processingResult, context, ticketId)
     }
 
     console.log(`Processed WhatsApp message from ${customerPhone}: ${processingResult.intent.name}`)
@@ -137,7 +163,7 @@ async function processIncomingMessage(message: any, metadata: any) {
     console.error('Error processing incoming message:', error)
 
     // Send error response
-    await sendErrorResponse(customerPhone, error.message)
+    await sendErrorResponse(customerPhone, (error as Error).message)
   }
 }
 
@@ -266,11 +292,27 @@ async function sendWhatsAppResponse(customerPhone: string, processingResult: any
 async function handleEscalationIfNeeded(
   customerPhone: string,
   processingResult: any,
-  context: any
+  context: any,
+  ticketId?: string
 ) {
   try {
-    if (processingResult.escalationRequired) {
-      console.log(`Escalation triggered for ${customerPhone} with intent: ${processingResult.intent.name}`)
+    if (processingResult.escalationRequired && ticketId) {
+      // Use the real escalation system
+      await supportEscalationSystem.processEscalation(
+        ticketId,
+        processingResult.intent.name,
+        {
+          customerMessage: processingResult.response,
+          conversationHistory: context.conversationHistory,
+          previousAttempts: context.userHistory?.tickets?.length || 0,
+          customerSentiment: processingResult.intent.entities?.sentiment || 'neutral',
+          riskLevel: processingResult.intent.priority >= 4 ? 'high' : 'medium',
+          businessImpact: processingResult.intent.priority >= 4 ? 'high' : 'medium'
+        },
+        'system'
+      )
+
+      console.log(`Escalation processed for ${customerPhone} with ticket ${ticketId}`)
     }
   } catch (error) {
     console.error('Error handling escalation:', error)

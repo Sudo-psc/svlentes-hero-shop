@@ -157,10 +157,28 @@ export async function GET(request: NextRequest) {
       orderBy: { _count: { priority: 'desc' } }
     })
 
+    // Helper to calculate average resolution time
+    const calculateAvgResolutionTime = (priority: string): string => {
+      const resolvedTickets = tickets.filter(t =>
+        t.status === 'RESOLVED' && t.priority === priority && t.resolvedAt && t.createdAt
+      )
+      if (resolvedTickets.length === 0) return '0h 0m'
+
+      const totalMinutes = resolvedTickets.reduce((sum, t) => {
+        const minutes = (t.resolvedAt!.getTime() - t.createdAt.getTime()) / (1000 * 60)
+        return sum + minutes
+      }, 0)
+
+      const avgMinutes = Math.round(totalMinutes / resolvedTickets.length)
+      const hours = Math.floor(avgMinutes / 60)
+      const minutes = avgMinutes % 60
+      return `${hours}h ${minutes}m`
+    }
+
     const priorityData: TicketPriorityData[] = ticketsByPriority.map(item => ({
       priority: item.priority,
       count: item._count.priority,
-      avgResolutionTime: '0h 0m' // Would calculate from resolved tickets
+      avgResolutionTime: calculateAvgResolutionTime(item.priority)
     }))
 
     // Group tickets by category
@@ -173,11 +191,22 @@ export async function GET(request: NextRequest) {
       orderBy: { _count: { category: 'desc' } }
     })
 
+    // Helper to calculate average satisfaction
+    const calculateAvgSatisfaction = (category: string): number => {
+      const categoryTickets = tickets.filter(t =>
+        t.category === category && t.customerSatisfaction != null
+      )
+      if (categoryTickets.length === 0) return 0
+
+      const total = categoryTickets.reduce((sum, t) => sum + t.customerSatisfaction!, 0)
+      return parseFloat((total / categoryTickets.length).toFixed(1))
+    }
+
     const categoryData: CategoryData[] = ticketsByCategory.map(item => ({
       category: item.category,
       count: item._count.category,
-      avgResolutionTime: '0h 0m', // Would calculate from resolved tickets
-      satisfaction: 4.5 // Would calculate from satisfaction scores
+      avgResolutionTime: calculateAvgResolutionTime(item.category),
+      satisfaction: calculateAvgSatisfaction(item.category)
     }))
 
     // Generate response time trend data
@@ -366,12 +395,29 @@ async function exportAnalyticsData(data: any) {
   try {
     const { timeRange = '7d', format = 'csv' } = data
 
+    // Parse timeRange parameter
+    const parseTimeRange = (range: string): number => {
+      const match = range.match(/^(\d+)([dhm])$/)
+      if (!match) return 7 * 24 * 60 * 60 * 1000 // default 7 days
+
+      const value = parseInt(match[1], 10)
+      const unit = match[2]
+
+      switch (unit) {
+        case 'd': return value * 24 * 60 * 60 * 1000
+        case 'h': return value * 60 * 60 * 1000
+        case 'm': return value * 60 * 1000
+        default: return 7 * 24 * 60 * 60 * 1000
+      }
+    }
+
+    const offsetMs = parseTimeRange(timeRange)
+    const gte = new Date(Date.now() - offsetMs)
+
     // Get analytics data (similar to GET but with more detail for export)
     const analytics = await prisma.supportTicket.findMany({
       where: {
-        createdAt: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        }
+        createdAt: { gte }
       },
       include: {
         agent: true,
@@ -398,28 +444,46 @@ async function exportAnalyticsData(data: any) {
       'Tempo de Resposta (min)'
     ]
 
+    // Helper to escape CSV content and prevent injection
+    const escapeCsvCell = (value: any): string => {
+      if (value == null || value === undefined) return ''
+
+      let str = String(value)
+
+      // CSV injection mitigation: prefix dangerous characters
+      if (/^[=+\-@]/.test(str)) {
+        str = "'" + str
+      }
+
+      // Escape internal double quotes by doubling them
+      str = str.replace(/"/g, '""')
+
+      // Wrap in quotes
+      return `"${str}"`
+    }
+
     const rows = analytics.map(ticket => [
-      ticket.id,
-      ticket.ticketNumber,
-      ticket.status,
-      ticket.priority,
-      ticket.category,
-      ticket.subject,
-      ticket.customerInfo?.name || '',
-      ticket.customerInfo?.email || '',
-      ticket.customerInfo?.phone || '',
-      ticket.agent?.name || '',
-      ticket.createdAt.toISOString(),
-      ticket.resolvedAt?.toISOString() || '',
-      ticket.customerSatisfaction?.toString() || '',
-      ticket.assignedAt && ticket.createdAt
+      escapeCsvCell(ticket.id),
+      escapeCsvCell(ticket.ticketNumber),
+      escapeCsvCell(ticket.status),
+      escapeCsvCell(ticket.priority),
+      escapeCsvCell(ticket.category),
+      escapeCsvCell(ticket.subject),
+      escapeCsvCell(ticket.customerInfo?.name),
+      escapeCsvCell(ticket.customerInfo?.email),
+      escapeCsvCell(ticket.customerInfo?.phone),
+      escapeCsvCell(ticket.agent?.name),
+      escapeCsvCell(ticket.createdAt.toISOString()),
+      escapeCsvCell(ticket.resolvedAt?.toISOString()),
+      escapeCsvCell(ticket.customerSatisfaction?.toString()),
+      escapeCsvCell(ticket.assignedAt && ticket.createdAt
         ? Math.round((ticket.assignedAt.getTime() - ticket.createdAt.getTime()) / (1000 * 60)).toString()
-        : ''
+        : '')
     ])
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map(row => row.join(','))
     ].join('\n')
 
     // Return CSV as downloadable file
