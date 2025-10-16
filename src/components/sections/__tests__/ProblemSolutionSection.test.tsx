@@ -67,18 +67,18 @@ describe('ProblemSolutionSection', () => {
             render(<ProblemSolutionSection />)
 
             // Check for solutions section title
-            expect(screen.getByText('✨ Soluções da SVlentes')).toBeInTheDocument()
+            expect(screen.getByText('✨ Soluções da SV Lentes')).toBeInTheDocument()
             expect(screen.getByText(/Cada problema tem uma solução inteligente/)).toBeInTheDocument()
 
             // Check for solution stats
-            expect(screen.getByText('Resultados com SVlentes')).toBeInTheDocument()
+            expect(screen.getByText('Resultados com SV Lentes')).toBeInTheDocument()
         })
 
         it('renders impact statistics correctly', () => {
             render(<ProblemSolutionSection />)
 
             // Check transformation section
-            expect(screen.getByText('A Transformação que a SVlentes Proporciona')).toBeInTheDocument()
+            expect(screen.getByText('A Transformação que a SV Lentes Proporciona')).toBeInTheDocument()
             expect(screen.getByText(/Veja o impacto real na vida dos nossos clientes/)).toBeInTheDocument()
 
             // Check all impact stats - use getAllByText for values that appear multiple times
@@ -105,7 +105,7 @@ describe('ProblemSolutionSection', () => {
 
             // Check CTA content
             expect(screen.getByText('Pronto para resolver esses problemas?')).toBeInTheDocument()
-            expect(screen.getByText(/Fale com um especialista e descubra como a SVlentes/)).toBeInTheDocument()
+            expect(screen.getByText(/Fale com um especialista e descubra como a SV Lentes/)).toBeInTheDocument()
 
             // Check CTA buttons
             expect(screen.getByRole('button', { name: /Falar com Especialista/i })).toBeInTheDocument()
@@ -199,7 +199,7 @@ describe('ProblemSolutionSection', () => {
 
             // Problems and solutions should be in lists or proper containers
             const problemsSection = screen.getByText('😤 Problemas que você enfrenta').closest('div')
-            const solutionsSection = screen.getByText('✨ Soluções da SVlentes').closest('div')
+            const solutionsSection = screen.getByText('✨ Soluções da SV Lentes').closest('div')
 
             expect(problemsSection).toBeInTheDocument()
             expect(solutionsSection).toBeInTheDocument()
@@ -249,7 +249,7 @@ describe('ProblemSolutionSection', () => {
 
             // The arrow should be present (we can check for the ArrowRight icon indirectly)
             // Since it's an icon, we check for its container or related elements
-            const transformationSection = screen.getByText('A Transformação que a SVlentes Proporciona')
+            const transformationSection = screen.getByText('A Transformação que a SV Lentes Proporciona')
             expect(transformationSection).toBeInTheDocument()
         })
 
@@ -282,7 +282,7 @@ describe('ProblemSolutionSection', () => {
             // The problems and solutions should be in a grid layout
             // We can verify this by checking the structure contains the expected content
             expect(screen.getByText('😤 Problemas que você enfrenta')).toBeInTheDocument()
-            expect(screen.getByText('✨ Soluções da SVlentes')).toBeInTheDocument()
+            expect(screen.getByText('✨ Soluções da SV Lentes')).toBeInTheDocument()
         })
 
         it('renders impact statistics in grid format', () => {
