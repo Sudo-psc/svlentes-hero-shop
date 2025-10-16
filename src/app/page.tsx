@@ -5,6 +5,7 @@ import { QuickStartSection } from '@/components/sections/QuickStartSection'
 import FAQ from '@/components/sections/FAQ'
 import { FinalCTA } from '@/components/sections/FinalCTA'
 import { TrustStrip } from '@/components/trust/TrustStrip'
+import { MobileSocialProof } from '@/components/sections/MobileSocialProof'
 
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
@@ -42,6 +43,11 @@ export default function HomePage() {
                     <TrustStrip />
                 </div>
             </section>
+
+            {/* Mobile Social Proof Section */}
+            <LazySection id="depoimentos">
+                <MobileSocialProof />
+            </LazySection>
 
             {/* Seção com opções de calculadora e assinatura direta */}
             <section id="planos-precos" className="bg-gradient-to-br from-primary-600 to-primary-700">

@@ -10,31 +10,70 @@ export interface UsagePattern {
 export interface LensType {
   id: string;
   name: string;
-  avulsoPrice: number;
-  subscriptionPrice: number;
+  brand: string;
+  basePrice: number;
+  boxesPerPeriod: number;
+  period: 'month' | 'semester';
+  description: string;
+  icon: string;
+  features: string[];
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  badge: string | null;
+  discount: number;
+  shipping: {
+    free: boolean;
+    condition: string;
+    nationwide: boolean;
+  };
+  payment: {
+    method: string;
+    installments: number;
+  };
+  cancellation: string;
+  benefits: Array<{
+    name: string;
+    value: number;
+  }>;
+  description: string;
+}
+
+export interface PlanCalculation {
+  planId: string;
+  planName: string;
+  originalPrice: number;
+  discountAmount: number;
+  finalPrice: number;
+  installmentValue: number;
+  totalBenefitsValue: number;
+  effectiveAnnualCost: number;
+  savingsVsRetail: number;
+  shippingIncluded: boolean;
 }
 
 export interface CalculatorInput {
   lensType: string;
-  usagePattern: string;
-  currentMonthlySpend?: number;
-  annualContactLensCost?: number;
-  annualConsultationCost?: number;
+  selectedPlan: 'monthly' | 'annual';
+  bothEyes: boolean;
+  differentGrades: boolean;
 }
 
 export interface CalculatorResult {
-  monthlyAvulso: number;
-  monthlySubscription: number;
-  monthlySavings: number;
-  yearlyAvulso: number;
-  yearlySubscription: number;
-  yearlySavings: number;
-  savingsPercentage: number;
-  recommendedPlan: string;
-  totalCurrentAnnualCost?: number;
-  totalSVLentesAnnualCost?: number;
-  totalAnnualSavings?: number;
-  includedConsultations?: number;
+  selectedLens: LensType;
+  baseMonthlyCost: number;
+  plans: {
+    monthly: PlanCalculation;
+    annual: PlanCalculation;
+  };
+  retailAnnualCost: number;
+  bestSavingsPlan: string;
+  totalAnnualSavings: {
+    monthly: number;
+    annual: number;
+  };
 }
 
 export interface CalculatorProps {

@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logger, LogCategory } from '@/lib/logger'
+import { paymentService } from '@/lib/services/payment-service'
+import { SubscriptionService } from '@/lib/database/subscription-service'
+import { emailService } from '@/lib/services/email-service'
 
 // Prevent this route from being evaluated at build time
 export const dynamic = 'force-dynamic'
@@ -44,13 +48,60 @@ interface WebhookLog {
 }
 
 function logWebhookEvent(log: WebhookLog) {
-    const logEntry = {
-        ...log,
-        timestamp: new Date().toISOString(),
-        source: 'asaas_webhook'
-    }
+    // Use secure logger instead of console.log
+    // In production, PII is automatically sanitized and only sent to backend
+    logger.logWebhook(log.eventType, {
+        paymentId: log.paymentId,
+        status: log.status,
+        timestamp: log.timestamp,
+        // Do NOT log: customerId, subscriptionId, amount (PII/financial data)
+        error: log.error
+    })
+}
 
-    console.log('ASAAS_WEBHOOK_EVENT:', JSON.stringify(logEntry))
+/**
+ * Lookup user by Asaas customer ID
+ * Used for email notifications after payment events
+ */
+async function getUserByAsaasCustomerId(asaasCustomerId: string): Promise<{
+    userId: string
+    email: string
+    name: string
+} | null> {
+    try {
+        // Import Prisma client dynamically to avoid build-time issues
+        const { PrismaClient } = await import('@prisma/client')
+        const prisma = new PrismaClient()
+
+        const user = await prisma.user.findUnique({
+            where: { asaasCustomerId },
+            select: {
+                id: true,
+                email: true,
+                name: true
+            }
+        })
+
+        await prisma.$disconnect()
+
+        if (!user) {
+            logger.warn(LogCategory.WEBHOOK, 'User not found by Asaas customer ID', {
+                asaasCustomerId
+            })
+            return null
+        }
+
+        return {
+            userId: user.id,
+            email: user.email,
+            name: user.name
+        }
+    } catch (error) {
+        logger.error(LogCategory.WEBHOOK, 'Error looking up user by Asaas customer ID', error as Error, {
+            asaasCustomerId
+        })
+        return null
+    }
 }
 
 async function handlePaymentCreated(payment: any) {
@@ -70,14 +121,32 @@ async function handlePaymentCreated(payment: any) {
             }
         })
 
-        console.log('PAYMENT_CREATED:', {
+        // Secure logging - PII sanitized in production
+        logger.logPayment('created', {
             paymentId: payment.id,
-            customer: payment.customer,
-            value: payment.value,
-            billingType: payment.billingType,
+            status: payment.status,
+            dueDate: payment.dueDate
         })
+
+        // Persist payment to database
+        // TODO: Add logic to lookup userId from payment.customer
+        const user = await getUserByAsaasCustomerId(payment.customer)
+
+        const paymentData = paymentService.mapAsaasWebhookToPayment(payment, {
+            userId: user?.userId,
+            subscriptionId: payment.subscription
+        })
+
+        await paymentService.createOrUpdatePayment(paymentData)
+
+        logger.info(LogCategory.WEBHOOK, 'Payment created and persisted', {
+            paymentId: payment.id
+        })
+
     } catch (error) {
-        console.error('Error handling payment created:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment created', error as Error, {
+            paymentId: payment.id
+        })
         throw error
     }
 }
@@ -99,17 +168,84 @@ async function handlePaymentReceived(payment: any) {
             }
         })
 
-        console.log('CONVERSION_EVENT:', {
-            event: 'payment_confirmed',
+        // Secure logging - no PII/financial data in production logs
+        logger.logBusiness('payment_confirmed', {
             paymentId: payment.id,
-            customerId: payment.customer,
-            value: payment.value,
-            currency: 'BRL',
-            externalReference: payment.externalReference,
+            paymentDate: payment.paymentDate,
+            currency: 'BRL'
         })
 
+        // Update payment status in database
+        await paymentService.updatePaymentStatus(payment.id, {
+            status: 'RECEIVED',
+            paymentDate: new Date(payment.paymentDate || payment.clientPaymentDate),
+            netValue: payment.netValue
+        })
+
+        // If this is a subscription payment, activate subscription
+        if (payment.subscription) {
+            const subscription = await SubscriptionService.getSubscriptionByAsaasId(payment.subscription)
+
+            if (subscription) {
+                // Activate subscription (handles first payment and renewals)
+                await SubscriptionService.activateSubscription(subscription.id)
+
+                // Record payment
+                await SubscriptionService.recordPayment(
+                    subscription.id,
+                    payment.id,
+                    payment.value,
+                    new Date(payment.paymentDate || payment.clientPaymentDate)
+                )
+
+                logger.info(LogCategory.WEBHOOK, 'Subscription activated and payment recorded', {
+                    subscriptionId: subscription.id,
+                    paymentId: payment.id
+                })
+
+                // Send confirmation email
+                // TODO: Get user details from database
+                const user = await getUserByAsaasCustomerId(payment.customer)
+
+                if (user) {
+                    const result = await emailService.sendPaymentConfirmation({
+                        paymentId: payment.id,
+                        recipientName: user.name,
+                        recipientEmail: user.email,
+                        amount: payment.value,
+                        paymentMethod: payment.billingType,
+                        paymentDate: new Date(payment.paymentDate || payment.clientPaymentDate),
+                        invoiceUrl: payment.invoiceUrl
+                    })
+
+                    if (!result.success) {
+                        logger.warn(LogCategory.WEBHOOK, 'Payment confirmation email failed', {
+                            paymentId: payment.id,
+                            error: result.error
+                        })
+                    } else {
+                        logger.info(LogCategory.WEBHOOK, 'Payment confirmation email sent', {
+                            paymentId: payment.id
+                        })
+                    }
+                } else {
+                    logger.warn(LogCategory.WEBHOOK, 'User not found for payment confirmation email', {
+                        paymentId: payment.id,
+                        asaasCustomerId: payment.customer
+                    })
+                }
+            } else {
+                logger.warn(LogCategory.WEBHOOK, 'Subscription not found for payment', {
+                    paymentId: payment.id,
+                    asaasSubscriptionId: payment.subscription
+                })
+            }
+        }
+
     } catch (error) {
-        console.error('Error handling payment received:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment received', error as Error, {
+            paymentId: payment.id
+        })
         throw error
     }
 }
@@ -130,13 +266,18 @@ async function handlePaymentConfirmed(payment: any) {
             }
         })
 
-        console.log('PAYMENT_CONFIRMED:', {
+        // Secure logging - no PII in production
+        logger.logPayment('confirmed', {
             paymentId: payment.id,
-            customer: payment.customer,
-            value: payment.value,
+            confirmedDate: payment.confirmedDate
         })
+
+        // TODO: Update payment status in database
+        // await PaymentService.updatePaymentStatus(payment.id, 'CONFIRMED')
     } catch (error) {
-        console.error('Error handling payment confirmed:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment confirmed', error as Error, {
+            paymentId: payment.id
+        })
         throw error
     }
 }
@@ -157,14 +298,77 @@ async function handlePaymentOverdue(payment: any) {
             }
         })
 
-        console.log('PAYMENT_OVERDUE:', {
+        // Secure logging
+        logger.logPayment('overdue', {
             paymentId: payment.id,
-            customer: payment.customer,
-            dueDate: payment.dueDate,
+            dueDate: payment.dueDate
         })
 
+        // Update payment status
+        await paymentService.updatePaymentStatus(payment.id, {
+            status: 'OVERDUE'
+        })
+
+        // Mark subscription as overdue
+        if (payment.subscription) {
+            const subscription = await SubscriptionService.getSubscriptionByAsaasId(payment.subscription)
+
+            if (subscription) {
+                await SubscriptionService.markAsOverdue(subscription.id)
+
+                logger.info(LogCategory.WEBHOOK, 'Subscription marked as overdue', {
+                    subscriptionId: subscription.id,
+                    paymentId: payment.id
+                })
+
+                // Send overdue notification
+                // TODO: Get user details from database
+                const user = await getUserByAsaasCustomerId(payment.customer)
+
+                if (user) {
+                    const daysOverdue = Math.floor(
+                        (Date.now() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24)
+                    )
+
+                    const result = await emailService.sendOverdueNotification({
+                        subscriptionId: subscription.id,
+                        recipientName: user.name,
+                        recipientEmail: user.email,
+                        amount: payment.value,
+                        dueDate: new Date(payment.dueDate),
+                        daysOverdue,
+                        paymentLink: payment.invoiceUrl || `https://svlentes.shop/area-assinante/pagamentos/${payment.id}`
+                    })
+
+                    if (!result.success) {
+                        logger.warn(LogCategory.WEBHOOK, 'Overdue notification email failed', {
+                            paymentId: payment.id,
+                            error: result.error
+                        })
+                    } else {
+                        logger.info(LogCategory.WEBHOOK, 'Overdue notification email sent', {
+                            paymentId: payment.id,
+                            daysOverdue
+                        })
+                    }
+                } else {
+                    logger.warn(LogCategory.WEBHOOK, 'User not found for overdue notification email', {
+                        paymentId: payment.id,
+                        asaasCustomerId: payment.customer
+                    })
+                }
+            } else {
+                logger.warn(LogCategory.WEBHOOK, 'Subscription not found for overdue payment', {
+                    paymentId: payment.id,
+                    asaasSubscriptionId: payment.subscription
+                })
+            }
+        }
+
     } catch (error) {
-        console.error('Error handling payment overdue:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment overdue', error as Error, {
+            paymentId: payment.id
+        })
         throw error
     }
 }
@@ -184,13 +388,80 @@ async function handlePaymentRefunded(payment: any) {
             }
         })
 
-        console.log('PAYMENT_REFUNDED:', {
+        // Secure logging
+        logger.logPayment('refunded', {
             paymentId: payment.id,
-            customer: payment.customer,
-            value: payment.value,
+            refundDate: new Date().toISOString()
         })
+
+        // Record refund in database
+        await paymentService.recordRefund(payment.id)
+
+        logger.info(LogCategory.WEBHOOK, 'Payment refund recorded', {
+            paymentId: payment.id
+        })
+
+        // Handle subscription refund
+        if (payment.subscription) {
+            const subscription = await SubscriptionService.getSubscriptionByAsaasId(payment.subscription)
+
+            if (subscription) {
+                await SubscriptionService.handleRefund(
+                    subscription.id,
+                    payment.value,
+                    'Refund processed by Asaas'
+                )
+
+                logger.info(LogCategory.WEBHOOK, 'Subscription refund handled', {
+                    subscriptionId: subscription.id,
+                    paymentId: payment.id
+                })
+
+                // Send refund confirmation email
+                // TODO: Get user details from database
+                const user = await getUserByAsaasCustomerId(payment.customer)
+
+                if (user) {
+                    const result = await emailService.sendRefundConfirmation(
+                        user.email,
+                        {
+                            refundId: `refund_${payment.id}_${Date.now()}`,
+                            paymentId: payment.id,
+                            amount: payment.value,
+                            reason: 'Payment refunded by Asaas',
+                            refundDate: new Date(),
+                            estimatedDays: 5
+                        }
+                    )
+
+                    if (!result.success) {
+                        logger.warn(LogCategory.WEBHOOK, 'Refund confirmation email failed', {
+                            paymentId: payment.id,
+                            error: result.error
+                        })
+                    } else {
+                        logger.info(LogCategory.WEBHOOK, 'Refund confirmation email sent', {
+                            paymentId: payment.id
+                        })
+                    }
+                } else {
+                    logger.warn(LogCategory.WEBHOOK, 'User not found for refund confirmation email', {
+                        paymentId: payment.id,
+                        asaasCustomerId: payment.customer
+                    })
+                }
+            } else {
+                logger.warn(LogCategory.WEBHOOK, 'Subscription not found for refunded payment', {
+                    paymentId: payment.id,
+                    asaasSubscriptionId: payment.subscription
+                })
+            }
+        }
+
     } catch (error) {
-        console.error('Error handling payment refunded:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment refunded', error as Error, {
+            paymentId: payment.id
+        })
         throw error
     }
 }
@@ -199,9 +470,12 @@ export async function POST(request: NextRequest) {
     try {
         const asaasToken = request.headers.get('asaas-access-token')
         const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN
-        
+
         if (expectedToken && asaasToken !== expectedToken) {
-            console.error('ASAAS_WEBHOOK_AUTH_FAILED: Invalid token')
+            logger.logSecurity('webhook_auth_failed', {
+                source: 'asaas',
+                reason: 'invalid_token'
+            })
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
@@ -210,9 +484,16 @@ export async function POST(request: NextRequest) {
 
         const body: AsaasWebhookEvent = await request.json()
 
-        console.log(`ASAAS_WEBHOOK_RECEIVED: ${body.event}`)
+        logger.info(LogCategory.WEBHOOK, `Webhook received: ${body.event}`, {
+            event: body.event,
+            paymentId: body.payment?.id
+        })
 
         if (!body.event || !body.payment) {
+            logger.warn(LogCategory.WEBHOOK, 'Invalid webhook payload received', {
+                hasEvent: !!body.event,
+                hasPayment: !!body.payment
+            })
             return NextResponse.json(
                 { error: 'Invalid webhook payload' },
                 { status: 400 }
@@ -225,7 +506,7 @@ export async function POST(request: NextRequest) {
                 break
 
             case 'PAYMENT_UPDATED':
-                console.log('PAYMENT_UPDATED:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Payment updated', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_CONFIRMED':
@@ -239,11 +520,11 @@ export async function POST(request: NextRequest) {
                 break
 
             case 'PAYMENT_DELETED':
-                console.log('PAYMENT_DELETED:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Payment deleted', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_RESTORED':
-                console.log('PAYMENT_RESTORED:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Payment restored', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_REFUNDED':
@@ -251,44 +532,49 @@ export async function POST(request: NextRequest) {
                 break
 
             case 'PAYMENT_RECEIVED_IN_CASH_UNDONE':
-                console.log('PAYMENT_RECEIVED_IN_CASH_UNDONE:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Payment cash undone', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_CHARGEBACK_REQUESTED':
-                console.log('PAYMENT_CHARGEBACK_REQUESTED:', body.payment.id)
+                logger.warn(LogCategory.WEBHOOK, 'Chargeback requested', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_CHARGEBACK_DISPUTE':
-                console.log('PAYMENT_CHARGEBACK_DISPUTE:', body.payment.id)
+                logger.warn(LogCategory.WEBHOOK, 'Chargeback dispute', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_AWAITING_CHARGEBACK_REVERSAL':
-                console.log('PAYMENT_AWAITING_CHARGEBACK_REVERSAL:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Awaiting chargeback reversal', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_DUNNING_RECEIVED':
-                console.log('PAYMENT_DUNNING_RECEIVED:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Dunning received', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_DUNNING_REQUESTED':
-                console.log('PAYMENT_DUNNING_REQUESTED:', body.payment.id)
+                logger.info(LogCategory.WEBHOOK, 'Dunning requested', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_BANK_SLIP_VIEWED':
-                console.log('PAYMENT_BANK_SLIP_VIEWED:', body.payment.id)
+                logger.debug(LogCategory.WEBHOOK, 'Bank slip viewed', { paymentId: body.payment.id })
                 break
 
             case 'PAYMENT_CHECKOUT_VIEWED':
-                console.log('PAYMENT_CHECKOUT_VIEWED:', body.payment.id)
+                logger.debug(LogCategory.WEBHOOK, 'Checkout viewed', { paymentId: body.payment.id })
                 break
 
             default:
-                console.log('Unknown webhook event:', body.event)
+                logger.warn(LogCategory.WEBHOOK, 'Unknown webhook event received', {
+                    event: body.event,
+                    paymentId: body.payment.id
+                })
         }
 
         return NextResponse.json({ received: true }, { status: 200 })
     } catch (error: any) {
-        console.error('Error processing ASAAS webhook:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error processing webhook', error, {
+            errorMessage: error.message
+        })
 
         logWebhookEvent({
             eventType: 'WEBHOOK_ERROR',

@@ -1,89 +1,54 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+  Skeleton,
+  SkeletonSubscriptionCard,
+  SkeletonOrderHistory,
+  SkeletonCard,
+  SkeletonDashboard
+} from '@/components/ui/Skeleton'
 
+/**
+ * Enhanced Dashboard Loading Component
+ *
+ * Provides content-aware skeleton screens that match the actual dashboard layout.
+ * Improves perceived performance and user experience during data loading.
+ */
 export function DashboardLoading() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section Loading */}
         <div className="mb-8">
-          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-96 mt-2 animate-pulse"></div>
+          <div className="space-y-2">
+            <Skeleton variant="text" width="40%" height={32} animation="wave" />
+            <Skeleton variant="text" width="60%" height={20} animation="wave" />
+          </div>
         </div>
 
         {/* Subscription Status Loading */}
         <Card className="mb-8">
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
-                <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
-              </div>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-              </div>
-            </div>
-          </CardContent>
+          <SkeletonSubscriptionCard />
         </Card>
 
-        {/* Benefits Loading */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
-                  </div>
-                  <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Address and Contact Loading */}
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-                <div className="h-8 bg-gray-200 rounded w-32 mt-4 animate-pulse"></div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mt-4 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tabs Navigation Loading */}
+        <div className="mb-6 flex gap-4 border-b border-gray-200">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton
+              key={i}
+              variant="text"
+              width={100}
+              height={40}
+              animation="pulse"
+            />
+          ))}
         </div>
+
+        {/* Tab Content Loading */}
+        <Card>
+          <CardContent className="p-6">
+            <SkeletonCard />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
@@ -92,30 +57,7 @@ export function DashboardLoading() {
 export function SubscriptionStatusLoading() {
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
-          <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <div className="h-5 bg-gray-200 rounded w-32 animate-pulse"></div>
-            <div className="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-40 animate-pulse"></div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
+      <SkeletonSubscriptionCard />
     </Card>
   )
 }
@@ -123,26 +65,8 @@ export function SubscriptionStatusLoading() {
 export function BenefitsLoading() {
   return (
     <Card>
-      <CardHeader>
-        <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-              <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
-                </div>
-                <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
-              </div>
-              <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          ))}
-        </div>
+      <CardContent className="p-6">
+        <SkeletonCard />
       </CardContent>
     </Card>
   )
@@ -151,17 +75,25 @@ export function BenefitsLoading() {
 export function ShippingAddressLoading() {
   return (
     <Card>
-      <CardHeader>
-        <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-4 bg-gray-200 rounded animate-pulse"
-                 style={{ width: `${Math.random() * 40 + 60}%` }}></div>
-          ))}
-          <div className="h-8 bg-gray-200 rounded w-32 mt-4 animate-pulse"></div>
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          <Skeleton variant="text" width="50%" height={24} animation="wave" />
+          <div className="space-y-2">
+            <Skeleton variant="text" width="100%" height={16} animation="wave" />
+            <Skeleton variant="text" width="80%" height={16} animation="wave" />
+            <Skeleton variant="text" width="60%" height={16} animation="wave" />
+          </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function OrderHistoryLoading() {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <SkeletonOrderHistory />
       </CardContent>
     </Card>
   )

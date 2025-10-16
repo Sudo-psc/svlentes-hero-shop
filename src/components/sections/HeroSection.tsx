@@ -40,56 +40,172 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                     {/* Left Column - Hero Content */}
                     <div className="space-y-8 animate-fade-in">
 
-                        {/* Pioneer Badge */}
-                        <div className="flex justify-center lg:justify-start">
+                        {/* Mobile-first Medical Credibility */}
+                        <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
+                            {/* CRM Badge - Primary Mobile */}
+                            <div className="lg:hidden flex items-center justify-center space-x-2 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-300 rounded-xl px-4 py-2.5 shadow-lg">
+                                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                                <div className="flex flex-col text-center">
+                                    <span className="text-xs text-cyan-600 font-semibold">Dr. Philipe Saraiva Cruz</span>
+                                    <span className="text-sm font-bold text-cyan-800">CRM-MG 69.870</span>
+                                </div>
+                            </div>
+
+                            {/* Desktop Pioneer Badge */}
                             <Badge
                                 variant="default"
-                                className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm px-4 py-2 text-base"
+                                className="hidden lg:flex bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm px-4 py-2 text-base"
                             >
                                 <Award className="w-4 h-4 mr-2" />
                                 🏆 Pioneiro no Brasil
                             </Badge>
+
+                            {/* Mobile Trust Indicators */}
+                            <div className="lg:hidden flex items-center space-x-4 text-xs text-gray-600">
+                                <div className="flex items-center space-x-1">
+                                    <span className="text-green-500">✓</span>
+                                    <span>Seguro</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <span className="text-blue-500">🏥</span>
+                                    <span>Médico</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                    <span className="text-purple-500">🚚</span>
+                                    <span>Entrega</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Main Headline */}
+                        {/* Main Headline - Mobile Optimized */}
                         <div className="text-center lg:text-left">
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
                                 <span className="block">Nunca mais</span>
                                 <span className="block text-gradient">fique sem lentes</span>
                             </h1>
 
-                            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mb-4">
-                                Assinatura com acompanhamento médico especializado.
-                            </p>
+                            {/* Mobile Value Proposition */}
+                            <div className="lg:hidden space-y-3 mb-6">
+                                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-200">
+                                    <div className="flex items-center justify-center space-x-2 mb-2">
+                                        <span className="text-2xl">🏥</span>
+                                        <span className="font-bold text-cyan-800">Acompanhamento Médico Incluído</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                        Dr. Philipe Saraiva Cruz (CRM-MG 69.870) acompanha seu caso pessoal
+                                    </p>
+                                </div>
 
-                            <p className="text-lg text-gray-700 max-w-2xl">
-                                Receba suas lentes em casa com logística integrada e consultas regulares.
-                            </p>
+                                <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+                                    <div className="flex items-center space-x-1">
+                                        <span className="text-green-500 font-bold">✓</span>
+                                        <span>Entrega mensal</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <span className="text-blue-500 font-bold">✓</span>
+                                        <span>Economia 67%</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <span className="text-purple-500 font-bold">✓</span>
+                                        <span>Pagamento parcelado</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Desktop Value Proposition */}
+                            <div className="hidden lg:block">
+                                <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mb-4">
+                                    Assinatura com acompanhamento médico especializado.
+                                </p>
+
+                                <p className="text-lg text-gray-700 max-w-2xl">
+                                    Receba suas lentes em casa com logística integrada e consultas regulares.
+                                </p>
+                            </div>
                         </div>
 
-                        {/* CTAs - Primary destacado */}
+                        {/* CTAs - Mobile Optimized */}
                         <div className="flex flex-col gap-4 justify-center lg:justify-start">
-                            {/* Mobile: CTA primária full-width */}
-                            <Button
-                                onClick={handleAgendarConsulta}
-                                size="lg"
-                                className="w-full sm:w-auto sm:min-w-[200px] flex items-center justify-center space-x-2 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 text-lg font-bold bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 py-4"
-                                aria-label="Agendar consulta com oftalmologista - CTA principal"
-                            >
-                                <Phone className="w-5 h-5" aria-hidden="true" />
-                                <span>Agendar consulta com oftalmologista</span>
-                            </Button>
+                            {/* Mobile: CTA primária com destaque médico */}
+                            <div className="lg:hidden">
+                                <Button
+                                    onClick={handleAgendarConsulta}
+                                    size="lg"
+                                    className="w-full flex items-center justify-center space-x-3 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 text-lg font-bold bg-gradient-to-r from-primary-600 to-cyan-600 hover:from-primary-700 hover:to-cyan-700 py-4 border-2 border-primary-400"
+                                    aria-label="Agendar consulta médica - CTA principal mobile"
+                                >
+                                    <div className="bg-white/20 rounded-full p-1.5">
+                                        <Phone className="w-5 h-5" aria-hidden="true" />
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <span>Agendar Consulta Médica</span>
+                                        <span className="text-xs font-normal opacity-90">Dr. Philipe Saraiva Cruz</span>
+                                    </div>
+                                </Button>
+                            </div>
 
-                            <Button
-                                onClick={handleFalarWhatsApp}
-                                variant="outline"
-                                size="lg"
-                                className="w-full sm:w-auto sm:min-w-[200px] flex items-center justify-center space-x-2 border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 hover:text-gray-800 py-4"
-                                aria-label="Tirar dúvidas no WhatsApp - CTA secundário"
-                            >
-                                <MessageCircle className="w-5 h-5" aria-hidden="true" />
-                                <span>Tirar dúvidas no WhatsApp</span>
-                            </Button>
+                            {/* Desktop: CTA primária */}
+                            <div className="hidden lg:block">
+                                <Button
+                                    onClick={handleAgendarConsulta}
+                                    size="lg"
+                                    className="w-full sm:w-auto sm:min-w-[200px] flex items-center justify-center space-x-2 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 text-lg font-bold bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 py-4"
+                                    aria-label="Agendar consulta com oftalmologista - CTA principal"
+                                >
+                                    <Phone className="w-5 h-5" aria-hidden="true" />
+                                    <span>Agendar consulta com oftalmologista</span>
+                                </Button>
+                            </div>
+
+                            {/* Mobile: Calculadora CTA (secundária) */}
+                            <div className="lg:hidden">
+                                <a
+                                    href="/calculadora"
+                                    className="block w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl font-bold py-3 px-4 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-green-400"
+                                >
+                                    <span className="text-xl">💰</span>
+                                    <div className="flex flex-col items-center">
+                                        <span>Calcular Economia</span>
+                                        <span className="text-xs font-normal opacity-90">Grátis e instantâneo</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            {/* Mobile: WhatsApp CTA (terciária) */}
+                            <div className="lg:hidden">
+                                <Button
+                                    onClick={handleFalarWhatsApp}
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full flex items-center justify-center space-x-2 border-2 border-green-300 hover:bg-green-50 hover:border-green-400 text-green-700 hover:text-green-800 py-3"
+                                    aria-label="Tirar dúvidas no WhatsApp - CTA terciária mobile"
+                                >
+                                    <MessageCircle className="w-5 h-5" aria-hidden="true" />
+                                    <span>Tirar dúvidas rápidas</span>
+                                </Button>
+                            </div>
+
+                            {/* Desktop CTAs */}
+                            <div className="hidden lg:flex flex-col sm:flex-row gap-4">
+                                <Button
+                                    onClick={handleFalarWhatsApp}
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full sm:w-auto sm:min-w-[200px] flex items-center justify-center space-x-2 border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 hover:text-gray-800 py-4"
+                                    aria-label="Tirar dúvidas no WhatsApp - CTA secundário"
+                                >
+                                    <MessageCircle className="w-5 h-5" aria-hidden="true" />
+                                    <span>Tirar dúvidas no WhatsApp</span>
+                                </Button>
+
+                                <a
+                                    href="/calculadora"
+                                    className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg font-semibold py-3 px-4 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                >
+                                    <span>💰</span>
+                                    <span>Calculadora</span>
+                                </a>
+                            </div>
                         </div>
 
                         {/* Mobile Sticky CTA */}

@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Label } from '@/components/ui/Label';
-import { usePrivacy } from '@/components/privacy/PrivacyProvider';
-import { setCookieConsent, setMarketingConsent, clearAllPrivacyData } from '@/lib/privacy';
+import { setCookieConsent, setMarketingConsent, clearAllPrivacyData, getCookieConsent, getMarketingConsent } from '@/lib/privacy';
 import { Settings, Shield, Trash2, Download, Eye } from 'lucide-react';
 
 interface PrivacySettingsProps {
@@ -14,24 +13,52 @@ interface PrivacySettingsProps {
 }
 
 export function PrivacySettings({ isOpen, onClose }: PrivacySettingsProps) {
-    const { cookieConsent, marketingConsent, updateCookieConsent } = usePrivacy();
+    const [cookieConsent, setCookieConsentState] = useState<any>(null);
+    const [marketingConsent, setMarketingConsentState] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'cookies' | 'marketing' | 'data'>('cookies');
     const [cookiePrefs, setCookiePrefs] = useState({
         necessary: true,
-        analytics: cookieConsent?.preferences.analytics ?? false,
-        marketing: cookieConsent?.preferences.marketing ?? false,
+        analytics: false,
+        marketing: false,
     });
     const [marketingPrefs, setMarketingPrefs] = useState({
-        email: marketingConsent?.preferences?.email ?? false,
-        whatsapp: marketingConsent?.preferences?.whatsapp ?? false,
-        sms: marketingConsent?.preferences?.sms ?? false,
+        email: false,
+        whatsapp: false,
+        sms: false,
     });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedCookieConsent = getCookieConsent();
+            const savedMarketingConsent = getMarketingConsent();
+            
+            setCookieConsentState(savedCookieConsent);
+            setMarketingConsentState(savedMarketingConsent);
+            
+            if (savedCookieConsent) {
+                setCookiePrefs({
+                    necessary: true,
+                    analytics: savedCookieConsent.preferences.analytics ?? false,
+                    marketing: savedCookieConsent.preferences.marketing ?? false,
+                });
+            }
+            
+            if (savedMarketingConsent?.preferences) {
+                setMarketingPrefs({
+                    email: savedMarketingConsent.preferences.email ?? false,
+                    whatsapp: savedMarketingConsent.preferences.whatsapp ?? false,
+                    sms: savedMarketingConsent.preferences.sms ?? false,
+                });
+            }
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     const handleSaveCookiePreferences = () => {
         setCookieConsent(cookiePrefs);
-        updateCookieConsent(cookiePrefs);
+        setCookieConsentState({ preferences: cookiePrefs, timestamp: new Date().toISOString(), version: '1.0' });
+        window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: cookiePrefs }));
     };
 
     const handleSaveMarketingPreferences = () => {

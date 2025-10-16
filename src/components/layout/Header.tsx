@@ -39,6 +39,7 @@ export function Header({ className }: HeaderProps) {
     }, [])
 
     const navigation = [
+        { name: 'Calculadora', href: '/calculadora', isAnchor: false },
         { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
         { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
         { name: 'Blog', href: '/blog', isAnchor: false },
@@ -95,7 +96,16 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     {/* Navigation Desktop */}
                     <nav className="hidden md:flex items-center space-x-8">
                         {navigation.map((item) => (
-                            item.isAnchor ? (
+                            item.name === 'Calculadora' ? (
+                                <a
+                                    key={item.name}
+                                    href={item.href}
+                                    className="inline-flex items-center space-x-1 bg-gradient-to-r from-primary-600 to-cyan-600 text-white px-3 py-1.5 rounded-full font-semibold text-sm hover:from-primary-700 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                                >
+                                    <span>💰</span>
+                                    <span>{item.name}</span>
+                                </a>
+                            ) : item.isAnchor ? (
                                 <a
                                     key={item.name}
                                     href={item.href}
@@ -168,17 +178,29 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                        aria-label="Toggle menu"
-                    >
-                        {isMenuOpen ? (
-                            <X className="w-6 h-6" />
-                        ) : (
-                            <Menu className="w-6 h-6" />
-                        )}
-                    </button>
+                    <div className="md:hidden flex items-center space-x-3">
+                        {/* CRM Badge Mobile */}
+                        <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg px-2 py-1 shadow-sm">
+                            <div className="flex items-center space-x-1">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span className="text-xs font-semibold text-cyan-700">
+                                    CRM-MG 69.870
+                                </span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                            aria-label="Toggle menu"
+                        >
+                            {isMenuOpen ? (
+                                <X className="w-6 h-6" />
+                            ) : (
+                                <Menu className="w-6 h-6" />
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mobile Menu */}
@@ -186,7 +208,17 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     <div className="md:hidden border-t border-gray-200 bg-white">
                         <div className="py-4 space-y-4">
                             {navigation.map((item) => (
-                                item.isAnchor ? (
+                                item.name === 'Calculadora' ? (
+                                    <a
+                                        key={item.name}
+                                        href={item.href}
+                                        className="block mx-4 mb-3 inline-flex items-center space-x-2 bg-gradient-to-r from-primary-600 to-cyan-600 text-white px-4 py-2.5 rounded-full font-bold text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-primary-300"
+                                    >
+                                        <span className="text-base">💰</span>
+                                        <span>{item.name}</span>
+                                        <span className="bg-white/20 px-1.5 py-0.5 rounded-full text-xs font-bold">GRÁTIS</span>
+                                    </a>
+                                ) : item.isAnchor ? (
                                     <a
                                         key={item.name}
                                         href={item.href}

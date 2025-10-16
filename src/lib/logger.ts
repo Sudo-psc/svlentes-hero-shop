@@ -128,21 +128,23 @@ class Logger {
   private writeLog(entry: LogEntry): void {
     const formatted = this.formatLog(entry)
 
-    // Console output
-    switch (entry.level) {
-      case LogLevel.DEBUG:
-        console.debug(formatted)
-        break
-      case LogLevel.INFO:
-        console.info(formatted)
-        break
-      case LogLevel.WARN:
-        console.warn(formatted)
-        break
-      case LogLevel.ERROR:
-      case LogLevel.FATAL:
-        console.error(formatted)
-        break
+    // Console output (server-side only in production, and only for errors)
+    if (this.shouldLogToConsole(entry.level)) {
+      switch (entry.level) {
+        case LogLevel.DEBUG:
+          console.debug(formatted)
+          break
+        case LogLevel.INFO:
+          console.info(formatted)
+          break
+        case LogLevel.WARN:
+          console.warn(formatted)
+          break
+        case LogLevel.ERROR:
+        case LogLevel.FATAL:
+          console.error(formatted)
+          break
+      }
     }
 
     // Em produção, enviar para serviços externos
@@ -293,15 +295,49 @@ class Logger {
 
   sanitizeMetadata(metadata: LogMetadata): LogMetadata {
     const sanitized = { ...metadata }
-    const sensitiveKeys = ['password', 'token', 'secret', 'apiKey', 'creditCard', 'cvv']
+    const sensitiveKeys = [
+      'password', 'token', 'secret', 'apiKey', 'creditCard', 'cvv',
+      'cpf', 'cnpj', 'email', 'phone', 'mobilePhone', 'address',
+      'postalCode', 'customer', 'customerId', 'externalReference',
+      'name', 'cpfCnpj', 'billingType', 'value', 'netValue'
+    ]
 
     for (const key of Object.keys(sanitized)) {
-      if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+      if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) {
         sanitized[key] = '[REDACTED]'
       }
     }
 
     return sanitized
+  }
+
+  /**
+   * Sanitize payment data - removes all PII but keeps operational data
+   */
+  sanitizePaymentData(payment: any): any {
+    if (!payment) return null
+
+    return {
+      id: payment.id,
+      status: payment.status,
+      billingType: payment.billingType ? '[REDACTED]' : undefined,
+      value: payment.value ? '[REDACTED]' : undefined,
+      dueDate: payment.dueDate,
+      paymentDate: payment.paymentDate,
+      // Remove all customer PII
+      customer: payment.customer ? '[REDACTED]' : undefined,
+      externalReference: payment.externalReference ? '[REDACTED]' : undefined,
+    }
+  }
+
+  /**
+   * Check if we should log to console in production
+   * Only logs ERROR and FATAL to server-side console, never to client
+   */
+  private shouldLogToConsole(level: LogLevel): boolean {
+    if (this.environment === 'development') return true
+    if (typeof window !== 'undefined') return false // Never log to browser console in any env
+    return level === LogLevel.ERROR || level === LogLevel.FATAL
   }
 }
 

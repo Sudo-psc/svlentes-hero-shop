@@ -3,11 +3,20 @@
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { initGA, initScrollTracking, initSessionRecording, GA_MEASUREMENT_ID } from '@/lib/analytics';
-import { usePrivacy } from '@/components/privacy/PrivacyProvider';
 
 export function GoogleAnalytics() {
-    const { hasAnalyticsConsent } = usePrivacy();
+    const [hasAnalyticsConsent, setHasAnalyticsConsent] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const consent = localStorage.getItem('cookie-consent');
+            if (consent) {
+                const parsed = JSON.parse(consent);
+                setHasAnalyticsConsent(parsed?.preferences?.analytics ?? false);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         // Only initialize GA4 if user has given consent

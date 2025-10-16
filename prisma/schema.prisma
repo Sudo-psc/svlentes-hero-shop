@@ -1,0 +1,425 @@
+// Enhanced Prisma Schema for Airtable Migration
+// This schema extends the existing one to support all Airtable data
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum SubscriptionStatus {
+  PENDING_ACTIVATION  // Awaiting first payment
+  ACTIVE              // Active subscription
+  OVERDUE             // Payment overdue
+  SUSPENDED           // Temporarily suspended
+  PAUSED              // User paused
+  CANCELLED           // User cancelled
+  EXPIRED             // Expired (legacy)
+  REFUNDED            // Refunded
+  PENDING             // Legacy pending
+}
+
+enum BenefitType {
+  UNLIMITED
+  LIMITED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  BOLETO
+}
+
+enum PaymentMethodType {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  BOLETO
+}
+
+enum InvoiceType {
+  SUBSCRIPTION
+  ONE_TIME
+  ADJUSTMENT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum SupportCategory {
+  BILLING
+  TECHNICAL
+  DELIVERY
+  GENERAL
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum SupportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum PaymentStatus {
+  PENDING
+  RECEIVED
+  CONFIRMED
+  OVERDUE
+  REFUNDED
+  REFUND_REQUESTED
+  CHARGEBACK_REQUESTED
+  CHARGEBACK_DISPUTE
+  AWAITING_CHARGEBACK_REVERSAL
+  DUNNING_REQUESTED
+  DUNNING_RECEIVED
+  AWAITING_RISK_ANALYSIS
+  CANCELLED
+}
+
+// NextAuth Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// User Model - Extended for Airtable migration
+model User {
+  id            String         @id @default(cuid())
+  googleId      String?        @unique @map("google_id") @db.VarChar(255)
+  firebaseUid   String?        @unique @map("firebase_uid") @db.VarChar(255)
+  email         String         @unique @db.VarChar(255)
+  emailVerified DateTime?      @map("email_verified")
+  name          String         @db.VarChar(255)
+  password      String?        @db.VarChar(255)
+  avatarUrl     String?        @map("avatar_url") @db.Text
+  image         String?
+  role          String         @default("subscriber") @db.VarChar(50)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  lastLoginAt   DateTime?      @map("last_login_at") @db.Timestamp(6)
+
+  // Additional fields from Airtable
+  phone         String?        @map("phone") @db.VarChar(20)
+  whatsapp      String?        @map("whatsapp") @db.VarChar(20)
+
+  // Asaas Integration - Link user to Asaas customer for webhook processing
+  asaasCustomerId String?      @unique @map("asaas_customer_id") @db.VarChar(255)
+
+  accounts      Account[]
+  sessions      Session[]
+  subscriptions Subscription[]
+  supportTickets SupportTicket[]
+  payments      Payment[]
+
+  @@index([email], name: "idx_users_email")
+  @@index([googleId], name: "idx_users_google_id")
+  @@index([asaasCustomerId], name: "idx_users_asaas_customer_id")
+  @@map("users")
+}
+
+// Subscription Model - Extended for Airtable migration
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @map("user_id")
+  asaasSubscriptionId  String?            @unique @map("asaas_subscription_id") @db.VarChar(255)
+  planType             String             @map("plan_type") @db.VarChar(100)
+  status               SubscriptionStatus @default(ACTIVE)
+  monthlyValue         Decimal            @map("monthly_value") @db.Decimal(10, 2)
+  renewalDate          DateTime           @map("renewal_date") @db.Date
+  startDate            DateTime           @map("start_date") @db.Date
+  paymentMethod        PaymentMethod      @map("payment_method")
+  paymentMethodLast4   String?            @map("payment_method_last4") @db.VarChar(4)
+  shippingAddress      Json?              @map("shipping_address") @db.JsonB
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Additional fields from Airtable
+  lensType             String?            @map("lens_type") @db.VarChar(255)
+  bothEyes             Boolean            @default(false) @map("both_eyes")
+  differentGrades      Boolean            @default(false) @map("different_grades")
+  endDate              DateTime?          @map("end_date") @db.Date
+  cancelReason         String?            @map("cancel_reason") @db.Text
+  contactInfo          Json?              @map("contact_info") @db.JsonB
+  metadata             Json?              @map("metadata") @db.JsonB
+  nextBillingDate      DateTime?          @map("next_billing_date") @db.Date
+
+  // Lifecycle tracking fields
+  lastPaymentId        String?            @map("last_payment_id") @db.VarChar(255)
+  lastPaymentDate      DateTime?          @map("last_payment_date") @db.Timestamp(6)
+  overdueDate          DateTime?          @map("overdue_date") @db.Timestamp(6)
+  daysOverdue          Int?               @map("days_overdue")
+  suspendedDate        DateTime?          @map("suspended_date") @db.Timestamp(6)
+  suspendedReason      String?            @map("suspended_reason") @db.Text
+  refundedDate         DateTime?          @map("refunded_date") @db.Timestamp(6)
+  refundReason         String?            @map("refund_reason") @db.Text
+  refundAmount         Decimal?           @map("refund_amount") @db.Decimal(10, 2)
+  activatedAt          DateTime?          @map("activated_at") @db.Timestamp(6)
+
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  benefits SubscriptionBenefit[]
+  orders   Order[]
+  invoices Invoice[]
+  paymentMethods PaymentMethodRecord[]
+  payments Payment[]
+
+  @@index([userId], name: "idx_subscriptions_user_id")
+  @@index([asaasSubscriptionId], name: "idx_subscriptions_asaas_id")
+  @@index([status], name: "idx_subscriptions_status")
+  @@map("subscriptions")
+}
+
+// Payment Model - Track individual payments from Asaas webhooks
+model Payment {
+  id                String         @id @default(cuid())
+  userId            String         @map("user_id")
+  subscriptionId    String         @map("subscription_id")
+
+  // Asaas References (required for webhook idempotency)
+  asaasPaymentId    String         @unique @map("asaas_payment_id") @db.VarChar(255)
+  asaasCustomerId   String         @map("asaas_customer_id") @db.VarChar(255)
+  asaasSubscriptionId String?      @map("asaas_subscription_id") @db.VarChar(255)
+
+  // Core Payment Data
+  amount            Decimal        @map("amount") @db.Decimal(10, 2)
+  netValue          Decimal?       @map("net_value") @db.Decimal(10, 2)
+  originalValue     Decimal?       @map("original_value") @db.Decimal(10, 2)
+  status            PaymentStatus  @map("status")
+  billingType       String         @map("billing_type") @db.VarChar(50)
+  description       String?        @map("description") @db.Text
+
+  // Date Management
+  dueDate           DateTime       @map("due_date") @db.Date
+  originalDueDate   DateTime?      @map("original_due_date") @db.Date
+  paymentDate       DateTime?      @map("payment_date") @db.Timestamp(6)
+  clientPaymentDate DateTime?      @map("client_payment_date") @db.Timestamp(6)
+  confirmedDate     DateTime?      @map("confirmed_date") @db.Timestamp(6)
+  refundedDate      DateTime?      @map("refunded_date") @db.Timestamp(6)
+
+  // Financial Adjustments
+  discountValue     Decimal?       @map("discount_value") @db.Decimal(10, 2)
+  interestValue     Decimal?       @map("interest_value") @db.Decimal(10, 2)
+  fineValue         Decimal?       @map("fine_value") @db.Decimal(10, 2)
+  refundAmount      Decimal?       @map("refund_amount") @db.Decimal(10, 2)
+
+  // URLs and Documents
+  invoiceUrl        String?        @map("invoice_url") @db.Text
+  invoiceNumber     String?        @map("invoice_number") @db.VarChar(100)
+  bankSlipUrl       String?        @map("bank_slip_url") @db.Text
+  transactionReceiptUrl String?    @map("transaction_receipt_url") @db.Text
+  nossoNumero       String?        @map("nosso_numero") @db.VarChar(100)
+
+  // PIX-specific fields
+  pixQrCodePayload  String?        @map("pix_qr_code_payload") @db.Text
+  pixQrCodeImage    String?        @map("pix_qr_code_image") @db.Text
+  pixExpirationDate DateTime?      @map("pix_expiration_date") @db.Timestamp(6)
+
+  // Additional References
+  externalReference String?        @map("external_reference") @db.VarChar(255)
+  installmentNumber Int?           @map("installment_number")
+
+  // Flags
+  deleted           Boolean        @default(false)
+  anticipated       Boolean        @default(false)
+  postalService     Boolean        @default(false) @map("postal_service")
+
+  // Flexible metadata for additional Asaas data
+  metadata          Json?          @map("metadata") @db.JsonB
+
+  // Audit Fields
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription      Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  // Indexes for efficient querying
+  @@index([userId], name: "idx_payments_user_id")
+  @@index([subscriptionId], name: "idx_payments_subscription_id")
+  @@index([asaasPaymentId], name: "idx_payments_asaas_id")
+  @@index([asaasCustomerId], name: "idx_payments_customer_id")
+  @@index([status], name: "idx_payments_status")
+  @@index([dueDate], name: "idx_payments_due_date")
+  @@index([paymentDate], name: "idx_payments_payment_date")
+  @@index([asaasSubscriptionId], name: "idx_payments_asaas_subscription_id")
+  @@map("payments")
+}
+
+model SubscriptionBenefit {
+  id                  String      @id @default(cuid())
+  subscriptionId      String      @map("subscription_id")
+  benefitName         String      @map("benefit_name") @db.VarChar(255)
+  benefitDescription  String      @map("benefit_description") @db.Text
+  benefitIcon         String      @map("benefit_icon") @db.VarChar(100)
+  benefitType         BenefitType @map("benefit_type")
+  quantityTotal       Int?        @map("quantity_total")
+  quantityUsed        Int         @default(0) @map("quantity_used")
+  expirationDate      DateTime?   @map("expiration_date") @db.Date
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId], name: "idx_benefits_subscription_id")
+  @@map("subscription_benefits")
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  subscriptionId  String         @map("subscription_id")
+  orderDate       DateTime       @map("order_date") @db.Date
+  shippingDate    DateTime?      @map("shipping_date") @db.Date
+  deliveryStatus  DeliveryStatus @default(PENDING) @map("delivery_status")
+  trackingCode    String?        @map("tracking_code") @db.VarChar(255)
+  deliveryAddress Json           @map("delivery_address") @db.JsonB
+  products        Json           @map("products") @db.JsonB
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Additional fields from Airtable
+  type            String         @map("type") @db.VarChar(50) // 'subscription' | 'one_time'
+  totalAmount     Decimal        @map("total_amount") @db.Decimal(10, 2)
+  paymentStatus   String         @map("payment_status") @db.VarChar(50) // 'pending' | 'paid' | 'failed' | 'refunded'
+  estimatedDelivery DateTime?    @map("estimated_delivery") @db.Date
+  deliveredAt     DateTime?      @map("delivered_at") @db.Timestamp(6)
+  notes           String?        @map("notes") @db.Text
+  paymentMethodId String?        @map("payment_method_id")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  invoices      Invoice[]
+  paymentMethod PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([subscriptionId], name: "idx_orders_subscription_id")
+  @@index([trackingCode], name: "idx_orders_tracking_code")
+  @@index([deliveryStatus], name: "idx_orders_delivery_status")
+  @@map("orders")
+}
+
+// Payment Method Records - New model from Airtable
+model PaymentMethodRecord {
+  id             String              @id @default(cuid())
+  subscriptionId String              @map("subscription_id")
+  type           PaymentMethodType   @map("type")
+  brand          String?             @map("brand") @db.VarChar(100)
+  last4          String?             @map("last4") @db.VarChar(4)
+  expiryMonth    String?             @map("expiry_month") @db.VarChar(2)
+  expiryYear     String?             @map("expiry_year") @db.VarChar(4)
+  holderName     String              @map("holder_name") @db.VarChar(255)
+  isDefault      Boolean             @default(false) @map("is_default")
+  asaasCardId    String?             @map("asaas_card_id") @db.VarChar(255)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  subscription   Subscription        @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  orders         Order[]
+  invoices       Invoice[]
+
+  @@index([subscriptionId], name: "idx_payment_methods_subscription_id")
+  @@map("payment_method_records")
+}
+
+// Invoice Model - New from Airtable
+model Invoice {
+  id              String           @id @default(cuid())
+  subscriptionId  String           @map("subscription_id")
+  orderId         String?          @map("order_id")
+  type            InvoiceType      @map("type")
+  amount          Decimal          @map("amount") @db.Decimal(10, 2)
+  status          InvoiceStatus    @map("status")
+  dueDate         DateTime         @map("due_date") @db.Date
+  paidAt          DateTime?        @map("paid_at") @db.Timestamp(6)
+  paymentMethodId String?          @map("payment_method_id")
+  items           Json              @map("items") @db.JsonB
+  taxes           Decimal          @default(0) @map("taxes") @db.Decimal(10, 2)
+  discounts       Decimal          @default(0) @map("discounts") @db.Decimal(10, 2)
+  pdfUrl          String?          @map("pdf_url") @db.Text
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  subscription    Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  order           Order?           @relation(fields: [orderId], references: [id])
+  paymentMethod   PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([subscriptionId], name: "idx_invoices_subscription_id")
+  @@index([status], name: "idx_invoices_status")
+  @@index([dueDate], name: "idx_invoices_due_date")
+  @@map("invoices")
+}
+
+// Support Ticket Model - New from Airtable
+model SupportTicket {
+  id          String            @id @default(cuid())
+  userId      String            @map("user_id")
+  subject     String            @map("subject")
+  description String            @map("description") @db.Text
+  category    SupportCategory   @map("category")
+  status      SupportStatus     @map("status")
+  priority    SupportPriority   @map("priority")
+  responses   Json              @map("responses") @db.JsonB
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
+  resolvedAt  DateTime?         @map("resolved_at") @db.Timestamp(6)
+
+  user        User              @relation(fields: [userId], references: [id])
+
+  @@index([userId], name: "idx_support_tickets_user_id")
+  @@index([status], name: "idx_support_tickets_status")
+  @@index([priority], name: "idx_support_tickets_priority")
+  @@map("support_tickets")
+}
