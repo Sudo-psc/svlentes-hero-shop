@@ -145,6 +145,37 @@ Se você é novo no projeto, comece por aqui:
 
 ## 📂 Documentação por Tópico
 
+### 🤖 Chatbot WhatsApp (LangChain + LangGraph + GPT-5)
+
+**Documentos**:
+1. [docs/CHATBOT_README.md](docs/CHATBOT_README.md) - Visão geral e índice completo
+2. [docs/CHATBOT_WHATSAPP_REQUIREMENTS.md](docs/CHATBOT_WHATSAPP_REQUIREMENTS.md) - Requisitos funcionais detalhados
+3. [docs/CHATBOT_TECHNICAL_ARCHITECTURE.md](docs/CHATBOT_TECHNICAL_ARCHITECTURE.md) - Arquitetura técnica e implementação
+4. [docs/CHATBOT_IMPLEMENTATION_GUIDE.md](docs/CHATBOT_IMPLEMENTATION_GUIDE.md) - Guia de implementação passo-a-passo
+
+**Stack**:
+- LangChain 0.2+ (Framework AI)
+- LangGraph (Orquestração de agentes)
+- GPT-5 (Modelo de linguagem OpenAI)
+- Qdrant (Banco de dados vetorial - memória)
+- WhatsApp Business API (Meta Cloud API)
+- PostgreSQL + Redis + BullMQ
+
+**Funcionalidades**:
+- ✅ 4 Agentes especializados (Sales, Support, Scheduling, Information)
+- ✅ Memória persistente de conversas (Qdrant)
+- ✅ Classificação inteligente de intenção
+- ✅ Handoff para atendimento humano
+- ✅ Integração com Asaas (links de pagamento)
+- ✅ Agendamento de consultas
+- ✅ Qualificação automática de leads
+- ✅ Analytics e métricas em tempo real
+
+**Configuração**:
+- `.env.chatbot.example` - Template de variáveis de ambiente
+
+---
+
 ### 💳 Pagamentos (Asaas)
 
 **Documentos**:
@@ -369,6 +400,13 @@ journalctl -u svlentes-nextjs -f
 │   ├── OPERACOES_SISTEMA.md           ⭐ Manual operacional
 │   └── CHECKLIST_DEPLOYMENT.md        🚀 Checklist de deploy
 │
+├── 🤖 DOCUMENTAÇÃO CHATBOT WHATSAPP
+│   ├── docs/CHATBOT_README.md         📚 Índice e visão geral
+│   ├── docs/CHATBOT_WHATSAPP_REQUIREMENTS.md  📋 Requisitos funcionais
+│   ├── docs/CHATBOT_TECHNICAL_ARCHITECTURE.md 🏗️ Arquitetura técnica
+│   ├── docs/CHATBOT_IMPLEMENTATION_GUIDE.md   🚀 Guia de implementação
+│   └── .env.chatbot.example           ⚙️ Template de configuração
+│
 ├── 🔧 SCRIPTS
 │   ├── scripts/backup-system.sh       💾 Backup
 │   ├── scripts/restore-backup.sh      ♻️  Restore
@@ -380,6 +418,7 @@ journalctl -u svlentes-nextjs -f
     ├── src/lib/asaas.ts               💳 Cliente Asaas
     ├── src/lib/logger.ts              📊 Sistema de logs
     ├── src/lib/monitoring.ts          📈 Monitoramento
+    ├── src/lib/whatsapp.ts            📱 Integração WhatsApp (existente)
     └── src/types/asaas.ts             📝 Types TypeScript
 ```
 
@@ -421,9 +460,10 @@ journalctl -u svlentes-nextjs -f
 | Documentação Geral | 4 | ~1.500 |
 | Documentação Técnica | 3 | ~1.300 |
 | Documentação Operacional | 2 | ~900 |
+| **Documentação Chatbot** | **5** | **~2.500** |
 | Scripts | 5 | ~1.130 |
 | Código | 3 | ~1.200 |
-| **TOTAL** | **17** | **~6.030** |
+| **TOTAL** | **22** | **~8.530** |
 
 ---
 
@@ -435,15 +475,20 @@ journalctl -u svlentes-nextjs -f
 |---------------|---------------------|
 | Asaas | [MIGRACAO_STRIPE_ASAAS.md](MIGRACAO_STRIPE_ASAAS.md) |
 | Backup | [OPERACOES_SISTEMA.md](OPERACOES_SISTEMA.md#sistema-de-backup) |
+| **Chatbot** | **[docs/CHATBOT_README.md](docs/CHATBOT_README.md)** |
 | Deploy | [CHECKLIST_DEPLOYMENT.md](CHECKLIST_DEPLOYMENT.md) |
 | Emergência | [OPERACOES_SISTEMA.md](OPERACOES_SISTEMA.md#procedimentos-de-emergência) |
+| **LangChain** | **[docs/CHATBOT_TECHNICAL_ARCHITECTURE.md](docs/CHATBOT_TECHNICAL_ARCHITECTURE.md)** |
+| **LangGraph** | **[docs/CHATBOT_TECHNICAL_ARCHITECTURE.md](docs/CHATBOT_TECHNICAL_ARCHITECTURE.md)** |
 | Logs | [OPERACOES_SISTEMA.md](OPERACOES_SISTEMA.md#sistema-de-logs) |
 | Monitoramento | [OPERACOES_SISTEMA.md](OPERACOES_SISTEMA.md#monitoramento) |
 | Pagamentos | [MIGRACAO_STRIPE_ASAAS.md](MIGRACAO_STRIPE_ASAAS.md) |
+| **Qdrant** | **[docs/CHATBOT_WHATSAPP_REQUIREMENTS.md](docs/CHATBOT_WHATSAPP_REQUIREMENTS.md)** |
 | Restore | [OPERACOES_SISTEMA.md](OPERACOES_SISTEMA.md#restauração-de-backup) |
 | Segurança | [SEGURANCA_API_KEYS.md](SEGURANCA_API_KEYS.md) |
 | Stripe | [MIGRACAO_STRIPE_ASAAS.md](MIGRACAO_STRIPE_ASAAS.md) |
 | Webhook | [OPERACOES_SISTEMA.md](OPERACOES_SISTEMA.md#webhooks-asaas) |
+| **WhatsApp** | **[docs/CHATBOT_README.md](docs/CHATBOT_README.md)** |
 
 ---
 
