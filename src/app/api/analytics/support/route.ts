@@ -107,9 +107,7 @@ export async function GET(request: NextRequest) {
         }
       },
       include: {
-        agent: true,
-        escalation: true,
-        whatsappInteraction: true
+        user: true
       }
     })
 

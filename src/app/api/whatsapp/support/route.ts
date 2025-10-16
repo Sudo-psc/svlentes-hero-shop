@@ -4,6 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { langchainSupportProcessor } from '@/lib/langchain-support-processor'
+import { supportTicketManager } from '@/lib/support-ticket-manager'
+import { supportEscalationSystem } from '@/lib/support-escalation-system'
+import { supportKnowledgeBase } from '@/lib/support-knowledge-base'
 
 // Webhook verification for WhatsApp Cloud API
 export async function GET(request: NextRequest) {
@@ -84,16 +88,56 @@ async function processIncomingMessage(message: any, metadata: any) {
     const customerPhone = message.from
     const messageId = message.id
 
-    // Mock processing for testing
-    console.log(`Processing WhatsApp message from ${customerPhone}: ${messageContent}`)
+    // Get or create user profile
+    const userProfile = await getOrCreateUserProfile(customerPhone, metadata)
 
-    // Store mock interaction
-    const mockResponse = `Olá! Recebemos sua mensagem: "${messageContent}". Em breve um de nossos atendentes irá responder.`
+    // Get conversation history
+    const conversationHistory = await getConversationHistory(customerPhone, 10)
+    const userHistory = await getUserSupportHistory(userProfile.id)
 
-    console.log(`Generated response: ${mockResponse}`)
+    // Get current context
+    const context = {
+      userHistory,
+      previousTickets: userHistory.tickets || [],
+      subscriptionInfo: userProfile.subscription,
+      userProfile,
+      conversationHistory: conversationHistory.map(msg => msg.content),
+      lastIntent: userHistory.lastIntent
+    }
+
+    // Process message with LangChain
+    const processingResult = await langchainSupportProcessor.processSupportMessage(
+      messageContent,
+      context
+    )
+
+    // Store interaction
+    await storeInteraction({
+      messageId,
+      customerPhone,
+      content: messageContent,
+      intent: processingResult.intent,
+      response: processingResult.response,
+      escalationRequired: processingResult.escalationRequired,
+      ticketCreated: processingResult.ticketCreated,
+      userProfile
+    })
+
+    // Send response via WhatsApp
+    await sendWhatsAppResponse(customerPhone, processingResult)
+
+    // Handle escalation if required
+    if (processingResult.escalationRequired && processingResult.ticketCreated) {
+      await handleEscalationIfNeeded(customerPhone, processingResult, context)
+    }
+
+    console.log(`Processed WhatsApp message from ${customerPhone}: ${processingResult.intent.name}`)
 
   } catch (error) {
     console.error('Error processing incoming message:', error)
+
+    // Send error response
+    await sendErrorResponse(customerPhone, error.message)
   }
 }
 
@@ -122,6 +166,129 @@ function extractMessageContent(message: any): string | null {
   }
 
   return null
+}
+
+/**
+ * Get or create user profile
+ */
+async function getOrCreateUserProfile(phone: string, metadata: any): Promise<any> {
+  try {
+    // Mock user profile for testing
+    return {
+      id: 'test_user_123',
+      name: 'Cliente Teste',
+      email: 'cliente@teste.com',
+      phone,
+      whatsapp: phone,
+      subscription: null,
+      subscriptionStatus: 'none'
+    }
+  } catch (error) {
+    console.error('Error getting/creating user profile:', error)
+    return {
+      id: 'unknown',
+      name: 'Cliente',
+      phone,
+      whatsapp: phone,
+      subscription: null,
+      subscriptionStatus: 'none'
+    }
+  }
+}
+
+/**
+ * Get conversation history
+ */
+async function getConversationHistory(phone: string, limit: number = 10): Promise<any[]> {
+  try {
+    // Mock conversation history for testing
+    return []
+  } catch (error) {
+    console.error('Error getting conversation history:', error)
+    return []
+  }
+}
+
+/**
+ * Get user support history
+ */
+async function getUserSupportHistory(userId: string): Promise<any> {
+  try {
+    // Mock user history for testing
+    return { tickets: [], lastIntent: null, lastInteraction: null }
+  } catch (error) {
+    console.error('Error getting user support history:', error)
+    return { tickets: [], lastIntent: null, lastInteraction: null }
+  }
+}
+
+/**
+ * Store interaction in database
+ */
+async function storeInteraction(data: {
+  messageId: string
+  customerPhone: string
+  content: string
+  intent: any
+  response: string
+  escalationRequired: boolean
+  ticketCreated: boolean
+  userProfile: any
+}) {
+  try {
+    // Mock interaction storage for testing
+    console.log(`Storing interaction: ${data.content} -> ${data.response}`)
+  } catch (error) {
+    console.error('Error storing interaction:', error)
+  }
+}
+
+/**
+ * Send response via WhatsApp
+ */
+async function sendWhatsAppResponse(customerPhone: string, processingResult: any) {
+  try {
+    console.log(`Sending WhatsApp response to ${customerPhone}: ${processingResult.response}`)
+
+    // Log quick replies if available
+    if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
+      console.log(`Quick replies: ${processingResult.quickReplies.join(', ')}`)
+    }
+
+  } catch (error) {
+    console.error('Error sending WhatsApp response:', error)
+  }
+}
+
+/**
+ * Handle escalation if needed
+ */
+async function handleEscalationIfNeeded(
+  customerPhone: string,
+  processingResult: any,
+  context: any
+) {
+  try {
+    if (processingResult.escalationRequired) {
+      console.log(`Escalation triggered for ${customerPhone} with intent: ${processingResult.intent.name}`)
+    }
+  } catch (error) {
+    console.error('Error handling escalation:', error)
+  }
+}
+
+/**
+ * Send error response
+ */
+async function sendErrorResponse(customerPhone: string, errorMessage: string) {
+  try {
+    const errorResponse = `Desculpe, estou com dificuldades técnicas no momento. Um atendente humano já foi notificado para te ajudar. Por favor, tente novamente em alguns minutos.`
+
+    console.log(`Sending error response to ${customerPhone}: ${errorResponse}`)
+
+  } catch (error) {
+    console.error('Error sending error response:', error)
+  }
 }
 
 /**

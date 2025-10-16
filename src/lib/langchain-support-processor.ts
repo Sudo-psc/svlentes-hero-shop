@@ -40,15 +40,6 @@ export class LangChainSupportProcessor {
   private llm: ChatOpenAI
   private knowledgeBase: SupportKnowledgeBase
 
-  constructor() {
-    this.llm = new ChatOpenAI({
-      modelName: 'gpt-4-turbo-preview',
-      temperature: 0.3,
-      openAIApiKey: process.env.OPENAI_API_KEY
-    })
-    this.knowledgeBase = new SupportKnowledgeBase()
-  }
-
   // Support-specific intent classification template
   private readonly SUPPORT_INTENT_TEMPLATE = `
 Você é um assistente de atendimento ao cliente especializado em lentes de contato da SV Lentes.
@@ -198,7 +189,12 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
   private escalationChain: RunnableSequence<any, string>
 
   constructor() {
-    super()
+    this.llm = new ChatOpenAI({
+      modelName: 'gpt-4-turbo-preview',
+      temperature: 0.3,
+      openAIApiKey: process.env.OPENAI_API_KEY
+    })
+    this.knowledgeBase = new SupportKnowledgeBase()
     this.initializeChains()
   }
 
@@ -280,7 +276,7 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
         intent,
         response,
         quickReplies,
-        escalationRequired: escalationRequired,
+        escalationRequired: escalationDecision,
         ticketCreated,
         actions: intent.suggestedActions
       }
