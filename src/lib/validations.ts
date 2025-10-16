@@ -154,7 +154,7 @@ export function validateCPF(cpf: string): boolean {
         sum += parseInt(cleanCPF[i]) * (10 - i)
     }
     let remainder = sum % 11
-    let digit1 = remainder < 2 ? 0 : 11 - remainder
+    const digit1 = remainder < 2 ? 0 : 11 - remainder
 
     if (parseInt(cleanCPF[9]) !== digit1) return false
 
@@ -164,7 +164,7 @@ export function validateCPF(cpf: string): boolean {
         sum += parseInt(cleanCPF[i]) * (11 - i)
     }
     remainder = sum % 11
-    let digit2 = remainder < 2 ? 0 : 11 - remainder
+    const digit2 = remainder < 2 ? 0 : 11 - remainder
 
     return parseInt(cleanCPF[10]) === digit2
 }

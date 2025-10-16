@@ -1,4 +1,7 @@
-// Lógica para calculadora de economia de lentes de contato
+/**
+ * @deprecated This file contains duplicated logic. Use calculator-service.ts instead.
+ * This file is kept for backward compatibility but will be removed in a future version.
+ */
 
 import { economyCalculatorData } from '@/data/pricing-plans'
 

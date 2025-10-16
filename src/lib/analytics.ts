@@ -262,8 +262,8 @@ export const setUserProperties = (properties: {
 export const initScrollTracking = () => {
     if (typeof window === 'undefined') return;
 
-    let scrollDepths = [25, 50, 75, 90, 100];
-    let trackedDepths: number[] = [];
+    const scrollDepths = [25, 50, 75, 90, 100];
+    const trackedDepths: number[] = [];
 
     const trackScrollDepth = () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;

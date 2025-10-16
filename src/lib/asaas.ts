@@ -228,26 +228,26 @@ export class AsaasClient {
     }
 }
 
-// Check if we're in build environment
+import { APP_CONFIG } from './constants'
+
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
-                   (typeof window === 'undefined' && !process.env.ASAAS_API_KEY_SANDBOX && !process.env.ASAAS_API_KEY_PROD)
+                   (typeof window === 'undefined' && !APP_CONFIG.asaas.apiKeySandbox && !APP_CONFIG.asaas.apiKeyProduction)
 
 const getApiKey = (): string => {
-    // During build time, return a placeholder
     if (isBuildTime) {
         return 'build-time-placeholder'
     }
     
-    const env = process.env.ASAAS_ENV || 'sandbox'
+    const env = APP_CONFIG.asaas.environment
     
     if (env === 'production') {
-        const key = process.env.ASAAS_API_KEY_PROD
+        const key = APP_CONFIG.asaas.apiKeyProduction
         if (!key) {
             throw new Error('ASAAS_API_KEY_PROD is not defined')
         }
         return key
     } else {
-        const key = process.env.ASAAS_API_KEY_SANDBOX
+        const key = APP_CONFIG.asaas.apiKeySandbox
         if (!key) {
             throw new Error('ASAAS_API_KEY_SANDBOX is not defined')
         }
@@ -271,7 +271,7 @@ export const getAsaasClient = (): AsaasClient => {
         }
         asaasInstance = new AsaasClient({
             apiKey,
-            environment: (process.env.ASAAS_ENV as 'sandbox' | 'production') || 'sandbox'
+            environment: APP_CONFIG.asaas.environment
         })
     }
     return asaasInstance

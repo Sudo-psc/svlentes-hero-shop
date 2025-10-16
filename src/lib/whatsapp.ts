@@ -1,7 +1,6 @@
-// Utilitários para integração com WhatsApp Business
-
 import { generateWhatsAppLink } from './utils'
 import { trackEvent } from './analytics'
+import { APP_CONFIG } from './constants'
 
 export interface WhatsAppContextData {
     page: string
@@ -132,16 +131,14 @@ export function generateContextualMessage(
     return message
 }
 
-// Função para abrir WhatsApp com contexto
 export function openWhatsAppWithContext(
     context: keyof typeof whatsappMessages,
     data?: WhatsAppContextData
 ) {
-    const phone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511947038078'
+    const phone = APP_CONFIG.whatsapp.number
     const message = generateContextualMessage(context, data)
     const link = generateWhatsAppLink(phone, message)
 
-    // Analytics tracking
     trackEvent('whatsapp_redirect', {
         context: context,
         user_data: !!data?.userInfo,

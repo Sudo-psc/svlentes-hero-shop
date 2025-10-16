@@ -1,5 +1,5 @@
-// Enhanced Prisma Schema for Airtable Migration
-// This schema extends the existing one to support all Airtable data
+// Enhanced Prisma Schema - Complete System
+// Combines: Airtable Migration + Intelligent Reminder System
 
 generator client {
   provider = "prisma-client-js"
@@ -157,27 +157,32 @@ model User {
   firebaseUid   String?        @unique @map("firebase_uid") @db.VarChar(255)
   email         String         @unique @db.VarChar(255)
   emailVerified DateTime?      @map("email_verified")
-  name          String         @db.VarChar(255)
+  name          String?        @db.VarChar(255)
   password      String?        @db.VarChar(255)
   avatarUrl     String?        @map("avatar_url") @db.Text
   image         String?
   role          String         @default("subscriber") @db.VarChar(50)
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
   lastLoginAt   DateTime?      @map("last_login_at") @db.Timestamp(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  // Additional fields from Airtable
   phone         String?        @map("phone") @db.VarChar(20)
   whatsapp      String?        @map("whatsapp") @db.VarChar(20)
 
-  // Asaas Integration - Link user to Asaas customer for webhook processing
   asaasCustomerId String?      @unique @map("asaas_customer_id") @db.VarChar(255)
 
-  accounts      Account[]
-  sessions      Session[]
-  subscriptions Subscription[]
-  supportTickets SupportTicket[]
-  payments      Payment[]
+  preferences   Json?          @map("preferences") @db.JsonB
+
+  accounts             Account[]
+  sessions             Session[]
+  subscriptions        Subscription[]
+  supportTickets       SupportTicket[]
+  payments             Payment[]
   whatsappInteractions WhatsAppInteraction[]
+  notifications        Notification[]
+  interactions         Interaction[]
+  mlPredictions        MLPrediction[]
+  userBehavior         UserBehavior?
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -542,4 +547,197 @@ model FAQ {
   @@index([isActive], name: "idx_faqs_active")
   @@index([priority], name: "idx_faqs_priority")
   @@map("faqs")
+}
+// ==================== NOTIFICATION & REMINDER ENUMS ====================
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+  PUSH
+}
+
+enum NotificationStatus {
+  SCHEDULED
+  SENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  FAILED
+  CANCELLED
+}
+
+enum NotificationType {
+  REMINDER
+  PROMOTION
+  UPDATE
+  ALERT
+}
+
+enum InteractionType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  DISMISSED
+  OPTED_OUT
+  CONVERTED
+}
+
+// ==================== INTELLIGENT REMINDER SYSTEM ====================
+
+model UserBehavior {
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  emailOpenRate           Float     @default(0)
+  emailClickRate          Float     @default(0)
+  whatsappOpenRate        Float     @default(0)
+  whatsappClickRate       Float     @default(0)
+  smsOpenRate             Float     @default(0)
+  smsClickRate            Float     @default(0)
+  pushOpenRate            Float     @default(0)
+  pushClickRate           Float     @default(0)
+  
+  bestHourOfDay           Int?
+  averageResponseTime     Int?
+  
+  preferredFrequency      Int       @default(3)
+  currentFatigueScore     Float     @default(0)
+  
+  conversionRate          Float     @default(0)
+  
+  updatedAt               DateTime  @updatedAt
+  
+  @@map("user_behaviors")
+}
+
+model Notification {
+  id                String              @id @default(cuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  channel           NotificationChannel
+  type              NotificationType    @default(REMINDER)
+  
+  subject           String?
+  content           String
+  metadata          Json?
+  
+  scheduledAt       DateTime
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  
+  status            NotificationStatus  @default(SCHEDULED)
+  errorMessage      String?
+  
+  predictedChannel  NotificationChannel?
+  predictionScore   Float?
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  interactions      Interaction[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([channel])
+  @@map("notifications")
+}
+
+model Interaction {
+  id                String            @id @default(cuid())
+  notificationId    String
+  notification      Notification      @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  actionType        InteractionType
+  metadata          Json?
+  
+  timestamp         DateTime          @default(now())
+  
+  @@index([notificationId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("interactions")
+}
+
+model MLPrediction {
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  predictedChannel    NotificationChannel
+  predictedTime       DateTime
+  confidenceScore     Float
+  
+  modelVersion        String
+  features            Json
+  
+  actualChannel       NotificationChannel?
+  actualTime          DateTime?
+  wasAccurate         Boolean?
+  
+  createdAt           DateTime            @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ml_predictions")
+}
+
+model Campaign {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  
+  type              NotificationType
+  targetChannels    NotificationChannel[]
+  
+  content           Json
+  
+  scheduledAt       DateTime
+  completedAt       DateTime?
+  
+  totalTargets      Int                 @default(0)
+  totalSent         Int                 @default(0)
+  totalDelivered    Int                 @default(0)
+  totalOpened       Int                 @default(0)
+  totalClicked      Int                 @default(0)
+  totalConverted    Int                 @default(0)
+  
+  status            String              @default("draft")
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@map("campaigns")
+}
+
+model AnalyticsSnapshot {
+  id                String              @id @default(cuid())
+  
+  date              DateTime            @unique
+  
+  totalSent         Int                 @default(0)
+  totalDelivered    Int                 @default(0)
+  totalOpened       Int                 @default(0)
+  totalClicked      Int                 @default(0)
+  
+  emailMetrics      Json?
+  whatsappMetrics   Json?
+  smsMetrics        Json?
+  pushMetrics       Json?
+  
+  avgResponseTime   Float?
+  optOutRate        Float?
+  
+  createdAt         DateTime            @default(now())
+  
+  @@index([date])
+  @@map("analytics_snapshots")
 }

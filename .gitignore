@@ -45,6 +45,13 @@ next-env.d.ts
 # OS
 Thumbs.db
 
+# Backup files
+*.backup
+*.bak
+*.bak2
+*.old
+*.tmp
+
 .github/instructions/kluster-code-verify.instructions.md
 .kluster
 

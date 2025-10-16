@@ -13,6 +13,7 @@ import { trackLeadCapture } from '@/lib/conversion-tracking'
 import { MarketingOptIn } from '@/components/privacy/MarketingOptIn'
 import { setMarketingConsent } from '@/lib/privacy'
 import { Calculator, Phone, MessageCircle, Shield, CheckCircle } from 'lucide-react'
+import { logger, LogCategory } from '@/lib/logger'
 
 interface LeadCaptureFormProps {
     variant?: 'hero' | 'calculator' | 'inline'
@@ -96,7 +97,9 @@ export function LeadCaptureForm({
             })
 
         } catch (error) {
-            console.error('Erro ao enviar formulário:', error)
+            logger.error(LogCategory.BUSINESS, 'Failed to submit lead form', error as Error, {
+                variant
+            })
         } finally {
             setIsSubmitting(false)
         }
