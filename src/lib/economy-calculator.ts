@@ -131,16 +131,6 @@ function getRecommendedPlan(
         }
     }
 
-    if (usage === 'regular' || annualSavings > 600) {
-        // Usuário regular com boa economia - Premium
-        return {
-            id: 'premium',
-            name: 'Plano Premium',
-            price: 149.90,
-            savings: annualSavings + 150
-        }
-    }
-
     if (annualSavings > 1000) {
         // Alta economia - VIP pode valer a pena
         return {
@@ -148,6 +138,16 @@ function getRecommendedPlan(
             name: 'Plano VIP',
             price: 249.90,
             savings: annualSavings + 400 // Economia com exames e atendimento domiciliar
+        }
+    }
+
+    if (usage === 'regular' || annualSavings > 600) {
+        // Usuário regular com boa economia - Premium
+        return {
+            id: 'premium',
+            name: 'Plano Premium',
+            price: 149.90,
+            savings: annualSavings + 150
         }
     }
 
