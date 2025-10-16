@@ -1,9 +1,11 @@
 /**
  * WhatsApp Support Integration API
- * Main endpoint for customer support via WhatsApp with LangChain integration
+ * Main endpoint for customer support via WhatsApp with LangGraph integration
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { langGraphAgent, conversationMemory } from '@/lib/langgraph'
+import { whatsappClient } from '@/lib/langgraph/whatsapp-client'
 
 // Webhook verification for WhatsApp Cloud API
 export async function GET(request: NextRequest) {
@@ -68,7 +70,7 @@ async function processWhatsAppWebhook(body: any) {
 }
 
 /**
- * Process individual incoming message
+ * Process individual incoming message with LangGraph
  */
 async function processIncomingMessage(message: any, metadata: any) {
   try {
@@ -84,16 +86,63 @@ async function processIncomingMessage(message: any, metadata: any) {
     const customerPhone = message.from
     const messageId = message.id
 
-    // Mock processing for testing
     console.log(`Processing WhatsApp message from ${customerPhone}: ${messageContent}`)
 
-    // Store mock interaction
-    const mockResponse = `Olá! Recebemos sua mensagem: "${messageContent}". Em breve um de nossos atendentes irá responder.`
+    // Get conversation history
+    const conversationHistory = conversationMemory.getConversation(customerPhone)
 
-    console.log(`Generated response: ${mockResponse}`)
+    // Add user message to memory
+    conversationMemory.addUserMessage(customerPhone, messageContent)
+
+    // Process with LangGraph agent
+    const result = await langGraphAgent.processMessage(
+      messageContent,
+      customerPhone,
+      undefined,
+      conversationHistory
+    )
+
+    // Add AI response to memory
+    conversationMemory.addAIMessage(customerPhone, result.response)
+
+    // Mark as escalated if needed
+    if (result.escalationRequired) {
+      conversationMemory.markAsEscalated(customerPhone)
+    }
+
+    // Log the interaction
+    console.log(`LangGraph response for ${customerPhone}:`, {
+      response: result.response.slice(0, 100) + '...',
+      escalationRequired: result.escalationRequired,
+      toolsUsed: result.toolsUsed,
+    })
+
+    // Mark message as read
+    await whatsappClient.markAsRead(messageId)
+
+    // Send reaction to show message was received
+    await whatsappClient.sendReaction(customerPhone, messageId, '👀')
+
+    // Send the AI response back via WhatsApp API
+    await whatsappClient.sendTextMessage(customerPhone, result.response)
+
+    // If escalated, notify team
+    if (result.escalationRequired) {
+      console.log(`🚨 Conversation escalated for ${customerPhone}`)
+      // In production: send notification to support team
+    }
 
   } catch (error) {
     console.error('Error processing incoming message:', error)
+    
+    // Send fallback response
+    const fallbackResponse = 'Desculpe, tive um problema técnico. Um atendente entrará em contato em breve.'
+    
+    try {
+      await whatsappClient.sendTextMessage(message.from, fallbackResponse)
+    } catch (sendError) {
+      console.error('Error sending fallback message:', sendError)
+    }
   }
 }
 

@@ -1,4 +1,12 @@
 import '@testing-library/jest-dom'
+import { TextEncoder, TextDecoder } from 'util'
+import { ReadableStream, TransformStream } from 'stream/web'
+
+// Polyfill for LangChain/LangGraph
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+global.ReadableStream = ReadableStream
+global.TransformStream = TransformStream
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
