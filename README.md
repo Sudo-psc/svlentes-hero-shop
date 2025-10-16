@@ -12,6 +12,7 @@ Landing page para assinatura de lentes de contato com acompanhamento médico esp
 - **TypeScript** - Tipagem estática
 - **Tailwind CSS v4** - Framework CSS utilitário
 - **Asaas API v3** - Gateway de pagamento brasileiro (PIX, Boleto, Cartão de Crédito)
+- **SendPulse API** - Integração WhatsApp Business para mensagens automáticas
 - **Zod** - Validação de schemas
 - **React Hook Form** - Gerenciamento de formulários
 - **Framer Motion** - Animações
@@ -22,6 +23,7 @@ Landing page para assinatura de lentes de contato com acompanhamento médico esp
 - Node.js 18+
 - npm ou yarn
 - Conta no Asaas (para pagamentos - [asaas.com](https://www.asaas.com))
+- Conta no SendPulse (para WhatsApp Business - [sendpulse.com](https://sendpulse.com))
 
 ## 🛠️ Instalação
 
@@ -88,6 +90,8 @@ src/
 - [x] Hero Section com formulário de leads
 - [x] Seção de planos e preços
 - [x] Integração com Asaas (PIX, Boleto, Cartão)
+- [x] Integração WhatsApp Business via SendPulse
+- [x] Sistema de resposta automática WhatsApp
 - [x] Calculadora de economia
 - [x] FAQ interativo
 - [x] Sistema de testes (Jest + Playwright)
@@ -100,6 +104,24 @@ src/
 - `npm run build` - Gera build de produção
 - `npm run start` - Executa build de produção
 - `npm run lint` - Executa linting
+
+## 📱 WhatsApp Business Integration
+
+Este projeto integra com SendPulse para automatizar comunicação via WhatsApp Business:
+
+- **Envio de mensagens**: API para enviar mensagens contextuais aos clientes
+- **Recebimento via webhook**: Processamento automático de mensagens recebidas
+- **Respostas automáticas**: Sistema inteligente de resposta baseado em palavras-chave
+- **Gestão de contatos**: Sincronização automática de informações de clientes
+
+Para configurar a integração, consulte:
+- `SENDPULSE_INTEGRATION.md` - Documentação técnica completa
+- `SENDPULSE_SETUP_GUIDE.md` - Guia passo-a-passo de configuração
+
+Testar integração:
+```bash
+node scripts/test-sendpulse.js
+```
 
 ## 📝 Especificações
 
