@@ -1,0 +1,84 @@
+
+> svlentes-landing-page@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.5
+   - Environments: .env.local, .env.production, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 32.6s
+   Skipping validation of types
+   Linting ...
+   Collecting page data ...
+   Generating static pages (0/35) ...
+   Generating static pages (8/35) 
+   Generating static pages (17/35) 
+[WordPress API] HTTP 404 for https://svlentes.shop/wp-json/wp/v2/posts?page=1&per_page=6&_embed=true&_fields=id%2Ctitle%2Cexcerpt%2Cslug%2Cdate%2Cmodified%2Cauthor%2Cfeatured_media%2Ccategories%2Ctags%2C_embedded&status=publish&orderby=date&order=desc (Not Found)
+[WordPress API] getPosts error: HTTP 404: Not Found
+[WordPress API] HTTP 404 for https://svlentes.shop/wp-json/wp/v2/posts?page=1&per_page=100&_embed=true&_fields=id%2Ctitle%2Cexcerpt%2Cslug%2Cdate%2Cmodified%2Cauthor%2Cfeatured_media%2Ccategories%2Ctags%2C_embedded&status=publish&orderby=date&order=desc (Not Found)
+[WordPress API] getPosts error: HTTP 404: Not Found
+[WordPress API] HTTP 404 for https://svlentes.shop/wp-json/wp/v2/categories?per_page=100&orderby=count&order=desc&hide_empty=true (Not Found)
+[WordPress API] getCategories error: HTTP 404: Not Found
+   Generating static pages (26/35) 
+ ✓ Generating static pages (35/35)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS  Revalidate  Expire
+┌ ○ /                                    7.17 kB         168 kB
+├ ○ /_not-found                            196 B         102 kB
+├ ƒ /agendar-consulta                      196 B         102 kB
+├ ƒ /api/analytics/support                 196 B         102 kB
+├ ƒ /api/asaas/create-payment              196 B         102 kB
+├ ƒ /api/assinante/register                196 B         102 kB
+├ ƒ /api/assinante/subscription            196 B         102 kB
+├ ƒ /api/auth/forgot-password              196 B         102 kB
+├ ƒ /api/auth/resend-verification          196 B         102 kB
+├ ƒ /api/auth/reset-password               196 B         102 kB
+├ ƒ /api/auth/verify-email                 196 B         102 kB
+├ ƒ /api/create-checkout                   196 B         102 kB
+├ ƒ /api/health-check                      196 B         102 kB
+├ ƒ /api/monitoring/alerts                 196 B         102 kB
+├ ƒ /api/monitoring/errors                 196 B         102 kB
+├ ƒ /api/monitoring/performance            196 B         102 kB
+├ ƒ /api/privacy/consent-log               196 B         102 kB
+├ ƒ /api/privacy/data-request              196 B         102 kB
+├ ƒ /api/schedule-consultation             196 B         102 kB
+├ ƒ /api/webhooks/asaas                    196 B         102 kB
+├ ƒ /api/whatsapp-redirect                 196 B         102 kB
+├ ○ /area-assinante/dashboard            5.21 kB         156 kB
+├ ○ /area-assinante/login                1.77 kB         160 kB
+├ ○ /area-assinante/registro             2.25 kB         161 kB
+├ ○ /assinar                             9.66 kB         119 kB
+├ ○ /auth/forgot-password                 4.4 kB         159 kB
+├ ○ /auth/reset-password                 3.86 kB         122 kB
+├ ○ /auth/verify-email                   3.51 kB         122 kB
+├ ○ /blog                                  175 B         111 kB          1m      1y
+├ ƒ /blog/busca                          1.23 kB         112 kB
+├ ƒ /blog/categoria/[slug]               1.23 kB         112 kB
+├ ○ /calculadora                          5.4 kB         118 kB
+├ ○ /cancel                                168 B         105 kB
+├ ○ /color-palette                       2.99 kB         113 kB
+├ ƒ /como-funciona                       8.31 kB         170 kB
+├ ○ /lentes                                196 B         102 kB
+├ ƒ /lentes-diarias                      12.9 kB         176 kB
+├ ○ /lentes-redirect                     1.05 kB         103 kB
+├ ○ /planos                              10.2 kB         124 kB
+├ ○ /politica-privacidade                  196 B         102 kB
+├ ○ /robots.txt                            196 B         102 kB
+├ ○ /shadcn-demo                         16.9 kB         131 kB
+├ ○ /sitemap.xml                           196 B         102 kB          1m      1y
+├ ƒ /success                             5.74 kB         119 kB
+├ ○ /termos-uso                            196 B         102 kB
+└ ○ /test-personalization                13.8 kB         116 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-ba098675cb6696ab.js      45.7 kB
+  ├ chunks/4bd1b696-f785427dddbba9fb.js  54.2 kB
+  └ other shared chunks (total)          1.94 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
