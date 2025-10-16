@@ -1,4 +1,4 @@
-import { sendPulseClient } from '@/lib/sendpulse-client'
+import { sendPulseWhatsAppClient } from '@/lib/sendpulse-whatsapp'
 import { NotificationChannel } from '@/types/reminders'
 
 export interface ReminderMessage {
@@ -43,7 +43,7 @@ export class SendPulseReminderService {
       }
 
       if (reminder.quickReplies && reminder.quickReplies.length > 0) {
-        const result = await sendPulseClient.sendMessageWithQuickReplies(
+        const result = await sendPulseWhatsAppClient.sendMessageWithQuickReplies(
           reminder.phone,
           reminder.message,
           reminder.quickReplies
@@ -51,7 +51,7 @@ export class SendPulseReminderService {
         
         return result && !result.error
       } else {
-        const result = await sendPulseClient.sendMessage({
+        const result = await sendPulseWhatsAppClient.sendMessage({
           phone: reminder.phone,
           message: reminder.message
         })
@@ -91,7 +91,7 @@ export class SendPulseReminderService {
         throw new Error('Phone number required for SMS reminders')
       }
 
-      const result = await sendPulseClient.sendMessage({
+      const result = await sendPulseWhatsAppClient.sendMessage({
         phone: reminder.phone,
         message: reminder.message
       })
@@ -151,7 +151,7 @@ export class SendPulseReminderService {
         return
       }
 
-      await sendPulseClient.createOrUpdateContact({
+      await sendPulseWhatsAppClient.createOrUpdateContact({
         phone: reminder.phone,
         name: reminder.name,
         email: reminder.email,

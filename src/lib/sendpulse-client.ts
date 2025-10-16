@@ -71,15 +71,46 @@ interface SendPulseWebhookData {
 }
 
 export class SendPulseClient {
-  private apiToken: string
+  private clientId: string
+  private clientSecret: string
   private webhookToken: string
   private baseUrl: string
+  private accessToken: string | null = null
+  private tokenExpiry: number = 0
 
   constructor() {
-    this.apiToken = process.env.SENDPULSE_API_TOKEN || ''
+    this.clientId = process.env.SENDPULSE_CLIENT_ID || ''
+    this.clientSecret = process.env.SENDPULSE_CLIENT_SECRET || ''
     this.webhookToken = process.env.SENDPULSE_WEBHOOK_TOKEN || ''
-    // SendPulse Brazilian WhatsApp API uses different base URL
-    this.baseUrl = 'https://api.sendpulse.com/360/v1/whatsapp'
+    this.baseUrl = 'https://api.sendpulse.com'
+  }
+
+  private async getAccessToken(): Promise<string> {
+    if (this.accessToken && Date.now() < this.tokenExpiry) {
+      return this.accessToken
+    }
+
+    const response = await fetch(`${this.baseUrl}/oauth/access_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        grant_type: 'client_credentials',
+        client_id: this.clientId,
+        client_secret: this.clientSecret
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`SendPulse OAuth failed: ${response.status}`)
+    }
+
+    const data = await response.json()
+    this.accessToken = data.access_token
+    this.tokenExpiry = Date.now() + (data.expires_in - 60) * 1000
+
+    return this.accessToken
   }
 
   /**
@@ -87,7 +118,9 @@ export class SendPulseClient {
    */
   async sendMessage(params: SendPulseMessage): Promise<any> {
     try {
-      if (!this.apiToken) {
+      const token = await this.getAccessToken()
+      
+      if (!token) {
         throw new Error('SendPulse API token not configured')
       }
 

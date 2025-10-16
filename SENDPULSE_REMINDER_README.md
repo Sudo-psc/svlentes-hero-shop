@@ -125,14 +125,19 @@ curl -X POST http://localhost:3000/api/reminders/bulk \
 Add to `.env.local`:
 
 ```bash
-# SendPulse Configuration
-SENDPULSE_API_TOKEN=your_api_token_here
+# SendPulse Configuration (OAuth2)
+SENDPULSE_CLIENT_ID=your_client_id_here
+SENDPULSE_CLIENT_SECRET=your_client_secret_here
 SENDPULSE_WEBHOOK_TOKEN=your_webhook_token_here
-NEXT_PUBLIC_SENDPULSE_PHONE_NUMBER_ID=your_phone_number_id
 
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/svlentes
 ```
+
+**Como obter credenciais:**
+1. Acesse [SendPulse Settings → API](https://login.sendpulse.com/settings)
+2. Copie o **ID** para `SENDPULSE_CLIENT_ID`
+3. Copie o **Secret** para `SENDPULSE_CLIENT_SECRET`
 
 ## Supported Channels
 
