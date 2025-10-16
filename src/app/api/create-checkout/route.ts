@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { asaas } from '@/lib/asaas'
 import { pricingPlans } from '@/data/pricing-plans'
+import { logger, LogCategory } from '@/lib/logger'
 
 // Schema para validação dos dados do checkout
 const checkoutRequestSchema = z.object({
@@ -132,15 +133,10 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Log da criação para analytics
-        console.log('Checkout Asaas created:', {
+        logger.logPayment('checkout_created', {
             customerId: customer.id,
             subscriptionId: subscription.id,
             paymentId: firstPayment?.id,
-            planId,
-            billingInterval,
-            billingType,
-            amount: planValue,
         })
 
         return NextResponse.json({
@@ -180,9 +176,8 @@ export async function POST(request: NextRequest) {
         })
 
     } catch (error) {
-        console.error('Erro ao criar checkout Asaas:', error)
+        logger.error(LogCategory.PAYMENT, 'Failed to create checkout', error as Error)
 
-        // Tratar erros de validação
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 {
@@ -196,7 +191,6 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Tratar erros da API Asaas
         if (error instanceof Error && error.message.includes('Asaas')) {
             return NextResponse.json(
                 { error: 'Erro no processamento do pagamento. Tente novamente.' },
@@ -204,7 +198,6 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Erro genérico
         return NextResponse.json(
             { error: 'Erro interno do servidor. Tente novamente.' },
             { status: 500 }
@@ -233,7 +226,7 @@ export async function GET() {
         })
 
     } catch (error) {
-        console.error('Erro ao obter informações dos planos:', error)
+        logger.error(LogCategory.API, 'Failed to fetch plans info', error as Error)
         return NextResponse.json(
             { error: 'Erro ao carregar informações dos planos' },
             { status: 500 }
