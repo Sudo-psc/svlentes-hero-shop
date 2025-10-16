@@ -130,27 +130,26 @@ export class NotificationService {
   }
 
   /**
-   * Send WhatsApp notification
+   * Send WhatsApp notification via SendPulse
    */
   private async sendWhatsApp(notification: any): Promise<boolean> {
     try {
-      // TODO: Import WhatsApp service when implemented
-      // const { sendWhatsAppMessage } = await import('@/lib/whatsapp')
+      const { sendPulseClient } = await import('@/lib/sendpulse-client')
       
-      const phone = notification.user.phone || notification.metadata?.phone
+      const phone = notification.user.whatsapp || notification.user.phone || notification.metadata?.phone
       if (!phone) {
         throw new Error('Phone number not available')
       }
 
-      // TODO: Uncomment when sendWhatsAppMessage is implemented
-      // const result = await sendWhatsAppMessage({
-      //   to: phone,
-      //   message: notification.content,
-      // })
-      // return result.success
+      const quickReplies = notification.metadata?.quickReplies || []
+      
+      const result = await sendPulseClient.sendMessageWithQuickReplies({
+        phone,
+        message: notification.content,
+        quickReplies
+      })
 
-      console.log('WhatsApp send not yet fully integrated:', { phone, content: notification.content })
-      return false
+      return result && !result.error
     } catch (error) {
       console.error('WhatsApp send failed:', error)
       return false
@@ -158,13 +157,23 @@ export class NotificationService {
   }
 
   /**
-   * Send SMS notification
+   * Send SMS notification via SendPulse
    */
   private async sendSMS(notification: any): Promise<boolean> {
     try {
-      // TODO: Implement SMS integration with Twilio
-      console.log('SMS sending not yet implemented:', notification)
-      return false
+      const { sendPulseClient } = await import('@/lib/sendpulse-client')
+      
+      const phone = notification.user.phone || notification.metadata?.phone
+      if (!phone) {
+        throw new Error('Phone number not available')
+      }
+
+      const result = await sendPulseClient.sendMessage({
+        phone,
+        message: notification.content
+      })
+
+      return result && !result.error
     } catch (error) {
       console.error('SMS send failed:', error)
       return false
