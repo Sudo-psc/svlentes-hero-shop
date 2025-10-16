@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { Calculator, Plus, Minus, CheckCircle, ArrowRight } from 'lucide-react'
+import { BUSINESS_CONSTANTS } from '@/lib/constants'
 
 interface CalculatorData {
     currentSpending: string
@@ -24,12 +25,7 @@ interface EconomyResult {
     planPrice: number
 }
 
-const addOnPrices = {
-    solution: 25,
-    drops: 15,
-    case: 10,
-    consultation: 80
-}
+const addOnPrices = BUSINESS_CONSTANTS.addOnPrices
 
 const addOnDescriptions = {
     solution: 'Solução de limpeza mensal',
@@ -56,12 +52,7 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
     const calculateEconomy = (): EconomyResult => {
         const currentSpending = parseFloat(calculatorData.currentSpending) || 0
 
-        // Preço base do plano conforme tipo de lente
-        const basePlanPrice = {
-            mensal: 89,
-            trimestral: 79,
-            semestral: 69
-        }[calculatorData.lensType]
+        const basePlanPrice = BUSINESS_CONSTANTS.planBasePrices[calculatorData.lensType]
 
         // Calcular preço dos add-ons
         const addOnsTotal = Object.entries(calculatorData.addOns)
@@ -109,11 +100,7 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
         .filter(([_, selected]) => selected)
         .reduce((total, [addOn]) => total + addOnPrices[addOn as keyof typeof addOnPrices], 0)
 
-    const basePlanPrice = {
-        mensal: 89,
-        trimestral: 79,
-        semestral: 69
-    }[calculatorData.lensType]
+    const basePlanPrice = BUSINESS_CONSTANTS.planBasePrices[calculatorData.lensType]
 
     const totalPlanPrice = basePlanPrice + selectedAddOnsTotal
 

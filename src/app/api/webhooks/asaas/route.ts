@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { logger, LogCategory } from '@/lib/logger'
 
-// Prevent this route from being evaluated at build time
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
@@ -44,13 +44,13 @@ interface WebhookLog {
 }
 
 function logWebhookEvent(log: WebhookLog) {
-    const logEntry = {
-        ...log,
-        timestamp: new Date().toISOString(),
-        source: 'asaas_webhook'
-    }
-
-    console.log('ASAAS_WEBHOOK_EVENT:', JSON.stringify(logEntry))
+    logger.logWebhook(log.eventType, {
+        paymentId: log.paymentId,
+        customerId: log.customerId,
+        subscriptionId: log.subscriptionId,
+        statusCode: log.status === 'success' ? 200 : 500,
+        ...log.details
+    })
 }
 
 async function handlePaymentCreated(payment: any) {
@@ -70,14 +70,10 @@ async function handlePaymentCreated(payment: any) {
             }
         })
 
-        console.log('PAYMENT_CREATED:', {
-            paymentId: payment.id,
-            customer: payment.customer,
-            value: payment.value,
-            billingType: payment.billingType,
-        })
     } catch (error) {
-        console.error('Error handling payment created:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment created', error as Error, {
+            paymentId: payment.id,
+        })
         throw error
     }
 }
