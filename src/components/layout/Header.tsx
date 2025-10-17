@@ -39,6 +39,7 @@ export function Header({ className }: HeaderProps) {
     }, [])
 
     const navigation = [
+        { name: 'Calculadora', href: '/calculadora', isAnchor: false },
         { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
         { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
         { name: 'Blog', href: '/blog', isAnchor: false },
