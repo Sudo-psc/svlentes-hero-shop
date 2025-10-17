@@ -41,11 +41,15 @@ systemctl status svlentes-nextjs    # Check service status
 systemctl restart svlentes-nextjs   # Restart after deployment
 journalctl -u svlentes-nextjs -f    # View live logs
 
-# Reverse Proxy (Caddy)
-systemctl status caddy              # Check Caddy status
-caddy validate --config /etc/caddy/Caddyfile  # Test configuration
-caddy reload --config /etc/caddy/Caddyfile    # Reload without downtime
-journalctl -u caddy -f              # Real-time logs
+# Reverse Proxy (Nginx)
+systemctl status nginx              # Check Nginx status
+nginx -t                            # Test configuration validity
+systemctl reload nginx              # Reload without downtime
+journalctl -u nginx -f              # Real-time logs
+
+# View Nginx configuration
+cat /etc/nginx/sites-enabled/svlentes.com.br
+cat /etc/nginx/sites-enabled/svlentes.shop
 ```
 
 ### Asset Management
@@ -293,10 +297,12 @@ curl https://svlentes.com.br/api/health-check
 - [ ] Production build successful (`npm run build`)
 - [ ] Environment variables configured
 - [ ] Asaas production keys active
-- [ ] SSL certificates valid (Caddy manages automatically)
+- [ ] SSL certificates valid (Let's Encrypt via Certbot)
+- [ ] Nginx configuration tested (`nginx -t`)
 - [ ] Health check endpoint responding
 - [ ] Database migrations applied
 - [ ] Monitoring alerts configured
+- [ ] Clear Next.js build cache if needed (`rm -rf .next`)
 
 ## API Endpoints
 
@@ -351,6 +357,124 @@ curl https://svlentes.com.br/api/health-check
 - **Email**: saraivavision@gmail.com
 - **Website**: svlentes.shop
 - **Responsible Physician**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
+
+## Nginx Reverse Proxy Configuration
+
+### Overview
+The application uses **Nginx 1.24.0** as reverse proxy for SSL termination and routing.
+
+### Virtual Hosts
+- **svlentes.com.br** (primary domain) → proxies to `localhost:5000`
+- **svlentes.shop** (alternative) → redirects to `svlentes.com.br`
+
+### Key Features
+- **SSL/TLS**: Let's Encrypt certificates with auto-renewal via Certbot
+- **HTTP/2**: Enabled for performance
+- **Security Headers**: HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+- **Static Asset Caching**: `/_next/static` cached for 365 days
+- **Image Optimization**: 1-year expiry for images/fonts
+- **Client Max Body**: 10MB limit
+
+### Configuration Files
+```
+/etc/nginx/sites-available/svlentes.com.br  # Main config
+/etc/nginx/sites-available/svlentes.shop     # Redirect config
+/etc/nginx/sites-enabled/                    # Symlinks to enabled sites
+```
+
+### SSL Certificate Management
+```bash
+# List certificates
+certbot certificates
+
+# Renew certificates (automatic via systemd timer)
+certbot renew
+
+# Test auto-renewal
+certbot renew --dry-run
+
+# View certificate expiry
+certbot certificates | grep Expiry
+
+# Manual renewal if needed
+certbot renew --force-renewal
+systemctl reload nginx
+```
+
+### Cache Management
+```bash
+# Clear Next.js build cache
+rm -rf .next
+
+# Rebuild application
+npm run build
+
+# Restart services
+systemctl restart svlentes-nextjs
+systemctl reload nginx
+
+# Force browser cache clear
+# Note: Nginx caches /_next/static for 365 days
+# Users may need Ctrl+F5 (hard refresh) after updates
+```
+
+### Common Nginx Operations
+```bash
+# Test configuration before applying
+nginx -t
+
+# Reload configuration (no downtime)
+systemctl reload nginx
+
+# Restart Nginx (brief downtime)
+systemctl restart nginx
+
+# View access logs
+tail -f /var/log/nginx/svlentes.com.br.access.log
+
+# View error logs
+tail -f /var/log/nginx/error.log
+
+# Check which process is using port 443
+lsof -ti:443
+```
+
+### Troubleshooting Nginx
+
+**Configuration Test Warnings:**
+```
+protocol options redefined for [::]:443
+```
+This is a known warning when multiple virtual hosts use the same SSL settings. It's safe to ignore.
+
+**Port Already in Use:**
+```bash
+# Check what's using port 80/443
+netstat -tlnp | grep -E ":80|:443"
+
+# If needed, stop conflicting service
+systemctl stop caddy  # If Caddy is running
+```
+
+**SSL Certificate Issues:**
+```bash
+# Verify certificate files exist
+ls -la /etc/letsencrypt/live/svlentes.com.br/
+ls -la /etc/letsencrypt/live/svlentes.shop/
+
+# Test SSL connection
+openssl s_client -connect svlentes.com.br:443 -servername svlentes.com.br
+
+# Check certificate expiry
+openssl x509 -in /etc/letsencrypt/live/svlentes.com.br/fullchain.pem -text -noout | grep "Not After"
+```
+
+**Changes Not Reflecting:**
+1. Clear Next.js cache: `rm -rf .next`
+2. Rebuild: `npm run build`
+3. Restart Next.js: `systemctl restart svlentes-nextjs`
+4. Reload Nginx: `systemctl reload nginx`
+5. Clear browser cache: Ctrl+F5 (hard refresh)
 
 ## Troubleshooting
 
