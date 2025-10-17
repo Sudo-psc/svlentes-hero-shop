@@ -74,6 +74,40 @@ export function MyComponent({ prop }: ComponentProps) {
 5. **Run tests after changes**: `npm run test && npm run build` before considering done
 6. **kluster verification**: Run `kluster_code_review_auto` after ANY file change
 
+## LangChain & LangSmith Observability
+
+### LangSmith Configuration
+LangSmith provides observability for LangChain operations (support chatbot, AI agents).
+
+**Environment Variables:**
+```bash
+LANGCHAIN_TRACING_V2=true                              # Enable tracing
+LANGCHAIN_API_KEY="lsv2_pt_your_key_here"             # Get from smith.langchain.com
+LANGCHAIN_PROJECT="svlentes-whatsapp-support"         # Project name
+LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"  # Default endpoint
+OPENAI_API_KEY="sk-your_openai_key"                   # For LLM calls
+```
+
+**Key Files:**
+- `/src/lib/langsmith-config.ts` - Configuration utilities
+- `/src/lib/langchain-support-processor.ts` - Support chatbot with tracing
+- `/docs/LANGSMITH_SETUP.md` - Complete setup guide
+
+**Features:**
+- ✅ Automatic tracing of all LLM calls
+- ✅ Step-by-step execution tracking (intent, response, escalation)
+- ✅ Rich metadata (user context, intent, sentiment, priority)
+- ✅ Performance monitoring (latency, tokens, costs)
+- ✅ Error tracking and debugging
+
+**Quick Start:**
+1. Sign up at https://smith.langchain.com/
+2. Create API key and add to `.env`
+3. Set `LANGCHAIN_TRACING_V2=true`
+4. View traces at https://smith.langchain.com/
+
+See `/docs/LANGSMITH_SETUP.md` for detailed documentation.
+
 ## Infrastructure & Deployment
 
 ### Reverse Proxy (Currently: Caddy) ✅ MIGRATED

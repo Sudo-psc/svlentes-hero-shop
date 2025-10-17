@@ -28,6 +28,8 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.production
+.env.tmp
 
 # vercel
 .vercel
@@ -45,15 +47,14 @@ next-env.d.ts
 # OS
 Thumbs.db
 
-# Backup files
-*.backup
-*.bak
-*.bak2
-*.old
-*.tmp
-
 .github/instructions/kluster-code-verify.instructions.md
 .kluster
 
 /generated/prisma
-.venv/
+
+# Replit state files
+.local/
+*.bin
+
+# Temporary files
+*.tmp

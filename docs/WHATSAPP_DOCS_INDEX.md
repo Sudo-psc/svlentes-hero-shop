@@ -277,7 +277,68 @@ Usar: WHATSAPP_CLOUD_API_IMPLEMENTATION.md (seção Deployment)
 
 ---
 
+## 4️⃣ [Configuração LangSmith para Observabilidade](./LANGSMITH_SETUP.md)
+
+**Tamanho**: 8KB | **Linhas**: ~300
+
+### Conteúdo:
+- ✅ Visão geral do LangSmith
+- ✅ Quick start (criar conta, obter API key)
+- ✅ Configuração de environment variables
+- ✅ Features & capabilities (tracing automático, metadata, step-by-step tracking)
+- ✅ Como usar o dashboard LangSmith
+- ✅ Monitorar performance e custos
+- ✅ Debug de issues
+- ✅ Otimizar prompts
+- ✅ Configuração avançada (por ambiente)
+- ✅ Métricas & analytics
+- ✅ Segurança & privacidade (LGPD compliance)
+- ✅ Troubleshooting
+- ✅ Best practices
+
+### Quando usar:
+- Para configurar observabilidade no projeto
+- Para monitorar agentes LangChain em produção
+- Para debug de prompts e chains
+- Para otimizar custos de LLM
+
+---
+
+## 5️⃣ [Exemplos de Uso LangSmith](./LANGSMITH_EXAMPLE.md)
+
+**Tamanho**: 9KB | **Linhas**: ~320
+
+### Conteúdo:
+- ✅ Exemplo básico de LangChain call com tracing
+- ✅ Chain execution com tracing
+- ✅ Integração WhatsApp Support (caso real)
+- ✅ Como visualizar traces no dashboard
+- ✅ Como filtrar traces (por user, intent, tags, performance, cost)
+- ✅ Exemplo de debug (intent classification not working)
+- ✅ Exemplo de otimização de performance
+- ✅ Exemplo de tracking de custos
+- ✅ Exemplo de tracking de erros
+- ✅ Best practices com exemplos de código
+- ✅ Troubleshooting comum
+
+### Quando usar:
+- Como referência de código para implementação
+- Para entender como usar LangSmith na prática
+- Para debug e otimização de agentes
+
+---
+
 ## 📝 Changelog
+
+### v1.1.0 - 2025-10-16
+- ✅ **NOVO**: Documentação completa LangSmith (setup + examples)
+- ✅ **NOVO**: Módulo de configuração LangSmith (`src/lib/langsmith-config.ts`)
+- ✅ **NOVO**: Integração LangSmith no support processor
+- ✅ **NOVO**: Testes unitários para configuração LangSmith (12 tests)
+- ✅ **NOVO**: Atualização AGENTS.md com seção LangSmith
+- ✅ Tracing automático de todas operações LangChain
+- ✅ Metadata rica para análise (userId, intent, sentiment, priority)
+- ✅ Step-by-step tracking (emergency, intent, response, escalation)
 
 ### v1.0.0 - 2025-10-16
 - ✅ Documentação inicial criada
@@ -286,6 +347,7 @@ Usar: WHATSAPP_CLOUD_API_IMPLEMENTATION.md (seção Deployment)
 
 ### Contribuidores
 - Pesquisa e documentação: Claude (Anthropic)
+- Implementação LangSmith: GitHub Copilot
 - Revisão técnica: Necessária
 
 ---

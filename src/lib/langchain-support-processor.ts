@@ -10,6 +10,7 @@ import { RunnableSequence, RunnableMap } from '@langchain/core/runnables'
 import { Document } from '@langchain/core/documents'
 import { SupportKnowledgeBase, FAQCategory } from './support-knowledge-base'
 import { supportTicketManager, TicketCategory, TicketPriority } from './support-ticket-manager'
+import { getLangSmithConfig, logLangSmithStatus, getLangSmithRunConfig } from './langsmith-config'
 
 interface SupportIntent {
   name: string
@@ -189,13 +190,18 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
   private escalationChain: RunnableSequence<any, string>
 
   constructor() {
+    const langsmithConfig = getLangSmithConfig()
+    
     this.llm = new ChatOpenAI({
       modelName: 'gpt-4-turbo-preview',
       temperature: 0.3,
-      openAIApiKey: process.env.OPENAI_API_KEY
+      openAIApiKey: process.env.OPENAI_API_KEY,
+      callbacks: langsmithConfig.tracingEnabled ? undefined : []
     })
     this.knowledgeBase = new SupportKnowledgeBase()
     this.initializeChains()
+    
+    logLangSmithStatus()
   }
 
   private initializeChains(): void {
@@ -243,6 +249,15 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     ticketCreated: boolean
     actions: string[]
   }> {
+    const runConfig = getLangSmithRunConfig({
+      userId: context.userProfile?.id,
+      userName: context.userProfile?.name,
+      hasSubscription: !!context.subscriptionInfo,
+      messageLength: message.length,
+      conversationLength: context.conversationHistory.length,
+      tags: ['whatsapp-support', 'customer-service']
+    })
+
     try {
       // Step 1: Check for emergency
       const emergencyCheck = await this.detectEmergency(message)
@@ -293,11 +308,16 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     const history = context.conversationHistory.slice(-5).join(' | ')
     const customerData = this.formatCustomerData(context)
 
+    const runConfig = getLangSmithRunConfig({
+      step: 'intent-classification',
+      tags: ['intent', 'classification', 'support']
+    })
+
     const result = await this.intentChain.invoke({
       message,
       history,
       customerData
-    })
+    }, runConfig)
 
     return result
   }
@@ -348,7 +368,11 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
    */
   private async detectEmergency(message: string): Promise<string> {
     try {
-      return await this.emergencyChain.invoke({ message })
+      const runConfig = getLangSmithRunConfig({
+        step: 'emergency-detection',
+        tags: ['emergency', 'safety', 'critical']
+      })
+      return await this.emergencyChain.invoke({ message }, runConfig)
     } catch (error) {
       console.error('Error detecting emergency:', error)
       return 'EMERGENCY_FALSE'
@@ -413,6 +437,15 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
 
     const specificInstructions = this.getSpecificInstructions(intent)
 
+    const runConfig = getLangSmithRunConfig({
+      step: 'response-generation',
+      intent: intent.name,
+      category: intent.category,
+      priority: intent.priority,
+      sentiment: intent.entities.sentiment,
+      tags: ['response', 'generation', intent.category]
+    })
+
     return await this.responseChain.invoke({
       customerName,
       customerType,
@@ -426,7 +459,7 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       originalMessage,
       knowledgeBase: knowledgeBaseInfo,
       specificInstructions
-    })
+    }, runConfig)
   }
 
   /**
@@ -464,13 +497,21 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     const attempts = context.conversationHistory.length
 
     try {
+      const runConfig = getLangSmithRunConfig({
+        step: 'escalation-decision',
+        intent: intent.name,
+        priority: intent.priority,
+        attempts,
+        tags: ['escalation', 'decision', 'routing']
+      })
+
       const decision = await this.escalationChain.invoke({
         message,
         intent: intent.name,
         priority: intent.priority,
         attempts,
         conversationHistory
-      })
+      }, runConfig)
 
       return decision.includes('ESCALATE_TRUE')
     } catch (error) {
