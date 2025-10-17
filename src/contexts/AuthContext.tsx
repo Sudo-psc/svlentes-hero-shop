@@ -107,11 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[GOOGLE_AUTH] Opening popup...')
       const result = await signInWithPopup(auth, provider)
 
-      console.log('[GOOGLE_AUTH] Popup completed successfully:', {
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-      })
+      console.log('[GOOGLE_AUTH] Popup completed successfully for user ID:', result.user.uid)
 
       // Google accounts are automatically verified
       // No need to check emailVerified for social logins

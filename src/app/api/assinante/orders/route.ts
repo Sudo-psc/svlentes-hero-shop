@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth } from '@/lib/firebase-admin'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 
 /**
  * GET /api/assinante/orders
  * Retorna histórico de pedidos do usuário autenticado
  */
 export async function GET(request: NextRequest) {
+  // Rate limiting: 200 requisições em 15 minutos (leitura)
+  const rateLimitResult = await rateLimit(request, rateLimitConfigs.read)
+  if (rateLimitResult) {
+    return rateLimitResult
+  }
+
   try {
     // Verificar se Firebase Admin está inicializado
     if (!adminAuth) {

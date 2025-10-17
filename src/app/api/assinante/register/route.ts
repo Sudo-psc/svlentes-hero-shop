@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { createVerificationToken } from '@/lib/tokens'
 import { sendVerificationEmail } from '@/lib/email'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import { csrfProtection } from '@/lib/csrf'
 
 /**
  * Schema de validação para registro de usuário
@@ -26,6 +28,18 @@ const registerSchema = z.object({
  * Cria uma nova conta de usuário
  */
 export async function POST(request: NextRequest) {
+  // CSRF Protection
+  const csrfResult = await csrfProtection(request)
+  if (csrfResult) {
+    return csrfResult
+  }
+
+  // Rate limiting: 5 tentativas em 15 minutos
+  const rateLimitResult = await rateLimit(request, rateLimitConfigs.auth)
+  if (rateLimitResult) {
+    return rateLimitResult
+  }
+
   try {
     const body = await request.json()
 
@@ -77,13 +91,13 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    console.log(`[REGISTER] New user created: ${user.email} (ID: ${user.id})`)
+    console.log(`[REGISTER] New user created with ID: ${user.id}`)
 
     // Enviar email de verificação (não-bloqueante)
     try {
       const verificationToken = await createVerificationToken(email)
       await sendVerificationEmail(email, verificationToken)
-      console.log(`[REGISTER] Verification email sent to ${email}`)
+      console.log(`[REGISTER] Verification email sent for user ID: ${user.id}`)
     } catch (emailError: any) {
       // Log erro mas não bloqueia o registro
       console.error('[REGISTER] Failed to send verification email:', emailError.message)

@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth } from '@/lib/firebase-admin'
 import { prisma } from '@/lib/prisma'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import { csrfProtection } from '@/lib/csrf'
 
 /**
  * GET /api/assinante/subscription
  * Retorna dados da assinatura do usuário autenticado
  */
 export async function GET(request: NextRequest) {
+  // Rate limiting: 200 requisições em 15 minutos (leitura)
+  const rateLimitResult = await rateLimit(request, rateLimitConfigs.read)
+  if (rateLimitResult) {
+    return rateLimitResult
+  }
+
   try {
     // Verificar se Firebase Admin está inicializado
     if (!adminAuth) {
@@ -137,6 +145,18 @@ export async function GET(request: NextRequest) {
  * Atualiza dados da assinatura (endereço de entrega, etc)
  */
 export async function PUT(request: NextRequest) {
+  // CSRF Protection
+  const csrfResult = await csrfProtection(request)
+  if (csrfResult) {
+    return csrfResult
+  }
+
+  // Rate limiting: 50 requisições em 15 minutos (escrita)
+  const rateLimitResult = await rateLimit(request, rateLimitConfigs.write)
+  if (rateLimitResult) {
+    return rateLimitResult
+  }
+
   try {
     // Verificar se Firebase Admin está inicializado
     if (!adminAuth) {
