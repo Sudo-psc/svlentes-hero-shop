@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { PrismaClient, ConsentType, ConsentStatus } from '@prisma/client';
 
+const prisma = new PrismaClient();
+
+// Schema de validação para logging de consentimento
 const consentLogSchema = z.object({
-    action: z.string(),
-    data: z.any(),
-    timestamp: z.string(),
-    userAgent: z.string(),
-    url: z.string()
+    email: z.string().email('Email inválido'),
+    consentType: z.enum(['TERMS', 'DATA_PROCESSING', 'MARKETING', 'MEDICAL_DATA']),
+    status: z.enum(['GRANTED', 'REVOKED', 'EXPIRED']).optional().default('GRANTED'),
+    userId: z.string().optional(),
+    metadata: z.object({
+        source: z.string().optional(),
+        planId: z.string().optional(),
+        version: z.string().optional()
+    }).optional()
 });
 
 export async function POST(request: NextRequest) {
@@ -14,28 +22,33 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const validatedData = consentLogSchema.parse(body);
 
-        // Enhanced log entry with additional metadata
-        const logEntry = {
-            ...validatedData,
-            id: crypto.randomUUID(),
-            ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-            sessionId: request.headers.get('x-session-id') || 'unknown',
-            serverTimestamp: new Date().toISOString()
-        };
+        // Capturar informações de auditoria
+        const ipAddress = request.headers.get('x-forwarded-for') ||
+                         request.headers.get('x-real-ip') ||
+                         'unknown';
+        const userAgent = request.headers.get('user-agent') || 'unknown';
 
-        // In production, save to secure database
-        console.log('Consent log entry:', logEntry);
-
-        // Store in audit trail (in production, use secure database)
-        // await saveConsentLog(logEntry);
+        // Criar registro de consentimento no banco de dados
+        const consentLog = await prisma.consentLog.create({
+            data: {
+                email: validatedData.email,
+                consentType: validatedData.consentType as ConsentType,
+                status: validatedData.status as ConsentStatus,
+                userId: validatedData.userId,
+                ipAddress: ipAddress.substring(0, 45), // Limitar tamanho
+                userAgent,
+                metadata: validatedData.metadata || {}
+            }
+        });
 
         return NextResponse.json({
             success: true,
-            logId: logEntry.id
+            message: 'Consentimento registrado com sucesso',
+            logId: consentLog.id
         });
 
     } catch (error) {
-        console.error('Error logging consent:', error);
+        console.error('Erro ao registrar consentimento:', error);
 
         if (error instanceof z.ZodError) {
             return NextResponse.json({
@@ -49,57 +62,71 @@ export async function POST(request: NextRequest) {
             success: false,
             message: 'Erro ao registrar consentimento'
         }, { status: 500 });
+    } finally {
+        await prisma.$disconnect();
     }
 }
 
 export async function GET(request: NextRequest) {
-    const searchParams = request.nextUrl.searchParams;
-    const email = searchParams.get('email');
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    try {
+        const searchParams = request.nextUrl.searchParams;
+        const email = searchParams.get('email');
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
+        const consentType = searchParams.get('consentType');
 
-    if (!email) {
-        return NextResponse.json({
-            success: false,
-            message: 'Email é obrigatório para consultar logs'
-        }, { status: 400 });
-    }
+        if (!email) {
+            return NextResponse.json({
+                success: false,
+                message: 'Email é obrigatório para consultar logs'
+            }, { status: 400 });
+        }
 
-    // In production, fetch from database with proper authentication
-    // const logs = await getConsentLogs(email, startDate, endDate);
+        // Construir filtros de busca
+        const where: any = { email };
 
-    // Mock response for now
-    const mockLogs = [
-        {
-            id: '1',
-            action: 'cookie_consent_updated',
-            timestamp: new Date().toISOString(),
-            data: {
-                preferences: {
-                    necessary: true,
-                    analytics: true,
-                    marketing: false
-                }
+        if (consentType) {
+            where.consentType = consentType as ConsentType;
+        }
+
+        if (startDate || endDate) {
+            where.timestamp = {};
+            if (startDate) {
+                where.timestamp.gte = new Date(startDate);
             }
-        },
-        {
-            id: '2',
-            action: 'marketing_consent_updated',
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            data: {
-                granted: true,
-                preferences: {
-                    email: true,
-                    whatsapp: true,
-                    sms: false
-                }
+            if (endDate) {
+                where.timestamp.lte = new Date(endDate);
             }
         }
-    ];
 
-    return NextResponse.json({
-        success: true,
-        logs: mockLogs,
-        total: mockLogs.length
-    });
+        // Buscar logs de consentimento
+        const logs = await prisma.consentLog.findMany({
+            where,
+            orderBy: { timestamp: 'desc' },
+            take: 100 // Limitar a 100 registros mais recentes
+        });
+
+        return NextResponse.json({
+            success: true,
+            logs: logs.map(log => ({
+                id: log.id,
+                consentType: log.consentType,
+                status: log.status,
+                timestamp: log.timestamp,
+                metadata: log.metadata,
+                ipAddress: log.ipAddress.substring(0, 15) + '...' // Parcialmente ocultado por privacidade
+            })),
+            total: logs.length
+        });
+
+    } catch (error) {
+        console.error('Erro ao buscar logs de consentimento:', error);
+
+        return NextResponse.json({
+            success: false,
+            message: 'Erro ao buscar logs de consentimento'
+        }, { status: 500 });
+    } finally {
+        await prisma.$disconnect();
+    }
 }

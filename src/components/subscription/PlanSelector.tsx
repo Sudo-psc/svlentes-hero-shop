@@ -7,11 +7,12 @@ import { pricingPlans } from '@/data/pricing-plans'
 
 interface PlanSelectorProps {
     onSelectPlan: (planId: string, billingCycle: 'monthly' | 'annual') => void
+    initialPlanId?: string
 }
 
-export function PlanSelector({ onSelectPlan }: PlanSelectorProps) {
+export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
-    const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+    const [selectedPlan, setSelectedPlan] = useState<string | null>(initialPlanId || null)
 
     const handleSelectPlan = (planId: string) => {
         setSelectedPlan(planId)

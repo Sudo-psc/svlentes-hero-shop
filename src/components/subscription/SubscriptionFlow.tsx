@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PlanSelector } from './PlanSelector'
 import { LensSelector } from './LensSelector'
 import { AddOnsSelector } from './AddOnsSelector'
 import { OrderSummary } from './OrderSummary'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Loader2, TrendingDown, X } from 'lucide-react'
 import { FlowData, LensData, ContactData, PaymentRequest } from '@/types/subscription'
+import { encryptPrescription } from '@/lib/encryption'
+import { CalculatorResult } from '@/types/calculator'
+import { formatCurrency } from '@/lib/calculator'
 
 type FlowStep = 'plan' | 'lens' | 'addons' | 'summary'
 
@@ -20,6 +23,22 @@ export function SubscriptionFlow() {
         lensData: null,
         addOns: []
     })
+    const [calculatorData, setCalculatorData] = useState<CalculatorResult | null>(null)
+    const [showCalculatorBanner, setShowCalculatorBanner] = useState(false)
+
+    // Carregar dados da calculadora do localStorage ao montar
+    useEffect(() => {
+        try {
+            const savedResult = localStorage.getItem('calculatorResult')
+            if (savedResult) {
+                const result: CalculatorResult = JSON.parse(savedResult)
+                setCalculatorData(result)
+                setShowCalculatorBanner(true)
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dados da calculadora:', error)
+        }
+    }, [])
 
     const steps = [
         { id: 'plan', label: 'Plano', number: 1 },
@@ -50,6 +69,17 @@ export function SubscriptionFlow() {
         setError(null)
 
         try {
+            // Criptografar dados médicos sensíveis (prescrição) antes de enviar
+            let encryptedLensData: string | undefined;
+            if (flowData.lensData) {
+                try {
+                    encryptedLensData = encryptPrescription(flowData.lensData);
+                } catch (encryptError) {
+                    console.error('Erro ao criptografar dados médicos:', encryptError);
+                    throw new Error('Erro ao processar dados de prescrição. Por favor, tente novamente.');
+                }
+            }
+
             const paymentRequest: PaymentRequest = {
                 planId: flowData.planId!,
                 billingInterval: flowData.billingCycle,
@@ -61,7 +91,7 @@ export function SubscriptionFlow() {
                     cpfCnpj: contactData.cpfCnpj,
                 },
                 metadata: {
-                    lensData: JSON.stringify(flowData.lensData),
+                    lensData: encryptedLensData || '',  // Dados criptografados (⚠️ LGPD Art. 46)
                     addOns: JSON.stringify(flowData.addOns),
                     source: 'subscription_flow',
                     consentTimestamp: new Date().toISOString(),
@@ -84,8 +114,11 @@ export function SubscriptionFlow() {
             const data = await response.json()
 
             if (data.invoiceUrl) {
+                // Limpar dados da calculadora do localStorage após sucesso
+                localStorage.removeItem('calculatorResult')
                 window.location.href = data.invoiceUrl
             } else {
+                localStorage.removeItem('calculatorResult')
                 window.location.href = '/agendar-consulta'
             }
         } catch (error) {
@@ -95,6 +128,11 @@ export function SubscriptionFlow() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const dismissCalculatorBanner = () => {
+        setShowCalculatorBanner(false)
+        localStorage.removeItem('calculatorResult')
     }
 
     return (
@@ -147,9 +185,57 @@ export function SubscriptionFlow() {
                     </div>
                 </div>
 
+                {/* Calculator Result Banner */}
+                {showCalculatorBanner && calculatorData && calculatorData.totalAnnualSavings && calculatorData.totalAnnualSavings > 0 && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 mb-8">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4 flex-1">
+                                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <TrendingDown className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-green-900 mb-2">
+                                        Seu Cálculo de Economia
+                                    </h3>
+                                    <div className="grid md:grid-cols-3 gap-4">
+                                        <div>
+                                            <p className="text-sm text-green-700">Economia Anual Total</p>
+                                            <p className="text-2xl font-bold text-green-900">
+                                                {formatCurrency(calculatorData.totalAnnualSavings)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-green-700">Economia Mensal</p>
+                                            <p className="text-2xl font-bold text-green-900">
+                                                {formatCurrency(calculatorData.totalAnnualSavings / 12)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-green-700">Plano Recomendado</p>
+                                            <p className="text-lg font-semibold text-primary-600 capitalize">
+                                                {calculatorData.recommendedPlan}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-green-700 mt-3">
+                                        💡 Continue com o fluxo de assinatura para garantir sua economia!
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={dismissCalculatorBanner}
+                                className="flex-shrink-0 ml-4 text-green-600 hover:text-green-800 transition-colors"
+                                aria-label="Fechar banner"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Error Display */}
                 {error && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3">
+                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3 mb-8">
                         <div className="flex-shrink-0">
                             <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -184,7 +270,10 @@ export function SubscriptionFlow() {
                     )}
 
                     {currentStep === 'plan' && (
-                        <PlanSelector onSelectPlan={handlePlanSelect} />
+                        <PlanSelector
+                            onSelectPlan={handlePlanSelect}
+                            initialPlanId={calculatorData?.recommendedPlan}
+                        />
                     )}
 
                     {currentStep === 'lens' && (

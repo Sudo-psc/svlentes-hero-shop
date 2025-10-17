@@ -178,11 +178,13 @@ model User {
   subscriptions        Subscription[]
   supportTickets       SupportTicket[]
   payments             Payment[]
+  whatsappConversations WhatsAppConversation[]
   whatsappInteractions WhatsAppInteraction[]
   notifications        Notification[]
   interactions         Interaction[]
   mlPredictions        MLPrediction[]
   userBehavior         UserBehavior?
+  consentLogs          ConsentLog[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -502,28 +504,75 @@ model Agent {
   @@map("agents")
 }
 
-// WhatsApp Interaction Model
+// WhatsApp Conversation Model - Thread Management
+model WhatsAppConversation {
+  id                String   @id @default(cuid())
+  customerPhone     String   @map("customer_phone") @db.VarChar(20)
+  userId            String?  @map("user_id")
+  customerName      String?  @map("customer_name") @db.VarChar(255)
+
+  // Conversation metadata
+  lastMessageAt     DateTime @default(now()) @map("last_message_at") @db.Timestamp(6)
+  messageCount      Int      @default(0) @map("message_count")
+  isActive          Boolean  @default(true) @map("is_active")
+
+  // Last interaction context
+  lastIntent        String?  @map("last_intent") @db.VarChar(50)
+  lastSentiment     String?  @map("last_sentiment") @db.VarChar(50)
+
+  // SendPulse metadata
+  sendpulseContactId String? @map("sendpulse_contact_id") @db.VarChar(255)
+  sendpulseBotId     String? @map("sendpulse_bot_id") @db.VarChar(255)
+
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages          WhatsAppInteraction[]
+
+  @@unique([customerPhone], name: "unique_conversation_phone")
+  @@index([customerPhone], name: "idx_conversations_phone")
+  @@index([userId], name: "idx_conversations_user")
+  @@index([lastMessageAt], name: "idx_conversations_last_message")
+  @@index([isActive], name: "idx_conversations_active")
+  @@map("whatsapp_conversations")
+}
+
+// WhatsApp Interaction Model - Individual Messages
 model WhatsAppInteraction {
   id                String   @id @default(cuid())
+  conversationId    String   @map("conversation_id")
   messageId         String   @unique
   customerPhone     String   @map("customer_phone")
   userId            String?  @map("user_id")
-  content           String
+  content           String   @db.Text
   isFromCustomer    Boolean  @default(true) @map("is_from_customer")
   intent            String?  @map("intent")
   sentiment         String?  @map("sentiment")
   urgency           String?  @map("urgency")
-  response          String?  @map("response")
+  response          String?  @map("response") @db.Text
   escalationRequired Boolean  @default(false) @map("escalation_required")
   ticketCreated     Boolean  @default(false) @map("ticket_created")
+  ticketId          String?  @map("ticket_id")
+
+  // LangChain metadata
+  llmModel          String?  @map("llm_model") @db.VarChar(100)
+  processingTime    Int?     @map("processing_time")
+
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // Relations
+  conversation      WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user              User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  @@index([conversationId], name: "idx_whatsapp_interactions_conversation")
   @@index([customerPhone], name: "idx_whatsapp_interactions_phone")
   @@index([userId], name: "idx_whatsapp_interactions_user")
   @@index([intent], name: "idx_whatsapp_interactions_intent")
   @@index([sentiment], name: "idx_whatsapp_interactions_sentiment")
+  @@index([createdAt], name: "idx_whatsapp_interactions_created_at")
+  @@index([ticketId], name: "idx_whatsapp_interactions_ticket")
   @@map("whatsapp_interactions")
 }
 
@@ -583,6 +632,36 @@ enum InteractionType {
   DISMISSED
   OPTED_OUT
   CONVERTED
+}
+
+// ==================== LGPD COMPLIANCE ENUMS ====================
+
+enum ConsentType {
+  TERMS
+  DATA_PROCESSING
+  MARKETING
+  MEDICAL_DATA
+}
+
+enum ConsentStatus {
+  GRANTED
+  REVOKED
+  EXPIRED
+}
+
+enum DataRequestType {
+  ACCESS
+  RECTIFICATION
+  DELETION
+  PORTABILITY
+  OPPOSITION
+}
+
+enum DataRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
 }
 
 // ==================== INTELLIGENT REMINDER SYSTEM ====================
@@ -720,24 +799,76 @@ model Campaign {
 
 model AnalyticsSnapshot {
   id                String              @id @default(cuid())
-  
+
   date              DateTime            @unique
-  
+
   totalSent         Int                 @default(0)
   totalDelivered    Int                 @default(0)
   totalOpened       Int                 @default(0)
   totalClicked      Int                 @default(0)
-  
+
   emailMetrics      Json?
   whatsappMetrics   Json?
   smsMetrics        Json?
   pushMetrics       Json?
-  
+
   avgResponseTime   Float?
   optOutRate        Float?
-  
+
   createdAt         DateTime            @default(now())
-  
+
   @@index([date])
   @@map("analytics_snapshots")
+}
+
+// ==================== LGPD COMPLIANCE MODELS ====================
+
+model ConsentLog {
+  id              String         @id @default(cuid())
+  userId          String?        @map("user_id")
+  email           String         @db.VarChar(255)
+  consentType     ConsentType    @map("consent_type")
+  status          ConsentStatus  @default(GRANTED)
+  ipAddress       String         @map("ip_address") @db.VarChar(45)
+  userAgent       String         @map("user_agent") @db.Text
+  timestamp       DateTime       @default(now()) @db.Timestamp(6)
+  expiresAt       DateTime?      @map("expires_at") @db.Timestamp(6)
+
+  // Metadata for additional context
+  metadata        Json?          @db.JsonB
+
+  // Relations
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId], name: "idx_consent_logs_user_id")
+  @@index([email], name: "idx_consent_logs_email")
+  @@index([consentType], name: "idx_consent_logs_type")
+  @@index([timestamp], name: "idx_consent_logs_timestamp")
+  @@map("consent_logs")
+}
+
+model DataRequest {
+  id              String              @id @default(cuid())
+  email           String              @db.VarChar(255)
+  name            String              @db.VarChar(255)
+  requestType     DataRequestType     @map("request_type")
+  status          DataRequestStatus   @default(PENDING)
+  reason          String?             @db.Text
+
+  // Request tracking
+  requestedAt     DateTime            @default(now()) @map("requested_at") @db.Timestamp(6)
+  completedAt     DateTime?           @map("completed_at") @db.Timestamp(6)
+
+  // Audit trail
+  ipAddress       String              @map("ip_address") @db.VarChar(45)
+  userAgent       String              @map("user_agent") @db.Text
+
+  // Additional information
+  metadata        Json?               @db.JsonB
+
+  @@index([email], name: "idx_data_requests_email")
+  @@index([status], name: "idx_data_requests_status")
+  @@index([requestType], name: "idx_data_requests_type")
+  @@index([requestedAt], name: "idx_data_requests_requested_at")
+  @@map("data_requests")
 }
