@@ -124,7 +124,7 @@ export default function PlanosPage() {
               Agendar Consulta
             </a>
             <a
-              href="https://wa.me/553399898026"
+              href="https://wa.me/5533999898026"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors duration-200 shadow-lg"

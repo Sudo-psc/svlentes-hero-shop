@@ -105,7 +105,7 @@ export default function FAQ({ className }: FAQSectionProps) {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <a
-                            href="https://wa.me/+553399898026?text=Olá! Tenho uma dúvida sobre o serviço de assinatura de lentes."
+                            href="https://wa.me/+5533999898026?text=Olá! Tenho uma dúvida sobre o serviço de assinatura de lentes."
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"

@@ -617,7 +617,7 @@ export class SupportEscalationSystem {
     }
 
     if (escalation.reason === EscalationReason.EMERGENCY) {
-      steps.push('Em caso de emergência, ligue para (33) 99898-026')
+      steps.push('Em caso de emergência, ligue para (33) 99989-8026')
     }
 
     steps.push('Seu caso tem prioridade máxima em nossa fila')

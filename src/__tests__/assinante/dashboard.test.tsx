@@ -334,7 +334,7 @@ describe('ShippingAddressCard', () => {
 
 describe('EmergencyContactCard', () => {
   const mockContact = {
-    phone: '+55 33 99898-026',
+    phone: '+55 33 99989-8026',
     email: 'saraivavision@gmail.com',
     doctor: {
       name: 'Dr. Philipe Saraiva Cruz',
@@ -348,7 +348,7 @@ describe('EmergencyContactCard', () => {
     expect(screen.getByText('Contato de Emergência')).toBeInTheDocument()
     expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
     expect(screen.getByText('CRM-MG 69.870')).toBeInTheDocument()
-    expect(screen.getByText('(33) 99898-026')).toBeInTheDocument()
+    expect(screen.getByText('(33) 99989-8026')).toBeInTheDocument()
     expect(screen.getByText('saraivavision@gmail.com')).toBeInTheDocument()
   })
 

@@ -111,7 +111,7 @@ REGRAS DE ATENDIMENTO:
 INFORMAÇÕES DA EMPRESA:
 - Clínica: Saraiva Vision - Caratinga/MG
 - Responsável: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
-- WhatsApp: (33) 99898-026
+- WhatsApp: (33) 99989-8026
 - E-mail: contato@svlentes.com.br
 - Site: svlentes.com.br
 
@@ -401,7 +401,7 @@ Sua mensagem indica uma possível emergência oftalmológica. **NÃO ESPERE!**
 - Hospital com serviço de oftalmologia
 
 📞 **CONTATO DIRETO COM DR. PHILIPE:**
-- WhatsApp: (33) 99898-026
+- WhatsApp: (33) 99989-8026
 - Disponível 24h para emergências
 
 📍 **CLÍNICA SARAIVA VISION:**

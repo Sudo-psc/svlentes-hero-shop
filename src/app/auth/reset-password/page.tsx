@@ -243,7 +243,7 @@ function ResetPasswordContent() {
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600 mb-2">Precisa de ajuda?</p>
           <a
-            href={`https://wa.me/553399898026?text=${encodeURIComponent(
+            href={`https://wa.me/5533999898026?text=${encodeURIComponent(
               'Olá! Preciso de ajuda com a recuperação de senha no site SV Lentes.'
             )}`}
             target="_blank"

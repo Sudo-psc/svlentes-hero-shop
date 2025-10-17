@@ -20,13 +20,13 @@ export function DashboardError({
   onContactSupport
 }: DashboardErrorProps) {
   const handleWhatsApp = () => {
-    const phoneNumber = '553399898026'
+    const phoneNumber = '5533999898026'
     const message = encodeURIComponent('Olá! Preciso de ajuda com o dashboard da minha assinatura.')
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
   }
 
   const handlePhoneCall = () => {
-    window.open('tel:+553399898026', '_self')
+    window.open('tel:+5533999898026', '_self')
   }
 
   const handleBackToHome = () => {
@@ -96,7 +96,7 @@ export function DashboardError({
                   <strong>Contato de Suporte:</strong>
                 </p>
                 <div className="space-y-1 text-xs text-gray-600">
-                  <p>WhatsApp: +55 33 99898-026</p>
+                  <p>WhatsApp: +55 33 99989-8026</p>
                   <p>Email: saraivavision@gmail.com</p>
                   <p>Dr. Philipe Saraiva Cruz (CRM-MG 69.870)</p>
                 </div>

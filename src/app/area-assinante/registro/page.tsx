@@ -254,7 +254,7 @@ export default function RegisterPage() {
               Precisa de ajuda?
             </p>
             <a
-              href={`https://wa.me/553399898026?text=${encodeURIComponent('Olá! Preciso de ajuda com o cadastro no site SV Lentes.')}`}
+              href={`https://wa.me/5533999898026?text=${encodeURIComponent('Olá! Preciso de ajuda com o cadastro no site SV Lentes.')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-cyan-600 hover:text-cyan-700 font-medium"

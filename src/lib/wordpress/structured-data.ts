@@ -21,7 +21,7 @@ const STRUCTURED_DATA_CONFIG = {
   siteUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://svlentes.shop',
   organizationName: 'Saraiva Vision - SV Lentes',
   logo: 'https://svlentes.shop/images/logo.svg',
-  contactPhone: '+553399898026',
+  contactPhone: '+5533999898026',
   contactEmail: 'saraivavision@gmail.com',
   medicalSpecialty: 'Ophthalmology',
   responsiblePhysician: {

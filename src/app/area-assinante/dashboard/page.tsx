@@ -264,12 +264,12 @@ export default function DashboardPage() {
             <div>
               <p className="text-sm text-gray-600 mb-1">WhatsApp:</p>
               <a
-                href="https://wa.me/553399898026"
+                href="https://wa.me/5533999898026"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-cyan-600 hover:underline font-medium text-lg"
               >
-                +55 33 99898-026
+                +55 33 99989-8026
               </a>
             </div>
             <div>

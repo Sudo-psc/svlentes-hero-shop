@@ -121,7 +121,7 @@ export class SendPulseReminderService {
       
       reminder.quickReplies.forEach((reply) => {
         html += `
-          <a href="https://wa.me/553399898026?text=${encodeURIComponent(reply)}"
+          <a href="https://wa.me/5533999898026?text=${encodeURIComponent(reply)}"
              style="background-color: #0891b2; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; display: inline-block; text-align: center;">
             ${reply}
           </a>
@@ -137,7 +137,7 @@ export class SendPulseReminderService {
     html += `
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
           <p>SV Lentes - Seu clube de assinatura de lentes de contato</p>
-          <p>WhatsApp: (33) 99898-0026 | Email: contato@svlentes.com.br</p>
+          <p>WhatsApp: (33) 99989-8026 | Email: contato@svlentes.com.br</p>
         </div>
       </div>
     `
