@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient, DataRequestType, DataRequestStatus } from '@prisma/client';
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
+import { csrfProtection } from '@/lib/csrf';
 
 const prisma = new PrismaClient();
 
@@ -14,6 +16,22 @@ const dataRequestSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    // CSRF Protection
+    const csrfResult = await csrfProtection(request);
+    if (csrfResult) {
+        return csrfResult;
+    }
+
+    // Rate limiting: 10 requisições em 1 hora (solicitações sensíveis de dados)
+    const rateLimitResult = await rateLimit(request, {
+        windowMs: 60 * 60 * 1000, // 1 hora
+        max: 10, // 10 requisições por hora
+        message: 'Muitas solicitações de dados. Tente novamente mais tarde.'
+    });
+    if (rateLimitResult) {
+        return rateLimitResult;
+    }
+
     try {
         const body = await request.json();
         const validatedData = dataRequestSchema.parse(body);

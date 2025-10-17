@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { X, Package, Truck, Calendar, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
+import { formatDate, formatCurrency } from '@/lib/formatters'
+import { getOrderStatusColor, getOrderStatusLabel } from '@/lib/subscription-helpers'
 
 interface Order {
   id: string
@@ -65,47 +67,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800'
-      case 'shipped':
-        return 'bg-blue-100 text-blue-800'
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      'delivered': 'Entregue',
-      'shipped': 'Enviado',
-      'processing': 'Em Processamento',
-      'cancelled': 'Cancelado',
-      'pending': 'Pendente'
-    }
-    return labels[status] || status
   }
 
   if (!isOpen) return null
@@ -175,8 +136,8 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
                           Pedido #{order.id.slice(-8)}
                         </p>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(order.status)}`}>
-                        {getStatusLabel(order.status)}
+                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getOrderStatusColor(order.status)}`}>
+                        {getOrderStatusLabel(order.status)}
                       </span>
                     </div>
 

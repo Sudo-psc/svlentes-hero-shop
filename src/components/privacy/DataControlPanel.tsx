@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Select } from '@/components/ui/Select';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { useCsrfProtection } from '@/hooks/useCsrfProtection';
 import {
     Shield,
     Download,
@@ -24,6 +25,7 @@ interface DataControlPanelProps {
 }
 
 export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
+    const { withCsrfHeaders } = useCsrfProtection();
     const [activeTab, setActiveTab] = useState<'request' | 'status' | 'logs'>('request');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [requestSubmitted, setRequestSubmitted] = useState(false);
@@ -43,9 +45,9 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
         try {
             const response = await fetch('/api/privacy/data-request', {
                 method: 'POST',
-                headers: {
+                headers: withCsrfHeaders({
                     'Content-Type': 'application/json',
-                },
+                }),
                 body: JSON.stringify(formData),
             });
 

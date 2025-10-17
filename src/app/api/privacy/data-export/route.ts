@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { decryptPrescription } from '@/lib/encryption';
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
+import { csrfProtection } from '@/lib/csrf';
 
 const prisma = new PrismaClient();
 
@@ -16,6 +18,22 @@ const dataExportSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    // CSRF Protection
+    const csrfResult = await csrfProtection(request);
+    if (csrfResult) {
+        return csrfResult;
+    }
+
+    // Rate limiting: 3 requisições em 1 hora (exportação sensível de dados)
+    const rateLimitResult = await rateLimit(request, {
+        windowMs: 60 * 60 * 1000, // 1 hora
+        max: 3, // Apenas 3 exportações por hora
+        message: 'Limite de exportações excedido. Tente novamente em 1 hora.'
+    });
+    if (rateLimitResult) {
+        return rateLimitResult;
+    }
+
     try {
         const body = await request.json();
         const validatedData = dataExportSchema.parse(body);
@@ -218,6 +236,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    // Rate limiting: 20 requisições em 15 minutos (verificação de usuário)
+    const rateLimitResult = await rateLimit(request, {
+        windowMs: 15 * 60 * 1000,
+        max: 20,
+        message: 'Muitas verificações de usuário. Tente novamente mais tarde.'
+    });
+    if (rateLimitResult) {
+        return rateLimitResult;
+    }
+
     try {
         const searchParams = request.nextUrl.searchParams;
         const email = searchParams.get('email');

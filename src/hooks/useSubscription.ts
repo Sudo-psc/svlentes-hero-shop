@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useCsrfProtection } from './useCsrfProtection'
 import type { Subscription, SubscriptionUser, SubscriptionResponse, SubscriptionStatus } from '@/types/subscription'
 
 interface UseSubscriptionReturn {
@@ -19,6 +20,7 @@ interface UseSubscriptionReturn {
 
 export function useSubscription(): UseSubscriptionReturn {
   const { user: authUser, loading: authLoading } = useAuth()
+  const { withCsrfHeaders } = useCsrfProtection()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [user, setUser] = useState<SubscriptionUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -81,10 +83,10 @@ export function useSubscription(): UseSubscriptionReturn {
 
       const response = await fetch('/api/assinante/subscription', {
         method: 'PUT',
-        headers: {
+        headers: withCsrfHeaders({
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ shippingAddress: address }),
       })
 

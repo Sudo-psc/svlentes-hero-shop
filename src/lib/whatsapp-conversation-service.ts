@@ -372,7 +372,7 @@ export async function storeInteraction(data: StoreInteractionData): Promise<void
         isFromCustomer: true,
         intent: data.intent?.intent || data.intent?.category || null,
         sentiment: data.intent?.sentiment || null,
-        urgency: data.intent?.priority || null,
+        urgency: data.intent?.priority?.toString() || null,
         response: data.response,
         escalationRequired: data.escalationRequired,
         ticketCreated: data.ticketCreated,

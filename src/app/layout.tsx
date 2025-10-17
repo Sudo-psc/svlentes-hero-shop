@@ -54,6 +54,8 @@ export default function RootLayout({
         <html lang="pt-BR" className={`${inter.variable} ${poppins.variable}`}>
             <head>
                 <CriticalCSS />
+                {/* Facebook Domain Verification */}
+                <meta name="facebook-domain-verification" content="x8z1y4rfe0q22puqwl053agwm7y5w4" />
                 <link rel="icon" href="/images/favicon.png" type="image/png" />
                 <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.png" />
                 <link rel="manifest" href="/site.webmanifest" />

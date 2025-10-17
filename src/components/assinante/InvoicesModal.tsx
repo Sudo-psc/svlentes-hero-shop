@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { X, FileText, Calendar, Download, CreditCard } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
+import { formatDate, formatCurrency } from '@/lib/formatters'
+import { getInvoiceStatusColor, getInvoiceStatusLabel } from '@/lib/subscription-helpers'
 
 interface Invoice {
   id: string
@@ -67,50 +69,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-      case 'received':
-      case 'confirmed':
-        return 'bg-green-100 text-green-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'overdue':
-        return 'bg-red-100 text-red-800'
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      'paid': 'Pago',
-      'received': 'Recebido',
-      'confirmed': 'Confirmado',
-      'pending': 'Pendente',
-      'overdue': 'Vencido',
-      'cancelled': 'Cancelado'
-    }
-    return labels[status] || status
   }
 
   if (!isOpen) return null
@@ -180,8 +138,8 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                           Fatura #{invoice.id.slice(-8)}
                         </p>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(invoice.status)}`}>
-                        {getStatusLabel(invoice.status)}
+                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getInvoiceStatusColor(invoice.status)}`}>
+                        {getInvoiceStatusLabel(invoice.status)}
                       </span>
                     </div>
 

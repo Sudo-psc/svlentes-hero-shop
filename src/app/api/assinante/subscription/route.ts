@@ -18,9 +18,14 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar se Firebase Admin está inicializado
     if (!adminAuth) {
+      console.warn('[API /api/assinante/subscription] Firebase Admin não configurado - funcionalidade desabilitada')
       return NextResponse.json(
-        { error: 'CONFIG_ERROR', message: 'Firebase Admin não configurado' },
-        { status: 500 }
+        {
+          error: 'SERVICE_UNAVAILABLE',
+          message: 'Serviço de autenticação temporariamente indisponível',
+          subscription: null
+        },
+        { status: 503 }
       )
     }
 
@@ -160,9 +165,14 @@ export async function PUT(request: NextRequest) {
   try {
     // Verificar se Firebase Admin está inicializado
     if (!adminAuth) {
+      console.warn('[API /api/assinante/subscription] Firebase Admin não configurado - funcionalidade desabilitada')
       return NextResponse.json(
-        { error: 'CONFIG_ERROR', message: 'Firebase Admin não configurado' },
-        { status: 500 }
+        {
+          error: 'SERVICE_UNAVAILABLE',
+          message: 'Serviço de autenticação temporariamente indisponível',
+          subscription: null
+        },
+        { status: 503 }
       )
     }
 

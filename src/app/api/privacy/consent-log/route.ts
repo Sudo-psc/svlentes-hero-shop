@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient, ConsentType, ConsentStatus } from '@prisma/client';
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
+import { csrfProtection } from '@/lib/csrf';
 
 const prisma = new PrismaClient();
 
@@ -18,6 +20,18 @@ const consentLogSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+    // CSRF Protection
+    const csrfResult = await csrfProtection(request);
+    if (csrfResult) {
+        return csrfResult;
+    }
+
+    // Rate limiting: 50 requisições em 15 minutos (logs de consent)
+    const rateLimitResult = await rateLimit(request, rateLimitConfigs.write);
+    if (rateLimitResult) {
+        return rateLimitResult;
+    }
+
     try {
         const body = await request.json();
         const validatedData = consentLogSchema.parse(body);
@@ -68,6 +82,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+    // Rate limiting: 200 requisições em 15 minutos (leitura de logs)
+    const rateLimitResult = await rateLimit(request, rateLimitConfigs.read);
+    if (rateLimitResult) {
+        return rateLimitResult;
+    }
+
     try {
         const searchParams = request.nextUrl.searchParams;
         const email = searchParams.get('email');

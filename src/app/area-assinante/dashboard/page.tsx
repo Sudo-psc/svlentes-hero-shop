@@ -21,6 +21,8 @@ import { DashboardLoading } from '@/components/assinante/DashboardLoading'
 import { DashboardError } from '@/components/assinante/DashboardError'
 import { OrdersModal } from '@/components/assinante/OrdersModal'
 import { InvoicesModal } from '@/components/assinante/InvoicesModal'
+import { formatDate, formatCurrency } from '@/lib/formatters'
+import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -50,53 +52,6 @@ export default function DashboardPage() {
         onRetry={refetch}
       />
     )
-  }
-
-  // Format date helper
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
-
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
-
-  // Status badge color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800'
-      case 'paused':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  // Status label
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'Ativa'
-      case 'paused':
-        return 'Pausada'
-      case 'cancelled':
-        return 'Cancelada'
-      case 'inactive':
-        return 'Inativa'
-      default:
-        return status
-    }
   }
 
   return (

@@ -141,8 +141,8 @@ export const preloadCriticalResources = () => {
 
     // Preload critical images
     const imagePreloads = [
-        '/images/dr-philipe-saraiva-cruz.jpg',
-        '/images/logo.png',
+        '/icones/drphilipe_perfil.jpeg',
+        '/logo.png',
     ]
 
     imagePreloads.forEach(image => {

@@ -20,9 +20,8 @@ export function ResourcePreloader() {
             stripeScript.as = 'script'
             document.head.appendChild(stripeScript)
 
-            // Prefetch critical data
-            fetch('/api/pricing-plans', { method: 'HEAD' }).catch(() => { })
-            fetch('/api/doctor-info', { method: 'HEAD' }).catch(() => { })
+            // Prefetch critical data (removed non-existent endpoints)
+            // Note: pricing-plans and doctor-info are static data imports, not API routes
         }
     }, [])
 

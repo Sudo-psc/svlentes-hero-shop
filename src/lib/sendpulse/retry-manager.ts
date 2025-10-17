@@ -226,9 +226,8 @@ export class RetryManager {
    * Create a retry wrapper for a function
    */
   wrap<T extends (...args: any[]) => Promise<any>>(fn: T): T {
-    const manager = this
-    return (async function wrapped(...args: any[]) {
-      return manager.execute(() => fn(...args))
+    return (async (...args: any[]) => {
+      return this.execute(() => fn(...args))
     }) as T
   }
 }
