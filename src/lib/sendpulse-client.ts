@@ -1,11 +1,15 @@
 /**
- * SendPulse WhatsApp API Client (Refactored)
- * Now uses bot-based API with proper contact management and caching
+ * SendPulse WhatsApp API Client (Refactored - Phase 3)
+ * Bot-based API with contact management, rate limiting, retry logic, and template messages
  */
 
 import { sendPulseAuth } from './sendpulse-auth'
 import { botManager } from './sendpulse/bot-manager'
 import { contactCache } from './sendpulse/contact-cache'
+import { rateLimiter } from './sendpulse/rate-limiter'
+import { retryManager } from './sendpulse/retry-manager'
+import { templateManager } from './sendpulse/template-manager'
+import { analyticsService } from './sendpulse/analytics-service'
 import type {
   SendPulseContact,
   SendPulseContactsResponse,
@@ -18,8 +22,10 @@ import type {
   DocumentMessage,
   InteractiveButtonsMessage,
   InteractiveListMessage,
+  TemplateMessage,
   SendPulseWebhookData,
-  LegacySendMessageParams
+  LegacySendMessageParams,
+  MessageType
 } from './sendpulse/types'
 import {
   SendPulseContactError,
@@ -212,41 +218,61 @@ export class SendPulseClient {
   }
 
   /**
-   * Send message to contact by ID
+   * Send message to contact by ID with rate limiting, retry, and template fallback
    */
   private async sendMessageToContact(
     contactId: string,
-    message: WhatsAppMessage
+    message: WhatsAppMessage | TemplateMessage,
+    useTemplateFallback: boolean = true
   ): Promise<SendMessageResponse> {
     try {
-      const apiToken = await this.getApiToken()
+      // 1. Rate limiting
+      await rateLimiter.acquire()
 
-      // Check if contact is in 24-hour window
-      const isActive = await this.isContactActive(contactId)
-      if (!isActive) {
-        throw new ConversationWindowExpiredError(contactId)
+      // 2. Check if contact is in 24-hour window (skip for template messages)
+      if (message.type !== 'template') {
+        const isActive = await this.isContactActive(contactId)
+        if (!isActive) {
+          if (useTemplateFallback) {
+            console.log(`[SendPulse] 24h window expired, attempting template fallback for contact ${contactId}`)
+            return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
+          }
+          throw new ConversationWindowExpiredError(contactId)
+        }
       }
 
-      const payload: SendMessageRequest = {
-        contact_id: contactId,
-        message
-      }
+      // 3. Send with retry logic
+      const result = await retryManager.execute(async () => {
+        const apiToken = await this.getApiToken()
 
-      const response = await fetch(`${this.baseUrl}/contacts/send`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+        const payload: SendMessageRequest = {
+          contact_id: contactId,
+          message
+        }
+
+        const response = await fetch(`${this.baseUrl}/contacts/send`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw createSendPulseError(response.status, errorData)
+        }
+
+        return await response.json()
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw createSendPulseError(response.status, errorData)
-      }
+      // 4. Track analytics
+      const botId = await this.getBotId()
+      const messageType = message.type as MessageType | 'template'
+      analyticsService.trackMessage(contactId, botId, messageType, 'outbound')
 
-      return await response.json()
+      return result
 
     } catch (error) {
       if (error instanceof ConversationWindowExpiredError || error instanceof SendPulseMessageError) {
@@ -255,6 +281,53 @@ export class SendPulseClient {
       throw new SendPulseMessageError(
         `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
         undefined,
+        error
+      )
+    }
+  }
+
+  /**
+   * Template message fallback when 24h window expires
+   */
+  private async sendTemplateMessageFallback(
+    contactId: string,
+    originalMessage: WhatsAppMessage
+  ): Promise<SendMessageResponse> {
+    try {
+      const botId = await this.getBotId()
+
+      // Get default reengagement template
+      const template = await templateManager.getDefaultReengagementTemplate(botId)
+      if (!template) {
+        throw new SendPulseMessageError(
+          'No approved template available for conversation reengagement',
+          'TEMPLATE_NOT_FOUND'
+        )
+      }
+
+      // Extract text from original message for template parameters
+      let bodyText = ''
+      if (originalMessage.type === 'text') {
+        bodyText = originalMessage.text.body
+      } else if ('caption' in originalMessage && typeof originalMessage.caption === 'string') {
+        bodyText = originalMessage.caption
+      }
+
+      // Build template message (simplified - adjust based on your template structure)
+      const templateMessage = templateManager.buildTemplateMessage(
+        template.name,
+        template.language,
+        bodyText ? { body: [bodyText.substring(0, 60)] } : undefined
+      )
+
+      // Send template without fallback (avoid infinite loop)
+      return await this.sendMessageToContact(contactId, templateMessage, false)
+
+    } catch (error) {
+      console.error('[SendPulse] Template fallback failed:', error)
+      throw new SendPulseMessageError(
+        'Failed to send template message fallback',
+        'TEMPLATE_FALLBACK_FAILED',
         error
       )
     }
@@ -650,6 +723,137 @@ export class SendPulseClient {
    */
   clearCache(): void {
     contactCache.clear()
+  }
+
+  // ============================================================================
+  // Phase 3 Advanced Methods
+  // ============================================================================
+
+  /**
+   * Send template message (for expired 24h windows)
+   */
+  async sendTemplateMessage(
+    phone: string,
+    templateName: string,
+    languageCode: string = 'pt_BR',
+    parameters?: {
+      header?: string[]
+      body?: string[]
+      buttons?: Array<{ index: number; text?: string }>
+    }
+  ): Promise<SendMessageResponse> {
+    try {
+      const contact = await this.getOrCreateContact(phone)
+      const botId = await this.getBotId()
+
+      // Validate template exists and is approved
+      const template = await templateManager.getTemplate(botId, templateName)
+      if (!template) {
+        throw new SendPulseMessageError(
+          `Template "${templateName}" not found`,
+          'TEMPLATE_NOT_FOUND'
+        )
+      }
+
+      if (template.status !== 'APPROVED') {
+        throw new SendPulseMessageError(
+          `Template "${templateName}" is not approved (status: ${template.status})`,
+          'TEMPLATE_NOT_APPROVED'
+        )
+      }
+
+      // Validate parameters
+      const validation = templateManager.validateTemplateParameters(template, parameters)
+      if (!validation.valid) {
+        throw new SendPulseMessageError(
+          `Template parameters invalid: ${validation.errors.join(', ')}`,
+          'TEMPLATE_PARAMS_INVALID'
+        )
+      }
+
+      // Build and send template message
+      const templateMessage = templateManager.buildTemplateMessage(
+        templateName,
+        languageCode,
+        parameters
+      )
+
+      return await this.sendMessageToContact(contact.id, templateMessage, false)
+
+    } catch (error) {
+      console.error('Error sending template message:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get approved templates for current bot
+   */
+  async getTemplates(): Promise<any[]> {
+    try {
+      const botId = await this.getBotId()
+      return await templateManager.getApprovedTemplates(botId)
+    } catch (error) {
+      console.error('Error getting templates:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get conversation analytics for a contact
+   */
+  getConversationMetrics(contactPhone: string): any {
+    // In real implementation, map phone to contact_id
+    // For now, simplified
+    return analyticsService.getConversationMetrics(contactPhone)
+  }
+
+  /**
+   * Get analytics summary
+   */
+  getAnalyticsSummary(timeframe?: { start: string; end: string; granularity: 'hour' | 'day' | 'week' | 'month' }): any {
+    return analyticsService.getSummary(timeframe)
+  }
+
+  /**
+   * Get rate limiter statistics
+   */
+  getRateLimitStats(): any {
+    return rateLimiter.getStats()
+  }
+
+  /**
+   * Get retry manager statistics
+   */
+  getRetryStats(): any {
+    return retryManager.getStats()
+  }
+
+  /**
+   * Get template cache statistics
+   */
+  getTemplateStats(): any {
+    return templateManager.getCacheStats()
+  }
+
+  /**
+   * Get analytics statistics
+   */
+  getAnalyticsStats(): any {
+    return analyticsService.getStats()
+  }
+
+  /**
+   * Get comprehensive system statistics
+   */
+  getSystemStats(): any {
+    return {
+      cache: this.getCacheStats(),
+      rateLimit: this.getRateLimitStats(),
+      retry: this.getRetryStats(),
+      templates: this.getTemplateStats(),
+      analytics: this.getAnalyticsStats()
+    }
   }
 }
 

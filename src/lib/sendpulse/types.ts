@@ -341,3 +341,221 @@ export interface LegacySendMessageParams {
   image?: string
   document?: string
 }
+
+// ============================================================================
+// Template Message Types (Phase 3)
+// ============================================================================
+
+export interface SendPulseTemplate {
+  id: string
+  name: string
+  language: string
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'DELETED'
+  category: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION'
+  components: TemplateComponent[]
+  created_at?: string
+  updated_at?: string
+}
+
+export interface TemplateComponent {
+  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS'
+  format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
+  text?: string
+  example?: {
+    header_text?: string[]
+    body_text?: string[][]
+  }
+  buttons?: Array<{
+    type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'
+    text: string
+    url?: string
+    phone_number?: string
+  }>
+}
+
+export interface TemplateMessage {
+  type: 'template'
+  template: {
+    name: string
+    language: {
+      code: string // e.g., 'pt_BR', 'en_US'
+    }
+    components?: Array<{
+      type: 'header' | 'body' | 'button'
+      parameters?: Array<{
+        type: 'text' | 'image' | 'document' | 'video'
+        text?: string
+        image?: { link: string }
+        document?: { link: string; filename?: string }
+        video?: { link: string }
+      }>
+      sub_type?: 'quick_reply' | 'url'
+      index?: number
+    }>
+  }
+}
+
+export interface SendPulseTemplatesResponse {
+  success: boolean
+  data: SendPulseTemplate[]
+}
+
+// ============================================================================
+// Webhook Event Types (Phase 3)
+// ============================================================================
+
+export type WebhookEventType =
+  | 'message.new'
+  | 'message.status'
+  | 'contact.created'
+  | 'contact.updated'
+  | 'conversation.opened'
+  | 'conversation.closed'
+
+export interface WebhookEvent {
+  event: WebhookEventType
+  bot_id: string
+  contact_id: string
+  timestamp: string
+  data: MessageEvent | StatusEvent | ContactEvent | ConversationEvent
+}
+
+export interface MessageEvent {
+  message_id: string
+  type: MessageType | 'template'
+  direction: 'inbound' | 'outbound'
+  content: {
+    text?: string
+    image?: string
+    document?: string
+    buttons?: any[]
+  }
+  timestamp: string
+  from: string
+  to: string
+}
+
+export interface StatusEvent {
+  message_id: string
+  status: 'sent' | 'delivered' | 'read' | 'failed'
+  timestamp: string
+  error?: {
+    code: number
+    message: string
+  }
+}
+
+export interface ContactEvent {
+  contact_id: string
+  action: 'created' | 'updated'
+  changes?: {
+    field: string
+    old_value: any
+    new_value: any
+  }[]
+  timestamp: string
+}
+
+export interface ConversationEvent {
+  contact_id: string
+  action: 'opened' | 'closed'
+  timestamp: string
+  duration?: number // seconds, for closed events
+}
+
+// ============================================================================
+// Rate Limiting Types (Phase 3)
+// ============================================================================
+
+export interface RateLimitConfig {
+  maxRequests: number
+  windowMs: number
+  strategy: 'token-bucket' | 'sliding-window' | 'fixed-window'
+  burstSize?: number // For token bucket
+}
+
+export interface RateLimitState {
+  tokens: number
+  lastRefill: number
+  requestCount: number
+  windowStart: number
+}
+
+// ============================================================================
+// Retry Types (Phase 3)
+// ============================================================================
+
+export interface RetryConfig {
+  maxRetries: number
+  initialDelay: number // milliseconds
+  maxDelay: number // milliseconds
+  backoffMultiplier: number
+  retryableStatusCodes: number[]
+  retryableErrors: string[]
+}
+
+export interface RetryAttempt {
+  attempt: number
+  delay: number
+  error?: Error
+  timestamp: number
+}
+
+// ============================================================================
+// Analytics Types (Phase 3)
+// ============================================================================
+
+export interface ConversationMetrics {
+  contact_id: string
+  bot_id: string
+  totalMessages: number
+  sentByBot: number
+  sentByUser: number
+  averageResponseTime: number // milliseconds
+  conversationDuration: number // milliseconds
+  lastActivity: string
+  messagesByType: Record<MessageType | 'template', number>
+  deliveryRate: number // percentage
+  readRate: number // percentage
+  failureRate: number // percentage
+}
+
+export interface MessageMetrics {
+  total: number
+  sent: number
+  delivered: number
+  read: number
+  failed: number
+  byType: Record<MessageType | 'template', number>
+  byHour: Record<string, number> // ISO hour -> count
+  byDay: Record<string, number> // ISO date -> count
+}
+
+export interface AnalyticsTimeframe {
+  start: string // ISO datetime
+  end: string // ISO datetime
+  granularity: 'hour' | 'day' | 'week' | 'month'
+}
+
+export interface AnalyticsSummary {
+  timeframe: AnalyticsTimeframe
+  conversations: {
+    total: number
+    active: number
+    closed: number
+    averageDuration: number
+  }
+  messages: MessageMetrics
+  contacts: {
+    total: number
+    new: number
+    active: number
+    returning: number
+  }
+  performance: {
+    averageResponseTime: number
+    deliveryRate: number
+    readRate: number
+    failureRate: number
+  }
+}

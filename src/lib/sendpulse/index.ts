@@ -1,6 +1,6 @@
 /**
  * SendPulse WhatsApp Integration
- * Complete module exports
+ * Complete module exports (Phase 3 - Advanced Features)
  */
 
 // Main client
@@ -14,6 +14,13 @@ export { BotManager, botManager } from './bot-manager'
 
 // Contact caching
 export { ContactCache, contactCache } from './contact-cache'
+
+// Phase 3 - Advanced Features
+export { RateLimiter, rateLimiter } from './rate-limiter'
+export { RetryManager, retryManager } from './retry-manager'
+export { TemplateManager, templateManager } from './template-manager'
+export { WebhookHandler, webhookHandler } from './webhook-handler'
+export { AnalyticsService, analyticsService } from './analytics-service'
 
 // Type definitions
 export type {
@@ -35,7 +42,21 @@ export type {
   SendPulseBalance,
   SendPulseOAuthTokenResponse,
   SendPulseTokenInfo,
-  LegacySendMessageParams
+  LegacySendMessageParams,
+  // Phase 3 types
+  SendPulseTemplate,
+  TemplateMessage,
+  WebhookEvent,
+  WebhookEventType,
+  MessageEvent,
+  StatusEvent,
+  ContactEvent,
+  ConversationEvent,
+  RateLimitConfig,
+  RetryConfig,
+  ConversationMetrics,
+  MessageMetrics,
+  AnalyticsSummary
 } from './types'
 
 // Error classes
