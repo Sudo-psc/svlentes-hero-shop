@@ -14,6 +14,14 @@ import {
   getOrCreateUserProfile,
   storeInteraction
 } from '@/lib/whatsapp-conversation-service'
+import { logger, LogCategory } from '@/lib/logger'
+import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
+import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
+
+// Set debug level from environment or default to standard
+if (process.env.DEBUG_LEVEL) {
+  debugUtilities.setDebugLevel(process.env.DEBUG_LEVEL as DebugLevel)
+}
 
 // SendPulse webhook verification (SendPulse doesn't use token verification)
 export async function GET(request: NextRequest) {
@@ -31,49 +39,90 @@ export async function GET(request: NextRequest) {
 
 // Main webhook handler for SendPulse messages (Brazilian API)
 export async function POST(request: NextRequest) {
+  const timer = logger.startTimer()
+  const requestId = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+
   try {
     const body = await request.json()
-    console.log('SendPulse webhook received:', body)
+
+    // Log webhook received with tracing
+    await debugUtilities.traceWebhookProcessing(body, 'sendpulse')
+    logger.logSendPulseWebhook('received', {
+      requestId,
+      bodySize: JSON.stringify(body).length,
+      eventType: body.event || body[0]?.title || 'unknown'
+    })
 
     // Handle SendPulse native format (array of events)
     if (Array.isArray(body) && body.length > 0) {
+      logger.info(LogCategory.SENDPULSE, `Processing ${body.length} events`)
+
       for (const event of body) {
         if (event.title === 'incoming_message' && event.service === 'whatsapp') {
-          await processSendPulseNativeMessage(event)
+          await processSendPulseNativeMessage(event, requestId)
         }
       }
-      return NextResponse.json({ status: 'processed' })
+
+      const duration = timer()
+      logger.logPerformance('webhook_processed', { requestId, duration, eventCount: body.length })
+
+      return NextResponse.json({ status: 'processed', requestId })
     }
 
     // Handle SendPulse Brazilian API format
     if (body.entry && body.entry[0]?.changes) {
-      await processSendPulseWhatsAppMessage(body)
-      return NextResponse.json({ status: 'processed' })
+      await processSendPulseWhatsAppMessage(body, requestId)
+
+      const duration = timer()
+      logger.logPerformance('webhook_processed', { requestId, duration })
+
+      return NextResponse.json({ status: 'processed', requestId })
     }
 
     // Handle legacy events for backward compatibility
     if (body.event === 'message.new') {
-      await processSendPulseMessage(body)
-      return NextResponse.json({ status: 'processed' })
+      await processSendPulseMessage(body, requestId)
+
+      const duration = timer()
+      logger.logPerformance('webhook_processed', { requestId, duration })
+
+      return NextResponse.json({ status: 'processed', requestId })
     }
 
     // Handle message status updates
     if (body.event === 'message.status') {
-      await updateMessageStatus(body)
-      return NextResponse.json({ status: 'updated' })
+      await updateMessageStatus(body, requestId)
+
+      const duration = timer()
+      logger.logPerformance('status_updated', { requestId, duration })
+
+      return NextResponse.json({ status: 'updated', requestId })
     }
 
     // Handle webhook verification/test
     if (body.event === 'webhook.verify') {
-      return NextResponse.json({ status: 'verified' })
+      logger.info(LogCategory.WEBHOOK, 'Webhook verification request')
+      return NextResponse.json({ status: 'verified', requestId })
     }
 
-    return NextResponse.json({ status: 'received' })
+    // Unknown event type
+    logger.warn(LogCategory.WEBHOOK, 'Unknown webhook event type', {
+      requestId,
+      bodyKeys: Object.keys(body),
+      event: body.event
+    })
+
+    return NextResponse.json({ status: 'received', requestId })
 
   } catch (error) {
-    console.error('Error processing SendPulse webhook:', error)
+    const duration = timer()
+    logger.logSendPulseError('webhook_processing', error as Error, {
+      requestId,
+      duration
+    })
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', requestId },
       { status: 500 }
     )
   }
@@ -82,7 +131,8 @@ export async function POST(request: NextRequest) {
 /**
  * Process SendPulse native format message (array format)
  */
-async function processSendPulseNativeMessage(event: any) {
+async function processSendPulseNativeMessage(event: any, requestId?: string) {
+  const timer = logger.startTimer()
   try {
     // Extract message from info object
     const message = event.info?.message
@@ -119,7 +169,18 @@ async function processSendPulseNativeMessage(event: any) {
     const messageId = message.id || `msg_${Date.now()}`
     const customerName = contact.name || contact.username || 'Cliente'
 
-    console.log(`Processing SendPulse native message from ${customerPhone}: "${messageContent}"`)
+    // Log message received
+    logger.logWhatsAppMessageReceived(customerPhone, messageId, messageContent.length, {
+      requestId,
+      customerName,
+      format: 'native'
+    })
+
+    await debugUtilities.traceMessageProcessing('message_received', {
+      messageId,
+      phone: customerPhone,
+      contentLength: messageContent.length
+    })
 
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(contact, customerPhone)
@@ -139,10 +200,34 @@ async function processSendPulseNativeMessage(event: any) {
     }
 
     // Process message with LangChain
+    const langchainTimer = logger.startTimer()
     const processingResult = await langchainSupportProcessor.processSupportMessage(
       messageContent,
       context
     )
+    const langchainDuration = langchainTimer()
+
+    // Log intent detection
+    logger.logWhatsAppIntentDetected(
+      processingResult.intent.name,
+      processingResult.intent.confidence || 0.8,
+      customerPhone,
+      { requestId, duration: langchainDuration }
+    )
+
+    logger.logLangChainProcessing(
+      messageId,
+      processingResult.intent.name,
+      processingResult.intent.confidence || 0.8,
+      langchainDuration,
+      { requestId }
+    )
+
+    await debugUtilities.traceMessageProcessing('langchain_processed', {
+      messageId,
+      intent: processingResult.intent.name,
+      confidence: processingResult.intent.confidence
+    }, langchainDuration)
 
     // Store interaction
     await storeInteraction({
@@ -156,25 +241,60 @@ async function processSendPulseNativeMessage(event: any) {
       userProfile
     })
 
+    await debugUtilities.traceMessageProcessing('interaction_stored', {
+      messageId,
+      escalationRequired: processingResult.escalationRequired
+    })
+
     // Send response via SendPulse (pass contact window status from webhook)
-    await sendSendPulseResponse(customerPhone, processingResult, customerName, contact)
+    const sendTimer = logger.startTimer()
+    await sendSendPulseResponse(customerPhone, processingResult, customerName, contact, requestId)
+    const sendDuration = sendTimer()
+
+    logger.logSendPulseMessageSent(customerPhone, messageId, processingResult.response.length, {
+      requestId,
+      duration: sendDuration,
+      hasQuickReplies: processingResult.quickReplies && processingResult.quickReplies.length > 0
+    })
 
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
+      logger.logWhatsAppEscalation(customerPhone, processingResult.intent.name, 'MEDIUM', {
+        requestId,
+        messageId,
+        ticketId: processingResult.ticketId
+      })
+
       await handleEscalationIfNeeded(customerPhone, processingResult, context)
     }
 
-    console.log(`✅ SendPulse native message processed: ${customerPhone} - ${processingResult.intent.name}`)
+    const totalDuration = timer()
+    logger.info(LogCategory.WHATSAPP, `✅ Message processing completed`, {
+      requestId,
+      messageId,
+      customerPhone,
+      intent: processingResult.intent.name,
+      totalDuration,
+      stages: {
+        langchain: langchainDuration,
+        send: sendDuration
+      }
+    })
 
   } catch (error) {
-    console.error('Error processing SendPulse native message:', error)
+    const duration = timer()
+    logger.logSendPulseError('process_native_message', error as Error, {
+      requestId,
+      duration,
+      customerPhone: event.contact?.phone
+    })
   }
 }
 
 /**
  * Process SendPulse WhatsApp message (Brazilian API format)
  */
-async function processSendPulseWhatsAppMessage(webhookData: any) {
+async function processSendPulseWhatsAppMessage(webhookData: any, requestId?: string) {
   try {
     const entry = webhookData.entry?.[0]
     if (!entry?.changes) return
@@ -264,7 +384,7 @@ async function processWhatsAppMessage(message: any, metadata: any) {
 /**
  * Process incoming SendPulse message (legacy format)
  */
-async function processSendPulseMessage(webhookData: any) {
+async function processSendPulseMessage(webhookData: any, requestId?: string) {
   try {
     const message = webhookData.message
     const contact = webhookData.contact
@@ -377,13 +497,15 @@ async function sendSendPulseResponse(
   customerPhone: string,
   processingResult: any,
   customerName: string,
-  contact?: any
+  contact?: any,
+  requestId?: string
 ) {
   try {
-    // Extract conversation window status from webhook contact data
-    const isChatOpened = contact?.is_chat_opened ?? undefined
+    // IMPORTANT: If we're responding to a webhook message, the user just sent us a message,
+    // so the 24h conversation window is DEFINITELY open. We must pass isChatOpened=true.
+    const isChatOpened = true
 
-    console.log(`[Webhook] Contact window status from webhook: is_chat_opened=${isChatOpened}`)
+    console.log(`[Webhook] Responding to incoming message - window is open: isChatOpened=${isChatOpened}`)
 
     // Send message via SendPulse client
     if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
@@ -409,7 +531,11 @@ async function sendSendPulseResponse(
     }
 
   } catch (error) {
-    console.error('Error sending SendPulse response:', error)
+    logger.logSendPulseError('send_response', error as Error, {
+      requestId,
+      customerPhone,
+      responseLength: processingResult.response?.length
+    })
   }
 }
 
@@ -441,15 +567,86 @@ async function handleEscalationIfNeeded(
 /**
  * Update message status
  */
-async function updateMessageStatus(webhookData: any) {
-  try {
-    const { message_id, status } = webhookData
-    console.log(`Message ${message_id} status updated to: ${status}`)
+async function updateMessageStatus(webhookData: any, requestId?: string) {
+  const timer = logger.startTimer()
 
-    // TODO: Update message status in database
+  try {
+    const { message_id, status, error_code, error_message, timestamp, metadata } = webhookData
+
+    logger.info(LogCategory.SENDPULSE, `Message status update received`, {
+      requestId,
+      messageId: message_id,
+      status,
+      errorCode: error_code
+    })
+
+    // Map SendPulse status to our MessageStatus enum
+    const mappedStatus = mapSendPulseStatus(status)
+
+    // Update status in database
+    const statusRecord = await messageStatusTracker.updateStatus({
+      messageId: message_id,
+      status: mappedStatus,
+      timestamp: timestamp ? new Date(timestamp) : new Date(),
+      errorCode: error_code,
+      errorMessage: error_message,
+      metadata
+    })
+
+    if (statusRecord) {
+      const duration = timer()
+
+      logger.logSendPulseMessageStatus(
+        message_id,
+        statusRecord.previousStatus || 'unknown',
+        mappedStatus,
+        duration,
+        {
+          requestId,
+          deliveryTime: statusRecord.deliveryTime,
+          readTime: statusRecord.readTime
+        }
+      )
+
+      // Trace the status update
+      await debugUtilities.traceMessageProcessing('status_update', {
+        messageId: message_id,
+        status: mappedStatus,
+        duration
+      }, duration)
+    } else {
+      logger.warn(LogCategory.SENDPULSE, `Message not found for status update`, {
+        requestId,
+        messageId: message_id,
+        status
+      })
+    }
   } catch (error) {
-    console.error('Error updating message status:', error)
+    const duration = timer()
+    logger.logSendPulseError('update_message_status', error as Error, {
+      requestId,
+      messageId: webhookData.message_id,
+      duration
+    })
   }
+}
+
+/**
+ * Map SendPulse status to MessageStatus enum
+ */
+function mapSendPulseStatus(sendpulseStatus: string): MessageStatus {
+  const statusMap: Record<string, MessageStatus> = {
+    'queued': MessageStatus.QUEUED,
+    'sending': MessageStatus.SENDING,
+    'sent': MessageStatus.SENT,
+    'delivered': MessageStatus.DELIVERED,
+    'read': MessageStatus.READ,
+    'failed': MessageStatus.FAILED,
+    'rejected': MessageStatus.REJECTED,
+    'expired': MessageStatus.EXPIRED
+  }
+
+  return statusMap[sendpulseStatus.toLowerCase()] || MessageStatus.SENT
 }
 
 /**

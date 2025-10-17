@@ -231,21 +231,34 @@ export class SendPulseClient {
       await rateLimiter.acquire()
 
       // 2. Check if contact is in 24-hour window (skip for template messages)
-      // IMPORTANT: Skip window check for webhook responses - if user sent a message, window is open
-      if (message.type !== 'template' && isChatOpenedOverride === false) {
-        // Only check if explicitly told the window is closed (not undefined)
-        console.log(`[SendPulse] 24h window explicitly closed, attempting template fallback`)
-        if (useTemplateFallback) {
-          return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
+      // IMPORTANT: Trust the isChatOpenedOverride parameter
+      // - If true: User just sent a message (webhook context), window is definitely open
+      // - If false: Explicitly told window is closed, use template fallback
+      // - If undefined: Check API status (proactive messages)
+      if (message.type !== 'template') {
+        if (isChatOpenedOverride === true) {
+          // Webhook response - window is definitely open, skip check
+          console.log(`[SendPulse] Webhook response - window is open, skipping check`)
+        } else if (isChatOpenedOverride === false) {
+          // Explicitly told window is closed
+          console.log(`[SendPulse] 24h window explicitly closed, attempting template fallback`)
+          if (useTemplateFallback) {
+            return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
+          }
+          throw new ConversationWindowExpiredError(contactId)
+        } else {
+          // Undefined - check API status (proactive message scenario)
+          console.log(`[SendPulse] Proactive message - checking window status via API`)
+          const isActive = await this.isContactActive(contactId)
+          if (!isActive) {
+            console.log(`[SendPulse] Contact window closed, attempting template fallback`)
+            if (useTemplateFallback) {
+              return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
+            }
+            throw new ConversationWindowExpiredError(contactId)
+          }
         }
-        throw new ConversationWindowExpiredError(contactId)
       }
-
-      // If isChatOpenedOverride is undefined or true, assume window is open
-      // This is safe because:
-      // 1. If user just sent a message (webhook), window is definitely open
-      // 2. SendPulse API will return 422 if window is actually closed
-      console.log(`[SendPulse] Sending message without window check (webhook context)`)
 
 
       // 3. Send with retry logic
