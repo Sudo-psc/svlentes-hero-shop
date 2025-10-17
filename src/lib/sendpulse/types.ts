@@ -340,6 +340,7 @@ export interface LegacySendMessageParams {
   }>
   image?: string
   document?: string
+  isChatOpened?: boolean // Override window check with webhook status
 }
 
 // ============================================================================

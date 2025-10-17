@@ -59,8 +59,8 @@ const reminderTemplateMap: Record<ReminderType, ReminderTemplateDefinition> = {
 const supportContacts = [
   {
     label: 'WhatsApp',
-    value: '(33) 99898-0026',
-    href: 'https://wa.me/5533998980026'
+    value: '(33) 99898-026',
+    href: 'https://wa.me/553399898026'
   },
   {
     label: 'Email',

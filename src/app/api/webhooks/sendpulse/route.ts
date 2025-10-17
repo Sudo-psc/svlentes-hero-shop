@@ -94,10 +94,24 @@ async function processSendPulseNativeMessage(event: any) {
       return
     }
 
+    // Debug: Log full message structure to understand format
+    console.log('[DEBUG] Full message object:', JSON.stringify(message, null, 2))
+    console.log('[DEBUG] Contact phone:', contact.phone)
+
     // Extract message text from the message object
-    const messageContent = message.text || message.body || null
+    // SendPulse sends text in: message.channel_data.message.text.body
+    const messageContent =
+      message.channel_data?.message?.text?.body || // SendPulse real format
+      message.text || // Fallback
+      message.body || // Fallback
+      null
+
     if (!messageContent || typeof messageContent !== 'string') {
       console.warn('No text content in SendPulse message')
+      console.warn('[DEBUG] Message structure keys:', Object.keys(message))
+      console.warn('[DEBUG] Message.text:', message.text)
+      console.warn('[DEBUG] Message.body:', message.body)
+      console.warn('[DEBUG] Message.channel_data:', message.channel_data)
       return
     }
 
@@ -142,8 +156,8 @@ async function processSendPulseNativeMessage(event: any) {
       userProfile
     })
 
-    // Send response via SendPulse
-    await sendSendPulseResponse(customerPhone, processingResult, customerName)
+    // Send response via SendPulse (pass contact window status from webhook)
+    await sendSendPulseResponse(customerPhone, processingResult, customerName, contact)
 
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
@@ -195,6 +209,7 @@ async function processWhatsAppMessage(message: any, metadata: any) {
     const customerPhone = message.from
     const messageId = message.id
     const customerName = metadata.contacts?.[0]?.profile?.name || 'Cliente'
+    const contact = metadata.contacts?.[0] || {}
 
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(metadata.contacts?.[0] || {}, customerPhone)
@@ -231,8 +246,8 @@ async function processWhatsAppMessage(message: any, metadata: any) {
       userProfile
     })
 
-    // Send response via SendPulse
-    await sendSendPulseResponse(customerPhone, processingResult, customerName)
+    // Send response via SendPulse (pass contact window status from webhook)
+    await sendSendPulseResponse(customerPhone, processingResult, customerName, contact)
 
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
@@ -302,8 +317,8 @@ async function processSendPulseMessage(webhookData: any) {
       userProfile
     })
 
-    // Send response via SendPulse
-    await sendSendPulseResponse(customerPhone, processingResult, customerName)
+    // Send response via SendPulse (pass contact window status from webhook)
+    await sendSendPulseResponse(customerPhone, processingResult, customerName, contact)
 
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
@@ -361,20 +376,28 @@ function extractMessageContent(message: any): string | null {
 async function sendSendPulseResponse(
   customerPhone: string,
   processingResult: any,
-  customerName: string
+  customerName: string,
+  contact?: any
 ) {
   try {
+    // Extract conversation window status from webhook contact data
+    const isChatOpened = contact?.is_chat_opened ?? undefined
+
+    console.log(`[Webhook] Contact window status from webhook: is_chat_opened=${isChatOpened}`)
+
     // Send message via SendPulse client
     if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
       await sendPulseClient.sendMessageWithQuickReplies(
         customerPhone,
         processingResult.response,
-        processingResult.quickReplies
+        processingResult.quickReplies,
+        { isChatOpened }
       )
     } else {
       await sendPulseClient.sendMessage({
         phone: customerPhone,
-        message: processingResult.response
+        message: processingResult.response,
+        isChatOpened
       })
     }
 

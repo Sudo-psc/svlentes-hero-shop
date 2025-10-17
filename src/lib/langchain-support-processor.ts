@@ -112,7 +112,8 @@ INFORMAÇÕES DA EMPRESA:
 - Clínica: Saraiva Vision - Caratinga/MG
 - Responsável: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
 - WhatsApp: (33) 99898-026
-- Site: svlentes.shop
+- E-mail: contato@svlentes.com.br
+- Site: svlentes.com.br
 
 CONTEXTUALIZAÇÃO:
 - Nome do cliente: {customerName}
@@ -327,7 +328,13 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
    */
   private async parseSupportIntent(result: string): Promise<SupportIntent> {
     try {
-      const parsed = JSON.parse(result)
+      // Remove markdown code blocks if present (```json and ```)
+      const cleanedResult = result
+        .replace(/```json\s*/g, '')
+        .replace(/```\s*/g, '')
+        .trim()
+
+      const parsed = JSON.parse(cleanedResult)
       return {
         name: parsed.intent || 'general_inquiry',
         confidence: parsed.confidence || 0.5,

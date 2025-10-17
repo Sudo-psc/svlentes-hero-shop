@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - LGPD-compliant (Brazilian data protection law)
 - Production domains: **svlentes.com.br** (primary) / **svlentes.shop** (alternative)
 - Payment processor: **Asaas API v3** (Brazilian gateway - PIX, Boleto, Cartão de Crédito)
+- WhatsApp integration: **SendPulse** for customer support automation
 
 ## Development Commands
 
@@ -87,8 +88,12 @@ src/
 │   ├── layout.tsx         # Root layout with metadata
 │   ├── globals.css        # Global styles and CSS variables
 │   ├── api/               # API routes
-│   │   ├── webhooks/asaas/ # Asaas payment webhooks
+│   │   ├── webhooks/      # Webhook handlers
+│   │   │   ├── asaas/     # Asaas payment webhooks
+│   │   │   └── sendpulse/ # SendPulse WhatsApp webhooks
 │   │   ├── asaas/         # Payment creation endpoints
+│   │   ├── whatsapp/      # WhatsApp conversation management
+│   │   ├── sendpulse/     # SendPulse integration
 │   │   ├── monitoring/    # Health and performance endpoints
 │   │   ├── privacy/       # LGPD compliance endpoints
 │   │   ├── schedule-consultation/ # Appointment booking
@@ -98,6 +103,7 @@ src/
 │   ├── calculadora/       # Savings calculator page
 │   ├── assinar/          # Subscription signup flow
 │   ├── agendar-consulta/ # Consultation scheduling
+│   ├── area-assinante/    # Subscriber dashboard
 │   ├── lentes-diarias/    # Daily lenses information
 │   ├── politica-privacidade/ # Privacy policy (LGPD)
 │   ├── termos-uso/        # Terms of service
@@ -109,9 +115,14 @@ src/
 │   ├── sections/          # Landing page sections
 │   ├── forms/             # Form components with validation
 │   ├── layout/            # Header, Footer components
-│   └── trust/             # Trust indicators and credibility
+│   ├── trust/             # Trust indicators and credibility
+│   ├── assinante/         # Subscriber area components
+│   └── privacy/           # LGPD compliance components
 ├── lib/
 │   ├── calculator.ts      # Savings calculation logic
+│   ├── sendpulse-client.ts # SendPulse API client
+│   ├── sendpulse-auth.ts   # SendPulse authentication
+│   ├── langchain-support-processor.ts # AI-powered support
 │   └── utils.ts           # Utility functions (cn, etc.)
 ├── data/
 │   └── calculator-data.ts # Static calculator data
@@ -125,6 +136,8 @@ src/
 - **React Hook Form** with Zod validation
 - **Framer Motion** for animations
 - **Asaas API v3** for payment processing (Brazilian market)
+- **SendPulse** for WhatsApp Business integration
+- **LangChain + OpenAI** for AI-powered customer support
 - **Prisma** for database ORM (PostgreSQL)
 - **Jest** for unit testing
 - **Playwright** for E2E testing
@@ -144,6 +157,46 @@ src/
 - Secondary payment processor
 - Checkout sessions via `/api/create-checkout`
 - Webhook endpoint: `/api/webhooks/stripe`
+
+### WhatsApp Integration
+
+**SendPulse WhatsApp Business:**
+- Automated customer support via WhatsApp
+- Webhook endpoint: `/api/webhooks/sendpulse`
+- AI-powered intent detection and response generation
+- Conversation tracking and ticket escalation
+- Database models: `WhatsAppConversation`, `WhatsAppInteraction`
+- Environment variables: Check `.env.sendpulse` for required configuration
+
+**AI Support Processing:**
+- LangChain for natural language understanding
+- OpenAI GPT for response generation
+- Intent classification: subscription_inquiry, billing_support, delivery_status, etc.
+- Automatic ticket creation for complex issues
+- Response templates with personalization
+
+### Database Schema (Prisma + PostgreSQL)
+
+**Core Models:**
+- `User` - User accounts with Google OAuth and Firebase integration
+- `Subscription` - Subscription plans with Asaas integration
+- `Payment` - Individual payment records from Asaas webhooks
+- `Order` - Lens delivery orders with tracking
+- `SupportTicket` - Customer support tickets with escalation
+
+**WhatsApp Models:**
+- `WhatsAppConversation` - Conversation threads
+- `WhatsAppInteraction` - Individual messages with AI analysis
+- `FAQ` - Knowledge base for automated responses
+
+**LGPD Compliance Models:**
+- `ConsentLog` - User consent tracking
+- `DataRequest` - Data access/deletion requests
+
+**Notification System:**
+- `Notification` - Multi-channel notifications (email, WhatsApp, SMS)
+- `UserBehavior` - ML-driven engagement optimization
+- `Campaign` - Marketing campaign management
 
 ### Design System
 
@@ -190,6 +243,7 @@ src/
 
 **API Security:**
 - Asaas webhook token validation
+- SendPulse webhook authentication
 - CORS configuration for payment providers
 - Rate limiting on sensitive endpoints
 - No sensitive data in client-side code
@@ -221,6 +275,18 @@ ASAAS_ENV=production
 ASAAS_API_KEY_PROD=<production-key>
 ASAAS_API_KEY_SANDBOX=<sandbox-key>
 ASAAS_WEBHOOK_TOKEN=<webhook-secret>
+
+# SendPulse WhatsApp Integration
+SENDPULSE_USER_ID=<user-id>
+SENDPULSE_SECRET=<api-secret>
+SENDPULSE_ACCESS_TOKEN=<access-token>
+SENDPULSE_REFRESH_TOKEN=<refresh-token>
+SENDPULSE_BOT_ID=<whatsapp-bot-id>
+
+# AI/LangChain
+OPENAI_API_KEY=<openai-key>
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=<langchain-key>
 
 # Database (Prisma)
 DATABASE_URL=<postgresql-url>
@@ -257,9 +323,11 @@ NEXTAUTH_URL=https://svlentes.shop
 - Brazilian-specific validations (CPF, phone format)
 
 **WhatsApp Integration:**
+- SendPulse webhook handling for incoming messages
+- LangChain-powered intent classification
+- Automated response generation with context awareness
+- Ticket escalation for complex queries
 - Direct contact flow via `/api/whatsapp-redirect`
-- Pre-filled messages with consultation context
-- Fallback to phone number if redirect fails
 
 ## Development Workflow
 
@@ -267,8 +335,10 @@ NEXTAUTH_URL=https://svlentes.shop
 1. Install dependencies: `npm install`
 2. Copy environment example: `cp .env.local.example .env.local`
 3. Configure Asaas sandbox keys in `.env.local`
-4. Start development server: `npm run dev`
-5. Access at http://localhost:3000
+4. Configure database: Set `DATABASE_URL` in `.env.local`
+5. Run migrations: `npx prisma migrate dev`
+6. Start development server: `npm run dev`
+7. Access at http://localhost:3000
 
 ### Testing Before Deploy
 1. Run unit tests: `npm run test`
@@ -297,6 +367,7 @@ curl https://svlentes.com.br/api/health-check
 - [ ] Production build successful (`npm run build`)
 - [ ] Environment variables configured
 - [ ] Asaas production keys active
+- [ ] SendPulse integration configured
 - [ ] SSL certificates valid (Let's Encrypt via Certbot)
 - [ ] Nginx configuration tested (`nginx -t`)
 - [ ] Health check endpoint responding
@@ -311,6 +382,7 @@ curl https://svlentes.com.br/api/health-check
 - `POST /api/schedule-consultation` - Book medical consultation
 - `POST /api/asaas/create-payment` - Create Asaas payment
 - `POST /api/webhooks/asaas` - Asaas webhook handler
+- `POST /api/webhooks/sendpulse` - SendPulse WhatsApp webhook
 - `GET /api/whatsapp-redirect` - WhatsApp contact redirect
 
 ### Monitoring Endpoints
@@ -453,7 +525,7 @@ This is a known warning when multiple virtual hosts use the same SSL settings. I
 netstat -tlnp | grep -E ":80|:443"
 
 # If needed, stop conflicting service
-systemctl stop caddy  # If Caddy is running
+systemctl stop caddy  # If Caddy is installed but not in use
 ```
 
 **SSL Certificate Issues:**
@@ -488,6 +560,13 @@ openssl x509 -in /etc/letsencrypt/live/svlentes.com.br/fullchain.pem -text -noou
 - Check webhook token matches Asaas dashboard
 - Monitor webhook logs: `journalctl -u svlentes-nextjs -f`
 - Test in sandbox environment first
+
+### WhatsApp/SendPulse Issues
+- Verify SendPulse credentials in `.env.sendpulse`
+- Check webhook endpoint is publicly accessible
+- Monitor webhook logs for incoming messages
+- Test AI response generation locally
+- Verify database has WhatsApp tables: `npx prisma studio`
 
 ### Performance Issues
 - Check monitoring endpoints: `/api/monitoring/performance`

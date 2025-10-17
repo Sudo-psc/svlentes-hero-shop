@@ -56,7 +56,9 @@ export class SendPulseAuth {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
+        const text = await response.text()
+        console.error('SendPulse OAuth response:', text)
+        const errorData = JSON.parse(text || '{}')
         throw new Error(
           `SendPulse OAuth error: ${response.status} - ${
             errorData.error_description || response.statusText
@@ -64,7 +66,9 @@ export class SendPulseAuth {
         )
       }
 
-      const data: TokenResponse = await response.json()
+      const text = await response.text()
+      console.log('[SendPulse Auth] Raw response:', text.substring(0, 200))
+      const data: TokenResponse = JSON.parse(text)
 
       // Cache token (expires_in is in seconds, subtract 60s for safety margin)
       this.cachedToken = data.access_token

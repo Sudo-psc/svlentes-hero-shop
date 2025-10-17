@@ -223,7 +223,8 @@ export class SendPulseClient {
   private async sendMessageToContact(
     contactId: string,
     message: WhatsAppMessage | TemplateMessage,
-    useTemplateFallback: boolean = true
+    useTemplateFallback: boolean = true,
+    isChatOpenedOverride?: boolean
   ): Promise<SendMessageResponse> {
     try {
       // 1. Rate limiting
@@ -231,7 +232,17 @@ export class SendPulseClient {
 
       // 2. Check if contact is in 24-hour window (skip for template messages)
       if (message.type !== 'template') {
-        const isActive = await this.isContactActive(contactId)
+        // Use webhook status if provided, otherwise check API
+        let isActive: boolean
+
+        if (isChatOpenedOverride !== undefined) {
+          isActive = isChatOpenedOverride
+          console.log(`[SendPulse] Using webhook window status: is_chat_opened=${isActive}`)
+        } else {
+          isActive = await this.isContactActive(contactId)
+          console.log(`[SendPulse] Checked API window status: is_chat_opened=${isActive}`)
+        }
+
         if (!isActive) {
           if (useTemplateFallback) {
             console.log(`[SendPulse] 24h window expired, attempting template fallback for contact ${contactId}`)
@@ -392,7 +403,7 @@ export class SendPulseClient {
         } as TextMessage
       }
 
-      return await this.sendMessageToContact(contact.id, message)
+      return await this.sendMessageToContact(contact.id, message, true, params.isChatOpened)
 
     } catch (error) {
       console.error('Error sending SendPulse message:', error)
@@ -406,7 +417,8 @@ export class SendPulseClient {
   async sendMessageWithQuickReplies(
     phone: string,
     message: string,
-    quickReplies: string[]
+    quickReplies: string[],
+    options?: { isChatOpened?: boolean }
   ): Promise<any> {
     const buttons = quickReplies.map(reply => ({
       type: 'reply' as const,
@@ -419,7 +431,8 @@ export class SendPulseClient {
     return this.sendMessage({
       phone,
       message,
-      buttons
+      buttons,
+      isChatOpened: options?.isChatOpened
     })
   }
 

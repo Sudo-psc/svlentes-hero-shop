@@ -67,7 +67,7 @@ export const PricingFAQ: React.FC<PricingFAQProps> = ({
               Ainda tem dúvidas?
             </p>
             <a
-              href="https://wa.me/5533998980026"
+              href="https://wa.me/553399898026"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-cyan-600 hover:text-cyan-700 font-semibold"

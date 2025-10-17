@@ -91,7 +91,7 @@ export class EmailReminderService {
               📞 Precisa de ajuda?
             </p>
             <p style="font-size: 14px; color: #64748b; margin: 5px 0;">
-              WhatsApp: <a href="https://wa.me/5533998980026" style="color: #0891b2; text-decoration: none;">(33) 99898-0026</a>
+              WhatsApp: <a href="https://wa.me/553399898026" style="color: #0891b2; text-decoration: none;">(33) 99898-026</a>
             </p>
             <p style="font-size: 14px; color: #64748b; margin: 5px 0;">
               Email: <a href="mailto:contato@svlentes.com.br" style="color: #0891b2; text-decoration: none;">contato@svlentes.com.br</a>

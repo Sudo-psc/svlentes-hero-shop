@@ -121,7 +121,7 @@ export class SendPulseReminderService {
       
       reminder.quickReplies.forEach((reply) => {
         html += `
-          <a href="https://wa.me/5533998980026?text=${encodeURIComponent(reply)}" 
+          <a href="https://wa.me/553399898026?text=${encodeURIComponent(reply)}"
              style="background-color: #0891b2; color: white; padding: 12px 20px; text-decoration: none; border-radius: 6px; display: inline-block; text-align: center;">
             ${reply}
           </a>
