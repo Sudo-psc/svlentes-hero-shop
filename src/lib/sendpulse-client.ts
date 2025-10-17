@@ -231,26 +231,22 @@ export class SendPulseClient {
       await rateLimiter.acquire()
 
       // 2. Check if contact is in 24-hour window (skip for template messages)
-      if (message.type !== 'template') {
-        // Use webhook status if provided, otherwise check API
-        let isActive: boolean
-
-        if (isChatOpenedOverride !== undefined) {
-          isActive = isChatOpenedOverride
-          console.log(`[SendPulse] Using webhook window status: is_chat_opened=${isActive}`)
-        } else {
-          isActive = await this.isContactActive(contactId)
-          console.log(`[SendPulse] Checked API window status: is_chat_opened=${isActive}`)
+      // IMPORTANT: Skip window check for webhook responses - if user sent a message, window is open
+      if (message.type !== 'template' && isChatOpenedOverride === false) {
+        // Only check if explicitly told the window is closed (not undefined)
+        console.log(`[SendPulse] 24h window explicitly closed, attempting template fallback`)
+        if (useTemplateFallback) {
+          return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
         }
-
-        if (!isActive) {
-          if (useTemplateFallback) {
-            console.log(`[SendPulse] 24h window expired, attempting template fallback for contact ${contactId}`)
-            return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
-          }
-          throw new ConversationWindowExpiredError(contactId)
-        }
+        throw new ConversationWindowExpiredError(contactId)
       }
+
+      // If isChatOpenedOverride is undefined or true, assume window is open
+      // This is safe because:
+      // 1. If user just sent a message (webhook), window is definitely open
+      // 2. SendPulse API will return 422 if window is actually closed
+      console.log(`[SendPulse] Sending message without window check (webhook context)`)
+
 
       // 3. Send with retry logic
       const result = await retryManager.execute(async () => {
