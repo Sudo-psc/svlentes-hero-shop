@@ -1,0 +1,185 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  DEPLOY_PATH: '/root/svlentes-hero-shop'
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://svlentes.shop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full test suite
+        run: |
+          npm run test -- --coverage
+          npm run lint
+          npx tsc --noEmit
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_URL: https://svlentes.shop
+          NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
+          ASAAS_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment backup
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Create timestamped backup
+            BACKUP_DIR=~/backups/svlentes-\$(date +%Y%m%d_%H%M%S)
+            mkdir -p \$BACKUP_DIR
+
+            # Backup critical files
+            cp -r .next \$BACKUP_DIR/ 2>/dev/null || true
+            cp .env.local \$BACKUP_DIR/ 2>/dev/null || true
+            cp package.json \$BACKUP_DIR/
+
+            # Backup database
+            docker exec postgres pg_dump -U n8nuser svlentes_prod > \$BACKUP_DIR/database.sql 2>/dev/null || true
+
+            # Keep only last 5 backups
+            cd ~/backups
+            ls -t | tail -n +6 | xargs rm -rf 2>/dev/null || true
+
+            echo 'Backup created at: '\$BACKUP_DIR
+          "
+
+      - name: Deploy to production server
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Store current git commit for rollback
+            CURRENT_COMMIT=\$(git rev-parse HEAD)
+            echo \$CURRENT_COMMIT > .last-deploy-commit
+
+            # Pull latest code
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+
+            # Install dependencies
+            npm ci --production=false
+
+            # Run database migrations
+            npx prisma generate
+            npx prisma migrate deploy
+
+            # Build application
+            npm run build
+
+            # Restart systemd service
+            systemctl restart svlentes-nextjs
+
+            # Wait for service to stabilize
+            sleep 10
+
+            # Health check
+            MAX_RETRIES=5
+            RETRY_COUNT=0
+            while [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; do
+              if curl -f http://localhost:5000/api/health-check; then
+                echo 'Health check passed'
+                break
+              else
+                RETRY_COUNT=\$((RETRY_COUNT + 1))
+                if [ \$RETRY_COUNT -eq \$MAX_RETRIES ]; then
+                  echo 'Health check failed after \$MAX_RETRIES attempts'
+
+                  # Rollback on failure
+                  git checkout \$CURRENT_COMMIT
+                  npm ci --production=false
+                  npm run build
+                  systemctl restart svlentes-nextjs
+
+                  exit 1
+                fi
+                sleep 5
+              fi
+            done
+          "
+
+      - name: Verify public endpoint
+        run: |
+          sleep 5
+          curl -f https://svlentes.shop/api/health-check
+
+      - name: Run post-deployment smoke tests
+        run: |
+          # Test critical endpoints
+          curl -f https://svlentes.shop/
+          curl -f https://svlentes.shop/calculadora
+          curl -f https://svlentes.shop/assinar
+          curl -f https://svlentes.shop/api/monitoring/performance
+
+      - name: Send success notification
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.N8N_WEBHOOK_URL }}/production-deployment \
+            -H "Content-Type: application/json" \
+            -d '{
+              "status": "success",
+              "environment": "production",
+              "commit": "${{ github.sha }}",
+              "branch": "${{ github.ref_name }}",
+              "actor": "${{ github.actor }}",
+              "timestamp": "${{ github.event.head_commit.timestamp }}",
+              "url": "https://svlentes.shop"
+            }' || true
+
+      - name: Send failure notification
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.N8N_WEBHOOK_URL }}/production-deployment \
+            -H "Content-Type: application/json" \
+            -d '{
+              "status": "failed",
+              "environment": "production",
+              "commit": "${{ github.sha }}",
+              "branch": "${{ github.ref_name }}",
+              "actor": "${{ github.actor }}",
+              "timestamp": "${{ github.event.head_commit.timestamp }}",
+              "error": "Deployment failed - check logs"
+            }' || true

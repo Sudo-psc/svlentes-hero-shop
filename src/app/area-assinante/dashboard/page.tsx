@@ -14,7 +14,8 @@ import {
   CreditCard,
   MapPin,
   FileText,
-  RefreshCcw
+  RefreshCcw,
+  Settings
 } from 'lucide-react'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
 import { DashboardError } from '@/components/assinante/DashboardError'
@@ -290,9 +291,9 @@ export default function DashboardPage() {
                 <FileText className="h-4 w-4 mr-2" />
                 Baixar Fatura
               </Button>
-              <Button variant="outline" onClick={() => {/* TODO: Implement payment method change */}}>
-                <CreditCard className="h-4 w-4 mr-2" />
-                Alterar Forma de Pagamento
+              <Button variant="outline" onClick={() => router.push('/area-assinante/configuracoes')}>
+                <Settings className="h-4 w-4 mr-2" />
+                Configurações
               </Button>
             </div>
           </>

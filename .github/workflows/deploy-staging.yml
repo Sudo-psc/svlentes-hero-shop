@@ -1,0 +1,114 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  DEPLOY_PATH: '/root/svlentes-staging'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.svlentes.shop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          npm run test
+          npm run lint
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_URL: https://staging.svlentes.shop
+          NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
+          ASAAS_ENV: sandbox
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to staging server
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Backup current deployment
+            if [ -d .next ]; then
+              cp -r .next .next.backup.\$(date +%Y%m%d_%H%M%S)
+              find . -name '.next.backup.*' -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+            fi
+
+            # Pull latest code
+            git fetch origin
+            git checkout develop
+            git pull origin develop
+
+            # Install dependencies and build
+            npm ci
+            npm run build
+
+            # Run database migrations
+            npx prisma migrate deploy
+
+            # Restart service
+            systemctl restart svlentes-staging
+
+            # Wait for service to start
+            sleep 5
+
+            # Health check
+            if curl -f http://localhost:3001/api/health-check; then
+              echo 'Deployment successful'
+            else
+              echo 'Health check failed - rolling back'
+              rm -rf .next
+              mv .next.backup.* .next 2>/dev/null || true
+              systemctl restart svlentes-staging
+              exit 1
+            fi
+          "
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          curl -f https://staging.svlentes.shop/api/health-check
+
+      - name: Send deployment notification
+        if: always()
+        run: |
+          curl -X POST ${{ secrets.N8N_WEBHOOK_URL }}/staging-deployment \
+            -H "Content-Type: application/json" \
+            -d '{
+              "status": "${{ job.status }}",
+              "environment": "staging",
+              "commit": "${{ github.sha }}",
+              "branch": "${{ github.ref_name }}",
+              "actor": "${{ github.actor }}",
+              "timestamp": "${{ github.event.head_commit.timestamp }}"
+            }' || true

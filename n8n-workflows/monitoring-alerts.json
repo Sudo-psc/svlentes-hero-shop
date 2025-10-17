@@ -1,0 +1,320 @@
+{
+  "name": "Production Monitoring & Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "name": "Schedule - Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://svlentes.shop/api/health-check",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Health Check - Production",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://svlentes.shop/api/monitoring/performance",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Performance Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 450]
+    },
+    {
+      "parameters": {
+        "url": "https://svlentes.shop/api/monitoring/errors",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Error Logs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 600]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"responseCode\"]}}",
+              "operation": "notEqual",
+              "value2": 200
+            }
+          ]
+        }
+      },
+      "name": "Check Health Status",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"responseTime\"]}}",
+              "operation": "larger",
+              "value2": 3000
+            }
+          ]
+        }
+      },
+      "name": "Check Response Time",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 450]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"errorCount\"]}}",
+              "operation": "larger",
+              "value2": 10
+            }
+          ]
+        }
+      },
+      "name": "Check Error Threshold",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 600]
+    },
+    {
+      "parameters": {
+        "url": "https://api.whatsapp.com/send",
+        "options": {
+          "bodyParametersUi": {
+            "parameter": [
+              {
+                "name": "phone",
+                "value": "553399898026"
+              },
+              {
+                "name": "text",
+                "value": "🚨 CRITICAL ALERT\\n\\nProduction health check FAILED\\nURL: https://svlentes.shop\\nStatus: {{$json[\"responseCode\"]}}\\n\\nImmediate action required!"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Alert - Health Check Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 250]
+    },
+    {
+      "parameters": {
+        "url": "https://api.whatsapp.com/send",
+        "options": {
+          "bodyParametersUi": {
+            "parameter": [
+              {
+                "name": "phone",
+                "value": "553399898026"
+              },
+              {
+                "name": "text",
+                "value": "⚠️ PERFORMANCE ALERT\\n\\nSlow response time detected\\nCurrent: {{$json[\"responseTime\"]}}ms\\nThreshold: 3000ms\\n\\nCheck server resources"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Alert - Slow Performance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://api.whatsapp.com/send",
+        "options": {
+          "bodyParametersUi": {
+            "parameter": [
+              {
+                "name": "phone",
+                "value": "553399898026"
+              },
+              {
+                "name": "text",
+                "value": "⚠️ ERROR THRESHOLD ALERT\\n\\nHigh error count detected\\nErrors: {{$json[\"errorCount\"]}}\\nThreshold: 10\\n\\nReview error logs immediately"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Alert - High Error Count",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 550]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO monitoring_log (timestamp, health_status, response_time, error_count) VALUES (NOW(), {{$json[\"responseCode\"]}}, {{$json[\"responseTime\"]}}, {{$json[\"errorCount\"]}})"
+      },
+      "name": "Log Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1050, 400]
+    }
+  ],
+  "connections": {
+    "Schedule - Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Health Check - Production",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Performance Metrics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Error Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Health Check - Production": {
+      "main": [
+        [
+          {
+            "node": "Check Health Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Performance Metrics": {
+      "main": [
+        [
+          {
+            "node": "Check Response Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Logs": {
+      "main": [
+        [
+          {
+            "node": "Check Error Threshold",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Health Status": {
+      "main": [
+        [
+          {
+            "node": "Alert - Health Check Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Check Response Time": {
+      "main": [
+        [
+          {
+            "node": "Alert - Slow Performance",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Check Error Threshold": {
+      "main": [
+        [
+          {
+            "node": "Alert - High Error Count",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Alert - Health Check Failed": {
+      "main": [
+        [
+          {
+            "node": "Log Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert - Slow Performance": {
+      "main": [
+        [
+          {
+            "node": "Log Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert - High Error Count": {
+      "main": [
+        [
+          {
+            "node": "Log Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-17T00:00:00.000Z",
+  "versionId": "1"
+}

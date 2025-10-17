@@ -56,3 +56,4 @@ Thumbs.db
 .kluster
 
 /generated/prisma
+.venv/

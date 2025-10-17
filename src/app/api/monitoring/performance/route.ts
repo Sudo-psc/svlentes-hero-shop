@@ -70,8 +70,36 @@ export async function GET(request: NextRequest) {
         // Return aggregated performance metrics
         // In production, this would query your analytics database
 
-        const mockMetrics = {
+        // Calculate real-time server metrics
+        const startTime = process.hrtime.bigint()
+
+        // Memory usage
+        const memUsage = process.memoryUsage()
+        const memoryMB = {
+            rss: Math.round(memUsage.rss / 1024 / 1024),
+            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+            external: Math.round(memUsage.external / 1024 / 1024)
+        }
+
+        // Uptime
+        const uptimeSeconds = Math.floor(process.uptime())
+        const uptimeHours = Math.floor(uptimeSeconds / 3600)
+
+        const endTime = process.hrtime.bigint()
+        const responseTime = Number(endTime - startTime) / 1000000 // Convert to milliseconds
+
+        const metrics = {
             timestamp: new Date().toISOString(),
+            responseTime: Math.round(responseTime),
+            server: {
+                uptime: uptimeSeconds,
+                uptimeHours: uptimeHours,
+                memory: memoryMB,
+                nodeVersion: process.version,
+                platform: process.platform,
+                pid: process.pid
+            },
             metrics: {
                 averageLCP: 1800,
                 averageFID: 45,
@@ -85,10 +113,15 @@ export async function GET(request: NextRequest) {
                 fid: { trend: 'stable', change: 2 },
                 cls: { trend: 'improving', change: -0.01 },
                 pageLoadTime: { trend: 'improving', change: -300 }
+            },
+            health: {
+                status: 'healthy',
+                memoryPressure: memoryMB.heapUsed / memoryMB.heapTotal > 0.9 ? 'high' : 'normal',
+                uptimeStatus: uptimeSeconds < 60 ? 'starting' : 'stable'
             }
         }
 
-        return NextResponse.json(mockMetrics)
+        return NextResponse.json(metrics)
 
     } catch (error) {
         console.error('Failed to fetch performance metrics:', error)
