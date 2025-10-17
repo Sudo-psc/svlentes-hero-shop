@@ -16,7 +16,7 @@ export const doctorInfo = {
     experience: '5+ anos de experiência em oftalmologia',
     bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado. Com mais de 5 anos de experiência, dedica-se a proporcionar cuidado oftalmológico personalizado e acessível.',
     contact: {
-        whatsapp: '+5533998601427',
+        whatsapp: '+553399898026',
         email: 'dr.philipe@svlentes.com.br',
         clinicAddress: 'Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG'
     },
@@ -75,8 +75,8 @@ export const clinicInfo = {
         country: 'Brasil'
     },
     contact: {
-        phone: '+55 33 99860-1427',
-        whatsapp: '+55 33 99860-1427',
+        phone: '+55 33 99898-026',
+        whatsapp: '+55 33 99898-026',
         email: 'contato@svlentes.com.br',
         website: 'https://svlentes.com.br'
     },

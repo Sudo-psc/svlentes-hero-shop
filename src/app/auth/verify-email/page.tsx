@@ -174,7 +174,7 @@ function VerifyEmailContent() {
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600 mb-2">Precisa de ajuda?</p>
           <a
-            href={`https://wa.me/5533998601427?text=${encodeURIComponent(
+            href={`https://wa.me/553399898026?text=${encodeURIComponent(
               'Olá! Preciso de ajuda com a verificação de email no site SV Lentes.'
             )}`}
             target="_blank"

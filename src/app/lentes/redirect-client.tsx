@@ -80,7 +80,7 @@ export default function RedirectClient({ url, delay = 0 }: RedirectClientProps) 
         {/* Informações de contato */}
         <div className="pt-4 text-xs text-gray-400">
           <p>Saraiva Vision - Clínica Oftalmológica</p>
-          <p>Caratinga/MG | WhatsApp: (33) 99860-1427</p>
+          <p>Caratinga/MG | WhatsApp: (33) 99898-026</p>
         </div>
       </div>
     </div>

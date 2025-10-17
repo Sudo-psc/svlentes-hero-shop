@@ -124,7 +124,7 @@ export default function TermosUsoPage() {
                                 <p className="text-gray-700">CNPJ: 53.864.119/0001-79</p>
                                 <p className="text-gray-700">Endereço: Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG</p>
                                 <p className="text-gray-700">CEP: 35300-299</p>
-                                <p className="text-gray-700">WhatsApp: (33) 99860-1427</p>
+                                <p className="text-gray-700">WhatsApp: (33) 99898-026</p>
                                 <p className="text-gray-700">Email: <a href="mailto:contato@svlentes.com.br" className="text-blue-600 hover:underline">contato@svlentes.com.br</a></p>
                             </div>
                         </section>
