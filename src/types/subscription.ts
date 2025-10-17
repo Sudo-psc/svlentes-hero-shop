@@ -63,3 +63,95 @@ export interface SubscriptionError {
 }
 
 export type SubscriptionStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'error'
+
+/**
+ * Tipos para o fluxo de assinatura (SubscriptionFlow)
+ */
+
+export interface EyePrescription {
+  sphere: string | number
+  cylinder?: string | number
+  axis?: string | number
+}
+
+export interface LensData {
+  type: 'daily' | 'weekly' | 'monthly'
+  brand?: string
+  rightEye: EyePrescription
+  leftEye: EyePrescription
+  prescriptionDate?: string | Date
+  doctorCRM?: string
+  doctorName?: string
+}
+
+export interface ContactData {
+  name: string
+  email: string
+  phone: string
+  cpfCnpj: string
+  billingType: 'PIX' | 'BOLETO' | 'CREDIT_CARD'
+  acceptsTerms: boolean
+  acceptsDataProcessing?: boolean
+  acceptsMarketingCommunication?: boolean
+}
+
+export interface FlowData {
+  planId: string | null
+  billingCycle: 'monthly' | 'annual'
+  lensData: LensData | null
+  addOns: string[]
+}
+
+export interface ValidationError {
+  field: string
+  message: string
+}
+
+export interface FormValidationResult {
+  isValid: boolean
+  errors: ValidationError[]
+}
+
+export interface AddOnOption {
+  id: string
+  name: string
+  description: string
+  price: number
+  category?: 'accessory' | 'service' | 'insurance'
+}
+
+export interface PlanOption {
+  id: string
+  name: string
+  description: string
+  priceMonthly: number
+  priceAnnual: number
+  features: string[]
+  includedConsultations: number
+  recommended?: boolean
+}
+
+export interface PaymentRequest {
+  planId: string
+  billingInterval: 'monthly' | 'annual'
+  billingType: 'PIX' | 'BOLETO' | 'CREDIT_CARD'
+  customerData: {
+    name: string
+    email: string
+    phone: string
+    cpfCnpj: string
+  }
+  metadata: {
+    lensData: string
+    addOns: string
+    source: string
+    consentTimestamp?: string
+  }
+}
+
+export interface PaymentResponse {
+  success: boolean
+  invoiceUrl?: string
+  paymentId?: string
+  error?: string
+}

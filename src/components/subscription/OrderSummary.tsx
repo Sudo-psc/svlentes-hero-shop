@@ -1,28 +1,27 @@
 'use client'
 
-import { Check, Edit2, ShoppingCart } from 'lucide-react'
+import { Check, Edit2, ShoppingCart, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { pricingPlans } from '@/data/pricing-plans'
 import { useState } from 'react'
+import { ContactData, LensData, ValidationError } from '@/types/subscription'
+import {
+    validateEmail,
+    validatePhone,
+    validateCPFOrCNPJ,
+    maskPhone,
+    maskCPFOrCNPJ,
+} from '@/lib/validators'
 
 interface OrderSummaryProps {
     planId: string
     billingCycle: 'monthly' | 'annual'
-    lensData: any
+    lensData: LensData
     addOns: string[]
     onBack: () => void
     onConfirm: (contactData: ContactData) => void
-}
-
-interface ContactData {
-    name: string
-    email: string
-    phone: string
-    cpfCnpj?: string
-    billingType: 'PIX' | 'BOLETO' | 'CREDIT_CARD'
-    acceptsTerms: boolean
 }
 
 const addOnPrices: Record<string, { name: string; price: number }> = {
@@ -41,8 +40,12 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
         phone: '',
         cpfCnpj: '',
         billingType: 'PIX',
-        acceptsTerms: false
+        acceptsTerms: false,
+        acceptsDataProcessing: false,
     })
+
+    const [errors, setErrors] = useState<Record<string, string>>({})
+    const [touched, setTouched] = useState<Record<string, boolean>>({})
 
     const plan = pricingPlans.find(p => p.id === planId)
     if (!plan) return null
@@ -52,7 +55,68 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
     const monthlyTotal = planPrice + addOnsTotal
     const annualTotal = billingCycle === 'annual' ? plan.priceAnnual + (addOnsTotal * 12) : monthlyTotal * 12
 
-    const isValid = contactData.name && contactData.email && contactData.phone && contactData.acceptsTerms
+    // Validação em tempo real
+    const validateField = (field: keyof ContactData, value: string | boolean): string => {
+        switch (field) {
+            case 'name':
+                return typeof value === 'string' && value.trim().length < 3
+                    ? 'Nome deve ter pelo menos 3 caracteres'
+                    : ''
+            case 'email':
+                return typeof value === 'string' && !validateEmail(value)
+                    ? 'Email inválido'
+                    : ''
+            case 'phone':
+                return typeof value === 'string' && !validatePhone(value)
+                    ? 'Telefone inválido (formato: (XX) 9XXXX-XXXX)'
+                    : ''
+            case 'cpfCnpj':
+                return typeof value === 'string' && value && !validateCPFOrCNPJ(value)
+                    ? 'CPF/CNPJ inválido'
+                    : ''
+            case 'acceptsTerms':
+                return !value ? 'Você deve aceitar os termos de uso' : ''
+            case 'acceptsDataProcessing':
+                return !value ? 'Você deve autorizar o processamento de dados' : ''
+            default:
+                return ''
+        }
+    }
+
+    const handleInputChange = (field: keyof ContactData, value: string) => {
+        let maskedValue = value
+
+        // Aplicar máscaras
+        if (field === 'phone') {
+            maskedValue = maskPhone(value)
+        } else if (field === 'cpfCnpj') {
+            maskedValue = maskCPFOrCNPJ(value)
+        }
+
+        setContactData(prev => ({ ...prev, [field]: maskedValue }))
+
+        // Validar apenas se o campo já foi tocado
+        if (touched[field]) {
+            const error = validateField(field, maskedValue)
+            setErrors(prev => ({ ...prev, [field]: error }))
+        }
+    }
+
+    const handleBlur = (field: keyof ContactData) => {
+        setTouched(prev => ({ ...prev, [field]: true }))
+        const value = contactData[field]
+        const error = validateField(field, value ?? '')
+        setErrors(prev => ({ ...prev, [field]: error }))
+    }
+
+    const isValid =
+        contactData.name.trim().length >= 3 &&
+        validateEmail(contactData.email) &&
+        validatePhone(contactData.phone) &&
+        (!contactData.cpfCnpj || validateCPFOrCNPJ(contactData.cpfCnpj)) &&
+        contactData.acceptsTerms &&
+        contactData.acceptsDataProcessing &&
+        Object.values(errors).every(error => !error)
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -169,34 +233,82 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                     <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
                         <h4 className="font-semibold text-gray-900 mb-4">Seus Dados</h4>
                         <div className="space-y-4">
-                            <Input
-                                label="Nome completo"
-                                placeholder="João Silva"
-                                value={contactData.name}
-                                onChange={(e) => setContactData(prev => ({ ...prev, name: e.target.value }))}
-                                required
-                            />
-                            <Input
-                                label="WhatsApp"
-                                placeholder="(11) 99999-9999"
-                                value={contactData.phone}
-                                onChange={(e) => setContactData(prev => ({ ...prev, phone: e.target.value }))}
-                                required
-                            />
-                            <Input
-                                label="E-mail"
-                                type="email"
-                                placeholder="joao@email.com"
-                                value={contactData.email}
-                                onChange={(e) => setContactData(prev => ({ ...prev, email: e.target.value }))}
-                                required
-                            />
-                            <Input
-                                label="CPF/CNPJ"
-                                placeholder="000.000.000-00"
-                                value={contactData.cpfCnpj}
-                                onChange={(e) => setContactData(prev => ({ ...prev, cpfCnpj: e.target.value }))}
-                            />
+                            <div>
+                                <Input
+                                    label="Nome completo"
+                                    placeholder="João Silva"
+                                    value={contactData.name}
+                                    onChange={(e) => handleInputChange('name', e.target.value)}
+                                    onBlur={() => handleBlur('name')}
+                                    required
+                                    className={errors.name && touched.name ? 'border-red-500' : ''}
+                                />
+                                {errors.name && touched.name && (
+                                    <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {errors.name}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <Input
+                                    label="WhatsApp"
+                                    placeholder="(11) 99999-9999"
+                                    value={contactData.phone}
+                                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                                    onBlur={() => handleBlur('phone')}
+                                    required
+                                    maxLength={15}
+                                    className={errors.phone && touched.phone ? 'border-red-500' : ''}
+                                />
+                                {errors.phone && touched.phone && (
+                                    <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {errors.phone}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <Input
+                                    label="E-mail"
+                                    type="email"
+                                    placeholder="joao@email.com"
+                                    value={contactData.email}
+                                    onChange={(e) => handleInputChange('email', e.target.value)}
+                                    onBlur={() => handleBlur('email')}
+                                    required
+                                    className={errors.email && touched.email ? 'border-red-500' : ''}
+                                />
+                                {errors.email && touched.email && (
+                                    <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {errors.email}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <Input
+                                    label="CPF/CNPJ"
+                                    placeholder="000.000.000-00"
+                                    value={contactData.cpfCnpj}
+                                    onChange={(e) => handleInputChange('cpfCnpj', e.target.value)}
+                                    onBlur={() => handleBlur('cpfCnpj')}
+                                    maxLength={18}
+                                    className={errors.cpfCnpj && touched.cpfCnpj ? 'border-red-500' : ''}
+                                />
+                                {errors.cpfCnpj && touched.cpfCnpj && (
+                                    <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {errors.cpfCnpj}
+                                    </p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Necessário para emissão de nota fiscal
+                                </p>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Forma de Pagamento
@@ -211,23 +323,52 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                     <option value="CREDIT_CARD">Cartão de Crédito</option>
                                 </select>
                             </div>
-                            <div className="pt-2">
-                                <label className="flex items-start space-x-3 cursor-pointer">
-                                    <Checkbox
-                                        checked={contactData.acceptsTerms}
-                                        onChange={(e) => setContactData(prev => ({ ...prev, acceptsTerms: e.target.checked }))}
-                                    />
-                                    <span className="text-sm text-gray-700">
-                                        Aceito os{' '}
-                                        <a href="/termos" className="text-primary-600 hover:underline">
-                                            termos de uso
-                                        </a>{' '}
-                                        e{' '}
-                                        <a href="/privacidade" className="text-primary-600 hover:underline">
-                                            política de privacidade
-                                        </a>
-                                    </span>
-                                </label>
+                            <div className="pt-2 space-y-3">
+                                <div>
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                        <Checkbox
+                                            checked={contactData.acceptsTerms}
+                                            onChange={(e) => {
+                                                setContactData(prev => ({ ...prev, acceptsTerms: e.target.checked }))
+                                                handleBlur('acceptsTerms')
+                                            }}
+                                        />
+                                        <span className="text-sm text-gray-700">
+                                            Aceito os{' '}
+                                            <a href="/termos-uso" target="_blank" className="text-primary-600 hover:underline">
+                                                termos de uso
+                                            </a>{' '}
+                                            e{' '}
+                                            <a href="/politica-privacidade" target="_blank" className="text-primary-600 hover:underline">
+                                                política de privacidade
+                                            </a>
+                                        </span>
+                                    </label>
+                                    {errors.acceptsTerms && touched.acceptsTerms && (
+                                        <p className="text-red-600 text-xs mt-1 ml-7">{errors.acceptsTerms}</p>
+                                    )}
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                        <Checkbox
+                                            checked={contactData.acceptsDataProcessing}
+                                            onChange={(e) => {
+                                                setContactData(prev => ({ ...prev, acceptsDataProcessing: e.target.checked }))
+                                                handleBlur('acceptsDataProcessing')
+                                            }}
+                                        />
+                                        <span className="text-xs text-gray-700">
+                                            <strong>Autorização LGPD:</strong> Autorizo o processamento dos meus dados pessoais
+                                            e dados de saúde (prescrição médica) para fins de fornecimento de lentes de contato
+                                            e acompanhamento médico. Estou ciente de que posso solicitar acesso, correção ou
+                                            exclusão dos meus dados a qualquer momento.
+                                        </span>
+                                    </label>
+                                    {errors.acceptsDataProcessing && touched.acceptsDataProcessing && (
+                                        <p className="text-red-600 text-xs mt-1 ml-7">{errors.acceptsDataProcessing}</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
