@@ -5,9 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
 import {
-  User,
   Package,
   AlertTriangle,
   Calendar,
@@ -56,35 +54,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Logo className="h-8 w-auto" />
-              <span className="text-lg font-semibold text-gray-900">Área do Assinante</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-cyan-100 flex items-center justify-center">
-                  <User className="h-4 w-4 text-cyan-600" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">
-                  {user?.name || authUser.displayName}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => signOut()}
-              >
-                Sair
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
