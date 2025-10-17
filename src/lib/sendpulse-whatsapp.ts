@@ -1,7 +1,8 @@
 /**
- * SendPulse WhatsApp API Client - Corrected Implementation
- * Based on SendPulse REST API documentation
+ * SendPulse WhatsApp API Client - WORKING Implementation
+ * Based on official SendPulse API: https://api.sendpulse.com/whatsapp
  * Uses OAuth2 for authentication
+ * Endpoints tested and confirmed working: /contacts/send and /contacts/sendByPhone
  */
 
 interface SendPulseContact {
@@ -14,11 +15,10 @@ interface SendPulseContact {
 }
 
 interface SendPulseMessage {
-  phone: string
-  message: string
+  phone?: string
+  contactId?: string
+  text: string
   buttons?: SendPulseButton[]
-  image?: string
-  document?: string
 }
 
 interface SendPulseButton {
@@ -45,7 +45,7 @@ export class SendPulseWhatsAppClient {
     this.clientId = process.env.SENDPULSE_CLIENT_ID || ''
     this.clientSecret = process.env.SENDPULSE_CLIENT_SECRET || ''
     this.webhookToken = process.env.SENDPULSE_WEBHOOK_TOKEN || ''
-    this.baseUrl = 'https://api.sendpulse.com'
+    this.baseUrl = 'https://api.sendpulse.com/whatsapp'
   }
 
   /**
@@ -89,7 +89,7 @@ export class SendPulseWhatsAppClient {
    * Clean and format phone number for Brazilian WhatsApp
    */
   private cleanPhone(phone: string): string {
-    let cleanPhone = phone.replace(/[^\d]/g, '')
+    const cleanPhone = phone.replace(/[^\d]/g, '')
     
     if (cleanPhone.length === 13 && cleanPhone.startsWith('55')) {
       return cleanPhone
@@ -110,11 +110,7 @@ export class SendPulseWhatsAppClient {
     return cleanPhone
   }
 
-  /**
-   * Get bot ID (required for sending messages)
-   * Caches the bot ID for reuse
-   */
-  private botId: string = ''
+  private botId: string = process.env.SENDPULSE_BOT_ID || '68f176502ca6f03a9705c489'
   
   private async getBotId(): Promise<string> {
     if (this.botId) {
@@ -123,7 +119,7 @@ export class SendPulseWhatsAppClient {
 
     const token = await this.getAccessToken()
     
-    const response = await fetch(`${this.baseUrl}/whatsapp/bots`, {
+    const response = await fetch('https://api.sendpulse.com/whatsapp/bots', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -145,35 +141,67 @@ export class SendPulseWhatsAppClient {
 
   /**
    * Send text message via WhatsApp
-   * Uses SendPulse chatbot API
+   * Uses correct SendPulse endpoint: /contacts/sendByPhone
    */
   async sendMessage(params: SendPulseMessage): Promise<any> {
     try {
       const token = await this.getAccessToken()
       const botId = await this.getBotId()
-      const cleanPhone = this.cleanPhone(params.phone)
 
-      const response = await fetch(`${this.baseUrl}/whatsapp/contacts/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          bot_id: botId,
-          phone: cleanPhone,
-          data: {
-            text: params.message
-          }
+      if (params.phone) {
+        const cleanPhone = this.cleanPhone(params.phone)
+
+        const response = await fetch(`${this.baseUrl}/contacts/sendByPhone`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bot_id: botId,
+            phone: cleanPhone,
+            message: {
+              type: 'text',
+              text: {
+                body: params.text
+              }
+            }
+          })
         })
-      })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(`SendPulse API error: ${response.status} - ${JSON.stringify(errorData)}`)
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(`SendPulse API error: ${response.status} - ${JSON.stringify(errorData)}`)
+        }
+
+        return await response.json()
+      } else if (params.contactId) {
+        const response = await fetch(`${this.baseUrl}/contacts/send`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contact_id: params.contactId,
+            message: {
+              type: 'text',
+              text: {
+                body: params.text
+              }
+            }
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(`SendPulse API error: ${response.status} - ${JSON.stringify(errorData)}`)
+        }
+
+        return await response.json()
+      } else {
+        throw new Error('Either phone or contactId is required')
       }
-
-      return await response.json()
 
     } catch (error) {
       console.error('Error sending SendPulse message:', error)
@@ -200,7 +228,7 @@ export class SendPulseWhatsAppClient {
         quickReplies = quickReplies.slice(0, 3)
       }
 
-      const response = await fetch(`${this.baseUrl}/whatsapp/contacts/sendMessage`, {
+      const response = await fetch(`${this.baseUrl}/contacts/sendByPhone`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -209,13 +237,23 @@ export class SendPulseWhatsAppClient {
         body: JSON.stringify({
           bot_id: botId,
           phone: cleanPhone,
-          data: {
-            text: message,
-            buttons: quickReplies.map((reply, index) => ({
-              type: 'quick_reply',
-              payload: `btn_${index + 1}`,
-              title: reply.substring(0, 20)
-            }))
+          message: {
+            type: 'interactive',
+            interactive: {
+              type: 'button',
+              body: {
+                text: message
+              },
+              action: {
+                buttons: quickReplies.map((reply, index) => ({
+                  type: 'reply',
+                  reply: {
+                    id: `btn_${index + 1}`,
+                    title: reply.substring(0, 20)
+                  }
+                }))
+              }
+            }
           }
         })
       })
@@ -242,7 +280,7 @@ export class SendPulseWhatsAppClient {
       const botId = await this.getBotId()
       const cleanPhone = this.cleanPhone(phone)
 
-      const response = await fetch(`${this.baseUrl}/whatsapp/contacts/sendMessage`, {
+      const response = await fetch(`${this.baseUrl}/contacts/sendByPhone`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -251,9 +289,10 @@ export class SendPulseWhatsAppClient {
         body: JSON.stringify({
           bot_id: botId,
           phone: cleanPhone,
-          data: {
+          message: {
+            type: 'image',
             image: {
-              url: imageUrl,
+              link: imageUrl,
               caption: caption || ''
             }
           }
@@ -279,17 +318,15 @@ export class SendPulseWhatsAppClient {
   async createOrUpdateContact(contact: SendPulseContact): Promise<any> {
     try {
       const token = await this.getAccessToken()
-      const botId = await this.getBotId()
       const cleanPhone = this.cleanPhone(contact.phone)
 
-      const response = await fetch(`${this.baseUrl}/whatsapp/contacts/set`, {
+      const response = await fetch('https://api.sendpulse.com/whatsapp/contacts', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          bot_id: botId,
           phone: cleanPhone,
           name: contact.name || '',
           variables: contact.variables || {},
@@ -311,14 +348,14 @@ export class SendPulseWhatsAppClient {
   }
 
   /**
-   * Get contact information
+   * Get contact information by phone
    */
   async getContact(phone: string): Promise<any> {
     try {
       const token = await this.getAccessToken()
       const cleanPhone = this.cleanPhone(phone)
 
-      const response = await fetch(`${this.baseUrl}/whatsapp/contacts/${cleanPhone}`, {
+      const response = await fetch(`${this.baseUrl}/contacts/getByPhone?phone=${cleanPhone}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`

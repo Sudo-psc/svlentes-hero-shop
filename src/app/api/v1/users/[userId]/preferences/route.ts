@@ -7,9 +7,9 @@ import { reminderOrchestrator, behaviorService } from '@/lib/reminders'
 export const runtime = 'nodejs'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     userId: string
-  }
+  }>
 }
 
 /**
@@ -18,7 +18,7 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = params
+    const { userId } = await params
 
     const [preferences, behavior] = await Promise.all([
       reminderOrchestrator.getUserPreferences(userId),
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = params
+    const { userId } = await params
     const body = await request.json()
 
     await reminderOrchestrator.updateUserPreferences(userId, body)

@@ -7,9 +7,9 @@ import { notificationService, reminderOrchestrator } from '@/lib/reminders'
 export const runtime = 'nodejs'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 /**
@@ -18,7 +18,7 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const notification = await notificationService.getNotification(id)
 
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params
+    const { id } = await params
 
     await reminderOrchestrator.cancelReminder(id)
 

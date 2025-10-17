@@ -53,7 +53,7 @@ export class SendPulseReminderService {
       } else {
         const result = await sendPulseWhatsAppClient.sendMessage({
           phone: reminder.phone,
-          message: reminder.message
+          text: reminder.message
         })
         
         return result && !result.error
@@ -92,8 +92,8 @@ export class SendPulseReminderService {
       }
 
       const result = await sendPulseWhatsAppClient.sendMessage({
-        phone: reminder.phone,
-        message: reminder.message
+        phone,
+        text: notification.content
       })
 
       return result && !result.error
