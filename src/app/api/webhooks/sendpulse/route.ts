@@ -8,6 +8,12 @@ import { langchainSupportProcessor } from '@/lib/langchain-support-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
+import {
+  getConversationHistory,
+  getUserSupportHistory,
+  getOrCreateUserProfile,
+  storeInteraction
+} from '@/lib/whatsapp-conversation-service'
 
 // SendPulse webhook verification
 export async function GET(request: NextRequest) {
@@ -259,91 +265,6 @@ function extractMessageContent(message: any): string | null {
   }
 
   return null
-}
-
-/**
- * Get or create user profile from SendPulse contact data
- */
-async function getOrCreateUserProfile(contact: any, phone: string): Promise<any> {
-  try {
-    // Extract contact information from SendPulse
-    const userProfile = {
-      id: contact.id || `sendpulse_${phone}`,
-      name: contact.name || 'Cliente',
-      email: contact.email || null,
-      phone,
-      whatsapp: phone,
-      subscription: null,
-      subscriptionStatus: 'none',
-      source: 'sendpulse',
-      metadata: {
-        sendpulseId: contact.id,
-        variables: contact.variables || {},
-        tags: contact.tags || []
-      }
-    }
-
-    // TODO: Integrate with database to persist user profile
-    return userProfile
-
-  } catch (error) {
-    console.error('Error getting/creating user profile:', error)
-    return {
-      id: 'unknown',
-      name: 'Cliente',
-      phone,
-      whatsapp: phone,
-      subscription: null,
-      subscriptionStatus: 'none'
-    }
-  }
-}
-
-/**
- * Get conversation history
- */
-async function getConversationHistory(phone: string, limit: number = 10): Promise<any[]> {
-  try {
-    // TODO: Integrate with database to fetch conversation history
-    return []
-  } catch (error) {
-    console.error('Error getting conversation history:', error)
-    return []
-  }
-}
-
-/**
- * Get user support history
- */
-async function getUserSupportHistory(userId: string): Promise<any> {
-  try {
-    // TODO: Integrate with support ticket system
-    return { tickets: [], lastIntent: null, lastInteraction: null }
-  } catch (error) {
-    console.error('Error getting user support history:', error)
-    return { tickets: [], lastIntent: null, lastInteraction: null }
-  }
-}
-
-/**
- * Store interaction in database
- */
-async function storeInteraction(data: {
-  messageId: string
-  customerPhone: string
-  content: string
-  intent: any
-  response: string
-  escalationRequired: boolean
-  ticketCreated: boolean
-  userProfile: any
-}) {
-  try {
-    // TODO: Integrate with database to store interactions
-    console.log(`Storing SendPulse interaction: ${data.content} -> ${data.response}`)
-  } catch (error) {
-    console.error('Error storing interaction:', error)
-  }
 }
 
 /**
