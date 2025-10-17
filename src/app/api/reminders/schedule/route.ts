@@ -1,47 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendPulseReminderService, type ReminderMessage } from '@/lib/reminders/sendpulse-reminder-service'
-import { NotificationChannel } from '@/types/reminders'
+import { emailReminderService, type ReminderMessage } from '@/lib/reminders/email-reminder-service'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { reminder, channel } = body as {
+    const { reminder } = body as {
       reminder: ReminderMessage
-      channel: NotificationChannel
     }
 
-    if (!reminder || !channel) {
+    if (!reminder) {
       return NextResponse.json(
-        { error: 'Reminder data and channel are required' },
+        { error: 'Reminder data is required' },
         { status: 400 }
       )
     }
 
-    if (!reminder.scheduledAt) {
+    if (!reminder.email) {
       return NextResponse.json(
-        { error: 'scheduledAt is required for scheduling' },
+        { error: 'Email is required' },
         { status: 400 }
       )
     }
 
-    const scheduledAt = new Date(reminder.scheduledAt)
-    if (scheduledAt < new Date()) {
-      return NextResponse.json(
-        { error: 'scheduledAt must be in the future' },
-        { status: 400 }
-      )
-    }
-
-    reminder.scheduledAt = scheduledAt
-
-    const status = await sendPulseReminderService.scheduleReminder(reminder, channel)
+    const success = await emailReminderService.sendReminder(reminder)
 
     return NextResponse.json({
-      success: status !== 'failed',
-      status,
-      message: `Reminder ${status}`,
-      scheduledAt: reminder.scheduledAt,
-      channel
+      success,
+      status: success ? 'sent' : 'failed',
+      message: `Reminder ${success ? 'sent successfully' : 'failed'}`,
+      channel: 'EMAIL'
     })
   } catch (error) {
     console.error('Error scheduling reminder:', error)

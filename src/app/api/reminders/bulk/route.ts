@@ -1,25 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendPulseReminderService, type ReminderMessage } from '@/lib/reminders/sendpulse-reminder-service'
-import { NotificationChannel } from '@/types/reminders'
+import { emailReminderService, type ReminderMessage } from '@/lib/reminders/email-reminder-service'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { reminders, channel } = body as {
+    const { reminders } = body as {
       reminders: ReminderMessage[]
-      channel: NotificationChannel
     }
 
     if (!reminders || !Array.isArray(reminders) || reminders.length === 0) {
       return NextResponse.json(
         { error: 'Reminders array is required and must not be empty' },
-        { status: 400 }
-      )
-    }
-
-    if (!channel) {
-      return NextResponse.json(
-        { error: 'Channel is required' },
         { status: 400 }
       )
     }
@@ -31,7 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await sendPulseReminderService.sendBulkReminders(reminders, channel)
+    const result = await emailReminderService.sendBulkReminders(reminders)
 
     return NextResponse.json({
       success: result.failed === 0,
@@ -41,7 +32,7 @@ export async function POST(request: NextRequest) {
         total: result.total,
         successRate: ((result.sent / result.total) * 100).toFixed(2) + '%'
       },
-      channel
+      channel: 'EMAIL'
     })
   } catch (error) {
     console.error('Error sending bulk reminders:', error)
