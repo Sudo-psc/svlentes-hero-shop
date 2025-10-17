@@ -1,110 +1,241 @@
 /**
- * SendPulse WhatsApp API Client
- * Manages WhatsApp messaging through SendPulse API
+ * SendPulse WhatsApp API Client (Refactored)
+ * Now uses bot-based API with proper contact management and caching
  */
 
-interface SendPulseContact {
-  id?: string
-  name?: string
-  email?: string
-  phone: string
-  variables?: Record<string, any>
-  tags?: string[]
-}
-
-interface SendPulseMessage {
-  phone: string
-  message: string
-  buttons?: SendPulseButton[]
-  image?: string
-  document?: string
-}
-
-interface SendPulseButton {
-  type: 'reply' | 'url'
-  reply?: {
-    title: string
-    id: string
-  }
-  url?: {
-    title: string
-    url: string
-  }
-}
-
-interface SendPulseWebhookData {
-  event: string
-  message?: {
-    id: string
-    text?: {
-      body: string
-    }
-    interactive?: {
-      type: string
-      list_reply?: {
-        title: string
-        id: string
-      }
-      button_reply?: {
-        title: string
-        id: string
-      }
-    }
-    audio?: any
-    image?: any
-    video?: any
-    document?: any
-    timestamp: string
-    from: string
-    to: string
-  }
-  contact?: {
-    id: string
-    name?: string
-    email?: string
-    phone?: string
-    identifier?: string
-    variables?: Record<string, any>
-    tags?: string[]
-  }
-  timestamp?: string
-}
+import { sendPulseAuth } from './sendpulse-auth'
+import { botManager } from './sendpulse/bot-manager'
+import { contactCache } from './sendpulse/contact-cache'
+import type {
+  SendPulseContact,
+  SendPulseContactsResponse,
+  CreateContactRequest,
+  SendMessageRequest,
+  SendMessageResponse,
+  WhatsAppMessage,
+  TextMessage,
+  ImageMessage,
+  DocumentMessage,
+  InteractiveButtonsMessage,
+  InteractiveListMessage,
+  SendPulseWebhookData,
+  LegacySendMessageParams
+} from './sendpulse/types'
+import {
+  SendPulseContactError,
+  SendPulseMessageError,
+  ConversationWindowExpiredError,
+  createSendPulseError
+} from './sendpulse/errors'
 
 export class SendPulseClient {
-  private apiToken: string
   private webhookToken: string
   private baseUrl: string
+  private botId: string | null = null
 
   constructor() {
-    this.apiToken = process.env.SENDPULSE_API_TOKEN || ''
     this.webhookToken = process.env.SENDPULSE_WEBHOOK_TOKEN || ''
     this.baseUrl = 'https://api.sendpulse.com/whatsapp'
+    this.botId = process.env.SENDPULSE_BOT_ID || null
   }
 
   /**
-   * Send text message via SendPulse
+   * Get API token from auth service
    */
-  async sendMessage(params: SendPulseMessage): Promise<any> {
+  private async getApiToken(): Promise<string> {
+    // Try static token first (if provided in env)
+    const staticToken = process.env.SENDPULSE_API_TOKEN
+    if (staticToken) {
+      return staticToken
+    }
+
+    // Generate from OAuth using app_id and app_secret
+    return await sendPulseAuth.getAccessToken()
+  }
+
+  /**
+   * Get bot ID (from config or default bot)
+   */
+  private async getBotId(): Promise<string> {
+    if (this.botId) {
+      return this.botId
+    }
+
+    const defaultBot = await botManager.getDefaultBot()
+    this.botId = defaultBot.id
+    return this.botId
+  }
+
+  /**
+   * Get or create contact from phone number
+   * Uses cache to avoid repeated API calls
+   */
+  private async getOrCreateContact(phone: string, name?: string): Promise<SendPulseContact> {
+    const botId = await this.getBotId()
+    const cleanPhone = phone.replace(/\D/g, '')
+
+    // Check cache first
+    const cachedContactId = contactCache.getContactId(botId, cleanPhone)
+    if (cachedContactId) {
+      // Return cached contact (need to fetch full data)
+      const contact = await this.getContactById(cachedContactId)
+      if (contact) {
+        return contact
+      }
+    }
+
+    // Create or get contact from API
     try {
-      if (!this.apiToken) {
-        throw new Error('SendPulse API token not configured')
-      }
+      const apiToken = await this.getApiToken()
 
-      // Clean phone number (remove non-digits)
-      const cleanPhone = params.phone.replace(/[^\d]/g, '')
-
-      const payload = {
+      const payload: CreateContactRequest = {
+        bot_id: botId,
         phone: cleanPhone,
-        message: params.message,
-        ...(params.buttons && params.buttons.length > 0 && { buttons: params.buttons }),
-        ...(params.image && { image: params.image }),
-        ...(params.document && { document: params.document })
+        ...(name && { name })
       }
 
-      const response = await fetch(`${this.baseUrl}/contacts/sendMessage`, {
+      const response = await fetch(`${this.baseUrl}/contacts`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiToken}`,
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        // If contact exists, try to find it in the list
+        if (response.status === 400) {
+          const errorData = await response.json().catch(() => ({}))
+          if (errorData.errors?.phone?.[0]?.includes('already exists')) {
+            return await this.findContactByPhone(botId, cleanPhone)
+          }
+        }
+        const errorData = await response.json().catch(() => ({}))
+        throw createSendPulseError(response.status, errorData)
+      }
+
+      const contact: SendPulseContact = await response.json()
+
+      // Cache the contact
+      contactCache.set(botId, cleanPhone, contact)
+
+      return contact
+
+    } catch (error) {
+      if (error instanceof SendPulseContactError) {
+        throw error
+      }
+      throw new SendPulseContactError(
+        `Failed to get or create contact for phone ${phone}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error
+      )
+    }
+  }
+
+  /**
+   * Find contact by phone number in contacts list
+   */
+  private async findContactByPhone(botId: string, phone: string): Promise<SendPulseContact> {
+    const apiToken = await this.getApiToken()
+
+    const response = await fetch(
+      `${this.baseUrl}/contacts?bot_id=${botId}&limit=100`,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw createSendPulseError(response.status, errorData)
+    }
+
+    const data: SendPulseContactsResponse = await response.json()
+
+    const contact = data.data.find(c =>
+      c.channel_data.phone.toString().includes(phone.slice(-8))
+    )
+
+    if (!contact) {
+      throw new SendPulseContactError(`Contact with phone ${phone} not found`)
+    }
+
+    // Cache the found contact
+    contactCache.set(botId, phone, contact)
+
+    return contact
+  }
+
+  /**
+   * Get contact by ID
+   */
+  private async getContactById(contactId: string): Promise<SendPulseContact | null> {
+    try {
+      const apiToken = await this.getApiToken()
+
+      const response = await fetch(
+        `${this.baseUrl}/contacts/${contactId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null
+        }
+        const errorData = await response.json().catch(() => ({}))
+        throw createSendPulseError(response.status, errorData)
+      }
+
+      return await response.json()
+
+    } catch (error) {
+      console.error('Error getting contact by ID:', error)
+      return null
+    }
+  }
+
+  /**
+   * Check if contact is in 24-hour conversation window
+   */
+  private async isContactActive(contactId: string): Promise<boolean> {
+    const contact = await this.getContactById(contactId)
+    return contact?.is_chat_opened || false
+  }
+
+  /**
+   * Send message to contact by ID
+   */
+  private async sendMessageToContact(
+    contactId: string,
+    message: WhatsAppMessage
+  ): Promise<SendMessageResponse> {
+    try {
+      const apiToken = await this.getApiToken()
+
+      // Check if contact is in 24-hour window
+      const isActive = await this.isContactActive(contactId)
+      if (!isActive) {
+        throw new ConversationWindowExpiredError(contactId)
+      }
+
+      const payload: SendMessageRequest = {
+        contact_id: contactId,
+        message
+      }
+
+      const response = await fetch(`${this.baseUrl}/contacts/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
@@ -112,10 +243,83 @@ export class SendPulseClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(`SendPulse API error: ${response.status} - ${errorData.error || response.statusText}`)
+        throw createSendPulseError(response.status, errorData)
       }
 
       return await response.json()
+
+    } catch (error) {
+      if (error instanceof ConversationWindowExpiredError || error instanceof SendPulseMessageError) {
+        throw error
+      }
+      throw new SendPulseMessageError(
+        `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        undefined,
+        error
+      )
+    }
+  }
+
+  // ============================================================================
+  // Public API Methods (Backward Compatible + New Features)
+  // ============================================================================
+
+  /**
+   * Send text message (backward compatible with auto phone→contact conversion)
+   */
+  async sendMessage(params: LegacySendMessageParams): Promise<any> {
+    try {
+      // Get or create contact from phone
+      const contact = await this.getOrCreateContact(params.phone)
+
+      // Build message based on params
+      let message: WhatsAppMessage
+
+      if (params.buttons && params.buttons.length > 0) {
+        // Interactive buttons message
+        message = {
+          type: 'interactive',
+          interactive: {
+            type: 'button',
+            body: { text: params.message },
+            action: {
+              buttons: params.buttons.map(btn => ({
+                type: 'reply',
+                reply: btn.reply
+              }))
+            }
+          }
+        } as InteractiveButtonsMessage
+      } else if (params.image) {
+        // Image message
+        message = {
+          type: 'image',
+          image: {
+            link: params.image,
+            ...(params.message && { caption: params.message })
+          }
+        } as ImageMessage
+      } else if (params.document) {
+        // Document message
+        message = {
+          type: 'document',
+          document: {
+            link: params.document,
+            ...(params.message && { caption: params.message })
+          }
+        } as DocumentMessage
+      } else {
+        // Text message
+        message = {
+          type: 'text',
+          text: {
+            body: params.message,
+            preview_url: false
+          }
+        } as TextMessage
+      }
+
+      return await this.sendMessageToContact(contact.id, message)
 
     } catch (error) {
       console.error('Error sending SendPulse message:', error)
@@ -162,9 +366,10 @@ export class SendPulseClient {
       }>
     }>
   ): Promise<any> {
-    const payload = {
-      phone: phone.replace(/[^\d]/g, ''),
-      message,
+    const contact = await this.getOrCreateContact(phone)
+
+    const listMessage: InteractiveListMessage = {
+      type: 'interactive',
       interactive: {
         type: 'list',
         body: { text: message },
@@ -178,20 +383,7 @@ export class SendPulseClient {
       }
     }
 
-    const response = await fetch(`${this.baseUrl}/contacts/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    })
-
-    if (!response.ok) {
-      throw new Error(`SendPulse API error: ${response.status} ${response.statusText}`)
-    }
-
-    return await response.json()
+    return await this.sendMessageToContact(contact.id, listMessage)
   }
 
   /**
@@ -219,12 +411,22 @@ export class SendPulseClient {
   /**
    * Create or update contact
    */
-  async createOrUpdateContact(contact: SendPulseContact): Promise<any> {
+  async createOrUpdateContact(contact: {
+    phone: string
+    name?: string
+    email?: string
+    variables?: Record<string, any>
+    tags?: string[]
+  }): Promise<any> {
     try {
-      const payload = {
-        phone: contact.phone.replace(/[^\d]/g, ''),
+      const botId = await this.getBotId()
+      const apiToken = await this.getApiToken()
+      const cleanPhone = contact.phone.replace(/\D/g, '')
+
+      const payload: CreateContactRequest = {
+        bot_id: botId,
+        phone: cleanPhone,
         ...(contact.name && { name: contact.name }),
-        ...(contact.email && { email: contact.email }),
         ...(contact.variables && { variables: contact.variables }),
         ...(contact.tags && { tags: contact.tags })
       }
@@ -232,17 +434,23 @@ export class SendPulseClient {
       const response = await fetch(`${this.baseUrl}/contacts`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiToken}`,
+          'Authorization': `Bearer ${apiToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        throw new Error(`SendPulse API error: ${response.status} ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw createSendPulseError(response.status, errorData)
       }
 
-      return await response.json()
+      const contactData: SendPulseContact = await response.json()
+
+      // Update cache
+      contactCache.set(botId, cleanPhone, contactData)
+
+      return contactData
 
     } catch (error) {
       console.error('Error creating/updating SendPulse contact:', error)
@@ -251,28 +459,28 @@ export class SendPulseClient {
   }
 
   /**
-   * Get contact information
+   * Get contact information by phone
    */
   async getContact(phone: string): Promise<any> {
     try {
-      const cleanPhone = phone.replace(/[^\d]/g, '')
-      const response = await fetch(`${this.baseUrl}/contacts/${cleanPhone}`, {
-        headers: {
-          'Authorization': `Bearer ${this.apiToken}`
-        }
-      })
+      const botId = await this.getBotId()
+      const cleanPhone = phone.replace(/\D/g, '')
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null // Contact not found
-        }
-        throw new Error(`SendPulse API error: ${response.status} ${response.statusText}`)
+      // Check cache first
+      const cachedContactId = contactCache.getContactId(botId, cleanPhone)
+      if (cachedContactId) {
+        const contact = await this.getContactById(cachedContactId)
+        if (contact) return contact
       }
 
-      return await response.json()
+      // Find in contacts list
+      return await this.findContactByPhone(botId, cleanPhone)
 
     } catch (error) {
       console.error('Error getting SendPulse contact:', error)
+      if (error instanceof SendPulseContactError) {
+        return null
+      }
       throw error
     }
   }
@@ -282,6 +490,8 @@ export class SendPulseClient {
    */
   async registerWebhook(webhookUrl: string): Promise<any> {
     try {
+      const apiToken = await this.getApiToken()
+
       const payload = {
         url: webhookUrl,
         events: ['message.new', 'message.status'],
@@ -291,14 +501,15 @@ export class SendPulseClient {
       const response = await fetch(`${this.baseUrl}/webhooks`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiToken}`,
+          'Authorization': `Bearer ${apiToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        throw new Error(`SendPulse API error: ${response.status} ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw createSendPulseError(response.status, errorData)
       }
 
       return await response.json()
@@ -345,9 +556,11 @@ export class SendPulseClient {
    */
   async testConnection(): Promise<boolean> {
     try {
+      const apiToken = await this.getApiToken()
+
       const response = await fetch(`${this.baseUrl}/account/info`, {
         headers: {
-          'Authorization': `Bearer ${this.apiToken}`
+          'Authorization': `Bearer ${apiToken}`
         }
       })
 
@@ -364,14 +577,17 @@ export class SendPulseClient {
    */
   async getAccountInfo(): Promise<any> {
     try {
+      const apiToken = await this.getApiToken()
+
       const response = await fetch(`${this.baseUrl}/account/info`, {
         headers: {
-          'Authorization': `Bearer ${this.apiToken}`
+          'Authorization': `Bearer ${apiToken}`
         }
       })
 
       if (!response.ok) {
-        throw new Error(`SendPulse API error: ${response.status} ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw createSendPulseError(response.status, errorData)
       }
 
       return await response.json()
@@ -380,6 +596,60 @@ export class SendPulseClient {
       console.error('Error getting SendPulse account info:', error)
       throw error
     }
+  }
+
+  // ============================================================================
+  // New Advanced Methods
+  // ============================================================================
+
+  /**
+   * Get all contacts for current bot (with caching)
+   */
+  async getContacts(limit: number = 100): Promise<SendPulseContact[]> {
+    try {
+      const botId = await this.getBotId()
+      const apiToken = await this.getApiToken()
+
+      const response = await fetch(
+        `${this.baseUrl}/contacts?bot_id=${botId}&limit=${limit}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw createSendPulseError(response.status, errorData)
+      }
+
+      const data: SendPulseContactsResponse = await response.json()
+
+      // Prefetch contacts into cache
+      contactCache.prefetch(botId, data.data)
+
+      return data.data
+
+    } catch (error) {
+      console.error('Error getting contacts:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats() {
+    return contactCache.getStats()
+  }
+
+  /**
+   * Clear contact cache
+   */
+  clearCache(): void {
+    contactCache.clear()
   }
 }
 
