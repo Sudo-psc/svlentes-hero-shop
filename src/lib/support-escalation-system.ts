@@ -128,29 +128,37 @@ export class SupportEscalationSystem {
   private async loadAgentAvailability(): Promise<void> {
     try {
       const agents = await prisma.agent.findMany({
-        where: { isActive: true },
-        include: {
-          specializations: true,
-          metrics: true
-        }
+        where: { isActive: true }
       })
 
       agents.forEach(agent => {
+        // Parse JSON fields
+        const specializations = Array.isArray(agent.specializations)
+          ? agent.specializations as string[]
+          : []
+
+        const workingHours = agent.workingHours as {
+          start: string
+          end: string
+          timezone: string
+          daysAvailable: string[]
+        }
+
         this.agentAvailability.set(agent.id, {
           agentId: agent.id,
           isOnline: agent.isOnline,
           currentLoad: agent.currentTicketCount,
           maxCapacity: agent.maxConcurrentTickets,
-          specializations: agent.specializations.map(s => s.type) as AgentSpecialization[],
-          averageResponseTime: agent.metrics?.averageResponseTime,
-          satisfactionScore: agent.metrics?.satisfactionScore,
+          specializations: specializations as AgentSpecialization[],
+          averageResponseTime: agent.averageResponseTime ?? undefined,
+          satisfactionScore: agent.satisfactionScore ?? undefined,
           workingHours: {
-            start: agent.workingHours.start,
-            end: agent.workingHours.end,
-            timezone: agent.workingHours.timezone,
-            daysAvailable: agent.workingHours.daysAvailable
+            start: workingHours.start,
+            end: workingHours.end,
+            timezone: workingHours.timezone,
+            daysAvailable: workingHours.daysAvailable
           },
-          lastActive: agent.lastActive
+          lastActive: agent.lastActive ?? new Date()
         })
       })
     } catch (error) {

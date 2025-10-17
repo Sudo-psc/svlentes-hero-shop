@@ -15,18 +15,18 @@ import {
   storeInteraction
 } from '@/lib/whatsapp-conversation-service'
 
-// SendPulse webhook verification
+// SendPulse webhook verification (SendPulse doesn't use token verification)
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const token = searchParams.get('token')
   const challenge = searchParams.get('challenge')
 
-  // Verify SendPulse webhook token
-  if (token === process.env.SENDPULSE_WEBHOOK_TOKEN) {
-    return new NextResponse(challenge || 'verified')
+  // SendPulse webhook verification - respond with challenge if present
+  if (challenge) {
+    return new NextResponse(challenge, { status: 200 })
   }
 
-  return NextResponse.json({ error: 'Invalid verification' }, { status: 403 })
+  // Return OK for health checks
+  return NextResponse.json({ status: 'webhook_active', timestamp: new Date().toISOString() })
 }
 
 // Main webhook handler for SendPulse messages (Brazilian API)
@@ -34,6 +34,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     console.log('SendPulse webhook received:', body)
+
+    // Handle SendPulse native format (array of events)
+    if (Array.isArray(body) && body.length > 0) {
+      for (const event of body) {
+        if (event.title === 'incoming_message' && event.service === 'whatsapp') {
+          await processSendPulseNativeMessage(event)
+        }
+      }
+      return NextResponse.json({ status: 'processed' })
+    }
 
     // Handle SendPulse Brazilian API format
     if (body.entry && body.entry[0]?.changes) {
@@ -66,6 +76,84 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Process SendPulse native format message (array format)
+ */
+async function processSendPulseNativeMessage(event: any) {
+  try {
+    // Extract message from info object
+    const message = event.info?.message
+    const contact = event.contact
+    const bot = event.bot
+
+    if (!message || !contact) {
+      console.warn('Invalid SendPulse native message structure')
+      return
+    }
+
+    // Extract message text from the message object
+    const messageContent = message.text || message.body || null
+    if (!messageContent || typeof messageContent !== 'string') {
+      console.warn('No text content in SendPulse message')
+      return
+    }
+
+    const customerPhone = contact.phone
+    const messageId = message.id || `msg_${Date.now()}`
+    const customerName = contact.name || contact.username || 'Cliente'
+
+    console.log(`Processing SendPulse native message from ${customerPhone}: "${messageContent}"`)
+
+    // Get or create user profile
+    const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+
+    // Get conversation history
+    const conversationHistory = await getConversationHistory(customerPhone, 10)
+    const userHistory = await getUserSupportHistory(userProfile.id)
+
+    // Get current context
+    const context = {
+      userHistory,
+      previousTickets: userHistory.tickets || [],
+      subscriptionInfo: userProfile.subscription,
+      userProfile,
+      conversationHistory: conversationHistory.map(msg => msg.content),
+      lastIntent: userHistory.lastIntent
+    }
+
+    // Process message with LangChain
+    const processingResult = await langchainSupportProcessor.processSupportMessage(
+      messageContent,
+      context
+    )
+
+    // Store interaction
+    await storeInteraction({
+      messageId,
+      customerPhone,
+      content: messageContent,
+      intent: processingResult.intent,
+      response: processingResult.response,
+      escalationRequired: processingResult.escalationRequired,
+      ticketCreated: processingResult.ticketCreated,
+      userProfile
+    })
+
+    // Send response via SendPulse
+    await sendSendPulseResponse(customerPhone, processingResult, customerName)
+
+    // Handle escalation if required
+    if (processingResult.escalationRequired && processingResult.ticketCreated) {
+      await handleEscalationIfNeeded(customerPhone, processingResult, context)
+    }
+
+    console.log(`✅ SendPulse native message processed: ${customerPhone} - ${processingResult.intent.name}`)
+
+  } catch (error) {
+    console.error('Error processing SendPulse native message:', error)
   }
 }
 
