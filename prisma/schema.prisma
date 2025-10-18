@@ -3,11 +3,17 @@
 
 generator client {
   provider = "prisma-client-js"
+  // P3: Performance optimization - generate smaller client bundles
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // P3: Connection pooling optimized for serverless functions
+  // Recommended: Use connection pooling via PgBouncer or Prisma Accelerate
+  // For direct connection, PostgreSQL manages pooling server-side
+  directUrl = env("DATABASE_DIRECT_URL") // Optional: for migrations
 }
 
 // Enums

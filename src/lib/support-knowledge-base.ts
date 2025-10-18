@@ -107,14 +107,14 @@ export const SUPPORT_RESPONSES = {
 
   // Emergency responses
   emergency_eye: {
-    text: "⚠️ EMERGÊNCIA OCULAR ⚠️\n\nProcure imediatamente um pronto-socorro oftalmológico ou hospital.\n\nDr. Philipe: (33) 99989-8026\n\nNão espere, sua visão é prioritária!",
+    text: "⚠️ EMERGÊNCIA OCULAR ⚠️\n\nProcure imediatamente um pronto-socorro oftalmológico ou hospital.\n\nSaraiva Vision: (33) 98606-1427\n\nNão espere, sua visão é prioritária!",
     category: FAQCategory.EMERGENCY,
     escalationRequired: true,
     priority: 10
   },
 
   emergency_contact: {
-    text: "🚨 SITUAÇÃO DE EMERGÊNCIA 🚨\n\nContato direto com Dr. Philipe:\n📞 WhatsApp: (33) 99989-8026\n📞 Telefone Clínica: [número da clínica]\n\nEndereço: Caratinga/MG\n\nAtendimento 24h para emergências.",
+    text: "🚨 SITUAÇÃO DE EMERGÊNCIA 🚨\n\nContato direto com Saraiva Vision:\n📞 WhatsApp: (33) 98606-1427\n📞 Telefone Clínica: (33) 98606-1427\n\nEndereço: Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG\n\nAtendimento para emergências.",
     category: FAQCategory.EMERGENCY,
     escalationRequired: true,
     priority: 10

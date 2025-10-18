@@ -37,6 +37,56 @@ interface SupportContext {
   lastIntent?: SupportIntent
 }
 
+/**
+ * C5: Input sanitization to prevent prompt injection attacks
+ */
+function sanitizeUserInput(input: string, maxLength: number = 5000): string {
+  if (typeof input !== 'string') {
+    return ''
+  }
+
+  // Truncate to max length first
+  let sanitized = input.substring(0, maxLength)
+
+  // Remove common prompt injection patterns
+  const injectionPatterns = [
+    /\{system\}/gi,
+    /\{assistant\}/gi,
+    /\{user\}/gi,
+    /ignore\s+previous/gi,
+    /ignore\s+all\s+previous/gi,
+    /disregard\s+previous/gi,
+    /forget\s+previous/gi,
+    /new\s+instructions/gi,
+    /override\s+instructions/gi,
+    /system\s*:/gi,
+    /assistant\s*:/gi,
+    /### Instruction/gi,
+    /### New Instruction/gi,
+    /\[INST\]/gi,
+    /\[\/INST\]/gi
+  ]
+
+  for (const pattern of injectionPatterns) {
+    sanitized = sanitized.replace(pattern, '')
+  }
+
+  // Remove excessive whitespace
+  sanitized = sanitized.replace(/\s+/g, ' ').trim()
+
+  return sanitized
+}
+
+/**
+ * C5: Sanitize conversation history to prevent accumulated injection
+ */
+function sanitizeHistory(history: string[], maxItems: number = 10): string[] {
+  return history
+    .slice(-maxItems) // Keep only recent history
+    .map(msg => sanitizeUserInput(msg, 500)) // Shorter limit for history
+    .filter(msg => msg.length > 0) // Remove empty messages
+}
+
 export class LangChainSupportProcessor {
   private llm: ChatOpenAI
   private knowledgeBase: SupportKnowledgeBase
@@ -111,7 +161,8 @@ REGRAS DE ATENDIMENTO:
 INFORMAÇÕES DA EMPRESA:
 - Clínica: Saraiva Vision - Caratinga/MG
 - Responsável: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
-- WhatsApp: (33) 99989-8026
+- WhatsApp Clínica: (33) 98606-1427
+- WhatsApp Chatbot: (33) 99989-8026
 - E-mail: contato@svlentes.com.br
 - Site: svlentes.com.br
 
@@ -191,17 +242,25 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
   private escalationChain: RunnableSequence<any, string>
 
   constructor() {
+    // C2: Validate required OpenAI credentials at startup
+    const openAIApiKey = process.env.OPENAI_API_KEY
+    if (!openAIApiKey) {
+      throw new Error(
+        'OpenAI API key not configured. Required environment variable: OPENAI_API_KEY'
+      )
+    }
+
     const langsmithConfig = getLangSmithConfig()
-    
+
     this.llm = new ChatOpenAI({
       modelName: 'gpt-4-turbo-preview',
       temperature: 0.3,
-      openAIApiKey: process.env.OPENAI_API_KEY,
+      openAIApiKey,
       callbacks: langsmithConfig.tracingEnabled ? undefined : []
     })
     this.knowledgeBase = new SupportKnowledgeBase()
     this.initializeChains()
-    
+
     logLangSmithStatus()
   }
 
@@ -306,7 +365,10 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
    * Classify support intent from message
    */
   private async classifySupportIntent(message: string, context: SupportContext): Promise<SupportIntent> {
-    const history = context.conversationHistory.slice(-5).join(' | ')
+    // C5: Sanitize user input before LLM processing
+    const sanitizedMessage = sanitizeUserInput(message)
+    const sanitizedHistory = sanitizeHistory(context.conversationHistory)
+    const history = sanitizedHistory.slice(-5).join(' | ')
     const customerData = this.formatCustomerData(context)
 
     const runConfig = getLangSmithRunConfig({
@@ -315,7 +377,7 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     })
 
     const result = await this.intentChain.invoke({
-      message,
+      message: sanitizedMessage,
       history,
       customerData
     }, runConfig)
@@ -375,11 +437,14 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
    */
   private async detectEmergency(message: string): Promise<string> {
     try {
+      // C5: Sanitize user input before LLM processing
+      const sanitizedMessage = sanitizeUserInput(message)
+
       const runConfig = getLangSmithRunConfig({
         step: 'emergency-detection',
         tags: ['emergency', 'safety', 'critical']
       })
-      return await this.emergencyChain.invoke({ message }, runConfig)
+      return await this.emergencyChain.invoke({ message: sanitizedMessage }, runConfig)
     } catch (error) {
       console.error('Error detecting emergency:', error)
       return 'EMERGENCY_FALSE'
@@ -400,12 +465,14 @@ Sua mensagem indica uma possível emergência oftalmológica. **NÃO ESPERE!**
 - Pronto-socorro oftalmológico mais próximo
 - Hospital com serviço de oftalmologia
 
-📞 **CONTATO DIRETO COM DR. PHILIPE:**
-- WhatsApp: (33) 99989-8026
-- Disponível 24h para emergências
+📞 **CONTATO DIRETO COM SARAIVA VISION:**
+- WhatsApp: (33) 98606-1427
+- Telefone: (33) 98606-1427
+- Disponível para emergências
 
 📍 **CLÍNICA SARAIVA VISION:**
 - Caratinga/MG
+- Rua Catarina Maria Passos, 97 - Santa Zita
 
 Sua visão é prioridade absoluta. Não adie o atendimento médico!`
 
@@ -437,10 +504,16 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     context: SupportContext,
     knowledgeBaseInfo: string
   ): Promise<string> {
-    const customerName = context.userProfile?.name || 'Cliente'
+    // C5: Sanitize user input before LLM processing
+    const sanitizedMessage = sanitizeUserInput(originalMessage)
+    const sanitizedCustomerName = sanitizeUserInput(context.userProfile?.name || 'Cliente', 100)
+    const sanitizedTicketSubjects = context.previousTickets
+      .slice(0, 3)
+      .map(t => sanitizeUserInput(t.subject, 200))
+      .join(', ') || 'Nenhum'
+
     const customerType = context.subscriptionInfo ? 'Assinante' : 'Potencial cliente'
     const subscriptionStatus = context.subscriptionInfo?.status || 'Não aplicável'
-    const recentHistory = context.previousTickets.slice(0, 3).map(t => t.subject).join(', ') || 'Nenhum'
 
     const specificInstructions = this.getSpecificInstructions(intent)
 
@@ -454,16 +527,16 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     })
 
     return await this.responseChain.invoke({
-      customerName,
+      customerName: sanitizedCustomerName,
       customerType,
       subscriptionStatus,
-      recentHistory,
+      recentHistory: sanitizedTicketSubjects,
       intent: intent.name,
       category: intent.category,
       priority: intent.priority,
       sentiment: intent.entities.sentiment,
       urgency: intent.entities.urgency,
-      originalMessage,
+      originalMessage: sanitizedMessage,
       knowledgeBase: knowledgeBaseInfo,
       specificInstructions
     }, runConfig)
@@ -500,7 +573,10 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       return true
     }
 
-    const conversationHistory = context.conversationHistory.slice(-10).join(' | ')
+    // C5: Sanitize user input before LLM processing
+    const sanitizedMessage = sanitizeUserInput(message)
+    const sanitizedHistory = sanitizeHistory(context.conversationHistory)
+    const conversationHistory = sanitizedHistory.slice(-10).join(' | ')
     const attempts = context.conversationHistory.length
 
     try {
@@ -513,7 +589,7 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       })
 
       const decision = await this.escalationChain.invoke({
-        message,
+        message: sanitizedMessage,
         intent: intent.name,
         priority: intent.priority,
         attempts,

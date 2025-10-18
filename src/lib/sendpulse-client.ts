@@ -10,6 +10,13 @@ import { rateLimiter } from './sendpulse/rate-limiter'
 import { retryManager } from './sendpulse/retry-manager'
 import { templateManager } from './sendpulse/template-manager'
 import { analyticsService } from './sendpulse/analytics-service'
+import {
+  chunkMessage,
+  streamMessageChunks,
+  addChunkIndicators,
+  validateMessageLength,
+  DEFAULT_STREAM_CONFIG
+} from './message-streamer'
 import type {
   SendPulseContact,
   SendPulseContactsResponse,
@@ -910,6 +917,160 @@ export class SendPulseClient {
       retry: this.getRetryStats(),
       templates: this.getTemplateStats(),
       analytics: this.getAnalyticsStats()
+    }
+  }
+
+  /**
+   * P5: Send long message with progressive streaming
+   * Automatically chunks and streams long messages for better UX
+   */
+  async sendStreamedMessage(params: {
+    phone: string
+    message: string
+    isChatOpened?: boolean
+    enableIndicators?: boolean
+  }): Promise<{
+    success: boolean
+    chunksCount: number
+    totalLength: number
+  }> {
+    try {
+      // Validate message length
+      const validation = validateMessageLength(params.message)
+
+      // If message doesn't need chunking, send normally
+      if (!validation.needsChunking) {
+        await this.sendMessage({
+          phone: params.phone,
+          message: params.message,
+          isChatOpened: params.isChatOpened
+        })
+
+        return {
+          success: true,
+          chunksCount: 1,
+          totalLength: params.message.length
+        }
+      }
+
+      // Chunk the message
+      let chunks = chunkMessage(params.message, DEFAULT_STREAM_CONFIG)
+
+      // Add continuation indicators if enabled
+      if (params.enableIndicators !== false) {
+        chunks = addChunkIndicators(chunks)
+      }
+
+      // Stream chunks progressively
+      await streamMessageChunks(
+        chunks,
+        async (chunk, isFirst, isLast) => {
+          await this.sendMessage({
+            phone: params.phone,
+            message: chunk,
+            isChatOpened: params.isChatOpened
+          })
+        },
+        DEFAULT_STREAM_CONFIG
+      )
+
+      return {
+        success: true,
+        chunksCount: chunks.length,
+        totalLength: params.message.length
+      }
+
+    } catch (error) {
+      console.error('Error sending streamed message:', error)
+      throw error
+    }
+  }
+
+  /**
+   * P5: Send streamed message with quick replies
+   * Quick replies only appear on the last chunk
+   */
+  async sendStreamedMessageWithQuickReplies(params: {
+    phone: string
+    message: string
+    quickReplies: string[]
+    isChatOpened?: boolean
+    enableIndicators?: boolean
+  }): Promise<{
+    success: boolean
+    chunksCount: number
+    totalLength: number
+  }> {
+    try {
+      // Validate message length
+      const validation = validateMessageLength(params.message)
+
+      // If message doesn't need chunking, send with quick replies
+      if (!validation.needsChunking) {
+        await this.sendMessageWithQuickReplies(
+          params.phone,
+          params.message,
+          params.quickReplies,
+          { isChatOpened: params.isChatOpened }
+        )
+
+        return {
+          success: true,
+          chunksCount: 1,
+          totalLength: params.message.length
+        }
+      }
+
+      // Chunk the message
+      let chunks = chunkMessage(params.message, DEFAULT_STREAM_CONFIG)
+
+      // Add continuation indicators (but not on last chunk)
+      if (params.enableIndicators !== false) {
+        chunks = chunks.map((chunk, index) => {
+          const isLast = index === chunks.length - 1
+          if (index === 0 && !isLast) {
+            return `${chunk}\n\n_(continua...)_`
+          } else if (!isLast && index > 0) {
+            return `_(continuação)_\n\n${chunk}\n\n_(continua...)_`
+          } else if (isLast && index > 0) {
+            return `_(continuação)_\n\n${chunk}`
+          }
+          return chunk
+        })
+      }
+
+      // Stream chunks progressively
+      await streamMessageChunks(
+        chunks,
+        async (chunk, isFirst, isLast) => {
+          // Send quick replies only on the last chunk
+          if (isLast) {
+            await this.sendMessageWithQuickReplies(
+              params.phone,
+              chunk,
+              params.quickReplies,
+              { isChatOpened: params.isChatOpened }
+            )
+          } else {
+            await this.sendMessage({
+              phone: params.phone,
+              message: chunk,
+              isChatOpened: params.isChatOpened
+            })
+          }
+        },
+        DEFAULT_STREAM_CONFIG
+      )
+
+      return {
+        success: true,
+        chunksCount: chunks.length,
+        totalLength: params.message.length
+      }
+
+    } catch (error) {
+      console.error('Error sending streamed message with quick replies:', error)
+      throw error
     }
   }
 }
