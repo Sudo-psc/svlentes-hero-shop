@@ -1,7 +1,38 @@
-import { PricingPlan } from '@/types'
+/**
+ * Pricing Plans Data
+ *
+ * Versão: 1.0.0-fase3
+ * Fase: MVP - Pricing (Centralized Config)
+ *
+ * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
+ * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
+ */
 
-// Planos de assinatura de lentes de contato baseados em Saraiva Vision
-export const pricingPlans: PricingPlan[] = [
+import { PricingPlan } from '@/types'
+import { config } from '@/config/loader'
+
+/**
+ * Get pricing plans from centralized config
+ * Falls back to hardcoded data if feature flag is disabled
+ */
+function getPricingPlans(): PricingPlan[] {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.plans as PricingPlan[]
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading centralized config, using fallback data:', error)
+  }
+
+  // Fallback to hardcoded data
+  return hardcodedPlans
+}
+
+// Hardcoded fallback data
+const hardcodedPlans: PricingPlan[] = [
     {
         id: 'basico',
         name: 'Plano Básico',
@@ -67,8 +98,28 @@ export const pricingPlans: PricingPlan[] = [
     }
 ]
 
+// Export via função para suportar centralização
+export const pricingPlans: PricingPlan[] = getPricingPlans()
+
 // Comparação de features entre planos
-export const featureComparison = {
+export const featureComparison = getFeatureComparison()
+
+function getFeatureComparison() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.featureComparison
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading feature comparison, using fallback:', error)
+  }
+
+  return hardcodedFeatureComparison
+}
+
+const hardcodedFeatureComparison = {
     features: [
         'Lentes de contato',
         'Frequência de entrega',
@@ -146,7 +197,24 @@ export const featureComparison = {
 }
 
 // Benefícios gerais do serviço
-export const serviceBenefits = [
+export const serviceBenefits = getServiceBenefits()
+
+function getServiceBenefits() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.serviceBenefits
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading service benefits, using fallback:', error)
+  }
+
+  return hardcodedServiceBenefits
+}
+
+const hardcodedServiceBenefits = [
     {
         id: 'economy',
         title: 'Economia Garantida',
@@ -192,7 +260,24 @@ export const serviceBenefits = [
 ]
 
 // Informações de cobertura geográfica
-export const coverageInfo = [
+export const coverageInfo = getCoverageInfo()
+
+function getCoverageInfo() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.coverageInfo
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading coverage info, using fallback:', error)
+  }
+
+  return hardcodedCoverageInfo
+}
+
+const hardcodedCoverageInfo = [
     {
         id: 'presencial',
         icon: '📍',
@@ -218,7 +303,24 @@ export const coverageInfo = [
 ]
 
 // FAQ específica de planos
-export const pricingFAQ = [
+export const pricingFAQ = getPricingFAQ()
+
+function getPricingFAQ() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.faq
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading FAQ, using fallback:', error)
+  }
+
+  return hardcodedPricingFAQ
+}
+
+const hardcodedPricingFAQ = [
     {
         id: 'entrega',
         question: 'Como funciona a entrega?',
@@ -262,7 +364,24 @@ export const pricingFAQ = [
 ]
 
 // Dados para calculadora de economia
-export const economyCalculatorData = {
+export const economyCalculatorData = getEconomyCalculatorData()
+
+function getEconomyCalculatorData() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.economyCalculator
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading economy calculator, using fallback:', error)
+  }
+
+  return hardcodedEconomyCalculatorData
+}
+
+const hardcodedEconomyCalculatorData = {
     averagePrices: {
         daily: {
             avulso: 4.50, // por lente

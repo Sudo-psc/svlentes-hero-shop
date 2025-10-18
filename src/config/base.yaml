@@ -195,8 +195,256 @@ copy:
       ctaLearnMore: "Saiba Mais"
 
 # ============================================================================
+# PRICING & PLANS (Fase 3)
+# ============================================================================
+pricing:
+  plans:
+    - id: "basico"
+      name: "Plano Básico"
+      badge: "Pioneiro no Brasil"
+      priceMonthly: 89.00
+      priceAnnual: 979.00
+      description: "Plano básico de lentes de contato com acompanhamento 100% online via telemedicina."
+      features:
+        - "12 pares de lentes gelatinosas asféricas"
+        - "1 consulta de telemedicina por ano"
+        - "Acompanhamento médico mensal online"
+        - "Lembretes mensais de troca"
+        - "Entrega em casa sem custo adicional"
+        - "Atendimento em todo o Brasil"
+      recommended: false
+      stripeProductId: "prod_basic_svlentes"
+      stripePriceId: "price_basic_monthly"
+      asaasProductId: "prod_basico_svlentes"
+      ctaText: "Assinar Plano Básico"
+
+    - id: "padrao"
+      name: "Plano Padrão Online"
+      badge: "RECOMENDADO"
+      popularBadge: "Mais Popular"
+      priceMonthly: 119.00
+      priceAnnual: 1309.00
+      description: "Plano completo com lentes premium e acompanhamento online prioritário."
+      features:
+        - "Todos os benefícios do Plano Básico"
+        - "13 pares de lentes gelatinosas premium"
+        - "2 consultas de telemedicina por ano"
+        - "Prioridade no agendamento"
+        - "Frete expresso grátis"
+        - "Suporte via WhatsApp 24/7"
+      recommended: true
+      stripeProductId: "prod_standard_svlentes"
+      stripePriceId: "price_standard_monthly"
+      asaasProductId: "prod_padrao_svlentes"
+      ctaText: "Assinar Plano Padrão"
+
+    - id: "premium"
+      name: "Plano Premium Online"
+      badge: "Premium"
+      priceMonthly: 149.00
+      priceAnnual: 1639.00
+      description: "Experiência VIP online com lentes multifocais e atendimento personalizado exclusivo."
+      features:
+        - "Todos os benefícios do Plano Padrão"
+        - "14 pares de lentes premium multifocais"
+        - "4 consultas de telemedicina por ano"
+        - "Kit premium de higienização"
+        - "Atendimento personalizado exclusivo"
+      recommended: false
+      stripeProductId: "prod_premium_svlentes"
+      stripePriceId: "price_premium_monthly"
+      asaasProductId: "prod_premium_svlentes"
+      ctaText: "Assinar Plano Premium"
+
+  featureComparison:
+    features:
+      - "Lentes de contato"
+      - "Frequência de entrega"
+      - "Consultas médicas"
+      - "Teleorientação"
+      - "Suporte"
+      - "Frete"
+      - "Seguro"
+      - "App móvel"
+      - "Exames incluídos"
+      - "Atendimento domiciliar"
+    planComparison:
+      - feature: "Lentes de contato"
+        basic: "Mensais"
+        premium: "Diárias ou mensais"
+        vip: "Premium última geração"
+      - feature: "Frequência de entrega"
+        basic: "A cada 3 meses"
+        premium: "Mensal"
+        vip: "Quinzenal se necessário"
+      - feature: "Consultas médicas"
+        basic: "Básico"
+        premium: "Semestral incluída"
+        vip: "Trimestral incluída"
+      - feature: "Teleorientação"
+        basic: false
+        premium: "Ilimitada"
+        vip: "Ilimitada + prioritária"
+      - feature: "Suporte"
+        basic: "WhatsApp"
+        premium: "24/7 prioritário"
+        vip: "Concierge dedicado"
+      - feature: "Frete"
+        basic: "Grátis"
+        premium: "Grátis express"
+        vip: "Grátis express + emergencial"
+      - feature: "Seguro"
+        basic: "Básico"
+        premium: "Contra perda/dano"
+        vip: "Premium completo"
+      - feature: "App móvel"
+        basic: false
+        premium: true
+        vip: true
+      - feature: "Exames incluídos"
+        basic: false
+        premium: false
+        vip: true
+      - feature: "Atendimento domiciliar"
+        basic: false
+        premium: false
+        vip: true
+
+  serviceBenefits:
+    - id: "economy"
+      title: "Economia Garantida"
+      description: "Economia de até 40% comparado à compra avulsa de lentes"
+      icon: "💰"
+      highlight: true
+    - id: "medical-care"
+      title: "Acompanhamento Médico"
+      description: "Acompanhamento médico especializado incluído em todos os planos"
+      icon: "👨‍⚕️"
+      highlight: true
+    - id: "convenience"
+      title: "Entrega Regular"
+      description: "Entrega automática sem preocupação, sempre no prazo"
+      icon: "📦"
+      highlight: true
+    - id: "quality"
+      title: "Certificação ANVISA"
+      description: "Lentes premium certificadas pela ANVISA, garantia de qualidade"
+      icon: "✅"
+      highlight: false
+    - id: "support"
+      title: "Suporte Completo"
+      description: "Suporte via WhatsApp e telemedicina sempre que precisar"
+      icon: "💬"
+      highlight: false
+    - id: "flexibility"
+      title: "Flexibilidade Total"
+      description: "Pause ou cancele sua assinatura a qualquer momento sem burocracia"
+      icon: "🔄"
+      highlight: false
+
+  coverageInfo:
+    - id: "presencial"
+      icon: "📍"
+      title: "Consultas Presenciais"
+      description: "Disponíveis em Caratinga, Ipatinga e Belo Horizonte/MG"
+      locations:
+        - "Caratinga/MG"
+        - "Ipatinga/MG"
+        - "Belo Horizonte/MG"
+      nationwide: false
+    - id: "telemedicina"
+      icon: "🌐"
+      title: "Telemedicina"
+      description: "Válida em todo o território nacional"
+      nationwide: true
+    - id: "entrega"
+      icon: "📦"
+      title: "Entrega de Lentes"
+      description: "Válida em todo o território nacional via Correios"
+      nationwide: true
+
+  faq:
+    - id: "entrega"
+      question: "Como funciona a entrega?"
+      answer: "As lentes são entregues mensalmente no seu endereço cadastrado, sem custo adicional de frete. Você recebe automaticamente antes de acabar suas lentes atuais, garantindo que nunca fique sem suas lentes de contato."
+    - id: "consultas"
+      question: "As consultas estão incluídas?"
+      answer: "Sim! Todos os planos incluem consultas de acompanhamento com oftalmologista, tanto presenciais quanto por telemedicina, para garantir a saúde dos seus olhos. A quantidade de consultas varia de acordo com o plano escolhido."
+    - id: "diferenca"
+      question: "Qual a diferença entre os planos?"
+      answer: "A principal diferença está na quantidade de lentes, frequência de consultas e benefícios adicionais. O Plano Padrão oferece mais consultas e telemedicina ilimitada. O Plano Premium inclui lentes multifocais, exames complementares e kit de higienização."
+    - id: "cancelamento"
+      question: "Posso cancelar a assinatura?"
+      answer: "Sim, você pode pausar ou cancelar sua assinatura a qualquer momento, sem multas ou taxas de cancelamento. Basta entrar em contato através do portal do cliente ou via WhatsApp."
+    - id: "pagamento"
+      question: "Como funciona o pagamento?"
+      answer: "Você pode pagar em até 12 vezes no cartão de crédito ou à vista com desconto via PIX ou boleto bancário. O pagamento é processado de forma segura através da plataforma Asaas."
+    - id: "receita"
+      question: "Preciso de receita médica?"
+      answer: "Sim, para sua segurança e saúde ocular, é necessário ter uma receita médica válida. Se você ainda não tem, podemos agendar uma consulta de avaliação e adaptação de lentes de contato."
+    - id: "qualidade"
+      question: "As lentes são de qualidade?"
+      answer: "Sim! Trabalhamos apenas com lentes de contato de marcas reconhecidas e certificadas pela ANVISA. Todas as lentes são embaladas individualmente e em ambiente estéril, garantindo máxima segurança e qualidade."
+    - id: "acompanhamento"
+      question: "Como funciona o acompanhamento médico?"
+      answer: "Você terá acesso a consultas de acompanhamento com oftalmologista, tanto presenciais em nossas clínicas quanto por telemedicina. Além disso, oferecemos suporte via WhatsApp para dúvidas sobre uso e cuidados com as lentes."
+
+  economyCalculator:
+    averagePrices:
+      daily:
+        avulso: 4.50
+        subscription: 2.70
+      weekly:
+        avulso: 12.00
+        subscription: 7.20
+      monthly:
+        avulso: 25.00
+        subscription: 15.00
+    usagePatterns:
+      occasional:
+        daysPerMonth: 10
+        multiplier: 0.33
+      regular:
+        daysPerMonth: 20
+        multiplier: 0.67
+      daily:
+        daysPerMonth: 30
+        multiplier: 1.0
+
+# ============================================================================
+# SEO METADATA (Fase 3 - Basic)
+# ============================================================================
+seo:
+  defaultTitle: "SV Lentes - Assinatura de Lentes de Contato com Acompanhamento Médico"
+  titleTemplate: "%s | SV Lentes"
+  description: "Pioneiro no Brasil em assinatura de lentes de contato com acompanhamento médico especializado. Nunca mais fique sem lentes com a comodidade e segurança que você merece."
+  keywords:
+    - "lentes de contato"
+    - "assinatura lentes"
+    - "lentes online"
+    - "oftalmologista"
+    - "telemedicina"
+    - "Caratinga MG"
+    - "Dr. Philipe Saraiva"
+    - "SV Lentes"
+  openGraph:
+    type: "website"
+    siteName: "SV Lentes"
+    images:
+      - url: "https://svlentes.shop/og-image.jpg"
+        width: 1200
+        height: 630
+        alt: "SV Lentes - Assinatura de Lentes de Contato"
+  twitter:
+    card: "summary_large_image"
+    site: "@svlentes"
+    creator: "@saraivavision"
+
+# ============================================================================
 # FEATURE FLAGS
 # ============================================================================
 featureFlags:
-  useCentralizedConfig: true   # Ativar config centralizado de menus
-  useCentralizedCopy: true     # Ativar config centralizado de copy/i18n
+  useCentralizedConfig: true    # Ativar config centralizado de menus
+  useCentralizedCopy: true      # Ativar config centralizado de copy/i18n
+  useCentralizedPricing: true   # Ativar config centralizado de pricing
+  useCentralizedSEO: true       # Ativar config centralizado de SEO

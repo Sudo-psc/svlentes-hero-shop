@@ -125,21 +125,144 @@ const CopySchema = z.object({
 const LocalizedCopySchema = z.record(z.enum(['pt-BR', 'en-US']), CopySchema)
 
 // ============================================================================
-// 5. FEATURE FLAGS
+// 5. PRICING & PLANS (Fase 3)
+// ============================================================================
+const PricingPlanSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  badge: z.string().optional(),
+  popularBadge: z.string().optional(),
+  description: z.string().optional(),
+  priceMonthly: z.number(),
+  priceAnnual: z.number(),
+  features: z.array(z.string()),
+  recommended: z.boolean().optional(),
+  stripeProductId: z.string(),
+  stripePriceId: z.string(),
+  asaasProductId: z.string().optional(),
+  ctaText: z.string(),
+})
+
+const FeatureComparisonRowSchema = z.object({
+  feature: z.string(),
+  basic: z.union([z.string(), z.boolean()]),
+  premium: z.union([z.string(), z.boolean()]),
+  vip: z.union([z.string(), z.boolean()]),
+})
+
+const FeatureComparisonSchema = z.object({
+  features: z.array(z.string()),
+  planComparison: z.array(FeatureComparisonRowSchema),
+})
+
+const ServiceBenefitSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  icon: z.string(),
+  highlight: z.boolean(),
+})
+
+const CoverageInfoSchema = z.object({
+  id: z.string(),
+  icon: z.string(),
+  title: z.string(),
+  description: z.string(),
+  locations: z.array(z.string()).optional(),
+  nationwide: z.boolean(),
+})
+
+const FAQItemSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  answer: z.string(),
+})
+
+const EconomyCalculatorDataSchema = z.object({
+  averagePrices: z.object({
+    daily: z.object({
+      avulso: z.number(),
+      subscription: z.number(),
+    }),
+    weekly: z.object({
+      avulso: z.number(),
+      subscription: z.number(),
+    }),
+    monthly: z.object({
+      avulso: z.number(),
+      subscription: z.number(),
+    }),
+  }),
+  usagePatterns: z.object({
+    occasional: z.object({
+      daysPerMonth: z.number(),
+      multiplier: z.number(),
+    }),
+    regular: z.object({
+      daysPerMonth: z.number(),
+      multiplier: z.number(),
+    }),
+    daily: z.object({
+      daysPerMonth: z.number(),
+      multiplier: z.number(),
+    }),
+  }),
+})
+
+const PricingConfigSchema = z.object({
+  plans: z.array(PricingPlanSchema),
+  featureComparison: FeatureComparisonSchema,
+  serviceBenefits: z.array(ServiceBenefitSchema),
+  coverageInfo: z.array(CoverageInfoSchema),
+  faq: z.array(FAQItemSchema),
+  economyCalculator: EconomyCalculatorDataSchema,
+})
+
+// ============================================================================
+// 6. SEO METADATA (Fase 3 - Basic)
+// ============================================================================
+const SEOConfigSchema = z.object({
+  defaultTitle: z.string(),
+  titleTemplate: z.string(),
+  description: z.string(),
+  keywords: z.array(z.string()),
+  openGraph: z.object({
+    type: z.string(),
+    siteName: z.string(),
+    images: z.array(z.object({
+      url: z.string(),
+      width: z.number(),
+      height: z.number(),
+      alt: z.string(),
+    })),
+  }),
+  twitter: z.object({
+    card: z.string(),
+    site: z.string().optional(),
+    creator: z.string().optional(),
+  }),
+})
+
+// ============================================================================
+// 7. FEATURE FLAGS
 // ============================================================================
 const FeatureFlagsSchema = z.object({
   useCentralizedConfig: z.boolean(),
   useCentralizedCopy: z.boolean(),
+  useCentralizedPricing: z.boolean(),
+  useCentralizedSEO: z.boolean(),
 })
 
 // ============================================================================
-// ROOT CONFIG SCHEMA (MVP + Fase 2)
+// ROOT CONFIG SCHEMA (MVP + Fase 2 + Fase 3)
 // ============================================================================
 export const ConfigSchema = z.object({
   site: SiteConfigSchema,
   i18n: I18nConfigSchema,
   menus: MenusSchema,
   copy: LocalizedCopySchema,
+  pricing: PricingConfigSchema,
+  seo: SEOConfigSchema,
   featureFlags: FeatureFlagsSchema,
 })
 
