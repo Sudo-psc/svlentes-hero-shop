@@ -441,10 +441,233 @@ seo:
     creator: "@saraivavision"
 
 # ============================================================================
+# MEDICAL DATA (Fase 4)
+# ============================================================================
+medical:
+  doctor:
+    name: "Dr. Philipe Saraiva Cruz"
+    crm: "CRM 69.870"
+    crmEquipe: "CRM_EQP 155869.006"
+    specialty: "Oftalmologia"
+    photo: "/icones/drphilipe_perfil.jpeg"
+    credentials:
+      - "Especialista em Oftalmologia"
+      - "Graduado em Medicina pela Universidade Federal"
+      - "Residência em Oftalmologia"
+      - "Especialização em Lentes de Contato"
+      - "Membro da Sociedade Brasileira de Oftalmologia"
+    experience: "Especialista em oftalmologia"
+    bio: "Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado, dedicando-se a proporcionar cuidado oftalmológico personalizado e acessível."
+    contact:
+      whatsapp: "+5533999898026"
+      email: "dr.philipe@svlentes.com.br"
+      clinicAddress: "Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG"
+    socialProof:
+      patientsServed: "5000+"
+      satisfactionRate: "98%"
+      consultationsPerformed: "10000+"
+
+  clinic:
+    name: "SV Lentes"
+    fullName: "SV Lentes - Serviços Oftalmológicos Especializados"
+    cnpj: "53.864.119/0001-79"
+    address:
+      street: "Rua Catarina Maria Passos, 97"
+      neighborhood: "Santa Zita"
+      city: "Caratinga"
+      state: "MG"
+      zipCode: "35300-299"
+      country: "Brasil"
+    contact:
+      phone: "+55 33 99989-8026"
+      whatsapp: "+55 33 99989-8026"
+      email: "contato@svlentes.com.br"
+      website: "https://svlentes.com.br"
+    businessHours:
+      weekdays: "Segunda a Sexta: 8h às 18h"
+      saturday: "Sábado: 8h às 12h"
+      sunday: "Domingo: Fechado"
+      emergency: "24h via WhatsApp para emergências"
+    coverage:
+      area: "Atendimento em todo o Brasil"
+      shipping: "Entrega gratuita em todo território nacional"
+      consultation: "Consultas presenciais e telemedicina"
+
+  trust:
+    badges:
+      - id: "anvisa"
+        name: "Produtos ANVISA"
+        description: "Produtos aprovados pela ANVISA"
+        icon: "🏥"
+        verified: true
+      - id: "lgpd"
+        name: "Conformidade LGPD"
+        description: "Conformidade com LGPD"
+        icon: "🛡️"
+        verified: true
+      - id: "ssl"
+        name: "Site Seguro SSL"
+        description: "Conexão 100% segura"
+        icon: "🔒"
+        verified: true
+
+    certifications:
+      - id: "medical-degree"
+        name: "Graduação em Medicina"
+        institution: "Universidade Federal"
+        year: "2008"
+        verified: true
+      - id: "ophthalmology-residency"
+        name: "Residência em Oftalmologia"
+        institution: "Hospital das Clínicas"
+        year: "2011"
+        verified: true
+      - id: "contact-lens-specialization"
+        name: "Especialização em Lentes de Contato"
+        institution: "Instituto de Oftalmologia"
+        year: "2013"
+        verified: true
+      - id: "sbo-membership"
+        name: "Membro da SBO"
+        institution: "Sociedade Brasileira de Oftalmologia"
+        year: "2011"
+        verified: true
+
+    socialProofStats:
+      - id: "patients"
+        value: "5.000+"
+        label: "Pacientes"
+        icon: "👥"
+      - id: "satisfaction"
+        value: "98%"
+        label: "Satisfação"
+        icon: "⭐"
+      - id: "support"
+        value: "24/7"
+        label: "Suporte"
+        icon: "📞"
+
+    highlights:
+      - id: "pioneer-badge"
+        text: "Pioneiro no Brasil"
+        description: "Primeiro serviço de assinatura de lentes com acompanhamento médico"
+        icon: "🏆"
+        featured: true
+      - id: "quality-badge"
+        text: "Qualidade Garantida"
+        description: "Produtos de alta qualidade com garantia total"
+        icon: "✅"
+        featured: true
+      - id: "support-badge"
+        text: "Suporte 24/7"
+        description: "Atendimento especializado sempre disponível"
+        icon: "📞"
+        featured: true
+
+# ============================================================================
+# ANALYTICS & TRACKING (Fase 4)
+# ============================================================================
+analytics:
+  googleAnalytics:
+    enabled: true
+    measurementId: "${NEXT_PUBLIC_GA_MEASUREMENT_ID}"
+    consent:
+      analytics_storage: "granted"
+      ad_storage: "denied"
+    customDimensions:
+      plan_type: "custom_parameter_1"
+      billing_interval: "custom_parameter_2"
+    features:
+      pageTracking: true
+      scrollTracking: true
+      sessionRecording: true
+      enhancedEcommerce: true
+
+  conversionEvents:
+    - event: "lead_form_submit"
+      category: "engagement"
+      label: "Hero Form Submission"
+      value: 10
+    - event: "calculator_used"
+      category: "engagement"
+      label: "Savings Calculator"
+      value: 5
+    - event: "cta_agendar_clicked"
+      category: "conversion"
+      label: "Schedule Consultation CTA"
+      value: 20
+    - event: "cta_whatsapp_clicked"
+      category: "engagement"
+      label: "WhatsApp CTA"
+      value: 15
+    - event: "pricing_tab_switched"
+      category: "engagement"
+      label: "Pricing Tab Changed"
+      value: 2
+    - event: "plan_selected"
+      category: "conversion"
+      label: "Plan Selection"
+      value: 50
+    - event: "how_it_works_tab"
+      category: "engagement"
+      label: "How It Works Tab"
+      value: 3
+    - event: "faq_opened"
+      category: "engagement"
+      label: "FAQ Question Opened"
+      value: 1
+    - event: "addon_selected"
+      category: "conversion"
+      label: "Add-on Selected"
+      value: 25
+    - event: "consultation_scheduled"
+      category: "conversion"
+      label: "Consultation Scheduled"
+      value: 100
+    - event: "subscription_started"
+      category: "conversion"
+      label: "Subscription Started"
+      value: 500
+
+  monitoring:
+    errorTracking: true
+    performanceMetrics: true
+    thresholds:
+      pageLoadTime: 3000
+      interactionDelay: 100
+    vitals:
+      LCP: 2500
+      FID: 100
+      CLS: 0.1
+
+# ============================================================================
+# PRIVACY & COMPLIANCE (Fase 4)
+# ============================================================================
+privacy:
+  lgpd:
+    enabled: true
+    consentRequired: true
+    dataRetentionDays: 730
+    cookieConsent:
+      essential: true
+      analytics: "optional"
+      marketing: "optional"
+    dataSubjectRights:
+      - "access"
+      - "rectification"
+      - "erasure"
+      - "portability"
+      - "restriction"
+      - "objection"
+
+# ============================================================================
 # FEATURE FLAGS
 # ============================================================================
 featureFlags:
-  useCentralizedConfig: true    # Ativar config centralizado de menus
-  useCentralizedCopy: true      # Ativar config centralizado de copy/i18n
-  useCentralizedPricing: true   # Ativar config centralizado de pricing
-  useCentralizedSEO: true       # Ativar config centralizado de SEO
+  useCentralizedConfig: true       # Ativar config centralizado de menus
+  useCentralizedCopy: true         # Ativar config centralizado de copy/i18n
+  useCentralizedPricing: true      # Ativar config centralizado de pricing
+  useCentralizedSEO: true          # Ativar config centralizado de SEO
+  useCentralizedMedical: true      # Ativar config centralizado de dados médicos
+  useCentralizedAnalytics: true    # Ativar config centralizado de analytics
+  useCentralizedPrivacy: true      # Ativar config centralizado de privacy

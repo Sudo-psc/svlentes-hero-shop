@@ -244,17 +244,212 @@ const SEOConfigSchema = z.object({
 })
 
 // ============================================================================
-// 7. FEATURE FLAGS
+// 7. MEDICAL DATA (Fase 4)
+// ============================================================================
+const DoctorContactSchema = z.object({
+  whatsapp: z.string(),
+  email: z.string().email(),
+  clinicAddress: z.string(),
+})
+
+const DoctorSocialProofSchema = z.object({
+  patientsServed: z.string(),
+  satisfactionRate: z.string(),
+  consultationsPerformed: z.string(),
+})
+
+const DoctorSchema = z.object({
+  name: z.string(),
+  crm: z.string(),
+  crmEquipe: z.string(),
+  specialty: z.string(),
+  photo: z.string(),
+  credentials: z.array(z.string()),
+  experience: z.string(),
+  bio: z.string(),
+  contact: DoctorContactSchema,
+  socialProof: DoctorSocialProofSchema,
+})
+
+const ClinicAddressSchema = z.object({
+  street: z.string(),
+  neighborhood: z.string(),
+  city: z.string(),
+  state: z.string(),
+  zipCode: z.string(),
+  country: z.string(),
+})
+
+const ClinicContactSchema = z.object({
+  phone: z.string(),
+  whatsapp: z.string(),
+  email: z.string().email(),
+  website: z.string().url(),
+})
+
+const ClinicBusinessHoursSchema = z.object({
+  weekdays: z.string(),
+  saturday: z.string(),
+  sunday: z.string(),
+  emergency: z.string(),
+})
+
+const ClinicCoverageSchema = z.object({
+  area: z.string(),
+  shipping: z.string(),
+  consultation: z.string(),
+})
+
+const ClinicSchema = z.object({
+  name: z.string(),
+  fullName: z.string(),
+  cnpj: z.string(),
+  address: ClinicAddressSchema,
+  contact: ClinicContactSchema,
+  businessHours: ClinicBusinessHoursSchema,
+  coverage: ClinicCoverageSchema,
+})
+
+const TrustBadgeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  icon: z.string(),
+  verified: z.boolean(),
+})
+
+const CertificationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  institution: z.string(),
+  year: z.string().optional(),
+  number: z.string().optional(),
+  verified: z.boolean(),
+})
+
+const SocialProofStatSchema = z.object({
+  id: z.string(),
+  value: z.string(),
+  label: z.string(),
+  icon: z.string(),
+})
+
+const HighlightSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  description: z.string(),
+  icon: z.string(),
+  featured: z.boolean(),
+})
+
+const TrustSchema = z.object({
+  badges: z.array(TrustBadgeSchema),
+  certifications: z.array(CertificationSchema),
+  socialProofStats: z.array(SocialProofStatSchema),
+  highlights: z.array(HighlightSchema),
+})
+
+const MedicalConfigSchema = z.object({
+  doctor: DoctorSchema,
+  clinic: ClinicSchema,
+  trust: TrustSchema,
+})
+
+// ============================================================================
+// 8. ANALYTICS & TRACKING (Fase 4)
+// ============================================================================
+const GAConsentSchema = z.object({
+  analytics_storage: z.enum(['granted', 'denied']),
+  ad_storage: z.enum(['granted', 'denied']),
+})
+
+const GACustomDimensionsSchema = z.object({
+  plan_type: z.string(),
+  billing_interval: z.string(),
+})
+
+const GAFeaturesSchema = z.object({
+  pageTracking: z.boolean(),
+  scrollTracking: z.boolean(),
+  sessionRecording: z.boolean(),
+  enhancedEcommerce: z.boolean(),
+})
+
+const GoogleAnalyticsSchema = z.object({
+  enabled: z.boolean(),
+  measurementId: z.string(),
+  consent: GAConsentSchema,
+  customDimensions: GACustomDimensionsSchema,
+  features: GAFeaturesSchema,
+})
+
+const ConversionEventSchema = z.object({
+  event: z.string(),
+  category: z.string(),
+  label: z.string(),
+  value: z.number(),
+})
+
+const MonitoringThresholdsSchema = z.object({
+  pageLoadTime: z.number(),
+  interactionDelay: z.number(),
+})
+
+const VitalsSchema = z.object({
+  LCP: z.number(),
+  FID: z.number(),
+  CLS: z.number(),
+})
+
+const MonitoringSchema = z.object({
+  errorTracking: z.boolean(),
+  performanceMetrics: z.boolean(),
+  thresholds: MonitoringThresholdsSchema,
+  vitals: VitalsSchema,
+})
+
+const AnalyticsConfigSchema = z.object({
+  googleAnalytics: GoogleAnalyticsSchema,
+  conversionEvents: z.array(ConversionEventSchema),
+  monitoring: MonitoringSchema,
+})
+
+// ============================================================================
+// 9. PRIVACY & COMPLIANCE (Fase 4)
+// ============================================================================
+const CookieConsentSchema = z.object({
+  essential: z.boolean(),
+  analytics: z.string(),
+  marketing: z.string(),
+})
+
+const LGPDSchema = z.object({
+  enabled: z.boolean(),
+  consentRequired: z.boolean(),
+  dataRetentionDays: z.number(),
+  cookieConsent: CookieConsentSchema,
+  dataSubjectRights: z.array(z.string()),
+})
+
+const PrivacyConfigSchema = z.object({
+  lgpd: LGPDSchema,
+})
+
+// ============================================================================
+// 10. FEATURE FLAGS
 // ============================================================================
 const FeatureFlagsSchema = z.object({
   useCentralizedConfig: z.boolean(),
   useCentralizedCopy: z.boolean(),
   useCentralizedPricing: z.boolean(),
   useCentralizedSEO: z.boolean(),
+  useCentralizedMedical: z.boolean(),
+  useCentralizedAnalytics: z.boolean(),
+  useCentralizedPrivacy: z.boolean(),
 })
 
 // ============================================================================
-// ROOT CONFIG SCHEMA (MVP + Fase 2 + Fase 3)
+// ROOT CONFIG SCHEMA (MVP + Fase 2 + Fase 3 + Fase 4)
 // ============================================================================
 export const ConfigSchema = z.object({
   site: SiteConfigSchema,
@@ -263,6 +458,9 @@ export const ConfigSchema = z.object({
   copy: LocalizedCopySchema,
   pricing: PricingConfigSchema,
   seo: SEOConfigSchema,
+  medical: MedicalConfigSchema,
+  analytics: AnalyticsConfigSchema,
+  privacy: PrivacyConfigSchema,
   featureFlags: FeatureFlagsSchema,
 })
 

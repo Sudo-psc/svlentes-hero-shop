@@ -1,6 +1,36 @@
-// Dados do Dr. Philipe Saraiva Cruz - Médico responsável pela SV Lentes
+/**
+ * Doctor Information Data
+ *
+ * Versão: 1.0.0-fase4
+ * Fase: MVP - Medical Data (Centralized Config)
+ *
+ * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
+ * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
+ */
 
-export const doctorInfo = {
+import { config } from '@/config/loader'
+
+/**
+ * Get doctor information from centralized config
+ * Falls back to hardcoded data if feature flag is disabled
+ */
+function getDoctorInfo() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+
+    if (useCentralizedMedical) {
+      return appConfig.medical.doctor
+    }
+  } catch (error) {
+    console.warn('[Medical] Error loading doctor info, using fallback:', error)
+  }
+
+  return hardcodedDoctorInfo
+}
+
+// Hardcoded fallback data
+const hardcodedDoctorInfo = {
     name: 'Dr. Philipe Saraiva Cruz',
     crm: 'CRM 69.870',
     crmEquipe: 'CRM_EQP 155869.006',
@@ -13,8 +43,8 @@ export const doctorInfo = {
         'Especialização em Lentes de Contato',
         'Membro da Sociedade Brasileira de Oftalmologia'
     ],
-    experience: '5+ anos de experiência em oftalmologia',
-    bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado. Com mais de 5 anos de experiência, dedica-se a proporcionar cuidado oftalmológico personalizado e acessível.',
+    experience: 'Especialista em oftalmologia',
+    bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado, dedicando-se a proporcionar cuidado oftalmológico personalizado e acessível.',
     contact: {
         whatsapp: '+5533999898026',
         email: 'dr.philipe@svlentes.com.br',
@@ -22,13 +52,69 @@ export const doctorInfo = {
     },
     socialProof: {
         patientsServed: '5000+',
-        yearsExperience: '5+',
         satisfactionRate: '98%',
         consultationsPerformed: '10000+'
     }
 }
 
-export const trustIndicators = {
+// Export via função para suportar centralização
+export const doctorInfo = getDoctorInfo()
+
+/**
+ * Get trust indicators (legacy format for backward compatibility)
+ * Falls back to hardcoded data if feature flag is disabled
+ */
+function getTrustIndicators() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+
+    if (useCentralizedMedical) {
+      // Convert new centralized format to legacy format for backward compatibility
+      const badges = appConfig.medical.trust.badges
+      return {
+        anvisa: {
+          name: badges.find((b: any) => b.id === 'anvisa')?.name || 'ANVISA',
+          description: badges.find((b: any) => b.id === 'anvisa')?.description || 'Produtos aprovados pela ANVISA',
+          logo: '/images/selo-anvisa.png',
+          verified: badges.find((b: any) => b.id === 'anvisa')?.verified || true
+        },
+        crm: {
+          name: 'Conselho Regional de Medicina',
+          description: 'Médico registrado no CRM-SP',
+          number: appConfig.medical.doctor.crm,
+          logo: '/images/selo-crm.png',
+          verified: true
+        },
+        sbo: {
+          name: 'Sociedade Brasileira de Oftalmologia',
+          description: 'Membro ativo da SBO',
+          logo: '/images/selo-sbo.png',
+          verified: true
+        },
+        ssl: {
+          name: badges.find((b: any) => b.id === 'ssl')?.name || 'Certificado SSL',
+          description: badges.find((b: any) => b.id === 'ssl')?.description || 'Conexão segura',
+          logo: '/images/ssl-badge.png',
+          verified: badges.find((b: any) => b.id === 'ssl')?.verified || true
+        },
+        lgpd: {
+          name: badges.find((b: any) => b.id === 'lgpd')?.name || 'Conformidade LGPD',
+          description: badges.find((b: any) => b.id === 'lgpd')?.description || 'Em conformidade com LGPD',
+          logo: '/images/lgpd-badge.png',
+          verified: badges.find((b: any) => b.id === 'lgpd')?.verified || true
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('[Medical] Error loading trust indicators, using fallback:', error)
+  }
+
+  return hardcodedTrustIndicators
+}
+
+// Hardcoded fallback data
+const hardcodedTrustIndicators = {
     anvisa: {
         name: 'ANVISA',
         description: 'Produtos aprovados pela Agência Nacional de Vigilância Sanitária',
@@ -62,7 +148,27 @@ export const trustIndicators = {
     }
 }
 
-export const clinicInfo = {
+/**
+ * Get clinic information from centralized config
+ * Falls back to hardcoded data if feature flag is disabled
+ */
+function getClinicInfo() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+
+    if (useCentralizedMedical) {
+      return appConfig.medical.clinic
+    }
+  } catch (error) {
+    console.warn('[Medical] Error loading clinic info, using fallback:', error)
+  }
+
+  return hardcodedClinicInfo
+}
+
+// Hardcoded fallback data
+const hardcodedClinicInfo = {
     name: 'SV Lentes',
     fullName: 'SV Lentes - Serviços Oftalmológicos Especializados',
     cnpj: '53.864.119/0001-79',
@@ -92,3 +198,7 @@ export const clinicInfo = {
         consultation: 'Consultas presenciais e telemedicina'
     }
 }
+
+// Export via função para suportar centralização
+export const trustIndicators = getTrustIndicators()
+export const clinicInfo = getClinicInfo()
