@@ -152,11 +152,15 @@ export async function handleScheduleConsultation(data: ScheduleData) {
 }
 
 // Função auxiliar para obter price ID (Asaas uses plan value directly)
+// Atualizado com novo sistema de precificação (+15%)
 function getPriceId(planId: string, billingInterval: 'monthly' | 'annual'): number | null {
     const prices = {
-        basic: { monthly: 89.90, annual: 899.90 },
-        premium: { monthly: 149.90, annual: 1499.90 },
-        vip: { monthly: 249.90, annual: 2499.90 },
+        basico: { monthly: 128.00, annual: 1091.00 },  // Express Mensal / VIP Anual
+        padrao: { monthly: 91.00, annual: 1091.00 },   // VIP Anual (equivalente mensal)
+        premium: { monthly: 138.00, annual: 1661.00 }, // Saúde Ocular Anual
+        // Mapeamento alternativo por nome antigo (backward compatibility)
+        basic: { monthly: 128.00, annual: 1091.00 },
+        vip: { monthly: 91.00, annual: 1091.00 },
     }
 
     const plan = prices[planId as keyof typeof prices]
@@ -166,11 +170,15 @@ function getPriceId(planId: string, billingInterval: 'monthly' | 'annual'): numb
 }
 
 // Função auxiliar para obter preço do plano
+// Atualizado com novo sistema de precificação (+15%)
 function getPlanPrice(planId: string, billingInterval: 'monthly' | 'annual'): number {
     const prices = {
-        basic: { monthly: 89.90, annual: 899.90 },
-        premium: { monthly: 149.90, annual: 1499.90 },
-        vip: { monthly: 249.90, annual: 2499.90 },
+        basico: { monthly: 128.00, annual: 1091.00 },  // Express Mensal / VIP Anual
+        padrao: { monthly: 91.00, annual: 1091.00 },   // VIP Anual (equivalente mensal)
+        premium: { monthly: 138.00, annual: 1661.00 }, // Saúde Ocular Anual
+        // Mapeamento alternativo por nome antigo (backward compatibility)
+        basic: { monthly: 128.00, annual: 1091.00 },
+        vip: { monthly: 91.00, annual: 1091.00 },
     }
 
     const plan = prices[planId as keyof typeof prices]
@@ -180,11 +188,15 @@ function getPlanPrice(planId: string, billingInterval: 'monthly' | 'annual'): nu
 }
 
 // Função auxiliar para obter nome do plano
+// Atualizado com novo sistema de nomenclatura
 function getPlanName(planId: string): string {
     const names = {
-        basic: 'Plano Básico',
-        premium: 'Plano Premium',
-        vip: 'Plano VIP',
+        basico: 'Plano Express Mensal',
+        padrao: 'Plano VIP Anual',
+        premium: 'Plano Saúde Ocular Anual',
+        // Mapeamento alternativo por nome antigo (backward compatibility)
+        basic: 'Plano Express Mensal',
+        vip: 'Plano VIP Anual',
     }
 
     return names[planId as keyof typeof names] || planId
