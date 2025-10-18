@@ -68,6 +68,7 @@ yarn dev
 
 ```
 src/
+├── config/                # Centralized YAML config + loader/schema
 ├── app/                    # App Router do Next.js
 ├── components/
 │   ├── ui/                # Componentes base
@@ -93,6 +94,11 @@ src/
 - [x] Sistema de testes (Jest + Playwright)
 - [x] Animações com Framer Motion
 - [x] LGPD compliance (política de privacidade)
+- [x] Configuração centralizada (menus, copy, pricing, SEO, analytics)
+
+## ⚙️ Configuração Centralizada
+
+A nova stack de configuração unifica menus, copy, preços, SEO, dados médicos, analytics e privacidade em `src/config/base.yaml`, validado por `src/config/schema.ts` e carregado via `ConfigService` (`src/config/loader.ts`). Consulte [`docs/CENTRALIZED_CONFIG_SYSTEM.md`](docs/CENTRALIZED_CONFIG_SYSTEM.md) para o fluxo completo de edição, uso de feature flags e boas práticas no consumo server-side.
 
 ## 🔧 Scripts Disponíveis
 
