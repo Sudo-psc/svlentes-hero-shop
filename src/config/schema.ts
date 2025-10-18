@@ -64,19 +64,82 @@ const MenusSchema = z.object({
 })
 
 // ============================================================================
-// 4. FEATURE FLAGS
+// 4. COPY/CONTENT (I18N) - Fase 2
+// ============================================================================
+const CommonCopySchema = z.object({
+  cta: z.object({
+    primary: z.string(),
+    secondary: z.string(),
+    contact: z.string(),
+    schedule: z.string(),
+  }),
+  buttons: z.object({
+    submit: z.string(),
+    cancel: z.string(),
+    close: z.string(),
+    next: z.string(),
+    back: z.string(),
+  }),
+})
+
+const HeroCopySchema = z.object({
+  badge: z.string(),
+  title: z.object({
+    line1: z.string(),
+    line2: z.string(),
+  }),
+  subtitle: z.string(),
+  description: z.string(),
+  ctaPrimary: z.string(),
+  ctaSecondary: z.string(),
+})
+
+const HowItWorksStepSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  cost: z.string(),
+  economy: z.string(),
+  icon: z.string(),
+  duration: z.string(),
+})
+
+const HowItWorksCopySchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+  monthlyTab: z.string(),
+  annualTab: z.string(),
+  monthlyBadge: z.string(),
+  annualBadge: z.string(),
+  monthlySteps: z.array(HowItWorksStepSchema),
+  annualSteps: z.array(HowItWorksStepSchema),
+  ctaStart: z.string(),
+  ctaLearnMore: z.string(),
+})
+
+const CopySchema = z.object({
+  common: CommonCopySchema,
+  hero: HeroCopySchema,
+  howItWorks: HowItWorksCopySchema,
+})
+
+const LocalizedCopySchema = z.record(z.enum(['pt-BR', 'en-US']), CopySchema)
+
+// ============================================================================
+// 5. FEATURE FLAGS
 // ============================================================================
 const FeatureFlagsSchema = z.object({
   useCentralizedConfig: z.boolean(),
+  useCentralizedCopy: z.boolean(),
 })
 
 // ============================================================================
-// ROOT CONFIG SCHEMA (MVP)
+// ROOT CONFIG SCHEMA (MVP + Fase 2)
 // ============================================================================
 export const ConfigSchema = z.object({
   site: SiteConfigSchema,
   i18n: I18nConfigSchema,
   menus: MenusSchema,
+  copy: LocalizedCopySchema,
   featureFlags: FeatureFlagsSchema,
 })
 

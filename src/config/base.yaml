@@ -107,7 +107,96 @@ menus:
         isAnchor: false
 
 # ============================================================================
+# COPY/CONTENT (I18N) - Fase 2
+# ============================================================================
+copy:
+  pt-BR:
+    common:
+      cta:
+        primary: "Assine Agora"
+        secondary: "Saiba Mais"
+        contact: "Fale Conosco"
+        schedule: "Agende Consulta"
+      buttons:
+        submit: "Enviar"
+        cancel: "Cancelar"
+        close: "Fechar"
+        next: "Próximo"
+        back: "Voltar"
+
+    hero:
+      badge: "🏆 Pioneiro no Brasil"
+      title:
+        line1: "Nunca mais"
+        line2: "fique sem lentes"
+      subtitle: "Assinatura com acompanhamento médico especializado."
+      description: "Receba suas lentes em casa com logística integrada e consultas regulares."
+      ctaPrimary: "Agendar consulta com oftalmologista"
+      ctaSecondary: "Tirar dúvidas no WhatsApp"
+
+    howItWorks:
+      title: "Como Funciona"
+      subtitle: "Simples, prático e com acompanhamento médico"
+      monthlyTab: "Plano Mensal"
+      annualTab: "Plano Anual"
+      monthlyBadge: "Flexível"
+      annualBadge: "Melhor Custo-Benefício"
+      monthlySteps:
+        - title: "Consulta Inicial"
+          description: "Agende sua consulta com Dr. Philipe para avaliar suas necessidades"
+          cost: "Incluído no plano"
+          economy: "Economize R$ 150"
+          icon: "👨‍⚕️"
+          duration: "1 hora"
+        - title: "Escolha seu Plano"
+          description: "Selecione o plano ideal baseado no seu uso e necessidades"
+          cost: "A partir de R$ 89,90/mês"
+          economy: "Até 40% de economia"
+          icon: "📋"
+          duration: "5 minutos"
+        - title: "Receba em Casa"
+          description: "Suas lentes chegam automaticamente, sem você se preocupar"
+          cost: "Frete grátis"
+          economy: "Economize tempo e dinheiro"
+          icon: "📦"
+          duration: "2-3 dias úteis"
+        - title: "Acompanhamento Contínuo"
+          description: "Dr. Philipe monitora sua saúde ocular e ajusta quando necessário"
+          cost: "Incluído no plano"
+          economy: "Prevenção é economia"
+          icon: "📱"
+          duration: "Sempre disponível"
+      annualSteps:
+        - title: "Avaliação Completa"
+          description: "Consulta detalhada + exames para definir o melhor plano anual"
+          cost: "Incluído no plano anual"
+          economy: "Economize R$ 300 em consultas"
+          icon: "🔍"
+          duration: "1h30min"
+        - title: "Plano Anual Personalizado"
+          description: "Receba 2 meses grátis e desconto progressivo"
+          cost: "2 meses grátis"
+          economy: "Economize até R$ 600/ano"
+          icon: "📅"
+          duration: "Válido por 12 meses"
+        - title: "Entregas Programadas"
+          description: "Cronograma anual de entregas otimizado para seu uso"
+          cost: "Frete grátis o ano todo"
+          economy: "R$ 200 em frete economizado"
+          icon: "🚚"
+          duration: "Entregas automáticas"
+        - title: "Cuidado Anual Completo"
+          description: "Consultas regulares, exames e ajustes incluídos no plano"
+          cost: "Tudo incluído"
+          economy: "R$ 800 em serviços médicos"
+          icon: "🏥"
+          duration: "Cobertura anual completa"
+      ctaStart: "Começar Agora"
+      ctaLearnMore: "Saiba Mais"
+
+# ============================================================================
 # FEATURE FLAGS
 # ============================================================================
 featureFlags:
-  useCentralizedConfig: true  # Ativar config centralizado
+  useCentralizedConfig: true   # Ativar config centralizado de menus
+  useCentralizedCopy: true     # Ativar config centralizado de copy/i18n

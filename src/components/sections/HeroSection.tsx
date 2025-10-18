@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { HeroImage } from '@/components/sections/HeroImage'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
+import { useTranslation } from '@/lib/translation'
+import { config } from '@/config/loader'
 import { Phone, MessageCircle, Award } from 'lucide-react'
 
 interface HeroSectionProps {
@@ -11,6 +13,33 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ className = '' }: HeroSectionProps) {
+    const t = useTranslation()
+    const appConfig = config.load()
+    const useCentralizedCopy = config.isFeatureEnabled('useCentralizedCopy')
+
+    // Fallback para textos hardcoded se feature flag desativada
+    const copy = useCentralizedCopy ? {
+        badge: t('hero.badge'),
+        title: {
+            line1: t('hero.title.line1'),
+            line2: t('hero.title.line2'),
+        },
+        subtitle: t('hero.subtitle'),
+        description: t('hero.description'),
+        ctaPrimary: t('hero.ctaPrimary'),
+        ctaSecondary: t('hero.ctaSecondary'),
+    } : {
+        badge: '🏆 Pioneiro no Brasil',
+        title: {
+            line1: 'Nunca mais',
+            line2: 'fique sem lentes',
+        },
+        subtitle: 'Assinatura com acompanhamento médico especializado.',
+        description: 'Receba suas lentes em casa com logística integrada e consultas regulares.',
+        ctaPrimary: 'Agendar consulta com oftalmologista',
+        ctaSecondary: 'Tirar dúvidas no WhatsApp',
+    }
+
     const handleAgendarConsulta = () => {
         openWhatsAppWithContext('consultation', {
             page: 'landing-page',
@@ -47,23 +76,23 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-200 shadow-sm px-4 py-2 text-base"
                             >
                                 <Award className="w-4 h-4 mr-2" />
-                                🏆 Pioneiro no Brasil
+                                {copy.badge}
                             </Badge>
                         </div>
 
                         {/* Main Headline */}
                         <div className="text-center lg:text-left">
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                                <span className="block">Nunca mais</span>
-                                <span className="block text-gradient">fique sem lentes</span>
+                                <span className="block">{copy.title.line1}</span>
+                                <span className="block text-gradient">{copy.title.line2}</span>
                             </h1>
 
                             <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mb-4">
-                                Assinatura com acompanhamento médico especializado.
+                                {copy.subtitle}
                             </p>
 
                             <p className="text-lg text-gray-700 max-w-2xl">
-                                Receba suas lentes em casa com logística integrada e consultas regulares.
+                                {copy.description}
                             </p>
                         </div>
 
@@ -77,7 +106,7 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 aria-label="Agendar consulta com oftalmologista - CTA principal"
                             >
                                 <Phone className="w-5 h-5" aria-hidden="true" />
-                                <span>Agendar consulta com oftalmologista</span>
+                                <span>{copy.ctaPrimary}</span>
                             </Button>
 
                             <Button
@@ -88,7 +117,7 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 aria-label="Tirar dúvidas no WhatsApp - CTA secundário"
                             >
                                 <MessageCircle className="w-5 h-5" aria-hidden="true" />
-                                <span>Tirar dúvidas no WhatsApp</span>
+                                <span>{copy.ctaSecondary}</span>
                             </Button>
                         </div>
 
@@ -101,7 +130,7 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 aria-label="Agendar consulta - Sticky CTA mobile"
                             >
                                 <Phone className="w-5 h-5" aria-hidden="true" />
-                                <span>Agendar consulta com oftalmologista</span>
+                                <span>{copy.ctaPrimary}</span>
                             </Button>
                         </div>
 

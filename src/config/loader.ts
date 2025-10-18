@@ -32,6 +32,14 @@ class ConfigService {
    * @param environment - 'development' | 'staging' | 'production'
    */
   load(environment: string = process.env.NODE_ENV || 'development'): AppConfig {
+    // Guard: only run on server-side
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        'ConfigService.load() can only be called on the server. ' +
+        'Use getServerSideConfig() in server components or API routes.'
+      )
+    }
+
     if (this.config) {
       // Config já carregado, retornar cache
       return this.config
@@ -48,10 +56,7 @@ class ConfigService {
 
       this.config = validated
 
-      if (typeof window === 'undefined') {
-        // Server-side only (não logar no client)
-        console.log(`[ConfigService] Config loaded successfully (env: ${environment})`)
-      }
+      console.log(`[ConfigService] Config loaded successfully (env: ${environment})`)
 
       return this.config
     } catch (error: any) {
