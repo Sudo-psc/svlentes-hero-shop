@@ -20,11 +20,13 @@ jest.mock('next/navigation', () => ({
     },
 }))
 
-// Mock window.gtag for analytics
-Object.defineProperty(window, 'gtag', {
-    value: jest.fn(),
-    writable: true,
-})
+// Mock window.gtag for analytics (only in jsdom environment)
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'gtag', {
+        value: jest.fn(),
+        writable: true,
+    })
+}
 
 
 

@@ -9,7 +9,6 @@ import { doctorInfo, clinicInfo } from '@/data/doctor-info'
 import { PrivacyPolicy } from '@/components/privacy/PrivacyPolicy'
 import { PrivacySettings } from '@/components/privacy/PrivacySettings'
 import { DataControlPanel } from '@/components/privacy/DataControlPanel'
-import { config } from '@/config/loader'
 import {
     MapPin,
     Phone,
@@ -33,12 +32,11 @@ export function Footer({ className }: FooterProps) {
     const [showPrivacySettings, setShowPrivacySettings] = useState(false)
     const [showDataControl, setShowDataControl] = useState(false)
 
-    // Carregar configuração centralizada
-    const appConfig = config.load()
-    const useCentralizedConfig = config.isFeatureEnabled('useCentralizedConfig')
-
-    // Obter menus da configuração
-    const footerMenu = useCentralizedConfig ? config.getMenu('pt-BR', 'footer') : null
+    // FIXME: Configuração centralizada desabilitada temporariamente
+    // ConfigService requer acesso a fs (Node.js) que não funciona no client
+    // TODO: Implementar servidor de config ou passar como props de server component
+    const useCentralizedConfig = false
+    const footerMenu = null
 
     // Quick Links: usar config centralizado se disponível
     const quickLinks = useCentralizedConfig && footerMenu

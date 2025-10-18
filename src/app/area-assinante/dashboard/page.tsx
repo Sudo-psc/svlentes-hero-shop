@@ -92,8 +92,8 @@ export default function DashboardPage() {
                     <Package className="h-5 w-5 text-cyan-600" />
                     Status da Assinatura
                   </h3>
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(subscription.status)}`}>
-                    {getStatusLabel(subscription.status)}
+                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${getSubscriptionStatusColor(subscription.status)}`}>
+                    {getSubscriptionStatusLabel(subscription.status)}
                   </span>
                 </div>
                 <div className="space-y-3">

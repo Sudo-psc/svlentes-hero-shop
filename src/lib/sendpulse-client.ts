@@ -219,6 +219,11 @@ export class SendPulseClient {
 
   /**
    * Send message to contact by ID with rate limiting, retry, and template fallback
+   *
+   * CRITICAL FIX: ALWAYS check contact status via API before sending
+   * - The 24h window is ONLY open when user sends a message to US
+   * - Webhook flag is_chat_opened is unreliable (can be from test/old data)
+   * - We MUST verify window status with real API call to avoid 400 errors
    */
   private async sendMessageToContact(
     contactId: string,
@@ -231,76 +236,42 @@ export class SendPulseClient {
       // 1. Rate limiting
       await rateLimiter.acquire()
 
-      // 2. Check if contact is in 24-hour window (skip for template messages)
-      // IMPORTANT: Trust the isChatOpenedOverride parameter
-      // - If true: User just sent a message (webhook context), window is definitely open
-      // - If false: Explicitly told window is closed, use template fallback
-      // - If undefined: Check API status (proactive messages)
+      // 2. Check if contact is in 24-hour window (skip ONLY for template messages)
+      // CRITICAL: We CANNOT trust webhook flags - must verify via API
       if (message.type !== 'template') {
-        if (isChatOpenedOverride === true) {
-          // Webhook response - window is definitely open, skip check
-          console.log(`[SendPulse] Webhook response - window is open, skipping check`)
-        } else if (isChatOpenedOverride === false) {
-          // Explicitly told window is closed
-          console.log(`[SendPulse] 24h window explicitly closed, attempting template fallback`)
+        console.log(`[SendPulse] Checking 24h window status via API (contactId: ${contactId})`)
+
+        const isActive = await this.isContactActive(contactId)
+
+        if (!isActive) {
+          console.log(`[SendPulse] ❌ Contact window CLOSED - API confirmed is_chat_opened=false`)
+          console.log(`[SendPulse] Attempting template message fallback...`)
+
           if (useTemplateFallback) {
             return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
           }
+
           throw new ConversationWindowExpiredError(contactId)
-        } else {
-          // Undefined - check API status (proactive message scenario)
-          console.log(`[SendPulse] Proactive message - checking window status via API`)
-          const isActive = await this.isContactActive(contactId)
-          if (!isActive) {
-            console.log(`[SendPulse] Contact window closed, attempting template fallback`)
-            if (useTemplateFallback) {
-              return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
-            }
-            throw new ConversationWindowExpiredError(contactId)
-          }
         }
+
+        console.log(`[SendPulse] ✅ Contact window OPEN - API confirmed is_chat_opened=true`)
       }
 
-
-      // 3. Send with retry logic using appropriate endpoint
+      // 3. Send with retry logic
       const result = await retryManager.execute(async () => {
         const apiToken = await this.getApiToken()
-        const botId = await this.getBotId()
 
-        // IMPORTANT: For webhook responses, use sendByPhone endpoint which doesn't require
-        // the 24h window to be open. This is a free message API that works regardless of window status.
-        const useByPhoneEndpoint = isChatOpenedOverride === true && contactPhone
-
-        let payload: any
-        let endpoint: string
-
-        if (useByPhoneEndpoint) {
-          // Use sendByPhone with provided phone number
-          endpoint = '/contacts/sendByPhone'
-          payload = {
-            bot_id: botId,
-            phone: contactPhone,
-            message
-          }
-          console.log(`[SendPulse] Using sendByPhone endpoint for webhook response (no 24h window required)`, {
-            phone: contactPhone,
-            botId
-          })
-        } else {
-          // Standard endpoint (requires 24h window or template)
-          endpoint = '/contacts/send'
-          payload = {
-            contact_id: contactId,
-            message
-          }
+        // Use standard endpoint with contact_id
+        const endpoint = '/contacts/send'
+        const payload = {
+          contact_id: contactId,
+          message
         }
 
         console.log(`[SendPulse] Sending to API:`, {
           endpoint,
           contactId,
           messageType: message.type,
-          isChatOpenedOverride,
-          useByPhoneEndpoint,
           payload: JSON.stringify(payload)
         })
 

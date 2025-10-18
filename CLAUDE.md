@@ -268,7 +268,7 @@ src/
 ```bash
 # Application
 NEXT_PUBLIC_APP_URL=https://svlentes.shop
-NEXT_PUBLIC_WHATSAPP_NUMBER=553399898026
+NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # (33) 99989-8026
 
 # Asaas Payment (Required for production)
 ASAAS_ENV=production
@@ -425,7 +425,9 @@ curl https://svlentes.com.br/api/health-check
 - **Emergency Care**: Mandatory emergency contact information for medical services
 
 ### Contact Information
-- **WhatsApp**: +55 33 99898-026
+- **WhatsApp**: +55 33 99989-8026 (5533999898026)
+  - **IMPORTANT**: The correct number is (33) 99989-8026, NOT (33) 99898-026
+  - This is used throughout the application for customer support and reminders
 - **Email**: saraivavision@gmail.com
 - **Website**: svlentes.shop
 - **Responsible Physician**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
