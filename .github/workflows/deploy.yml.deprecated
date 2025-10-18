@@ -1,13 +1,30 @@
-name: Deploy SVlentes Landing Page
+# ⚠️ DEPRECATED WORKFLOW - DO NOT USE
+#
+# This workflow file has been deprecated as of 2025-10-18
+#
+# Reason: The project now uses systemd-based deployment via SSH instead of Vercel.
+#
+# Current active deployment workflows:
+# - deploy-staging.yml: Deploys to staging environment via SSH
+# - deploy-production.yml: Deploys to production environment via SSH
+#
+# This file is kept for historical reference only.
+# If you need Vercel deployment, this would need significant updates to work.
+#
+# Historical deployment architecture:
+# - Used Vercel CLI for deployment
+# - Integrated with Stripe (now using Asaas)
+# - Used Vercel Environments for staging/production
+# ================================================================================
+
+name: Deploy SVlentes Landing Page (DEPRECATED)
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  # This workflow is disabled - events will not trigger it
+  workflow_dispatch:  # Manual trigger only for reference
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '18'  # Outdated - current version is 20
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -15,36 +32,36 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
-      
+
     - name: Run linting
       run: npm run lint
-      
+
     - name: Run unit tests
       run: npm run test -- --watchAll=false --coverage
-      
+
     - name: Run integration tests
       run: npm run test -- --testPathPattern=integration --watchAll=false
-      
+
     - name: Build application
       run: npm run build
       env:
         STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
-        
+
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
@@ -56,35 +73,35 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: test
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        
+
     - name: Install dependencies
       run: npm ci
-      
+
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
-      
+
     - name: Build application
       run: npm run build
       env:
         STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-        
+
     - name: Run E2E tests
       run: npm run test:e2e
       env:
         STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-        
+
     - name: Upload E2E test results
       uses: actions/upload-artifact@v3
       if: failure()
@@ -98,38 +115,38 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, e2e-tests]
     if: github.ref == 'refs/heads/develop'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        
+
     - name: Install Vercel CLI
       run: npm install --global vercel@latest
-      
+
     - name: Pull Vercel Environment Information
       run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      
+
     - name: Build Project Artifacts
       run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-      
+
     - name: Deploy Project Artifacts to Vercel
       id: deploy
       run: |
         url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
         echo "preview_url=$url" >> $GITHUB_OUTPUT
-        
+
     - name: Run smoke tests
       run: |
         sleep 30
         curl -f ${{ steps.deploy.outputs.preview_url }}/api/health-check
         curl -f ${{ steps.deploy.outputs.preview_url }}
-        
+
     - name: Comment PR with preview URL
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
@@ -148,38 +165,38 @@ jobs:
     needs: [test, e2e-tests]
     if: github.ref == 'refs/heads/main'
     environment: production
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        
+
     - name: Install Vercel CLI
       run: npm install --global vercel@latest
-      
+
     - name: Pull Vercel Environment Information
       run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      
+
     - name: Build Project Artifacts
       run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      
+
     - name: Deploy Project Artifacts to Vercel
       id: deploy
       run: |
         url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
         echo "production_url=$url" >> $GITHUB_OUTPUT
-        
+
     - name: Run production smoke tests
       run: |
         sleep 60
         curl -f ${{ steps.deploy.outputs.production_url }}/api/health-check
         curl -f ${{ steps.deploy.outputs.production_url }}
-        
+
     - name: Send deployment notification
       if: always()
       uses: 8398a7/action-slack@v3
@@ -198,11 +215,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: github.ref == 'refs/heads/develop'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Run Lighthouse CI
       uses: treosh/lighthouse-ci-action@v10
       with:
@@ -216,18 +233,18 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: test
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Run Snyk to check for vulnerabilities
       uses: snyk/actions/node@master
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         args: --severity-threshold=high
-        
+
     - name: Run npm audit
       run: npm audit --audit-level=high
 
@@ -236,7 +253,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-production
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
     - name: Setup monitoring alerts
       run: |
