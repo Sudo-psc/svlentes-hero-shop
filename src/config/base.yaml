@@ -1,0 +1,113 @@
+# ============================================================================
+# SV LENTES - CONFIGURAÇÃO BASE (MVP - Fase 1)
+# Versão: 1.0.0-mvp
+# Ambiente: Base (pt-BR)
+# Fase: MVP - Menu
+# ============================================================================
+
+# ============================================================================
+# SITE METADATA
+# ============================================================================
+site:
+  name: "SV Lentes"
+  shortName: "SVLentes"
+  tagline: "Pioneiro no Brasil em Assinatura de Lentes de Contato"
+  description: "Assinatura de lentes de contato com acompanhamento médico especializado. Nunca mais fique sem lentes com a comodidade e segurança que você merece."
+  url: "https://svlentes.com.br"
+
+# ============================================================================
+# I18N CONFIGURATION
+# ============================================================================
+i18n:
+  defaultLocale: "pt-BR"
+  locales:
+    - "pt-BR"
+  fallback: "soft"
+
+# ============================================================================
+# MENUS & NAVIGATION
+# ============================================================================
+menus:
+  header:
+    main:
+      - label: "Calculadora"
+        href: "/calculadora"
+        isAnchor: false
+      - label: "Planos"
+        href: "https://svlentes.com.br/planos"
+        isAnchor: false
+      - label: "Como Funciona"
+        href: "/como-funciona"
+        isAnchor: false
+      - label: "Blog"
+        href: "/blog"
+        isAnchor: false
+      - label: "FAQ"
+        href: "#perguntas-frequentes"
+        isAnchor: true
+      - label: "Contato"
+        href: "#contato"
+        isAnchor: true
+
+    cta:
+      authenticated:
+        dashboard:
+          label: "Meu Painel"
+          href: "/area-assinante/dashboard"
+          icon: "LayoutDashboard"
+        logout:
+          label: "Sair"
+          href: "#logout"
+          icon: "LogOut"
+          action: "logout"
+
+      unauthenticated:
+        schedule:
+          label: "Agendar Consulta"
+          href: "#agendar-consulta"
+          icon: "Phone"
+          action: "whatsapp"
+        login:
+          label: "Área do Assinante"
+          href: "/area-assinante/login"
+          icon: "User"
+
+  footer:
+    quickLinks:
+      - label: "Planos e Preços"
+        href: "#planos-precos"
+        isAnchor: true
+      - label: "Como Funciona"
+        href: "#como-funciona"
+        isAnchor: true
+      - label: "FAQ"
+        href: "#perguntas-frequentes"
+        isAnchor: true
+      - label: "Programa de Indicação"
+        href: "#programa-indicacao"
+        isAnchor: true
+      - label: "Manual do Paciente (PDF)"
+        href: "/ManualPacienteLentesContato2025.pdf"
+        download: true
+        icon: "download"
+        external: true
+
+    legalLinks:
+      - label: "Política de Privacidade"
+        href: "#privacy-policy"
+        action: "showPrivacyPolicy"
+      - label: "Configurações de Privacidade"
+        href: "#privacy-settings"
+        action: "showPrivacySettings"
+      - label: "Meus Dados (LGPD)"
+        href: "#data-control"
+        action: "showDataControl"
+      - label: "Termos de Uso"
+        href: "/termos-uso"
+        isAnchor: false
+
+# ============================================================================
+# FEATURE FLAGS
+# ============================================================================
+featureFlags:
+  useCentralizedConfig: true  # Ativar config centralizado

@@ -28,7 +28,9 @@
         "icons:watch": "node scripts/auto-icon-updater.js",
         "icons:update": "node scripts/update-components-with-icons.js",
         "icons:analyze": "node scripts/analyze-icons.js",
-        "db:seed": "npx ts-node --esm prisma/seed.ts"
+        "db:seed": "npx ts-node --esm prisma/seed.ts",
+        "test:mcp": "ts-node scripts/test-mcp-integration.ts",
+        "test:send": "ts-node scripts/test-send-to-phone.ts"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
@@ -51,6 +53,7 @@
         "firebase-admin": "^13.5.0",
         "framer-motion": "^12.23.22",
         "isomorphic-dompurify": "^2.29.0",
+        "js-yaml": "^4.1.0",
         "lucide-react": "^0.303.0",
         "next": "^15.5.4",
         "next-auth": "^4.24.11",
@@ -61,7 +64,7 @@
         "resend": "^6.2.0-canary.3",
         "tailwind-merge": "^2.6.0",
         "tailwindcss-animate": "^1.0.7",
-        "zod": "^3.22.4"
+        "zod": "^3.25.76"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.10.2",
@@ -75,6 +78,7 @@
         "@types/bcryptjs": "^2.4.6",
         "@types/crypto-js": "^4.2.2",
         "@types/jest": "^30.0.0",
+        "@types/js-yaml": "^4.0.9",
         "@types/node": "^20.19.21",
         "@types/react": "^18",
         "@types/react-dom": "^18",

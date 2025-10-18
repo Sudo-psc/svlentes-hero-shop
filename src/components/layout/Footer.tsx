@@ -9,6 +9,7 @@ import { doctorInfo, clinicInfo } from '@/data/doctor-info'
 import { PrivacyPolicy } from '@/components/privacy/PrivacyPolicy'
 import { PrivacySettings } from '@/components/privacy/PrivacySettings'
 import { DataControlPanel } from '@/components/privacy/DataControlPanel'
+import { config } from '@/config/loader'
 import {
     MapPin,
     Phone,
@@ -32,15 +33,48 @@ export function Footer({ className }: FooterProps) {
     const [showPrivacySettings, setShowPrivacySettings] = useState(false)
     const [showDataControl, setShowDataControl] = useState(false)
 
-    const quickLinks = [
-        { name: 'Planos e Preços', href: '#planos-precos' },
-        { name: 'Como Funciona', href: '#como-funciona' },
-        { name: 'FAQ', href: '#perguntas-frequentes' },
-        { name: 'Programa de Indicação', href: '#programa-indicacao' },
-        { name: 'Manual do Paciente (PDF)', href: '/ManualPacienteLentesContato2025.pdf', download: true, icon: 'download' },
-    ]
+    // Carregar configuração centralizada
+    const appConfig = config.load()
+    const useCentralizedConfig = config.isFeatureEnabled('useCentralizedConfig')
 
-    const legalLinks = [
+    // Obter menus da configuração
+    const footerMenu = useCentralizedConfig ? config.getMenu('pt-BR', 'footer') : null
+
+    // Quick Links: usar config centralizado se disponível
+    const quickLinks = useCentralizedConfig && footerMenu
+        ? footerMenu.quickLinks.map((item: any) => ({
+            name: item.label,
+            href: item.href,
+            download: item.download || false,
+            icon: item.icon || undefined
+        }))
+        : [
+            { name: 'Planos e Preços', href: '#planos-precos' },
+            { name: 'Como Funciona', href: '#como-funciona' },
+            { name: 'FAQ', href: '#perguntas-frequentes' },
+            { name: 'Programa de Indicação', href: '#programa-indicacao' },
+            { name: 'Manual do Paciente (PDF)', href: '/ManualPacienteLentesContato2025.pdf', download: true, icon: 'download' },
+        ]
+
+    // Legal Links: usar config centralizado se disponível
+    const legalLinksFromConfig = useCentralizedConfig && footerMenu
+        ? footerMenu.legalLinks.map((item: any) => {
+            // Mapear actions para funções
+            const actionMap: Record<string, () => void> = {
+                'showPrivacyPolicy': () => setShowPrivacyPolicy(true),
+                'showPrivacySettings': () => setShowPrivacySettings(true),
+                'showDataControl': () => setShowDataControl(true)
+            }
+
+            return {
+                name: item.label,
+                href: item.href && !item.action ? item.href : undefined,
+                action: item.action ? actionMap[item.action] : undefined
+            }
+        })
+        : null
+
+    const legalLinks = legalLinksFromConfig || [
         {
             name: 'Política de Privacidade',
             action: () => setShowPrivacyPolicy(true)
@@ -119,7 +153,7 @@ export function Footer({ className }: FooterProps) {
                         </h4>
                         <nav aria-label="Links rápidos">
                             <ul className="space-y-3">
-                                {quickLinks.map((link) => (
+                                {quickLinks.map((link: any) => (
                                     <li key={link.name}>
                                         <a
                                             href={link.href}
@@ -219,7 +253,7 @@ export function Footer({ className }: FooterProps) {
                 <div className="container-custom">
                     {/* Legal Links */}
                     <div className="flex flex-wrap items-center justify-center gap-4 mb-6">
-                        {legalLinks.map((link) => (
+                        {legalLinks.map((link: any) => (
                             link.href ? (
                                 <a
                                     key={link.name}

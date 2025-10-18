@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { LogoHeader } from '@/components/ui/Logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
+import { config } from '@/config/loader'
 
 interface HeaderProps {
     className?: string
@@ -15,6 +16,13 @@ export function Header({ className }: HeaderProps) {
     const { user, loading, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
+
+    // Carregar configuração centralizada
+    const appConfig = config.load()
+    const useCentralizedConfig = config.isFeatureEnabled('useCentralizedConfig')
+
+    // Obter menus da configuração
+    const headerMenu = useCentralizedConfig ? config.getMenu('pt-BR', 'header') : null
 
     // Detectar scroll para adicionar sombra no header
     useEffect(() => {
@@ -38,14 +46,24 @@ export function Header({ className }: HeaderProps) {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    const navigation = [
-        { name: 'Calculadora', href: '/calculadora', isAnchor: false },
-        { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
-        { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
-        { name: 'Blog', href: '/blog', isAnchor: false },
-        { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
-        { name: 'Contato', href: '#contato', isAnchor: true },
-    ]
+    // Navegação principal: usar config centralizado se disponível
+    const navigation = useCentralizedConfig && headerMenu
+        ? headerMenu.main.map((item: any) => ({
+            name: item.label,
+            href: item.href,
+            isAnchor: item.isAnchor || false
+        }))
+        : [
+            { name: 'Calculadora', href: '/calculadora', isAnchor: false },
+            { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
+            { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
+            { name: 'Blog', href: '/blog', isAnchor: false },
+            { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
+            { name: 'Contato', href: '#contato', isAnchor: true },
+        ]
+
+    // CTAs: usar config centralizado se disponível
+    const ctaConfig = useCentralizedConfig && headerMenu ? headerMenu.cta : null
 
     const handleNavClick = (href: string) => {
         const sectionId = href.replace('#', '')
@@ -95,7 +113,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
 
                     {/* Navigation Desktop */}
                     <nav className="hidden md:flex items-center space-x-8">
-                        {navigation.map((item) => (
+                        {navigation.map((item: any) => (
                             item.isAnchor ? (
                                 <a
                                     key={item.name}
@@ -127,13 +145,13 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                         {user ? (
                             <>
                                 <Button
-                                    onClick={() => window.location.href = '/area-assinante/dashboard'}
+                                    onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
                                     variant="outline"
                                     className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                     size="default"
                                 >
                                     <LayoutDashboard className="w-4 h-4" />
-                                    <span>Meu Painel</span>
+                                    <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogout}
@@ -142,7 +160,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     size="default"
                                 >
                                     <LogOut className="w-4 h-4" />
-                                    <span>Sair</span>
+                                    <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                 </Button>
                             </>
                         ) : (
@@ -153,7 +171,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     size="default"
                                 >
                                     <Phone className="w-4 h-4" />
-                                    <span>Agendar Consulta</span>
+                                    <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogin}
@@ -162,7 +180,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     size="default"
                                 >
                                     <User className="w-4 h-4" />
-                                    <span>Área do Assinante</span>
+                                    <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                 </Button>
                             </>
                         )}
@@ -186,7 +204,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                 {isMenuOpen && (
                     <div className="md:hidden border-t border-gray-200 bg-white">
                         <div className="py-4 space-y-4">
-                            {navigation.map((item) => (
+                            {navigation.map((item: any) => (
                                 item.isAnchor ? (
                                     <a
                                         key={item.name}
@@ -215,13 +233,13 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                 {user ? (
                                     <>
                                         <Button
-                                            onClick={() => window.location.href = '/area-assinante/dashboard'}
+                                            onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
                                             variant="outline"
                                             className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                             size="default"
                                         >
                                             <LayoutDashboard className="w-4 h-4" />
-                                            <span>Meu Painel</span>
+                                            <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                         </Button>
                                         <Button
                                             onClick={handleLogout}
@@ -230,7 +248,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             size="default"
                                         >
                                             <LogOut className="w-4 h-4" />
-                                            <span>Sair</span>
+                                            <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                         </Button>
                                     </>
                                 ) : (
@@ -241,7 +259,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             size="default"
                                         >
                                             <Phone className="w-4 h-4" />
-                                            <span>Agendar Consulta</span>
+                                            <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                         </Button>
                                         <Button
                                             onClick={handleLogin}
@@ -250,7 +268,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             size="default"
                                         >
                                             <User className="w-4 h-4" />
-                                            <span>Área do Assinante</span>
+                                            <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                         </Button>
                                     </>
                                 )}
