@@ -224,7 +224,8 @@ export class SendPulseClient {
     contactId: string,
     message: WhatsAppMessage | TemplateMessage,
     useTemplateFallback: boolean = true,
-    isChatOpenedOverride?: boolean
+    isChatOpenedOverride?: boolean,
+    contactPhone?: string
   ): Promise<SendMessageResponse> {
     try {
       // 1. Rate limiting
@@ -261,16 +262,49 @@ export class SendPulseClient {
       }
 
 
-      // 3. Send with retry logic
+      // 3. Send with retry logic using appropriate endpoint
       const result = await retryManager.execute(async () => {
         const apiToken = await this.getApiToken()
+        const botId = await this.getBotId()
 
-        const payload: SendMessageRequest = {
-          contact_id: contactId,
-          message
+        // IMPORTANT: For webhook responses, use sendByPhone endpoint which doesn't require
+        // the 24h window to be open. This is a free message API that works regardless of window status.
+        const useByPhoneEndpoint = isChatOpenedOverride === true && contactPhone
+
+        let payload: any
+        let endpoint: string
+
+        if (useByPhoneEndpoint) {
+          // Use sendByPhone with provided phone number
+          endpoint = '/contacts/sendByPhone'
+          payload = {
+            bot_id: botId,
+            phone: contactPhone,
+            message
+          }
+          console.log(`[SendPulse] Using sendByPhone endpoint for webhook response (no 24h window required)`, {
+            phone: contactPhone,
+            botId
+          })
+        } else {
+          // Standard endpoint (requires 24h window or template)
+          endpoint = '/contacts/send'
+          payload = {
+            contact_id: contactId,
+            message
+          }
         }
 
-        const response = await fetch(`${this.baseUrl}/contacts/send`, {
+        console.log(`[SendPulse] Sending to API:`, {
+          endpoint,
+          contactId,
+          messageType: message.type,
+          isChatOpenedOverride,
+          useByPhoneEndpoint,
+          payload: JSON.stringify(payload)
+        })
+
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiToken}`,
@@ -281,6 +315,7 @@ export class SendPulseClient {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          console.error(`[SendPulse] API Error ${response.status}:`, JSON.stringify(errorData, null, 2))
           throw createSendPulseError(response.status, errorData)
         }
 
@@ -412,7 +447,7 @@ export class SendPulseClient {
         } as TextMessage
       }
 
-      return await this.sendMessageToContact(contact.id, message, true, params.isChatOpened)
+      return await this.sendMessageToContact(contact.id, message, true, params.isChatOpened, params.phone)
 
     } catch (error) {
       console.error('Error sending SendPulse message:', error)
