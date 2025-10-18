@@ -8,7 +8,7 @@ import { TrustStrip } from '@/components/trust/TrustStrip'
 
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
-    description: 'Assinatura de lentes de contato em Caratinga, Minas Gerais, com acompanhamento médico do Dr. Philipe Saraiva Cruz - CRM 69.870. Lentes diárias, mensais, tóricas e multifocais. Economia de até 40% e entrega grátis.',
+    description: 'Assinatura de lentes de contato em Caratinga, Minas Gerais, com acompanhamento médico do Dr. Philipe Saraiva Cruz - CRM 69.870. Lentes diárias, mensais, tóricas e multifocais. Economia de até 40% com entrega grátis.',
     keywords: [
         'lentes de contato Caratinga',
         'lentes de contato Minas Gerais',
