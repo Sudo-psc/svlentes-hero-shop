@@ -5,15 +5,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Checkbox } from '@/components/ui/Checkbox'
 import { pricingPlans } from '@/data/pricing-plans'
-import { useState } from 'react'
-import { ContactData, LensData, ValidationError } from '@/types/subscription'
-import {
-    validateEmail,
-    validatePhone,
-    validateCPFOrCNPJ,
-    maskPhone,
-    maskCPFOrCNPJ,
-} from '@/lib/validators'
+import { ContactData, LensData } from '@/types/subscription'
+import { useOrderContactForm } from '@/hooks/useOrderContactForm'
 
 interface OrderSummaryProps {
     planId: string
@@ -34,18 +27,16 @@ const addOnPrices: Record<string, { name: string; price: number }> = {
 }
 
 export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, onConfirm }: OrderSummaryProps) {
-    const [contactData, setContactData] = useState<ContactData>({
-        name: '',
-        email: '',
-        phone: '',
-        cpfCnpj: '',
-        billingType: 'PIX',
-        acceptsTerms: false,
-        acceptsDataProcessing: false,
-    })
-
-    const [errors, setErrors] = useState<Record<string, string>>({})
-    const [touched, setTouched] = useState<Record<string, boolean>>({})
+    const {
+        contactData,
+        errors,
+        touched,
+        handleInputChange,
+        handleCheckboxChange,
+        handleBlur,
+        setBillingType,
+        isValid,
+    } = useOrderContactForm()
 
     const plan = pricingPlans.find(p => p.id === planId)
     if (!plan) return null
@@ -54,69 +45,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
     const addOnsTotal = addOns.reduce((sum, addOnId) => sum + (addOnPrices[addOnId]?.price || 0), 0)
     const monthlyTotal = planPrice + addOnsTotal
     const annualTotal = billingCycle === 'annual' ? plan.priceAnnual + (addOnsTotal * 12) : monthlyTotal * 12
-
-    // Validação em tempo real
-    const validateField = (field: keyof ContactData, value: string | boolean): string => {
-        switch (field) {
-            case 'name':
-                return typeof value === 'string' && value.trim().length < 3
-                    ? 'Nome deve ter pelo menos 3 caracteres'
-                    : ''
-            case 'email':
-                return typeof value === 'string' && !validateEmail(value)
-                    ? 'Email inválido'
-                    : ''
-            case 'phone':
-                return typeof value === 'string' && !validatePhone(value)
-                    ? 'Telefone inválido (formato: (XX) 9XXXX-XXXX)'
-                    : ''
-            case 'cpfCnpj':
-                return typeof value === 'string' && value && !validateCPFOrCNPJ(value)
-                    ? 'CPF/CNPJ inválido'
-                    : ''
-            case 'acceptsTerms':
-                return !value ? 'Você deve aceitar os termos de uso' : ''
-            case 'acceptsDataProcessing':
-                return !value ? 'Você deve autorizar o processamento de dados' : ''
-            default:
-                return ''
-        }
-    }
-
-    const handleInputChange = (field: keyof ContactData, value: string) => {
-        let maskedValue = value
-
-        // Aplicar máscaras
-        if (field === 'phone') {
-            maskedValue = maskPhone(value)
-        } else if (field === 'cpfCnpj') {
-            maskedValue = maskCPFOrCNPJ(value)
-        }
-
-        setContactData(prev => ({ ...prev, [field]: maskedValue }))
-
-        // Validar apenas se o campo já foi tocado
-        if (touched[field]) {
-            const error = validateField(field, maskedValue)
-            setErrors(prev => ({ ...prev, [field]: error }))
-        }
-    }
-
-    const handleBlur = (field: keyof ContactData) => {
-        setTouched(prev => ({ ...prev, [field]: true }))
-        const value = contactData[field]
-        const error = validateField(field, value ?? '')
-        setErrors(prev => ({ ...prev, [field]: error }))
-    }
-
-    const isValid =
-        contactData.name.trim().length >= 3 &&
-        validateEmail(contactData.email) &&
-        validatePhone(contactData.phone) &&
-        (!contactData.cpfCnpj || validateCPFOrCNPJ(contactData.cpfCnpj)) &&
-        contactData.acceptsTerms &&
-        contactData.acceptsDataProcessing &&
-        Object.values(errors).every(error => !error)
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -315,7 +243,7 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                 </label>
                                 <select
                                     value={contactData.billingType}
-                                    onChange={(e) => setContactData(prev => ({ ...prev, billingType: e.target.value as 'PIX' | 'BOLETO' | 'CREDIT_CARD' }))}
+                                    onChange={(e) => setBillingType(e.target.value as ContactData['billingType'])}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                 >
                                     <option value="PIX">PIX</option>
@@ -329,7 +257,7 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                         <Checkbox
                                             checked={contactData.acceptsTerms}
                                             onChange={(e) => {
-                                                setContactData(prev => ({ ...prev, acceptsTerms: e.target.checked }))
+                                                handleCheckboxChange('acceptsTerms', e.target.checked)
                                                 handleBlur('acceptsTerms')
                                             }}
                                         />
@@ -354,7 +282,7 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                         <Checkbox
                                             checked={contactData.acceptsDataProcessing}
                                             onChange={(e) => {
-                                                setContactData(prev => ({ ...prev, acceptsDataProcessing: e.target.checked }))
+                                                handleCheckboxChange('acceptsDataProcessing', e.target.checked)
                                                 handleBlur('acceptsDataProcessing')
                                             }}
                                         />

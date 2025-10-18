@@ -6,17 +6,15 @@ import { LensSelector } from './LensSelector'
 import { AddOnsSelector } from './AddOnsSelector'
 import { OrderSummary } from './OrderSummary'
 import { Check, Loader2, TrendingDown, X } from 'lucide-react'
-import { FlowData, LensData, ContactData, PaymentRequest } from '@/types/subscription'
-import { encryptPrescription } from '@/lib/encryption'
+import { FlowData, LensData, ContactData } from '@/types/subscription'
 import { CalculatorResult } from '@/types/calculator'
 import { formatCurrency } from '@/lib/calculator'
+import { useAsaasPayment } from '@/hooks/useAsaasPayment'
 
 type FlowStep = 'plan' | 'lens' | 'addons' | 'summary'
 
 export function SubscriptionFlow() {
     const [currentStep, setCurrentStep] = useState<FlowStep>('plan')
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [flowData, setFlowData] = useState<FlowData>({
         planId: null,
         billingCycle: 'monthly',
@@ -25,6 +23,7 @@ export function SubscriptionFlow() {
     })
     const [calculatorData, setCalculatorData] = useState<CalculatorResult | null>(null)
     const [showCalculatorBanner, setShowCalculatorBanner] = useState(false)
+    const { processPayment, loading, error, clearError } = useAsaasPayment()
 
     // Carregar dados da calculadora do localStorage ao montar
     useEffect(() => {
@@ -65,68 +64,18 @@ export function SubscriptionFlow() {
     }
 
     const handleConfirm = async (contactData: ContactData) => {
-        setLoading(true)
-        setError(null)
-
         try {
-            // Criptografar dados médicos sensíveis (prescrição) antes de enviar
-            let encryptedLensData: string | undefined;
-            if (flowData.lensData) {
-                try {
-                    encryptedLensData = encryptPrescription(flowData.lensData);
-                } catch (encryptError) {
-                    console.error('Erro ao criptografar dados médicos:', encryptError);
-                    throw new Error('Erro ao processar dados de prescrição. Por favor, tente novamente.');
-                }
-            }
+            const response = await processPayment({ flowData, contactData })
 
-            const paymentRequest: PaymentRequest = {
-                planId: flowData.planId!,
-                billingInterval: flowData.billingCycle,
-                billingType: contactData.billingType,
-                customerData: {
-                    name: contactData.name,
-                    email: contactData.email,
-                    phone: contactData.phone,
-                    cpfCnpj: contactData.cpfCnpj,
-                },
-                metadata: {
-                    lensData: encryptedLensData || '',  // Dados criptografados (⚠️ LGPD Art. 46)
-                    addOns: JSON.stringify(flowData.addOns),
-                    source: 'subscription_flow',
-                    consentTimestamp: new Date().toISOString(),
-                },
-            }
+            localStorage.removeItem('calculatorResult')
 
-            const response = await fetch('/api/asaas/create-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(paymentRequest),
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Erro ao processar pagamento')
-            }
-
-            const data = await response.json()
-
-            if (data.invoiceUrl) {
-                // Limpar dados da calculadora do localStorage após sucesso
-                localStorage.removeItem('calculatorResult')
-                window.location.href = data.invoiceUrl
+            if (response.invoiceUrl) {
+                window.location.href = response.invoiceUrl
             } else {
-                localStorage.removeItem('calculatorResult')
                 window.location.href = '/agendar-consulta'
             }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-            setError(`Erro ao processar pagamento: ${errorMessage}`)
-            console.error('Erro ao confirmar pedido:', error)
-        } finally {
-            setLoading(false)
+        } catch (processingError) {
+            console.error('Erro ao confirmar pedido:', processingError)
         }
     }
 
@@ -246,7 +195,7 @@ export function SubscriptionFlow() {
                             <p className="text-sm text-red-700 mt-1">{error}</p>
                         </div>
                         <button
-                            onClick={() => setError(null)}
+                            onClick={clearError}
                             className="flex-shrink-0 text-red-600 hover:text-red-800"
                         >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

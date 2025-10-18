@@ -1,42 +1,13 @@
 'use client'
 
-import { useState } from 'react'
 import { Eye, Info, Calendar, UserCheck, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { validatePrescriptionDate, validateCRM } from '@/lib/validators'
-
-interface LensData {
-    type: 'daily' | 'weekly' | 'monthly'
-    brand: string
-    rightEye: {
-        sphere: string
-        cylinder: string
-        axis: string
-    }
-    leftEye: {
-        sphere: string
-        cylinder: string
-        axis: string
-    }
-    prescriptionDate?: string
-    doctorCRM?: string
-    doctorName?: string
-}
-
-interface ValidationErrors {
-    rightSphere?: string
-    rightCylinder?: string
-    rightAxis?: string
-    leftSphere?: string
-    leftCylinder?: string
-    leftAxis?: string
-    prescriptionDate?: string
-    doctorCRM?: string
-}
+import { useLensPrescriptionForm } from '@/hooks/useLensPrescriptionForm'
+import type { LensData as SubscriptionLensData } from '@/types/subscription'
 
 interface LensSelectorProps {
-    onContinue: (data: LensData) => void
+    onContinue: (data: SubscriptionLensData) => void
     onBack: () => void
 }
 
@@ -55,208 +26,20 @@ const popularBrands = [
     'Outra marca'
 ]
 
-/**
- * Valida valor esférico (grau de miopia/hipermetropia)
- * Faixa típica: -20.00 a +20.00 em passos de 0.25
- */
-function validateSphere(value: string): string | undefined {
-    if (!value) return 'Campo obrigatório'
-
-    const num = parseFloat(value)
-    if (isNaN(num)) return 'Valor inválido'
-    if (num < -20 || num > 20) return 'Faixa válida: -20.00 a +20.00'
-
-    // Verifica se é múltiplo de 0.25
-    const decimal = Math.abs((num * 100) % 25)
-    if (decimal > 0.01) return 'Use passos de 0.25 (ex: -2.00, -2.25, -2.50)'
-
-    return undefined
-}
-
-/**
- * Valida valor cilíndrico (grau de astigmatismo)
- * Faixa típica: 0.00 a -6.00 em passos de 0.25
- */
-function validateCylinder(value: string): string | undefined {
-    if (!value) return undefined // Cilíndrico é opcional
-
-    const num = parseFloat(value)
-    if (isNaN(num)) return 'Valor inválido'
-    if (num > 0) return 'Cilíndrico deve ser negativo ou zero'
-    if (num < -6) return 'Faixa válida: 0.00 a -6.00'
-
-    // Verifica se é múltiplo de 0.25
-    const decimal = Math.abs((num * 100) % 25)
-    if (decimal > 0.01) return 'Use passos de 0.25 (ex: -0.75, -1.00)'
-
-    return undefined
-}
-
-/**
- * Valida eixo (direção do astigmatismo)
- * Faixa: 0 a 180 graus
- */
-function validateAxis(value: string, cylinder: string): string | undefined {
-    // Se não tem cilíndrico, eixo não é necessário
-    if (!cylinder || parseFloat(cylinder) === 0) {
-        return undefined
-    }
-
-    if (!value) return 'Necessário quando há cilíndrico'
-
-    const num = parseInt(value)
-    if (isNaN(num)) return 'Valor inválido'
-    if (num < 0 || num > 180) return 'Faixa válida: 0 a 180'
-
-    return undefined
-}
-
 export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
-    const [lensData, setLensData] = useState<LensData>({
-        type: 'monthly',
-        brand: '',
-        rightEye: { sphere: '', cylinder: '', axis: '' },
-        leftEye: { sphere: '', cylinder: '', axis: '' }
-    })
-
-    const [sameForBothEyes, setSameForBothEyes] = useState(false)
-    const [errors, setErrors] = useState<ValidationErrors>({})
-
-    const handleTypeSelect = (type: 'daily' | 'weekly' | 'monthly') => {
-        setLensData(prev => ({ ...prev, type }))
-    }
-
-    const handleRightEyeChange = (field: keyof LensData['rightEye'], value: string) => {
-        const newRightEye = { ...lensData.rightEye, [field]: value }
-
-        // Validação em tempo real
-        const newErrors = { ...errors }
-        if (field === 'sphere') {
-            const error = validateSphere(value)
-            if (error) newErrors.rightSphere = error
-            else delete newErrors.rightSphere
-        } else if (field === 'cylinder') {
-            const error = validateCylinder(value)
-            if (error) newErrors.rightCylinder = error
-            else delete newErrors.rightCylinder
-
-            // Revalidar eixo quando cilíndrico muda
-            const axisError = validateAxis(newRightEye.axis, value)
-            if (axisError) newErrors.rightAxis = axisError
-            else delete newErrors.rightAxis
-        } else if (field === 'axis') {
-            const error = validateAxis(value, newRightEye.cylinder)
-            if (error) newErrors.rightAxis = error
-            else delete newErrors.rightAxis
-        }
-        setErrors(newErrors)
-
-        setLensData(prev => ({
-            ...prev,
-            rightEye: newRightEye,
-            ...(sameForBothEyes && { leftEye: newRightEye })
-        }))
-    }
-
-    const handleLeftEyeChange = (field: keyof LensData['leftEye'], value: string) => {
-        const newLeftEye = { ...lensData.leftEye, [field]: value }
-
-        // Validação em tempo real
-        const newErrors = { ...errors }
-        if (field === 'sphere') {
-            const error = validateSphere(value)
-            if (error) newErrors.leftSphere = error
-            else delete newErrors.leftSphere
-        } else if (field === 'cylinder') {
-            const error = validateCylinder(value)
-            if (error) newErrors.leftCylinder = error
-            else delete newErrors.leftCylinder
-
-            // Revalidar eixo quando cilíndrico muda
-            const axisError = validateAxis(newLeftEye.axis, value)
-            if (axisError) newErrors.leftAxis = axisError
-            else delete newErrors.leftAxis
-        } else if (field === 'axis') {
-            const error = validateAxis(value, newLeftEye.cylinder)
-            if (error) newErrors.leftAxis = error
-            else delete newErrors.leftAxis
-        }
-        setErrors(newErrors)
-
-        setLensData(prev => ({
-            ...prev,
-            leftEye: newLeftEye
-        }))
-    }
-
-    const handlePrescriptionDateChange = (value: string) => {
-        setLensData(prev => ({ ...prev, prescriptionDate: value }))
-
-        const newErrors = { ...errors }
-        if (value && !validatePrescriptionDate(value)) {
-            newErrors.prescriptionDate = 'Prescrição deve ter menos de 1 ano'
-        } else {
-            delete newErrors.prescriptionDate
-        }
-        setErrors(newErrors)
-    }
-
-    const handleDoctorCRMChange = (value: string) => {
-        setLensData(prev => ({ ...prev, doctorCRM: value }))
-
-        const newErrors = { ...errors }
-        if (value && !validateCRM(value)) {
-            newErrors.doctorCRM = 'Formato inválido (ex: 123456-MG)'
-        } else {
-            delete newErrors.doctorCRM
-        }
-        setErrors(newErrors)
-    }
-
-    const isValid = () => {
-        // Verificar campos obrigatórios
-        if (!lensData.brand || !lensData.rightEye.sphere || !lensData.leftEye.sphere) {
-            return false
-        }
-
-        // Verificar se não há erros de validação
-        if (Object.keys(errors).length > 0) {
-            return false
-        }
-
-        // Validar todos os campos preenchidos
-        const rightSphereError = validateSphere(lensData.rightEye.sphere)
-        const leftSphereError = validateSphere(lensData.leftEye.sphere)
-
-        if (rightSphereError || leftSphereError) {
-            return false
-        }
-
-        // Validar cilíndrico e eixo se preenchidos
-        if (lensData.rightEye.cylinder) {
-            const cylinderError = validateCylinder(lensData.rightEye.cylinder)
-            const axisError = validateAxis(lensData.rightEye.axis, lensData.rightEye.cylinder)
-            if (cylinderError || axisError) return false
-        }
-
-        if (lensData.leftEye.cylinder) {
-            const cylinderError = validateCylinder(lensData.leftEye.cylinder)
-            const axisError = validateAxis(lensData.leftEye.axis, lensData.leftEye.cylinder)
-            if (cylinderError || axisError) return false
-        }
-
-        // Validar data de prescrição se preenchida
-        if (lensData.prescriptionDate && !validatePrescriptionDate(lensData.prescriptionDate)) {
-            return false
-        }
-
-        // Validar CRM se preenchido
-        if (lensData.doctorCRM && !validateCRM(lensData.doctorCRM)) {
-            return false
-        }
-
-        return true
-    }
+    const {
+        lensData,
+        errors,
+        sameForBothEyes,
+        selectLensType,
+        selectBrand,
+        updateEye,
+        updatePrescriptionDate,
+        updateDoctorCRM,
+        updateDoctorName,
+        toggleSameForBothEyes,
+        isValid,
+    } = useLensPrescriptionForm()
 
     return (
         <div className="space-y-8">
@@ -269,7 +52,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                     {lensTypes.map((type) => (
                         <button
                             key={type.id}
-                            onClick={() => handleTypeSelect(type.id as any)}
+                            onClick={() => selectLensType(type.id as SubscriptionLensData['type'])}
                             className={`p-4 rounded-lg border-2 text-left transition-all ${lensData.type === type.id
                                     ? 'border-primary-600 bg-primary-50'
                                     : 'border-gray-200 hover:border-gray-300'
@@ -295,7 +78,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                     {popularBrands.map((brand) => (
                         <button
                             key={brand}
-                            onClick={() => setLensData(prev => ({ ...prev, brand }))}
+                            onClick={() => selectBrand(brand)}
                             className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${lensData.brand === brand
                                     ? 'border-primary-600 bg-primary-50 text-primary-700'
                                     : 'border-gray-200 text-gray-700 hover:border-gray-300'
@@ -314,7 +97,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                         Grau das Lentes
                     </h3>
                     <button
-                        onClick={() => setSameForBothEyes(!sameForBothEyes)}
+                        onClick={toggleSameForBothEyes}
                         className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                     >
                         {sameForBothEyes ? 'Graus diferentes' : 'Mesmo grau para ambos'}
@@ -344,7 +127,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             label="Esférico"
                             placeholder="-2.00"
                             value={lensData.rightEye.sphere}
-                            onChange={(e) => handleRightEyeChange('sphere', e.target.value)}
+                            onChange={(e) => updateEye('rightEye', 'sphere', e.target.value)}
                             error={errors.rightSphere}
                             required
                         />
@@ -353,7 +136,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             label="Cilíndrico"
                             placeholder="-0.75"
                             value={lensData.rightEye.cylinder}
-                            onChange={(e) => handleRightEyeChange('cylinder', e.target.value)}
+                            onChange={(e) => updateEye('rightEye', 'cylinder', e.target.value)}
                             error={errors.rightCylinder}
                             helperText="Opcional"
                         />
@@ -362,7 +145,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             label="Eixo"
                             placeholder="180"
                             value={lensData.rightEye.axis}
-                            onChange={(e) => handleRightEyeChange('axis', e.target.value)}
+                            onChange={(e) => updateEye('rightEye', 'axis', e.target.value)}
                             error={errors.rightAxis}
                             helperText={lensData.rightEye.cylinder ? undefined : 'Opcional'}
                         />
@@ -382,7 +165,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                                 label="Esférico"
                                 placeholder="-2.00"
                                 value={lensData.leftEye.sphere}
-                                onChange={(e) => handleLeftEyeChange('sphere', e.target.value)}
+                                onChange={(e) => updateEye('leftEye', 'sphere', e.target.value)}
                                 error={errors.leftSphere}
                                 required
                             />
@@ -391,7 +174,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                                 label="Cilíndrico"
                                 placeholder="-0.75"
                                 value={lensData.leftEye.cylinder}
-                                onChange={(e) => handleLeftEyeChange('cylinder', e.target.value)}
+                                onChange={(e) => updateEye('leftEye', 'cylinder', e.target.value)}
                                 error={errors.leftCylinder}
                                 helperText="Opcional"
                             />
@@ -400,7 +183,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                                 label="Eixo"
                                 placeholder="180"
                                 value={lensData.leftEye.axis}
-                                onChange={(e) => handleLeftEyeChange('axis', e.target.value)}
+                                onChange={(e) => updateEye('leftEye', 'axis', e.target.value)}
                                 error={errors.leftAxis}
                                 helperText={lensData.leftEye.cylinder ? undefined : 'Opcional'}
                             />
@@ -436,7 +219,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             id="prescription-date"
                             type="date"
                             value={lensData.prescriptionDate || ''}
-                            onChange={(e) => handlePrescriptionDateChange(e.target.value)}
+                            onChange={(e) => updatePrescriptionDate(e.target.value)}
                             error={errors.prescriptionDate}
                             helperText="Receita médica válida por 1 ano"
                             max={new Date().toISOString().split('T')[0]}
@@ -452,7 +235,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             id="doctor-crm"
                             placeholder="123456-MG"
                             value={lensData.doctorCRM || ''}
-                            onChange={(e) => handleDoctorCRMChange(e.target.value)}
+                            onChange={(e) => updateDoctorCRM(e.target.value)}
                             error={errors.doctorCRM}
                             helperText="Formato: 123456-UF"
                         />
@@ -464,7 +247,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             label="Nome do Médico"
                             placeholder="Dr(a). Nome do Oftalmologista"
                             value={lensData.doctorName || ''}
-                            onChange={(e) => setLensData(prev => ({ ...prev, doctorName: e.target.value }))}
+                            onChange={(e) => updateDoctorName(e.target.value)}
                             helperText="Opcional"
                         />
                     </div>
@@ -482,7 +265,7 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                 </Button>
                 <Button
                     onClick={() => onContinue(lensData)}
-                    disabled={!isValid()}
+                    disabled={!isValid}
                     className="flex-1"
                 >
                     Continuar
