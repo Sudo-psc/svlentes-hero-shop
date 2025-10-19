@@ -202,6 +202,16 @@ O Vercel automaticamente provê certificado SSL Let's Encrypt:
 
 ## 🔍 Monitoramento Pós-Deploy
 
+### Automação GitHub Actions
+
+- Pipeline `deploy-production.yml` executa `scripts/post-deploy-monitoring.sh`
+- Verificações automáticas:
+  - Health check dos endpoints `/api/health-check`, `/api/monitoring/*`
+  - Consulta Stripe com chave dedicada (`STRIPE_MONITORING_SECRET`)
+  - Checkout sintético com flag `syntheticTest` (sem acionar Asaas)
+  - Observação da taxa de erro por 10 minutos com rollback se > 5%
+- Alertas em tempo real via Slack e email (Resend)
+
 ### Verificar Logs
 ```bash
 # Ver logs em tempo real

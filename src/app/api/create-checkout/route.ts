@@ -56,6 +56,56 @@ export async function POST(request: NextRequest) {
             ? selectedPlan.priceAnnual
             : selectedPlan.priceMonthly
 
+        if (metadata.syntheticTest === 'true' || metadata.syntheticTest === true) {
+            const syntheticDueDate = new Date()
+            syntheticDueDate.setDate(syntheticDueDate.getDate() + 7)
+            const dueDate = syntheticDueDate.toISOString().split('T')[0]
+            logger.logPayment('synthetic_checkout', {
+                planId,
+                billingInterval,
+                billingType,
+                synthetic: true,
+                customerEmail: customerData.email,
+            })
+            return NextResponse.json({
+                success: true,
+                customer: {
+                    id: `synthetic_${planId}`,
+                    email: customerData.email,
+                    name: customerData.name,
+                },
+                subscription: {
+                    id: `synthetic_subscription_${planId}`,
+                    status: 'PENDING',
+                    nextDueDate: dueDate,
+                    value: planValue,
+                },
+                payment: {
+                    id: `synthetic_payment_${planId}`,
+                    status: billingType === 'PIX' ? 'PENDING' : 'AUTHORIZED',
+                    dueDate,
+                    value: planValue,
+                    invoiceUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://svlentes.shop'}/synthetic/invoice`,
+                    bankSlipUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://svlentes.shop'}/synthetic/boleto`,
+                    ...(billingType === 'PIX'
+                        ? {
+                            pix: {
+                                qrCode: 'synthetic-qr-code',
+                                payload: '000201syntheticpayload',
+                                expirationDate: dueDate,
+                            },
+                        }
+                        : {}),
+                },
+                plan: {
+                    id: planId,
+                    name: selectedPlan.name,
+                    billingInterval,
+                    amount: planValue,
+                },
+            })
+        }
+
         // 1. Criar ou atualizar cliente no Asaas
         let customer
 
