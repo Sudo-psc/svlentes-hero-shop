@@ -17,30 +17,40 @@ export default function PlanosPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative pt-24 pb-16 bg-gradient-to-b from-cyan-600 via-cyan-500 to-cyan-400 text-white overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full mix-blend-overlay filter blur-3xl animate-pulse delay-700" />
+      <section className="relative pt-32 pb-20 bg-gradient-to-br from-cyan-700 via-cyan-600 to-cyan-500 text-white overflow-hidden">
+        {/* Enhanced Background Pattern */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="7" cy="7" r="7"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full filter blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-300/20 rounded-full filter blur-3xl animate-pulse delay-700"></div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-4xl mx-auto">
-            <Badge variant="secondary" className="mb-4 bg-white/20 text-white border-white/30 backdrop-blur-sm">
-              Entrega em Todo o Brasil
-            </Badge>
+          <div className="text-center max-w-5xl mx-auto">
+            <div className="mb-8">
+              <Badge className="bg-white/20 backdrop-blur-md text-white border-white/30 px-6 py-2 text-sm font-semibold hover:bg-white/25 transition-colors">
+                ✨ Planos Online com Entrega em Todo o Brasil
+              </Badge>
+            </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Planos Online de Assinatura
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
+              <span className="block mb-2">Planos de Assinatura</span>
+              <span className="block text-cyan-50">Lentes de Contato</span>
+              <span className="block text-3xl md:text-4xl lg:text-5xl mt-4 text-cyan-100 font-medium">com Acompanhamento Médico</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-cyan-50 mb-4 leading-relaxed">
+            <p className="text-xl md:text-2xl text-cyan-50 mb-8 leading-relaxed font-medium">
               Assine Suas Lentes de Contato Pela Internet
             </p>
 
-            <p className="text-lg text-cyan-100 max-w-2xl mx-auto">
-              Lentes de qualidade com entrega mensal na sua casa. Planos para asféricas, diárias, tóricas e multifocais com frete grátis para todo o Brasil
-            </p>
+            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 max-w-4xl mx-auto border-2 border-white/20 shadow-2xl">
+              <p className="text-xl md:text-2xl text-white font-bold mb-3 drop-shadow-lg">
+                🚚 Lentes de qualidade com entrega mensal na sua casa
+              </p>
+              <p className="text-lg md:text-xl text-cyan-50 leading-relaxed">
+                Planos para <span className="font-semibold text-white">asféricas</span>, <span className="font-semibold text-white">diárias</span>, <span className="font-semibold text-white">tóricas</span> e <span className="font-semibold text-white">multifocais</span> com frete grátis para todo o Brasil
+              </p>
+            </div>
           </div>
         </div>
 
