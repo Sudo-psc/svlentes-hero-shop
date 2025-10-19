@@ -31,9 +31,9 @@ import {
   ArrowDownRight,
   MoreHorizontal
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { useAdminAuth } from '@/components/admin/providers/AdminAuthProvider'
 import { cn } from '@/lib/utils'
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Calculator, TrendingDown, Save, ArrowRight, Activity, Eye } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { calculateEconomy, formatCurrency } from '@/lib/calculator'
 import { usagePatterns, lensTypes, planPrices } from '@/data/calculator-data'
 import { CalculatorInput, CalculatorResult } from '@/types'

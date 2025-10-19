@@ -1,7 +1,7 @@
 'use client'
 
 import { Package, Calendar, RefreshCcw, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateLong } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel, type SubscriptionStatus } from '@/lib/subscription-helpers'
 

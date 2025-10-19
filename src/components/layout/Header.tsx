@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
-import { LogoHeader } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { LogoHeader } from '@/components/ui/logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
 import { useConfigValue } from '@/lib/use-config'

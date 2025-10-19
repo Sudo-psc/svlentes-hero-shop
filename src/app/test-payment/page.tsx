@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import PaymentTestModal from '@/components/payment/PaymentTestModal'
 import { CreditCard, TestTube } from 'lucide-react'
 

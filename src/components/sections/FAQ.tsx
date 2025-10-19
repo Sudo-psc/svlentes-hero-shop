@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useMemo } from 'react'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/Accordion'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { featuredFAQ } from '@/data/faq-data'
 import { FAQProps } from '@/types/wireframe'
 import { trackEvent } from '@/lib/analytics'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { LeadCaptureForm } from '@/components/forms/LeadCaptureForm'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import { trackEvent } from '@/lib/analytics'

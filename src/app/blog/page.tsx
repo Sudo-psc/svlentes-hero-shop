@@ -1,7 +1,7 @@
 import React from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, ArrowRight } from 'lucide-react'
 import { getPosts } from '@/lib/wordpress/api'
 import { formatDate, estimateReadingTime } from '@/lib/wordpress/transformers'

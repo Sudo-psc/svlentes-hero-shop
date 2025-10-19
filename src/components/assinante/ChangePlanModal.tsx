@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
 import { X, Check, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import type { PricingPlan } from '@/types'

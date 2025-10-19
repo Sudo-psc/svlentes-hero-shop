@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import StripeFallback from '@/components/ui/stripe-fallback'
 import { CreditCard, Smartphone, QrCode, AlertCircle } from 'lucide-react'
 

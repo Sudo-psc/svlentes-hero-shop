@@ -1,7 +1,7 @@
 'use client'
 
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { HeroImage } from '@/components/sections/HeroImage'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import { Phone, MessageCircle, Award } from 'lucide-react'

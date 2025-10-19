@@ -1,10 +1,10 @@
 'use client'
 
 import { AlertTriangle, RefreshCw, AlertCircle, Home } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 interface DashboardErrorProps {

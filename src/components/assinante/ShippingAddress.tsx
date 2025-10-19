@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { MapPin, Edit2, Save, X } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatZipCode } from '@/lib/formatters'
 
 export interface ShippingAddress {

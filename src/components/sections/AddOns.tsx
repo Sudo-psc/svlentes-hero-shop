@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { AddOn, AddOnsProps } from '@/types'
-import { Button } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/Checkbox'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
 import { trackEvent } from '@/lib/analytics'
 
 interface AddOnCardProps {

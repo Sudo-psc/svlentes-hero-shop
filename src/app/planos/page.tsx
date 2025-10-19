@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { StripePricingTable } from '@/components/payment/StripePricingTable';
 import { CoverageSection } from '@/components/pricing/CoverageSection';
 import { BenefitsGrid } from '@/components/pricing/BenefitsGrid';

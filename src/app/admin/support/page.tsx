@@ -24,9 +24,9 @@ import {
   ExternalLink,
   RefreshCw
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { useAdminAuth } from '@/components/admin/providers/AdminAuthProvider'
 import { cn } from '@/lib/utils'
 

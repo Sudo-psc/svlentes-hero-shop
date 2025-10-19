@@ -2,8 +2,8 @@
 
 import React from 'react'
 import { AlertCircle, User, Stethoscope, Phone, Mail } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export function MedicalInfoBanner() {
   return (

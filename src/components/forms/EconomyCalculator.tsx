@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Checkbox } from '@/components/ui/Checkbox'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Calculator, Plus, Minus, CheckCircle, ArrowRight } from 'lucide-react'
 import { BUSINESS_CONSTANTS } from '@/lib/constants'
 

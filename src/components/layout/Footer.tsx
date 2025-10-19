@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { LogoFooter } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { LogoFooter } from '@/components/ui/logo'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
 import { generateWhatsAppLink } from '@/lib/utils'
 import { doctorInfo, clinicInfo } from '@/data/doctor-info'

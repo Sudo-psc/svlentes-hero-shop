@@ -20,15 +20,15 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 
-import { Button } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/Checkbox'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,

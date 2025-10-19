@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { trackEvent, trackSubscriptionEvent } from '@/lib/analytics'
 import { trackPaymentCompleted } from '@/lib/conversion-tracking'
 

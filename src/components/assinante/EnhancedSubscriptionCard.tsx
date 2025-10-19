@@ -17,7 +17,7 @@ import {
   Edit,
   RefreshCcw
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateLong, formatRelativeTime } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel, type SubscriptionStatus } from '@/lib/subscription-helpers'
 import { cn } from '@/lib/utils'

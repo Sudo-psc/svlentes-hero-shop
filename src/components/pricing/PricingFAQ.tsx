@@ -6,7 +6,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/Accordion';
+} from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
 
 interface FAQItem {
