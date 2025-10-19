@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { langchainSupportProcessor } from '@/lib/langchain-support-processor'
+import { enhancedLangChainProcessor } from '@/lib/langchain-enhanced-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
@@ -816,11 +816,23 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       lastIntent: userHistory.lastIntent
     }
 
-    // Process message with LangChain
+    // Process message with Enhanced LangChain
     const langchainTimer = logger.startTimer()
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await enhancedLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: authStatus.sessionToken || `temp_${Date.now()}_${customerPhone.substring(-4)}`,
+        userId: authStatus.userId,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory.map(msg => msg.content),
+        previousTickets: userHistory.tickets,
+        systemState: {
+          currentTime: new Date(),
+          businessHours: this.isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
     const langchainDuration = langchainTimer()
 
