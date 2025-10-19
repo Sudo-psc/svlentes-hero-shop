@@ -6,7 +6,7 @@
  */
 
 import { BaseMemory, InputValues, OutputValues } from '@langchain/core/memory'
-import { ChatMessageHistory } from '@langchain/core/chat_history'
+import { BaseChatMessageHistory } from '@langchain/core/chat_history'
 import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages'
 import { getLangSmithConfig, getLangSmithRunConfig } from './langsmith-config'
 import { logger, LogCategory } from './logger'

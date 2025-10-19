@@ -71,89 +71,123 @@ export default function PlanosPage() {
       </section>
 
       {/* Location Toggle Section */}
-      <section className="py-12 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-16 bg-gradient-to-b from-slate-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
-              Escolha Como Deseja Assinar
-            </h2>
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Escolha Como Deseja Assinar
+              </h2>
+              <p className="text-lg text-gray-600">
+                Escolha a modalidade que melhor se adapta às suas necessidades
+              </p>
+            </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              {/* Planos Online Card */}
-              <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-cyan-500 relative">
-                <div className="absolute top-0 right-0 bg-cyan-500 text-white px-4 py-1 rounded-bl-lg rounded-tr-lg text-sm font-semibold">
-                  Você está aqui
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Planos Online Card - Enhanced */}
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity blur"></div>
+                <div className="relative bg-white rounded-2xl p-8 shadow-xl border border-cyan-100">
+                  <div className="absolute top-0 right-0">
+                    <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white px-6 py-2 rounded-bl-2xl rounded-tr-2xl text-sm font-bold shadow-lg">
+                      ✨ Você está aqui
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center w-16 h-16 bg-cyan-100 rounded-full mb-6 mx-auto">
+                    <svg className="w-8 h-8 text-cyan-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">
+                    Planos Online
+                  </h3>
+
+                  <p className="text-gray-600 mb-6 text-center leading-relaxed">
+                    Assine pela internet e receba suas lentes em casa com entrega para todo o Brasil.
+                  </p>
+
+                  <ul className="space-y-4 mb-6">
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-700 font-medium">Frete grátis para todo o Brasil</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-700 font-medium">Pagamento seguro pelo Stripe</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-700 font-medium">Entrega mensal programada</span>
+                    </li>
+                  </ul>
                 </div>
-                <div className="text-cyan-600 mb-4">
-                  <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Planos Online</h3>
-                <p className="text-gray-600 mb-4">
-                  Assine pela internet e receba suas lentes em casa. Entrega para todo o Brasil.
-                </p>
-                <ul className="text-left text-sm text-gray-600 mb-4 space-y-2">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Frete grátis para todo o Brasil
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Pagamento seguro pelo Stripe
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Entrega mensal programada
-                  </li>
-                </ul>
               </div>
 
-              {/* Planos Presenciais Card */}
-              <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-gray-200 hover:border-gray-300 transition-colors">
-                <div className="text-gray-500 mb-4">
-                  <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+              {/* Planos Presenciais Card - Enhanced */}
+              <div className="group bg-white rounded-2xl p-8 shadow-xl border-2 border-gray-200 hover:border-cyan-300 transition-all duration-300 hover:shadow-2xl">
+                <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-6 mx-auto">
+                  <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Planos Presenciais</h3>
-                <p className="text-gray-600 mb-4">
+
+                <h3 className="text-2xl font-bold text-gray-900 mb-3 text-center">
+                  Planos Presenciais
+                </h3>
+
+                <p className="text-gray-600 mb-6 text-center leading-relaxed">
                   Atendimento presencial em Caratinga/MG com consulta Dr. Philipe Saraiva.
                 </p>
-                <ul className="text-left text-sm text-gray-600 mb-4 space-y-2">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Consulta médica inclusa
+
+                <ul className="space-y-4 mb-6">
+                  <li className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mt-0.5">
+                      <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium">Consulta médica inclusa</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Retire na clínica
+                  <li className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mt-0.5">
+                      <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium">Retire na clínica</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Acompanhamento presencial
+                  <li className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center mt-0.5">
+                      <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium">Acompanhamento presencial</span>
                   </li>
                 </ul>
+
                 <a
                   href="https://saraivavision.com.br/planos"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full bg-gray-900 text-white py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors font-semibold"
+                  className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white py-4 px-6 rounded-xl hover:from-gray-800 hover:to-black transition-all duration-300 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   Ver Planos Presenciais
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
