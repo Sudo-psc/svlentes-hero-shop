@@ -112,6 +112,9 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      actions: write
+      contents: read
     steps:
       - name: Wait for release to be created
         run: sleep 10
