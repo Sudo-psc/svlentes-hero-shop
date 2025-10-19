@@ -96,10 +96,58 @@ src/
 
 ## 🔧 Scripts Disponíveis
 
+### Desenvolvimento
 - `npm run dev` - Executa em modo desenvolvimento
 - `npm run build` - Gera build de produção
 - `npm run start` - Executa build de produção
 - `npm run lint` - Executa linting
+
+### Testes
+- `npm run test` - Executa testes unitários
+- `npm run test:e2e` - Executa testes E2E
+- `npm run test:coverage` - Gera relatório de cobertura
+
+### Versionamento e Release
+- `npm run commit` - Assistente interativo para commits (Commitizen)
+- `npm run release` - Cria release automaticamente (executado via CI/CD)
+- `npm run release:dry` - Simula release sem publicar
+
+> 📚 **Guia de Versionamento:** Consulte [VERSIONING.md](./VERSIONING.md) para detalhes completos sobre conventional commits, releases automáticas e deploy
+
+## 🤝 Como Contribuir
+
+Este projeto utiliza **Conventional Commits** para versionamento automático.
+
+### Fazendo Commits
+
+Use o assistente interativo (recomendado):
+```bash
+npm run commit
+```
+
+Ou siga o formato manualmente:
+```bash
+git commit -m "feat: adiciona nova funcionalidade"
+git commit -m "fix: corrige bug no formulário"
+git commit -m "docs: atualiza documentação"
+```
+
+### Tipos de Commit
+
+- `feat:` - Nova funcionalidade (incrementa versão MINOR)
+- `fix:` - Correção de bug (incrementa versão PATCH)
+- `docs:` - Apenas documentação (sem release)
+- `style:` - Formatação de código (sem release)
+- `refactor:` - Refatoração de código (incrementa PATCH)
+- `perf:` - Melhoria de performance (incrementa PATCH)
+- `test:` - Adição/correção de testes (sem release)
+- `build:` - Mudanças no build (incrementa PATCH)
+- `ci:` - Mudanças em CI/CD (sem release)
+- `chore:` - Outras mudanças (sem release)
+
+Breaking changes: Use `feat!:` ou adicione `BREAKING CHANGE:` no corpo do commit para incrementar versão MAJOR.
+
+> 📖 **Documentação completa:** [VERSIONING.md](./VERSIONING.md) e [docs/RELEASE_MANAGEMENT.md](./docs/RELEASE_MANAGEMENT.md)
 
 ## 📝 Especificações
 
