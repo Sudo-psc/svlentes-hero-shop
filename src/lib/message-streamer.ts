@@ -36,8 +36,8 @@ export function chunkMessage(text: string, config: StreamConfig = DEFAULT_STREAM
     }
 
     // Find the best break point (paragraph > sentence > word)
-    let chunkEnd = config.maxChunkSize
-    let breakPoint = findBestBreakPoint(remainingText, chunkEnd)
+    const chunkEnd = config.maxChunkSize
+    const breakPoint = findBestBreakPoint(remainingText, chunkEnd)
 
     // Extract chunk and update remaining text
     const chunk = remainingText.substring(0, breakPoint).trim()

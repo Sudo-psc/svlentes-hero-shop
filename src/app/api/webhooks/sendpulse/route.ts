@@ -17,12 +17,30 @@ import {
 } from '@/lib/whatsapp-conversation-service'
 import { logger, LogCategory } from '@/lib/logger'
 import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter'
+// TODO: Re-enable chatbot authentication when chatbot-auth-handler is implemented
+// import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
+// import {
+//   viewSubscriptionCommand,
+//   nextDeliveryCommand
+// } from '@/lib/subscription-management-commands'
 // TODO: Re-enable when message-status-tracker and debug-utilities are implemented
 // import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
 // import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
 
 // C6: Zod validation schemas for webhook payloads (500KB limit)
 const MAX_PAYLOAD_SIZE = 500 * 1024 // 500KB
+
+// Message status enum (simplified without message-status-tracker)
+enum MessageStatus {
+  QUEUED = 'QUEUED',
+  SENDING = 'SENDING',
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  READ = 'READ',
+  FAILED = 'FAILED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED'
+}
 
 const SendPulseNativeEventSchema = z.object({
   title: z.string(),
@@ -412,6 +430,9 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
     //   phone: customerPhone,
     //   contentLength: messageContent.length
     // })
+
+    // TODO: Re-enable authentication and menu handling when chatbot-auth-handler is implemented
+    // Currently going straight to LangChain for all messages
 
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(contact, customerPhone)
