@@ -816,41 +816,80 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       lastIntent: userHistory.lastIntent
     }
 
-    // Process message with Enhanced LangChain
-    const langchainTimer = logger.startTimer()
-    const processingResult = await enhancedLangChainProcessor.processMessage(
-      messageContent,
-      {
-        sessionId: authStatus.sessionToken || `temp_${Date.now()}_${customerPhone.substring(-4)}`,
-        userId: authStatus.userId,
-        userProfile: userProfile,
-        conversationHistory: conversationHistory.map(msg => msg.content),
-        previousTickets: userHistory.tickets,
-        systemState: {
-          currentTime: new Date(),
-          businessHours: this.isBusinessHours(),
-          emergencyContacts: true,
-          maintenanceMode: false
-        }
-      }
-    )
-    const langchainDuration = langchainTimer()
+    // Helper function to check business hours
+  const isBusinessHours = () => {
+    const now = new Date()
+    const hours = now.getHours()
+    const day = now.getDay()
 
-    // Log intent detection
+    // Monday-Friday, 8am-6pm
+    return day >= 1 && day <= 5 && hours >= 8 && hours < 18
+  }
+
+  // Process message with Enhanced LangChain
+  const langchainTimer = logger.startTimer()
+  const processingResult = await enhancedLangChainProcessor.processMessage(
+    messageContent,
+    {
+      sessionId: authStatus.sessionToken || `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+      userId: authStatus.userId,
+      userProfile: userProfile,
+      conversationHistory: conversationHistory.map(msg => msg.content),
+      previousTickets: userHistory.tickets,
+      systemState: {
+        currentTime: new Date(),
+        businessHours: isBusinessHours(),
+        emergencyContacts: true,
+        maintenanceMode: false
+      }
+    }
+  )
+  const langchainDuration = langchainTimer()
+
+    // Enhanced logging for the new processor
     logger.logWhatsAppIntentDetected(
       processingResult.intent.name,
-      processingResult.intent.confidence || 0.8,
+      processingResult.confidence,
       customerPhone,
-      { requestId, duration: langchainDuration }
+      {
+        requestId,
+        duration: langchainDuration,
+        category: processingResult.intent.category,
+        priority: processingResult.intent.priority,
+        escalationRequired: processingResult.escalationRequired,
+        memoryStored: processingResult.memoryStored,
+        tokensUsed: processingResult.tokensUsed,
+        estimatedCost: processingResult.estimatedCost
+      }
     )
 
     logger.logLangChainProcessing(
       messageId,
       processingResult.intent.name,
-      processingResult.intent.confidence || 0.8,
+      processingResult.confidence,
       langchainDuration,
-      { requestId }
+      {
+        requestId,
+        enhancedProcessor: true,
+        sessionId: authStatus.sessionToken,
+        hasMemory: processingResult.memoryStored,
+        followUpRequired: processingResult.followUpRequired
+      }
     )
+
+    // Additional LangSmith detailed logging
+    if (processingResult.memoryStored) {
+      console.log('🧠 **LangSmith Enhanced Processing Log:**')
+      console.log(`📱 Session: ${authStatus.sessionToken || 'temp_session'}`)
+      console.log(`👤 User: ${userProfile.name} (${userProfile.subscriptionStatus})`)
+      console.log(`🎯 Intent: ${processingResult.intent.name} (${processingResult.confidence})`)
+      console.log(`⚡ Priority: ${processingResult.intent.priority}`)
+      console.log(`💰 Cost: $${processingResult.estimatedCost?.toFixed(4) || 'N/A'}`)
+      console.log(`🔗 Tokens: ${processingResult.tokensUsed || 'N/A'}`)
+      console.log(`⏱️  Processing: ${langchainDuration}ms`)
+      console.log(`📊 Sentiment: ${processingResult.intent.entities.sentiment}`)
+      console.log(`🚨 Urgency: ${processingResult.intent.entities.urgency}`)
+    }
 
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('langchain_processed', {
@@ -980,9 +1019,20 @@ async function processWhatsAppMessage(message: any, metadata: any) {
     }
 
     // Process message with LangChain
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await enhancedLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory?.map(msg => msg.content) || [],
+        previousTickets: [],
+        systemState: {
+          currentTime: new Date(),
+          businessHours: isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
 
     // Store interaction
@@ -1051,9 +1101,20 @@ async function processSendPulseMessage(webhookData: any, requestId?: string) {
     }
 
     // Process message with LangChain
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await enhancedLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory?.map(msg => msg.content) || [],
+        previousTickets: [],
+        systemState: {
+          currentTime: new Date(),
+          businessHours: isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
 
     // Store interaction
