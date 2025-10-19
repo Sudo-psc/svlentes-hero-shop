@@ -6,7 +6,7 @@
  */
 
 import { BaseMemory, InputValues, OutputValues } from '@langchain/core/memory'
-import { BaseChatMessageHistory } from '@langchain/core/chat_history'
+import { BaseSimpleMessageHistory } from '@langchain/core/chat_history'
 import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages'
 import { getLangSmithConfig, getLangSmithRunConfig } from './langsmith-config'
 import { logger, LogCategory } from './logger'
@@ -65,8 +65,25 @@ export interface PersistentMemoryConfig {
 /**
  * Advanced persistent memory system for WhatsApp bot
  */
+// Simple message history class to avoid LangChain compatibility issues
+class SimpleMessageHistory {
+  private messages: (HumanMessage | AIMessage | SystemMessage)[] = []
+
+  async addMessage(message: HumanMessage | AIMessage | SystemMessage): Promise<void> {
+    this.messages.push(message)
+  }
+
+  async getMessageHistory(): Promise<(HumanMessage | AIMessage | SystemMessage)[]> {
+    return [...this.messages]
+  }
+
+  clear(): void {
+    this.messages = []
+  }
+}
+
 export class LangChainBotMemory extends BaseMemory {
-  private history: Map<string, ChatMessageHistory> = new Map()
+  private history: Map<string, SimpleMessageHistory> = new Map()
   private summaries: Map<string, ConversationSummary> = new Map()
   private config: PersistentMemoryConfig
   private langsmithConfig: any
@@ -78,7 +95,7 @@ export class LangChainBotMemory extends BaseMemory {
       maxMessages: 50,
       maxSessions: 1000,
       retentionDays: 90,
-      enableEmbeddings: true,
+      enableEmbeddings: false, // Disable to avoid complexity
       enableSummarization: true,
       compressionThreshold: 20,
       ...config
@@ -92,16 +109,19 @@ export class LangChainBotMemory extends BaseMemory {
     })
   }
 
+  // Required by BaseMemory
+  memoryKeys = ['chat_history', 'conversation_summary', 'key_topics', 'sentiment']
+
   /**
    * Load conversation history for a session
    */
-  async loadSession(sessionId: string): Promise<ChatMessageHistory> {
+  async loadSession(sessionId: string): Promise<SimpleMessageHistory> {
     try {
       if (this.history.has(sessionId)) {
         return this.history.get(sessionId)!
       }
 
-      const history = new ChatMessageHistory()
+      const history = new SimpleMessageHistory()
 
       // Load from database
       const session = await prisma.chatbotSession.findUnique({
@@ -143,7 +163,7 @@ export class LangChainBotMemory extends BaseMemory {
       })
 
       // Return empty history on error
-      const emptyHistory = new ChatMessageHistory()
+      const emptyHistory = new SimpleMessageHistory()
       this.history.set(sessionId, emptyHistory)
       return emptyHistory
     }
@@ -318,7 +338,7 @@ export class LangChainBotMemory extends BaseMemory {
       this.summaries.set(sessionId, summary)
 
       // Update history with recent messages only
-      const newHistory = new ChatMessageHistory()
+      const newHistory = new SimpleMessageHistory()
       if (summary) {
         await newHistory.addMessage(new SystemMessage(
           `Resumo anterior: ${summary.summary}\nTópicos: ${summary.keyTopics.join(', ')}`
