@@ -106,6 +106,7 @@ CATEGORIAS PRINCIPAIS:
 - DELIVERY: Entrega, frete, rastreamento, atraso, correios
 - ACCOUNT: Conta, login, senha, dados pessoais, autenticação
 - SUBSCRIPTION: Gestão de assinatura (pausar, reativar, cancelar, alterar)
+- ADDONS: Serviços adicionais, consulta extra, teleorientação, seguro, VIP
 - COMPLAINT: Reclamações, insatisfação, problemas
 - COMPLIMENT: Elogios, feedback positivo
 - EMERGENCY: Emergências médicas, problemas oculares urgentes
@@ -703,7 +704,14 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       appointment_scheduling: 'Verificar disponibilidade, oferecer datas, confirmar agendamento',
       emergency: 'ENFOQUE EM SEGURANÇA! Direcionar para atendimento médico imediato',
       complaint: 'Demonstrar empatia, ouvir atentamente, oferecer soluções',
-      compliment: 'Agradecer, reforçar positividade, solicitar feedback'
+      compliment: 'Agradecer, reforçar positividade, solicitar feedback',
+      // AddOns specific instructions
+      addons_inquiry: 'Explicar benefícios, preços e como adicionar serviços adicionais à assinatura',
+      addons_purchase: 'Guiar cliente através do processo de adicionar serviços à assinatura existente',
+      addons_medical: 'Explicar consultas extras e teleorientação médica, enfatizar benefícios',
+      addons_insurance: 'Detalhar cobertura do seguro premium, processos de sinistro',
+      addons_vip: 'Explicar benefícios VIP e atendimento prioritário',
+      addons_pricing: 'Fornecer informações claras sobre preços e economia vs serviços avulsos'
     }
 
     return instructions[intent.name as keyof typeof instructions] || 'Fornecer informação clara e útil, oferecer ajuda adicional'

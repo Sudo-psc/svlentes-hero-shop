@@ -10,10 +10,12 @@ import { FlowData, LensData, ContactData } from '@/types/subscription'
 import { CalculatorResult } from '@/types/calculator'
 import { formatCurrency } from '@/lib/calculator'
 import { useAsaasPayment } from '@/hooks/useAsaasPayment'
+import { useSearchParams } from 'next/navigation'
 
 type FlowStep = 'plan' | 'lens' | 'addons' | 'summary'
 
 export function SubscriptionFlow() {
+    const searchParams = useSearchParams()
     const [currentStep, setCurrentStep] = useState<FlowStep>('plan')
     const [flowData, setFlowData] = useState<FlowData>({
         planId: null,
@@ -25,19 +27,31 @@ export function SubscriptionFlow() {
     const [showCalculatorBanner, setShowCalculatorBanner] = useState(false)
     const { processPayment, loading, error, clearError } = useAsaasPayment()
 
-    // Carregar dados da calculadora do localStorage ao montar
+    // Carregar dados da calculadora e AddOns da URL ao montar
     useEffect(() => {
         try {
+            // Carregar dados da calculadora do localStorage
             const savedResult = localStorage.getItem('calculatorResult')
             if (savedResult) {
                 const result: CalculatorResult = JSON.parse(savedResult)
                 setCalculatorData(result)
                 setShowCalculatorBanner(true)
             }
+
+            // Carregar AddOns pré-selecionados da URL
+            const addonsParam = searchParams.get('addons')
+            if (addonsParam) {
+                const preSelectedAddOns = addonsParam.split(',').filter(Boolean)
+                setFlowData(prev => ({ ...prev, addOns: preSelectedAddOns }))
+
+                // Se já tem AddOns selecionados, começar pelo step de planos ainda
+                // mas com a indicação de que AddOns já foram escolhidos
+                console.log('AddOns pré-selecionados da URL:', preSelectedAddOns)
+            }
         } catch (error) {
-            console.error('Erro ao carregar dados da calculadora:', error)
+            console.error('Erro ao carregar dados iniciais:', error)
         }
-    }, [])
+    }, [searchParams])
 
     const steps = [
         { id: 'plan', label: 'Plano', number: 1 },
@@ -236,6 +250,7 @@ export function SubscriptionFlow() {
                         <AddOnsSelector
                             onContinue={handleAddOnsSelect}
                             onBack={() => setCurrentStep('lens')}
+                            preSelectedAddOns={flowData.addOns}
                         />
                     )}
 

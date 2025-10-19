@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { enhancedLangChainProcessor } from '@/lib/langchain-enhanced-processor'
+import { simpleLangChainProcessor } from '@/lib/simple-langchain-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
@@ -828,7 +828,7 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
 
   // Process message with Enhanced LangChain
   const langchainTimer = logger.startTimer()
-  const processingResult = await enhancedLangChainProcessor.processMessage(
+  const processingResult = await simpleLangChainProcessor.processMessage(
     messageContent,
     {
       sessionId: authStatus.sessionToken || `temp_${Date.now()}_${customerPhone.slice(-4)}`,
@@ -846,7 +846,7 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
   )
   const langchainDuration = langchainTimer()
 
-    // Enhanced logging for the new processor
+    // Enhanced logging for the new simple processor
     logger.logWhatsAppIntentDetected(
       processingResult.intent.name,
       processingResult.confidence,
@@ -857,7 +857,6 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
         category: processingResult.intent.category,
         priority: processingResult.intent.priority,
         escalationRequired: processingResult.escalationRequired,
-        memoryStored: processingResult.memoryStored,
         tokensUsed: processingResult.tokensUsed,
         estimatedCost: processingResult.estimatedCost
       }
@@ -871,25 +870,21 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       {
         requestId,
         enhancedProcessor: true,
-        sessionId: authStatus.sessionToken,
-        hasMemory: processingResult.memoryStored,
-        followUpRequired: processingResult.followUpRequired
+        sessionId: authStatus.sessionToken
       }
     )
 
-    // Additional LangSmith detailed logging
-    if (processingResult.memoryStored) {
-      console.log('🧠 **LangSmith Enhanced Processing Log:**')
-      console.log(`📱 Session: ${authStatus.sessionToken || 'temp_session'}`)
-      console.log(`👤 User: ${userProfile.name} (${userProfile.subscriptionStatus})`)
-      console.log(`🎯 Intent: ${processingResult.intent.name} (${processingResult.confidence})`)
-      console.log(`⚡ Priority: ${processingResult.intent.priority}`)
-      console.log(`💰 Cost: $${processingResult.estimatedCost?.toFixed(4) || 'N/A'}`)
-      console.log(`🔗 Tokens: ${processingResult.tokensUsed || 'N/A'}`)
-      console.log(`⏱️  Processing: ${langchainDuration}ms`)
-      console.log(`📊 Sentiment: ${processingResult.intent.entities.sentiment}`)
-      console.log(`🚨 Urgency: ${processingResult.intent.entities.urgency}`)
-    }
+    // Additional detailed logging for the simple processor
+    console.log('🚀 **Simple Enhanced LangChain Processing Log:**')
+    console.log(`📱 Session: ${authStatus.sessionToken || 'temp_session'}`)
+    console.log(`👤 User: ${userProfile.name} (${userProfile.subscriptionStatus})`)
+    console.log(`🎯 Intent: ${processingResult.intent.name} (${processingResult.confidence})`)
+    console.log(`⚡ Priority: ${processingResult.intent.priority}`)
+    console.log(`💰 Cost: $${processingResult.estimatedCost?.toFixed(4) || 'N/A'}`)
+    console.log(`🔗 Tokens: ${processingResult.tokensUsed || 'N/A'}`)
+    console.log(`⏱️  Processing: ${langchainDuration}ms`)
+    console.log(`📊 Sentiment: ${processingResult.intent.sentiment}`)
+    console.log(`🚨 Urgency: ${processingResult.intent.urgency}`)
 
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('langchain_processed', {
@@ -1019,7 +1014,7 @@ async function processWhatsAppMessage(message: any, metadata: any) {
     }
 
     // Process message with LangChain
-    const processingResult = await enhancedLangChainProcessor.processMessage(
+    const processingResult = await simpleLangChainProcessor.processMessage(
       messageContent,
       {
         sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
@@ -1101,7 +1096,7 @@ async function processSendPulseMessage(webhookData: any, requestId?: string) {
     }
 
     // Process message with LangChain
-    const processingResult = await enhancedLangChainProcessor.processMessage(
+    const processingResult = await simpleLangChainProcessor.processMessage(
       messageContent,
       {
         sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,

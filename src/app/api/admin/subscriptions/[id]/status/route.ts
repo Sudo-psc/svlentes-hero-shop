@@ -354,37 +354,20 @@ async function triggerStatusActions(
   user: any
 ): Promise<void> {
   try {
-    switch (status) {
-      case 'ACTIVE':
-        // Enviar email de boas-vindas/reactivação
-        console.log(`Assinatura ${subscription.id} reativada por ${user.email}`)
-        // TODO: Integrar com sistema de notificações
-        break
+    // Send notification to user about status change
+    const { sendSubscriptionStatusNotification } = await import('@/lib/admin-notifications')
 
-      case 'OVERDUE':
-        // Enviar notificação de cobrança
-        console.log(`Assinatura ${subscription.id} em atraso`)
-        // TODO: Integrar com sistema de cobrança
-        break
+    await sendSubscriptionStatusNotification(
+      subscription.userId,
+      subscription.id,
+      'PREVIOUS', // This would need to be tracked properly
+      status,
+      user.name
+    )
 
-      case 'SUSPENDED':
-        // Notificar sobre suspensão
-        console.log(`Assinatura ${subscription.id} suspensa: ${subscription.suspendedReason}`)
-        // TODO: Integrar com sistema de notificações
-        break
-
-      case 'CANCELLED':
-        // Enviar email de cancelamento
-        console.log(`Assinatura ${subscription.id} cancelada: ${subscription.cancelReason}`)
-        // TODO: Integrar com sistema de notificações
-        break
-
-      default:
-        // Outros status
-        break
-    }
+    console.log(`[Admin] Status update completed for subscription ${subscription.id}: ${status} by ${user.email}`)
   } catch (error) {
-    console.error('Error triggering status actions:', error)
-    // Não falhar a atualização se as ações falharem
+    console.error('[Admin] Error sending status notification:', error)
+    // Não falhar a atualização se as notificações falharem
   }
 }

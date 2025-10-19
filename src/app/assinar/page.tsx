@@ -1,4 +1,5 @@
 import { SubscriptionFlow } from '@/components/subscription/SubscriptionFlow'
+import { Suspense } from 'react'
 
 export const metadata = {
     title: 'Assinar SV Lentes - Escolha seu Plano',
@@ -7,8 +8,8 @@ export const metadata = {
 
 export default function AssinarPage() {
     return (
-        <div>
+        <Suspense fallback={<div>Carregando...</div>}>
             <SubscriptionFlow />
-        </div>
+        </Suspense>
     )
 }

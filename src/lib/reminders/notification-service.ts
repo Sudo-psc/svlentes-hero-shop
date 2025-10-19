@@ -185,25 +185,23 @@ export class NotificationService {
    */
   private async sendPush(notification: any): Promise<boolean> {
     try {
-      // TODO: Implement push notification with Firebase
-      // const { sendPushNotification } = await import('@/lib/firebase-admin')
-      
+      const { sendPushNotification } = await import('@/lib/firebase-push')
+
       const token = notification.metadata?.pushToken
       if (!token) {
         throw new Error('Push token not available')
       }
 
-      // TODO: Uncomment when sendPushNotification is implemented
-      // const result = await sendPushNotification({
-      //   token,
-      //   title: notification.subject || 'Notification',
-      //   body: notification.content,
-      //   data: notification.metadata || {},
-      // })
-      // return result.success
+      const result = await sendPushNotification({
+        token,
+        title: notification.subject || 'Notification',
+        body: notification.content,
+        data: notification.metadata || {},
+        userId: notification.userId,
+        type: 'transactional'
+      })
 
-      console.log('Push notification not yet fully integrated:', { token })
-      return false
+      return result.success
     } catch (error) {
       console.error('Push send failed:', error)
       return false

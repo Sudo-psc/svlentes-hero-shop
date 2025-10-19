@@ -605,7 +605,7 @@ export class LangChainBotMemory extends BaseMemory {
       }
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error getting memory stats', {
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
       return null
     }
@@ -621,5 +621,4 @@ export const botMemory = new LangChainBotMemory({
   compressionThreshold: 15
 })
 
-// Export types
-export type { BotMemoryEntry, ConversationSummary, PersistentMemoryConfig }
+// Export types are already declared above

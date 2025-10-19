@@ -265,6 +265,15 @@ export async function PUT(
     // Disparar notificações
     await triggerAssignmentNotifications(result.ticket, agent, user, assignData.notes)
 
+    // Enviar notificação ao cliente sobre atribuição
+    const { sendSupportTicketAssignmentNotification } = await import('@/lib/admin-notifications')
+    await sendSupportTicketAssignmentNotification(
+      result.ticket.user.id,
+      result.ticket.id,
+      result.ticket.ticketNumber,
+      agent.name
+    )
+
     return createSuccessResponse(
       {
         ticket: result.ticket,
