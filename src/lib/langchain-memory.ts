@@ -544,7 +544,7 @@ export class LangChainBotMemory extends BaseMemory {
       })
 
       // Clear memory cache for old sessions
-      for (const [sessionId, history] of this.history) {
+      for (const sessionId of Array.from(this.history.keys())) {
         const session = await prisma.chatbotSession.findUnique({
           where: { sessionToken: sessionId }
         })
