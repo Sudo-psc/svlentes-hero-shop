@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check, Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { pricingPlans } from '@/data/pricing-plans'
+import { trackPlanSelection } from '@/lib/conversion-tracking'
 
 interface PlanSelectorProps {
     onSelectPlan: (planId: string, billingCycle: 'monthly' | 'annual') => void
@@ -17,6 +18,19 @@ export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps)
     const handleSelectPlan = (planId: string) => {
         setSelectedPlan(planId)
         onSelectPlan(planId, billingCycle)
+
+        const plan = pricingPlans.find(item => item.id === planId)
+        if (plan) {
+            const price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceAnnual
+            trackPlanSelection({
+                planId,
+                planName: plan.name,
+                billingInterval: billingCycle,
+                price,
+                planTier: plan.id,
+                quantity: 1,
+            })
+        }
     }
 
     return (

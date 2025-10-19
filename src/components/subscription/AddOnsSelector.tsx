@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Check, Plus, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { trackEvent } from '@/lib/analytics'
 
 interface AddOn {
     id: string
@@ -69,11 +70,21 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
     const [selectedAddOns, setSelectedAddOns] = useState<string[]>([])
 
     const toggleAddOn = (addOnId: string) => {
+        const addOn = availableAddOns.find(item => item.id === addOnId)
+
         setSelectedAddOns(prev =>
             prev.includes(addOnId)
                 ? prev.filter(id => id !== addOnId)
                 : [...prev, addOnId]
         )
+
+        if (addOn && !selectedAddOns.includes(addOnId)) {
+            trackEvent('addon_selected', {
+                addon_type: addOn.id,
+                addon_name: addOn.name,
+                addon_price: addOn.price,
+            })
+        }
     }
 
     const calculateTotal = () => {

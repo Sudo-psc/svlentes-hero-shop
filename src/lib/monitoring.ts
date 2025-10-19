@@ -36,6 +36,7 @@ class MonitoringService {
     private config: AlertConfig
     private errorCount: number = 0
     private lastErrorReset: number = Date.now()
+    private lastConversionRates: Record<string, number> = {}
 
     constructor(config: AlertConfig) {
         this.config = config
@@ -132,6 +133,30 @@ class MonitoringService {
             type: 'user_action',
             ...additionalData
         })
+    }
+
+    reportConversionRate(stage: string, rate: number, metadata?: Record<string, any>) {
+        this.reportPerformance(`conversion_rate_${stage}`, rate, {
+            stage,
+            ...metadata,
+        })
+
+        const previousRate = this.lastConversionRates[stage]
+        this.lastConversionRates[stage] = rate
+
+        if (previousRate !== undefined && previousRate > 0) {
+            const dropPercentage = ((previousRate - rate) / previousRate) * 100
+
+            if (dropPercentage > 20) {
+                this.sendAlert('conversion_rate_drop', {
+                    stage,
+                    previousRate,
+                    currentRate: rate,
+                    dropPercentage,
+                    metadata,
+                })
+            }
+        }
     }
 
     // Private methods
@@ -324,6 +349,10 @@ export const trackConversion = (type: string, value?: number, additionalData?: R
 
 export const trackUserAction = (action: string, additionalData?: Record<string, any>) => {
     monitoring.trackUserAction(action, additionalData)
+}
+
+export const reportConversionRate = (stage: string, rate: number, metadata?: Record<string, any>) => {
+    monitoring.reportConversionRate(stage, rate, metadata)
 }
 
 // Initialize Web Vitals monitoring on client side

@@ -72,19 +72,23 @@ export async function handleSubscription(data: SubscriptionData) {
 
         // Registrar evento de analytics e conversão
         const planPrice = getPlanPrice(data.planId, data.billingInterval)
-        const planTier = data.planId.includes('premium') ? 'premium' : data.planId.includes('vip') ? 'vip' : 'basic'
+        const planName = getPlanName(data.planId)
+        const planTier = getPlanTier(data.planId)
 
         trackPlanSelection(data.planId, data.billingInterval)
 
         trackCheckoutStarted({
             planId: data.planId,
+            planName,
             value: planPrice,
+            billingInterval: data.billingInterval,
+            paymentMethod: checkoutData.billingType,
         })
 
         // Track subscription event for enhanced ecommerce
         trackSubscriptionEvent('begin_checkout', {
             item_id: data.planId,
-            item_name: `Plano ${data.planId}`,
+            item_name: planName,
             item_category: 'subscription',
             price: planPrice,
             currency: 'BRL',
@@ -182,12 +186,29 @@ function getPlanPrice(planId: string, billingInterval: 'monthly' | 'annual'): nu
 // Função auxiliar para obter nome do plano
 function getPlanName(planId: string): string {
     const names = {
+        basico: 'Plano Básico',
+        padrao: 'Plano Padrão',
+        'padrão': 'Plano Padrão',
         basic: 'Plano Básico',
         premium: 'Plano Premium',
         vip: 'Plano VIP',
     }
 
     return names[planId as keyof typeof names] || planId
+}
+
+function getPlanTier(planId: string): string {
+    const normalized = planId.toLowerCase()
+
+    if (normalized.includes('vip')) {
+        return 'vip'
+    }
+
+    if (normalized.includes('premium') || normalized.includes('padrao') || normalized.includes('padrão')) {
+        return 'premium'
+    }
+
+    return 'basic'
 }
 
 // Função auxiliar para gerar URL do WhatsApp
@@ -213,9 +234,21 @@ function generateWhatsAppUrl(data: {
 // Função para registrar seleção de plano (analytics)
 export function trackPlanSelection(planId: string, billingInterval: 'monthly' | 'annual') {
     const planPrice = getPlanPrice(planId, billingInterval)
+    const planName = getPlanName(planId)
+    const planTier = getPlanTier(planId)
+
+    trackPlanSelectionConversion({
+        planId,
+        planName,
+        billingInterval,
+        price: planPrice,
+        planTier,
+        quantity: 1,
+    })
+
     trackSubscriptionEvent('view_item', {
         item_id: planId,
-        item_name: `Plano ${planId}`,
+        item_name: planName,
         item_category: 'subscription',
         price: planPrice,
         currency: 'BRL',

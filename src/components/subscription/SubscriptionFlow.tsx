@@ -10,6 +10,9 @@ import { FlowData, LensData, ContactData, PaymentRequest } from '@/types/subscri
 import { encryptPrescription } from '@/lib/encryption'
 import { CalculatorResult } from '@/types/calculator'
 import { formatCurrency } from '@/lib/calculator'
+import { pricingPlans } from '@/data/pricing-plans'
+import { trackCheckoutStarted, progressFunnelStage } from '@/lib/conversion-tracking'
+import { trackProductListView, trackProductPageView, trackPaymentFailureEvent, trackCheckoutCompletedEvent } from '@/lib/analytics'
 
 type FlowStep = 'plan' | 'lens' | 'addons' | 'summary'
 
@@ -25,6 +28,27 @@ export function SubscriptionFlow() {
     })
     const [calculatorData, setCalculatorData] = useState<CalculatorResult | null>(null)
     const [showCalculatorBanner, setShowCalculatorBanner] = useState(false)
+
+    useEffect(() => {
+        trackProductListView(
+            'subscription_flow_plans',
+            'Fluxo de Assinatura',
+            pricingPlans.map(plan => ({
+                item_id: plan.id,
+                item_name: plan.name,
+                item_category: 'subscription',
+                price: plan.priceMonthly,
+            }))
+        )
+
+        trackProductPageView({
+            item_id: 'subscription_flow',
+            item_name: 'Fluxo de Assinatura',
+            item_category: 'subscription',
+        })
+
+        progressFunnelStage('pricing_viewed')
+    }, [])
 
     // Carregar dados da calculadora do localStorage ao montar
     useEffect(() => {
@@ -67,6 +91,27 @@ export function SubscriptionFlow() {
     const handleConfirm = async (contactData: ContactData) => {
         setLoading(true)
         setError(null)
+
+        if (!flowData.planId) {
+            setLoading(false)
+            return
+        }
+
+        const selectedPlan = pricingPlans.find(plan => plan.id === flowData.planId)
+        const planName = selectedPlan?.name || flowData.planId
+        const planPrice = selectedPlan
+            ? flowData.billingCycle === 'monthly'
+                ? selectedPlan.priceMonthly
+                : selectedPlan.priceAnnual
+            : 0
+
+        trackCheckoutStarted({
+            planId: flowData.planId,
+            planName,
+            value: planPrice,
+            billingInterval: flowData.billingCycle,
+            paymentMethod: contactData.billingType,
+        })
 
         try {
             // Criptografar dados médicos sensíveis (prescrição) antes de enviar
@@ -114,10 +159,28 @@ export function SubscriptionFlow() {
             const data = await response.json()
 
             if (data.invoiceUrl) {
+                trackCheckoutCompletedEvent({
+                    plan_id: flowData.planId,
+                    plan_name: planName,
+                    value: planPrice,
+                    billing_interval: flowData.billingCycle,
+                    transaction_id: data.subscriptionId || data.paymentId || data.customerId,
+                    payment_method: contactData.billingType,
+                })
+
                 // Limpar dados da calculadora do localStorage após sucesso
                 localStorage.removeItem('calculatorResult')
                 window.location.href = data.invoiceUrl
             } else {
+                trackCheckoutCompletedEvent({
+                    plan_id: flowData.planId,
+                    plan_name: planName,
+                    value: planPrice,
+                    billing_interval: flowData.billingCycle,
+                    transaction_id: data.subscriptionId || data.paymentId || data.customerId,
+                    payment_method: contactData.billingType,
+                })
+
                 localStorage.removeItem('calculatorResult')
                 window.location.href = '/agendar-consulta'
             }
@@ -125,6 +188,15 @@ export function SubscriptionFlow() {
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
             setError(`Erro ao processar pagamento: ${errorMessage}`)
             console.error('Erro ao confirmar pedido:', error)
+
+            trackPaymentFailureEvent({
+                plan_id: flowData.planId,
+                plan_name: planName,
+                reason: errorMessage,
+                step: 'payment',
+                payment_method: contactData.billingType,
+                value: planPrice,
+            })
         } finally {
             setLoading(false)
         }

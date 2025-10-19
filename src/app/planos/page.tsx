@@ -7,11 +7,29 @@ import { CoverageSection } from '@/components/pricing/CoverageSection';
 import { BenefitsGrid } from '@/components/pricing/BenefitsGrid';
 import { PricingFAQ } from '@/components/pricing/PricingFAQ';
 import { pricingPlans, serviceBenefits, coverageInfo, pricingFAQ } from '@/data/pricing-plans';
+import { trackProductListView, trackProductPageView } from '@/lib/analytics';
 
 export default function PlanosPage() {
   // Set page metadata dynamically using Head or next/head for client components
   React.useEffect(() => {
     document.title = 'Planos de Assinatura de Lentes de Contato | SV Lentes';
+
+    trackProductListView(
+      'planos_page_plans',
+      'Página de Planos',
+      pricingPlans.map((plan) => ({
+        item_id: plan.id,
+        item_name: plan.name,
+        item_category: 'subscription',
+        price: plan.priceMonthly,
+      }))
+    );
+
+    trackProductPageView({
+      item_id: 'planos_page',
+      item_name: 'Planos SV Lentes',
+      item_category: 'subscription',
+    });
   }, []);
   const handleSaibaMais = (planId: string) => {
     // Scroll to FAQ or open modal with plan details

@@ -53,9 +53,11 @@ export default function SuccessPage() {
                 // Track successful conversion
                 trackPaymentCompleted({
                     transactionId: sessionId,
-                    planId: data.session.subscription?.id || 'unknown',
+                    planId: data.session.subscription?.id || 'subscription_success',
+                    planName: data.session.subscription?.id || 'Assinatura SV Lentes',
                     value: data.session.amount_total / 100,
                     currency: 'BRL',
+                    billingInterval: 'monthly',
                     subscriptionId: data.session.subscription?.id,
                 })
             } else {

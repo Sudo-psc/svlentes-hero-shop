@@ -1,7 +1,17 @@
 // Conversion Tracking and Funnel Analytics
 // Implements lead capture, plan selection, and abandonment tracking
 
-import { trackEvent, trackConversionFunnel, setUserProperties } from './analytics'
+import {
+    trackEvent,
+    trackConversionFunnel,
+    setUserProperties,
+    trackAddToCartEvent,
+    trackCheckoutStartedEvent,
+    trackCheckoutCompletedEvent,
+    trackConversionRateEvent,
+    trackSubscriptionEvent,
+} from './analytics'
+import { reportConversionRate } from './monitoring'
 
 // Conversion funnel stages based on the design document
 export type FunnelStage =
@@ -59,6 +69,162 @@ interface UserJourneyState {
 
 // Session storage key for user journey
 const JOURNEY_STORAGE_KEY = 'svlentes_user_journey'
+const FUNNEL_STATS_STORAGE_KEY = 'svlentes_funnel_stats'
+
+type StageConversionRates = Record<
+    FunnelStage,
+    {
+        fromStart: number
+        fromPrevious: number
+    }
+>
+
+interface FunnelStatistics {
+    totalSessions: number
+    stageCounts: Record<FunnelStage, number>
+    lastRates: Partial<Record<FunnelStage, { fromStart: number; fromPrevious: number }>>
+    lastUpdated: string | null
+}
+
+const FUNNEL_STAGE_ORDER: FunnelStage[] = [
+    'page_view',
+    'hero_engagement',
+    'lead_capture',
+    'calculator_used',
+    'pricing_viewed',
+    'plan_selected',
+    'checkout_started',
+    'payment_completed',
+    'consultation_booked',
+]
+
+function createDefaultFunnelStats(): FunnelStatistics {
+    const stageCounts = FUNNEL_STAGE_ORDER.reduce((acc, stage) => {
+        acc[stage] = 0
+        return acc
+    }, {} as Record<FunnelStage, number>)
+
+    return {
+        totalSessions: 0,
+        stageCounts,
+        lastRates: {},
+        lastUpdated: null,
+    }
+}
+
+function loadFunnelStats(): FunnelStatistics {
+    if (typeof window === 'undefined') {
+        return createDefaultFunnelStats()
+    }
+
+    try {
+        const stored = localStorage.getItem(FUNNEL_STATS_STORAGE_KEY)
+        if (!stored) {
+            return createDefaultFunnelStats()
+        }
+
+        const parsed = JSON.parse(stored) as FunnelStatistics
+        const stageCounts = { ...createDefaultFunnelStats().stageCounts, ...parsed.stageCounts }
+
+        return {
+            totalSessions: parsed.totalSessions,
+            stageCounts,
+            lastRates: parsed.lastRates || {},
+            lastUpdated: parsed.lastUpdated || null,
+        }
+    } catch {
+        return createDefaultFunnelStats()
+    }
+}
+
+function saveFunnelStats(stats: FunnelStatistics) {
+    if (typeof window === 'undefined') return
+
+    try {
+        localStorage.setItem(FUNNEL_STATS_STORAGE_KEY, JSON.stringify(stats))
+    } catch (error) {
+        console.warn('Failed to persist funnel statistics:', error)
+    }
+}
+
+function calculateConversionRates(stats: FunnelStatistics): StageConversionRates {
+    const baseCount = stats.stageCounts.page_view || stats.totalSessions || 1
+    const rates = {} as StageConversionRates
+    let previousCount = baseCount
+
+    FUNNEL_STAGE_ORDER.forEach(stage => {
+        const stageCount = stats.stageCounts[stage] || 0
+        const fromStart = baseCount > 0 ? (stageCount / baseCount) * 100 : 0
+        const fromPrevious = previousCount > 0 ? (stageCount / previousCount) * 100 : 0
+
+        rates[stage] = {
+            fromStart,
+            fromPrevious,
+        }
+
+        previousCount = stageCount || previousCount
+    })
+
+    return rates
+}
+
+function roundMetric(value: number): number {
+    return Number.isFinite(value) ? Number(value.toFixed(2)) : 0
+}
+
+function calculateDrop(previousRate: number | undefined, currentRate: number): number {
+    if (!previousRate || previousRate <= 0) {
+        return 0
+    }
+
+    const drop = ((previousRate - currentRate) / previousRate) * 100
+    return drop > 0 ? drop : 0
+}
+
+function updateFunnelStageStatistics(stage: FunnelStage) {
+    if (typeof window === 'undefined') return
+
+    const stats = loadFunnelStats()
+    const previousRates = stats.lastRates || {}
+
+    if (stage === 'page_view') {
+        stats.totalSessions += 1
+    }
+
+    stats.stageCounts[stage] = (stats.stageCounts[stage] || 0) + 1
+
+    const rates = calculateConversionRates(stats)
+    const stageRates = rates[stage]
+    const previousStageRates = previousRates[stage]
+    const dropPercentage = calculateDrop(previousStageRates?.fromPrevious, stageRates.fromPrevious)
+
+    trackConversionRateEvent({
+        stage,
+        rate_from_previous: roundMetric(stageRates.fromPrevious),
+        rate_from_start: roundMetric(stageRates.fromStart),
+        drop_percentage: roundMetric(dropPercentage),
+        sample_size: stats.stageCounts[stage],
+    })
+
+    reportConversionRate(stage, roundMetric(stageRates.fromPrevious), {
+        rateFromStart: roundMetric(stageRates.fromStart),
+        sampleSize: stats.stageCounts[stage],
+        dropPercentage: roundMetric(dropPercentage),
+        previousRate: previousStageRates?.fromPrevious ?? null,
+    })
+
+    const nextLastRates: FunnelStatistics['lastRates'] = {}
+    FUNNEL_STAGE_ORDER.forEach(key => {
+        nextLastRates[key] = {
+            fromStart: roundMetric(rates[key].fromStart),
+            fromPrevious: roundMetric(rates[key].fromPrevious),
+        }
+    })
+
+    stats.lastRates = nextLastRates
+    stats.lastUpdated = new Date().toISOString()
+    saveFunnelStats(stats)
+}
 
 // Initialize user journey tracking
 export function initializeUserJourney(): string {
@@ -85,6 +251,8 @@ export function initializeUserJourney(): string {
         subscription_status: 'none',
         acquisition_source: getAcquisitionSource(),
     })
+
+    updateFunnelStageStatistics('page_view')
 
     return sessionId
 }
@@ -129,6 +297,8 @@ export function progressFunnelStage(
 
     // Update user properties based on stage
     updateUserPropertiesForStage(stage, updatedState)
+
+    updateFunnelStageStatistics(stage)
 }
 
 // Track abandonment at specific points
@@ -228,9 +398,11 @@ export function trackLeadCapture(leadData: {
 // Plan selection tracking
 export function trackPlanSelection(planData: {
     planId: string
+    planName: string
     billingInterval: 'monthly' | 'annual'
     price: number
-    planTier: 'basic' | 'premium' | 'vip'
+    planTier: string
+    quantity?: number
 }) {
     progressFunnelStage('plan_selected', {
         selectedPlan: planData,
@@ -238,10 +410,18 @@ export function trackPlanSelection(planData: {
     })
 
     trackEvent('plan_selected', {
-        plan_name: planData.planId,
+        plan_name: planData.planName,
         price: planData.price,
         billing_interval: planData.billingInterval,
         plan_tier: planData.planTier,
+    })
+
+    trackAddToCartEvent({
+        item_id: planData.planId,
+        item_name: planData.planName,
+        price: planData.price,
+        quantity: planData.quantity ?? 1,
+        billing_interval: planData.billingInterval,
     })
 
     // Update user properties
@@ -273,16 +453,20 @@ export function trackCalculatorUsage(calculatorData: {
 // Checkout tracking
 export function trackCheckoutStarted(checkoutData: {
     planId: string
+    planName: string
     value: number
+    billingInterval: 'monthly' | 'annual'
+    paymentMethod?: string
     sessionId?: string
 }) {
     progressFunnelStage('checkout_started', { value: checkoutData.value })
 
-    trackEvent('plan_selected', {
-        plan_name: checkoutData.planId,
-        price: checkoutData.value,
-        billing_interval: 'monthly', // Could be determined from plan
-        plan_tier: 'basic', // Could be determined from plan
+    trackCheckoutStartedEvent({
+        plan_id: checkoutData.planId,
+        plan_name: checkoutData.planName,
+        value: checkoutData.value,
+        billing_interval: checkoutData.billingInterval,
+        payment_method: checkoutData.paymentMethod,
     })
 }
 
@@ -290,18 +474,41 @@ export function trackCheckoutStarted(checkoutData: {
 export function trackPaymentCompleted(paymentData: {
     transactionId: string
     planId: string
+    planName?: string
     value: number
     currency: string
+    billingInterval: 'monthly' | 'annual'
     subscriptionId?: string
+    paymentMethod?: string
 }) {
     progressFunnelStage('payment_completed', { value: paymentData.value })
 
     trackEvent('subscription_started', {
         plan_id: paymentData.planId,
         value: paymentData.value,
-        currency: 'BRL',
-        billing_interval: 'monthly', // Could be determined from plan
+        currency: paymentData.currency as 'BRL',
+        billing_interval: paymentData.billingInterval,
         transaction_id: paymentData.transactionId,
+    })
+
+    trackCheckoutCompletedEvent({
+        plan_id: paymentData.planId,
+        plan_name: paymentData.planName,
+        value: paymentData.value,
+        billing_interval: paymentData.billingInterval,
+        transaction_id: paymentData.transactionId,
+        payment_method: paymentData.paymentMethod,
+    })
+
+    trackSubscriptionEvent('purchase', {
+        item_id: paymentData.planId,
+        item_name: paymentData.planName || paymentData.planId,
+        item_category: 'subscription',
+        price: paymentData.value,
+        currency: paymentData.currency as 'BRL',
+        billing_interval: paymentData.billingInterval,
+        transaction_id: paymentData.transactionId,
+        subscription_id: paymentData.subscriptionId,
     })
 
     // Update user properties for successful conversion

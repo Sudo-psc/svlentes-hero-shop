@@ -73,7 +73,7 @@ export interface CustomEvents {
         plan_name: string;
         price: number;
         billing_interval: 'monthly' | 'annual';
-        plan_tier: 'basic' | 'premium' | 'vip';
+        plan_tier: string;
     };
     how_it_works_tab: {
         tab: 'mensal' | 'anual';
@@ -85,9 +85,54 @@ export interface CustomEvents {
         section_position: number;
     };
     addon_selected: {
-        addon_type: 'consulta' | 'teleorientacao' | 'seguro' | 'vip';
+        addon_type: string;
         addon_name: string;
         addon_price?: number;
+    };
+
+    // Ecommerce Funnel Events
+    product_page_view: {
+        item_id: string;
+        item_name: string;
+        item_category: string;
+        price?: number;
+    };
+    add_to_cart: {
+        item_id: string;
+        item_name: string;
+        price: number;
+        quantity: number;
+        billing_interval: 'monthly' | 'annual';
+    };
+    checkout_started: {
+        plan_id: string;
+        plan_name: string;
+        value: number;
+        billing_interval: 'monthly' | 'annual';
+        payment_method?: string;
+    };
+    payment_failure: {
+        plan_id: string;
+        plan_name?: string;
+        reason: string;
+        step: string;
+        payment_method?: string;
+        value?: number;
+    };
+    checkout_completed: {
+        plan_id: string;
+        plan_name?: string;
+        value: number;
+        billing_interval: 'monthly' | 'annual';
+        transaction_id?: string;
+        payment_method?: string;
+    };
+    conversion_rate_update: {
+        stage: string;
+        rate_from_previous: number;
+        rate_from_start: number;
+        drop_percentage: number;
+        sample_size: number;
     };
 
     // Conversion Events
@@ -229,6 +274,153 @@ export const trackSubscriptionEvent = (
     };
 
     window.gtag('event', action, eventData);
+};
+
+export const trackProductListView = (
+    listId: string,
+    listName: string,
+    items: Array<{
+        item_id: string;
+        item_name: string;
+        item_category: string;
+        price?: number;
+    }>
+) => {
+    if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) {
+        return;
+    }
+
+    window.gtag('event', 'view_item_list', {
+        item_list_id: listId,
+        item_list_name: listName,
+        items: items.map(item => ({
+            item_id: item.item_id,
+            item_name: item.item_name,
+            item_category: item.item_category,
+            price: item.price,
+        })),
+    });
+};
+
+export const trackProductPageView = (item: {
+    item_id: string;
+    item_name: string;
+    item_category: string;
+    price?: number;
+}) => {
+    trackEvent('product_page_view', {
+        item_id: item.item_id,
+        item_name: item.item_name,
+        item_category: item.item_category,
+        price: item.price,
+    });
+
+    trackSubscriptionEvent('view_item', {
+        item_id: item.item_id,
+        item_name: item.item_name,
+        item_category: item.item_category,
+        price: item.price ?? 0,
+        currency: 'BRL',
+        billing_interval: 'monthly',
+    });
+};
+
+export const trackAddToCartEvent = (item: {
+    item_id: string;
+    item_name: string;
+    price: number;
+    quantity?: number;
+    billing_interval: 'monthly' | 'annual';
+}) => {
+    const quantity = item.quantity ?? 1;
+
+    trackEvent('add_to_cart', {
+        item_id: item.item_id,
+        item_name: item.item_name,
+        price: item.price,
+        quantity,
+        billing_interval: item.billing_interval,
+    });
+
+    trackSubscriptionEvent('add_to_cart', {
+        item_id: item.item_id,
+        item_name: item.item_name,
+        item_category: 'subscription',
+        price: item.price,
+        currency: 'BRL',
+        billing_interval: item.billing_interval,
+    });
+};
+
+export const trackCheckoutStartedEvent = (data: {
+    plan_id: string;
+    plan_name: string;
+    value: number;
+    billing_interval: 'monthly' | 'annual';
+    payment_method?: string;
+}) => {
+    trackEvent('checkout_started', {
+        plan_id: data.plan_id,
+        plan_name: data.plan_name,
+        value: data.value,
+        billing_interval: data.billing_interval,
+        payment_method: data.payment_method,
+    });
+
+    trackSubscriptionEvent('begin_checkout', {
+        item_id: data.plan_id,
+        item_name: data.plan_name,
+        item_category: 'subscription',
+        price: data.value,
+        currency: 'BRL',
+        billing_interval: data.billing_interval,
+    });
+};
+
+export const trackCheckoutCompletedEvent = (data: {
+    plan_id: string;
+    plan_name?: string;
+    value: number;
+    billing_interval: 'monthly' | 'annual';
+    transaction_id?: string;
+    payment_method?: string;
+}) => {
+    trackEvent('checkout_completed', {
+        plan_id: data.plan_id,
+        plan_name: data.plan_name,
+        value: data.value,
+        billing_interval: data.billing_interval,
+        transaction_id: data.transaction_id,
+        payment_method: data.payment_method,
+    });
+};
+
+export const trackPaymentFailureEvent = (data: {
+    plan_id: string;
+    plan_name?: string;
+    reason: string;
+    step: string;
+    payment_method?: string;
+    value?: number;
+}) => {
+    trackEvent('payment_failure', {
+        plan_id: data.plan_id,
+        plan_name: data.plan_name,
+        reason: data.reason,
+        step: data.step,
+        payment_method: data.payment_method,
+        value: data.value,
+    });
+};
+
+export const trackConversionRateEvent = (data: {
+    stage: string;
+    rate_from_previous: number;
+    rate_from_start: number;
+    drop_percentage: number;
+    sample_size: number;
+}) => {
+    trackEvent('conversion_rate_update', data);
 };
 
 // Page view tracking for SPA navigation
