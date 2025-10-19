@@ -204,7 +204,7 @@ EMERGENCY_TRUE ou EMERGENCY_FALSE
 
     // Initialize LLM
     this.llm = new ChatOpenAI({
-      modelName: 'gpt-4-turbo-preview',
+      modelName: 'gpt-5-mini',
       temperature: 0.3,
       openAIApiKey,
       maxTokens: 800,
@@ -681,7 +681,7 @@ Se precisar de ajuda imediata:
         endpoint: this.langsmithConfig.endpoint
       },
       llm: {
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5-mini',
         temperature: 0.3,
         maxTokens: 800
       },

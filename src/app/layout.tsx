@@ -63,7 +63,7 @@ export default function RootLayout({
                   <link rel="dns-prefetch" href="https://api.whatsapp.com" />
                 <link rel="dns-prefetch" href="https://js.stripe.com" />
                 <meta name="theme-color" content="#0066cc" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
                 <meta name="format-detection" content="telephone=no" />
             </head>

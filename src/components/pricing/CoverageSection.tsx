@@ -97,26 +97,6 @@ export const CoverageSection: React.FC<CoverageSectionProps> = ({ items }) => {
           })}
         </div>
 
-        {/* Online Plans CTA */}
-        <div className="mt-12 max-w-3xl mx-auto">
-          <Card className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white border-0 shadow-xl">
-            <CardContent className="p-8 text-center">
-              <Badge variant="secondary" className="mb-4 bg-white text-cyan-600">
-                100% ONLINE
-              </Badge>
-              <h3 className="text-2xl font-bold mb-3">
-                Está Fora de MG? Conheça Nossos Planos 100% Online!
-              </h3>
-              <p className="text-cyan-50 mb-6">
-                Telemedicina ilimitada + Entrega em todo Brasil + Preços mais acessíveis
-              </p>
-              <button className="bg-white text-cyan-600 hover:bg-cyan-50 font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow-lg">
-                Ver Planos Online
-              </button>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Footer note */}
         <div className="text-center mt-8">
           <p className="text-sm text-silver-600 flex items-center justify-center gap-2">

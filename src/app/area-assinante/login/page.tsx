@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
@@ -77,8 +76,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-silver-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
         <div className="text-center">
-          <Logo className="mx-auto h-12 w-auto" />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+          <h2 className="text-3xl font-bold text-gray-900">
             Área do Assinante
           </h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -103,6 +101,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500"
               placeholder="seu@email.com"
             />
@@ -126,6 +125,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500"
               placeholder="••••••••"
             />

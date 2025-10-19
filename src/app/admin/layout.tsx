@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { AdminSidebar } from '@/components/admin/layout/AdminSidebar'
 import { AdminHeader } from '@/components/admin/layout/AdminHeader'
 import { AdminAuthProvider } from '@/components/admin/providers/AdminAuthProvider'
+import { MedicalInfoBanner } from '@/components/admin/ui/MedicalInfoBanner'
+import { LGDPAlertBanner } from '@/components/admin/ui/LGDPAlertBanner'
 import { checkAdminPermissions } from '@/lib/admin/auth'
 import { Permission } from '@/types/admin'
 
@@ -41,6 +43,12 @@ export default async function AdminLayout({
 
         {/* Main Content */}
         <div className="lg:pl-64">
+          {/* Medical Info Banner */}
+          <MedicalInfoBanner />
+
+          {/* LGPD Alerts Banner */}
+          <LGDPAlertBanner />
+
           {/* Header */}
           <AdminHeader session={session} />
 

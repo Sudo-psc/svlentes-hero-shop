@@ -323,7 +323,7 @@ FORNEÇA EM FORMATO JSON:
 
     // Initialize LLM with advanced configuration
     this.llm = new ChatOpenAI({
-      modelName: 'gpt-4-turbo-preview',
+      modelName: 'gpt-5-mini',
       temperature: 0.3, // Lower for more consistent responses
       openAIApiKey,
       maxTokens: 1000, // Limit for cost control
@@ -422,7 +422,7 @@ FORNEÇA EM FORMATO JSON:
           escalationRequired: true,
           ticketCreated: false,
           responseTime: Date.now() - startTime,
-          llmModel: 'gpt-4-turbo-preview'
+          llmModel: 'gpt-5-mini'
         })
 
         return {
@@ -456,7 +456,7 @@ FORNEÇA EM FORMATO JSON:
         escalationRequired: intent.escalationRequired,
         ticketCreated: false,
         responseTime: Date.now() - startTime,
-        llmModel: 'gpt-4-turbo-preview',
+        llmModel: 'gpt-5-mini',
         tokensUsed: this.estimateTokens(userMessage + response),
         cost: this.estimateCost(userMessage + response)
       })
@@ -908,7 +908,7 @@ Pedimos desculpas pelo inconveniente.`
       },
       memory: memoryStats,
       llm: {
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-5-mini',
         temperature: 0.3,
         maxTokens: 1000
       }

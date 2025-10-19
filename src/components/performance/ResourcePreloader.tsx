@@ -13,13 +13,6 @@ export function ResourcePreloader() {
 
         // Preload critical API endpoints
         if (typeof window !== 'undefined') {
-            // Preload Stripe.js
-            const stripeScript = document.createElement('link')
-            stripeScript.rel = 'preload'
-            stripeScript.href = 'https://js.stripe.com/v3/'
-            stripeScript.as = 'script'
-            document.head.appendChild(stripeScript)
-
             // Prefetch critical data (removed non-existent endpoints)
             // Note: pricing-plans and doctor-info are static data imports, not API routes
         }

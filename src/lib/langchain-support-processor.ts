@@ -257,7 +257,7 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     const langsmithConfig = getLangSmithConfig()
 
     this.llm = new ChatOpenAI({
-      modelName: 'gpt-4-turbo-preview',
+      modelName: 'gpt-5-mini',
       temperature: 0.3,
       openAIApiKey,
       callbacks: langsmithConfig.tracingEnabled ? undefined : []
