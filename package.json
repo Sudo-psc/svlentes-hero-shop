@@ -49,6 +49,9 @@
         "@radix-ui/react-slot": "^1.2.3",
         "@radix-ui/react-switch": "^1.2.6",
         "@radix-ui/react-toast": "^1.2.15",
+        "@swc/core": "^1.13.5",
+        "@swc/jest": "^0.2.39",
+        "babel-jest": "^30.2.0",
         "bcryptjs": "^3.0.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -59,7 +62,7 @@
         "isomorphic-dompurify": "^2.29.0",
         "js-yaml": "^4.1.0",
         "lucide-react": "^0.303.0",
-        "next": "^15.5.4",
+        "next": "^15.5.6",
         "next-auth": "^4.24.11",
         "prisma": "^6.17.1",
         "react": "^18.3.1",
@@ -68,6 +71,7 @@
         "resend": "^6.2.0-canary.3",
         "tailwind-merge": "^2.6.0",
         "tailwindcss-animate": "^1.0.7",
+        "ts-jest": "^29.4.5",
         "zod": "^3.25.76"
     },
     "devDependencies": {

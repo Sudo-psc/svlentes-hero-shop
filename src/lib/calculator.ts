@@ -56,7 +56,7 @@ export function calculateEconomy(input: UnifiedCalculatorInput): UnifiedCalculat
   const annualConsultationCost = input.annualConsultationCost || (consultationPrices.market.consultation * 2)
 
   const totalCurrentAnnualCost = annualContactLensCost + annualConsultationCost
-  const totalSVLentesAnnualCost = (recommendedPlan.monthlyPrice * 12) + yearlySubscription
+  const totalSVLentesAnnualCost = (recommendedPlan.monthlyPrice * 12)
   const totalAnnualSavings = totalCurrentAnnualCost - totalSVLentesAnnualCost
 
   return {
