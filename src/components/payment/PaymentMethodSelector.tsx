@@ -7,8 +7,8 @@ import { CreditCard, Smartphone, QrCode, AlertCircle } from 'lucide-react'
 
 interface PaymentMethodSelectorProps {
   planId: string
-  amount: number
   planName: string
+  amount: number
   customerEmail: string
   onAsaasPayment?: () => void
   className?: string
@@ -18,8 +18,8 @@ type PaymentMethod = 'asaas' | 'stripe'
 
 export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   planId,
-  amount,
   planName,
+  amount,
   customerEmail,
   onAsaasPayment,
   className
@@ -177,8 +177,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
           <StripeFallback
             planId={planId}
-            amount={amount}
-            planName={planName}
             customerEmail={customerEmail}
             className="w-full"
           />

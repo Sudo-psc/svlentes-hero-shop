@@ -7,16 +7,12 @@ import { Loader2, CreditCard } from 'lucide-react'
 
 interface StripeFallbackProps {
   planId: string
-  amount: number
-  planName: string
   customerEmail: string
   className?: string
 }
 
 const StripeFallback = ({
   planId,
-  amount,
-  planName,
   customerEmail,
   className
 }: StripeFallbackProps) => {
@@ -36,7 +32,7 @@ const StripeFallback = ({
         throw new Error('Falha ao carregar o Stripe')
       }
 
-      // Create checkout session on your server
+      // Create checkout session on your server (server-side validation)
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: {
@@ -44,11 +40,7 @@ const StripeFallback = ({
         },
         body: JSON.stringify({
           planId,
-          amount,
-          planName,
           customerEmail,
-          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/cancel`,
         }),
       })
 

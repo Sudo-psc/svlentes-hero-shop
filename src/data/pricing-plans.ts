@@ -8,7 +8,7 @@
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
 
-import { PricingPlan, PricingPlanGroup } from '@/types'
+import type { PricingPlan, PricingPlanGroup } from '@/types'
 import { config } from '@/config/loader'
 
 /**
@@ -22,7 +22,7 @@ function getPricingPlans(): PricingPlan[] {
     const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
 
-    let allPlans: PricingPlan[] = []
+    const allPlans: PricingPlan[] = []
 
     // Load aspheric plans
     if (usePricingAsfericos && appConfig.pricing_asfericos) {
@@ -57,6 +57,27 @@ function getPricingPlans(): PricingPlan[] {
  * Convert YAML plan structure to PricingPlan interface
  */
 function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
+  // Calculate annual price from monthly price for different billing cycles
+  let priceAnnual = 0;
+  const monthlyPrice = yamlPlan.pricing.priceMonthly || 0;
+
+  switch (yamlPlan.billingCycle) {
+    case 'monthly':
+      priceAnnual = monthlyPrice * 12;
+      break;
+    case 'quarterly':
+      priceAnnual = monthlyPrice * 3 * 4; // Quarterly price * 4 quarters
+      break;
+    case 'semiannual':
+      priceAnnual = monthlyPrice * 6 * 2; // Semiannual price * 2 periods
+      break;
+    case 'annual':
+      priceAnnual = yamlPlan.pricing.priceTotal || monthlyPrice * 12;
+      break;
+    default:
+      priceAnnual = monthlyPrice * 12;
+  }
+
   return {
     // Identificação
     id: yamlPlan.id,
@@ -71,6 +92,7 @@ function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
 
     // Preços
     priceMonthly: yamlPlan.pricing.priceMonthly,
+    priceAnnual: priceAnnual,
     priceTotal: yamlPlan.pricing.priceTotal,
     pricePerLens: yamlPlan.pricing.pricePerLens,
     installments: yamlPlan.pricing.installments,
@@ -688,16 +710,16 @@ export const pricingPlans: PricingPlan[] = getPricingPlans()
 export const pricingPlanGroups: PricingPlanGroup[] = getPricingPlanGroups()
 
 // Comparação de features entre planos
-export const featureComparison = getFeatureComparison()
+export const featureComparison = hardcodedFeatureComparison
 
 // Benefícios gerais do serviço
-export const serviceBenefits = getServiceBenefits()
+export const serviceBenefits = hardcodedServiceBenefits
 
 // Informações de cobertura geográfica
-export const coverageInfo = getCoverageInfo()
+export const coverageInfo = hardcodedCoverageInfo
 
 // FAQ específica de planos
-export const pricingFAQ = getPricingFAQ()
+export const pricingFAQ = hardcodedPricingFAQ
 
 // Dados para calculadora de economia
-export const economyCalculatorData = getEconomyCalculatorData()
+export const economyCalculatorData = hardcodedEconomyCalculatorData

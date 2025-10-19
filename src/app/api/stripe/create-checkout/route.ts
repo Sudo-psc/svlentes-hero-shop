@@ -1,23 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { logger, LogCategory } from '@/lib/logger'
+import { pricingPlans } from '@/data/pricing-plans'
+import { z } from 'zod'
 
 // Initialize Stripe with secret key (if available)
 let stripe: Stripe | null = null
 
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-09-30.clover',
   })
 }
 
-const checkoutRequestSchema = {
-  planId: { type: 'string', required: true },
-  amount: { type: 'number', required: true },
-  planName: { type: 'string', required: true },
-  customerEmail: { type: 'string', required: true },
-  successUrl: { type: 'string', required: true },
-  cancelUrl: { type: 'string', required: true },
+// Simplified schema - only accept planId and customerEmail from client
+const checkoutRequestSchema = z.object({
+  planId: z.string().min(1, 'ID do plano é obrigatório'),
+  customerEmail: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+})
+
+// Get canonical URLs from server config
+function getCanonicalUrls() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://svlentes.com.br'
+
+  return {
+    successUrl: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${baseUrl}/cancel`,
+  }
+}
+
+// Extract email domain for logging (PII-safe)
+function getEmailDomain(email: string): string {
+  try {
+    const domain = email.split('@')[1]
+    return domain || 'unknown'
+  } catch {
+    return 'invalid'
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -32,51 +51,51 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Validate required fields
-    for (const [key, config] of Object.entries(checkoutRequestSchema)) {
-      if (config.required && !body[key]) {
-        return NextResponse.json(
-          { error: `Campo ${key} é obrigatório` },
-          { status: 400 }
-        )
-      }
+    // Validate client input using Zod schema
+    const validatedData = checkoutRequestSchema.safeParse(body)
+    if (!validatedData.success) {
+      return NextResponse.json(
+        {
+          error: 'Dados inválidos',
+          details: validatedData.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        },
+        { status: 400 }
+      )
     }
 
-    const {
-      planId,
-      amount,
-      planName,
-      customerEmail,
-      successUrl,
-      cancelUrl
-    } = body
+    const { planId, customerEmail } = validatedData.data
+
+    // Look up plan server-side to prevent price tampering
+    const selectedPlan = pricingPlans.find(plan => plan.id === planId)
+
+    if (!selectedPlan) {
+      return NextResponse.json(
+        { error: 'Plano não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Get canonical URLs from server config
+    const { successUrl, cancelUrl } = getCanonicalUrls()
+
+    // Use monthly price for Stripe (can be adjusted for annual billing)
+    const amount = selectedPlan.priceMonthly
 
     logger.logPayment('stripe_checkout_attempt', {
       planId,
+      planName: selectedPlan.name,
       amount,
-      customerEmail,
+      emailDomain: getEmailDomain(customerEmail),
     })
 
-    // Create Stripe Checkout Session
+    // Create Stripe Checkout Session for subscription
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: [
         {
-          price_data: {
-            currency: 'brl',
-            product_data: {
-              name: planName,
-              description: `Assinatura SV Lentes - ${planName}`,
-              metadata: {
-                plan_id: planId,
-              },
-            },
-            unit_amount: Math.round(amount * 100), // Convert to cents
-            recurring: {
-              interval: 'month',
-              interval_count: 1,
-            },
-          },
+          price: selectedPlan.stripePriceId,
           quantity: 1,
         },
       ],
@@ -84,29 +103,20 @@ export async function POST(request: NextRequest) {
       customer_email: customerEmail,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: {
-        plan_id: planId,
-        source: 'website_fallback',
-      },
-      payment_intent_data: {
+      subscription_data: {
         metadata: {
           plan_id: planId,
+          source: 'website_fallback',
         },
       },
       locale: 'pt-BR',
       billing_address_collection: 'auto',
-      shipping_address_collection: {
-        allowed_countries: ['BR'],
-      },
-      phone_number_collection: {
-        enabled: true,
-      },
     })
 
     logger.logPayment('stripe_checkout_created', {
       sessionId: session.id,
       planId,
-      customerEmail,
+      emailDomain: getEmailDomain(customerEmail),
     })
 
     return NextResponse.json({

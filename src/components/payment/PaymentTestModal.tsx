@@ -65,8 +65,8 @@ export const PaymentTestModal: React.FC<PaymentTestModalProps> = ({
 
           <PaymentMethodSelector
             planId={planData.id}
-            amount={planData.price}
             planName={planData.name}
+            amount={planData.price}
             customerEmail={customerEmail}
             onAsaasPayment={handleAsaasPayment}
           />
