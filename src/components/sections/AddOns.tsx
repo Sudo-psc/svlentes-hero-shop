@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { AddOn, AddOnsProps } from '@/types'
-import { Button } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/Checkbox'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
 import { trackEvent } from '@/lib/analytics'
 
 interface AddOnCardProps {
@@ -267,8 +267,9 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                     <Button
                                         className="flex-1"
                                         onClick={() => {
-                                            // TODO: Integrar com formulário de assinatura
-                                            console.log('Add-ons selecionados:', selectedAddOns)
+                                            // Redirect to subscription page with selected AddOns
+                                            const addOnsParam = encodeURIComponent(selectedAddOns.join(','))
+                                            window.location.href = `/assinar?addons=${addOnsParam}`
                                         }}
                                     >
                                         Adicionar aos Planos
@@ -276,11 +277,11 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                     <Button
                                         variant="outline"
                                         onClick={() => {
-                                            // TODO: Integrar com WhatsApp
-                                            const message = `Olá! Tenho interesse nos seguintes serviços adicionais: ${services
+                                            // WhatsApp integration for AddOns inquiries
+                                            const selectedServices = services
                                                 .filter(s => selectedAddOns.includes(s.id))
                                                 .map(s => s.name)
-                                                .join(', ')}`
+                                            const message = `Olá! Tenho interesse nos seguintes serviços adicionais: ${selectedServices.join(', ')}`
                                             window.open(`https://wa.me/+5533999898026?text=${encodeURIComponent(message)}`)
                                         }}
                                     >
@@ -299,8 +300,9 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    // TODO: Integrar com WhatsApp para dúvidas
-                                    window.open('https://wa.me/+5533999898026?text=Olá! Gostaria de saber mais sobre os serviços adicionais.')
+                                    // WhatsApp integration for general AddOns questions
+                                    const message = 'Olá! Gostaria de saber mais sobre os serviços adicionais disponíveis.'
+                                    window.open(`https://wa.me/+5533999898026?text=${encodeURIComponent(message)}`)
                                 }}
                             >
                                 Tenho dúvidas - Falar no WhatsApp

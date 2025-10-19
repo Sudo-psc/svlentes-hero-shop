@@ -1,0 +1,2313 @@
+// ==================== COMPLETE SCHEMA WITH ADMINISTRATIVE SYSTEM ====================
+// Schema Prisma completo com sistema administrativo integrado
+// Combina schema existente com extensões administrativas robustas
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
+}
+
+// ==================== ENUMS ====================
+
+// Enums existentes mantidos
+enum SubscriptionStatus {
+  PENDING_ACTIVATION
+  ACTIVE
+  OVERDUE
+  SUSPENDED
+  PAUSED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+  PENDING
+}
+
+enum BenefitType {
+  UNLIMITED
+  LIMITED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  BOLETO
+}
+
+enum PaymentMethodType {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  BOLETO
+}
+
+enum InvoiceType {
+  SUBSCRIPTION
+  ONE_TIME
+  ADJUSTMENT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum SupportCategory {
+  BILLING
+  TECHNICAL
+  PRODUCT
+  DELIVERY
+  ACCOUNT
+  COMPLAINT
+  COMPLIMENT
+  EMERGENCY
+  GENERAL
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_CUSTOMER
+  PENDING_AGENT
+  RESOLVED
+  CLOSED
+  ESCALATED
+}
+
+enum SupportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum PaymentStatus {
+  PENDING
+  RECEIVED
+  CONFIRMED
+  OVERDUE
+  REFUNDED
+  REFUND_REQUESTED
+  CHARGEBACK_REQUESTED
+  CHARGEBACK_DISPUTE
+  AWAITING_CHARGEBACK_REVERSAL
+  DUNNING_REQUESTED
+  DUNNING_RECEIVED
+  AWAITING_RISK_ANALYSIS
+  CANCELLED
+}
+
+// Enums administrativos
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  SUPPORT_AGENT
+  FINANCIAL_ANALYST
+  VIEWER
+}
+
+enum AdminPermission {
+  USER_CREATE
+  USER_READ
+  USER_UPDATE
+  USER_DELETE
+  USER_EXPORT
+  SUBSCRIPTION_CREATE
+  SUBSCRIPTION_READ
+  SUBSCRIPTION_UPDATE
+  SUBSCRIPTION_DELETE
+  SUBSCRIPTION_PAUSE
+  SUBSCRIPTION_RESUME
+  SUBSCRIPTION_CANCEL
+  SUBSCRIPTION_EXPORT
+  ORDER_CREATE
+  ORDER_READ
+  ORDER_UPDATE
+  ORDER_DELETE
+  ORDER_TRACK
+  ORDER_EXPORT
+  PAYMENT_READ
+  PAYMENT_REFUND
+  PAYMENT_EXPORT
+  PAYMENT_DISPUTE
+  SUPPORT_READ
+  SUPPORT_ASSIGN
+  SUPPORT_ESCALATE
+  SUPPORT_RESOLVE
+  SUPPORT_EXPORT
+  FINANCIAL_READ
+  FINANCIAL_REPORT
+  FINANCIAL_REFUND
+  FINANCIAL_EXPORT
+  SYSTEM_CONFIG
+  SYSTEM_LOGS
+  SYSTEM_BACKUP
+  SYSTEM_MAINTENANCE
+  ANALYTICS_READ
+  ANALYTICS_EXPORT
+  ANALYTICS_DASHBOARD
+}
+
+enum AdminSessionStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  SUSPENDED
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+  CRITICAL
+}
+
+enum SystemEvent {
+  USER_LOGIN
+  USER_LOGOUT
+  USER_CREATED
+  USER_UPDATED
+  USER_DELETED
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_UPDATED
+  SUBSCRIPTION_CANCELLED
+  SUBSCRIPTION_PAUSED
+  SUBSCRIPTION_RESUMED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+  PAYMENT_DISPUTED
+  ORDER_CREATED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  SYSTEM_BACKUP
+  SYSTEM_MAINTENANCE
+  SYSTEM_ERROR
+  SYSTEM_UPDATE
+  SECURITY_ALERT
+  DATA_BREACH
+  UNAUTHORIZED_ACCESS
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum RefundReason {
+  CUSTOMER_REQUEST
+  SERVICE_NOT_PROVIDED
+  DEFECTIVE_PRODUCT
+  DELIVERY_ISSUE
+  WRONG_ITEM
+  DUPLICATE_PAYMENT
+  PARTIAL_REFUND
+  GOODWILL
+  CHARGEBACK
+  SYSTEM_ERROR
+}
+
+enum ChatbotAuthStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  REVOKED
+  USED
+}
+
+enum ChatbotSessionStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+  REVOKED
+}
+
+enum SubscriptionChangeType {
+  PLAN_CHANGE
+  ADDRESS_UPDATE
+  PAYMENT_METHOD_UPDATE
+  STATUS_CHANGE
+  PRICE_ADJUSTMENT
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_CANCELLED
+  SUBSCRIPTION_PAUSED
+  SUBSCRIPTION_RESUMED
+}
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+  PUSH
+}
+
+enum NotificationStatus {
+  SCHEDULED
+  SENDING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  FAILED
+  CANCELLED
+}
+
+enum NotificationType {
+  REMINDER
+  PROMOTION
+  UPDATE
+  ALERT
+}
+
+enum InteractionType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  DISMISSED
+  OPTED_OUT
+  CONVERTED
+}
+
+enum ConsentType {
+  TERMS
+  DATA_PROCESSING
+  MARKETING
+  MEDICAL_DATA
+}
+
+enum ConsentStatus {
+  GRANTED
+  REVOKED
+  EXPIRED
+}
+
+enum DataRequestType {
+  ACCESS
+  RECTIFICATION
+  DELETION
+  PORTABILITY
+  OPPOSITION
+}
+
+enum DataRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+// ==================== NEXTAUTH MODELS ====================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ==================== ADMIN USER MODELS ====================
+
+model AdminUser {
+  id                    String             @id @default(cuid())
+
+  // Authentication
+  email                 String             @unique @db.VarChar(255)
+  password              String             @db.VarChar(255)
+  name                  String             @db.VarChar(255)
+
+  // Role and Permissions
+  role                  AdminRole          @default(VIEWER)
+  permissions           AdminPermission[]
+  isActive              Boolean            @default(true)
+
+  // Profile Information
+  avatarUrl             String?            @map("avatar_url") @db.Text
+  phone                 String?            @db.VarChar(20)
+  department            String?            @db.VarChar(100)
+  position              String?            @db.VarChar(100)
+
+  // Security
+  twoFactorEnabled      Boolean            @default(false) @map("two_factor_enabled")
+  twoFactorSecret       String?            @map("two_factor_secret") @db.VarChar(255)
+  lastPasswordChange    DateTime?          @map("last_password_change") @db.Timestamp(6)
+  failedLoginAttempts   Int                @default(0) @map("failed_login_attempts")
+  lockedUntil           DateTime?          @map("locked_until") @db.Timestamp(6)
+
+  // Access Control
+  ipWhitelist           String[]           @default([]) @map("ip_whitelist")
+  allowedHours          Json?              @map("allowed_hours") @db.JsonB
+
+  // Audit Fields
+  createdBy             String?            @map("created_by")
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+  lastLoginAt           DateTime?          @map("last_login_at") @db.Timestamp(6)
+  lastLoginIp           String?            @map("last_login_ip") @db.VarChar(45)
+
+  // Relations
+  sessions              AdminSession[]
+  actions               AdminAction[]
+  assignedUsers         User[]             @relation("AdminAssignedUsers")
+  assignedSubscriptions Subscription[]     @relation("AdminAssignedSubscriptions")
+  assignedOrders        Order[]            @relation("AdminAssignedOrders")
+  supportTickets        SupportTicket[]
+  notifications         AdminNotification[]
+  permissionChanges     PermissionHistory[]
+
+  @@index([email], name: "idx_admin_users_email")
+  @@index([role], name: "idx_admin_users_role")
+  @@index([isActive], name: "idx_admin_users_active")
+  @@index([createdAt], name: "idx_admin_users_created_at")
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id                    String              @id @default(cuid())
+
+  // Session Information
+  adminUserId           String              @map("admin_user_id")
+  sessionToken          String              @unique @map("session_token") @db.VarChar(255)
+  refreshToken          String?             @map("refresh_token") @db.VarChar(255)
+
+  // Status and Lifecycle
+  status                AdminSessionStatus  @default(ACTIVE)
+  ipAddress             String              @map("ip_address") @db.VarChar(45)
+  userAgent             String              @map("user_agent") @db.Text
+  deviceInfo            Json?               @map("device_info") @db.JsonB
+
+  // Timing
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  lastActivityAt        DateTime            @default(now()) @map("last_activity_at") @db.Timestamp(6)
+  expiresAt             DateTime            @map("expires_at") @db.Timestamp(6)
+  terminatedAt          DateTime?           @map("terminated_at") @db.Timestamp(6)
+  terminationReason     String?             @map("termination_reason") @db.Text
+
+  // Security
+  suspiciousActivity    Boolean             @default(false) @map("suspicious_activity")
+  securityFlags         String[]            @default([]) @map("security_flags")
+
+  // Relations
+  adminUser             AdminUser           @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId], name: "idx_admin_sessions_admin_user")
+  @@index([sessionToken], name: "idx_admin_sessions_token")
+  @@index([status], name: "idx_admin_sessions_status")
+  @@index([expiresAt], name: "idx_admin_sessions_expires")
+  @@index([lastActivityAt], name: "idx_admin_sessions_last_activity")
+  @@map("admin_sessions")
+}
+
+model PermissionHistory {
+  id                    String             @id @default(cuid())
+
+  // Target
+  adminUserId           String             @map("admin_user_id")
+
+  // Change Information
+  permissionAdded       AdminPermission?   @map("permission_added")
+  permissionRemoved     AdminPermission?   @map("permission_removed")
+  roleChangedFrom       AdminRole?         @map("role_changed_from")
+  roleChangedTo         AdminRole?         @map("role_changed_to")
+
+  // Audit
+  changedBy             String             @map("changed_by")
+  reason                String             @db.Text
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+  userAgent             String             @map("user_agent") @db.Text
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  adminUser             AdminUser          @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId], name: "idx_permission_history_admin_user")
+  @@index([changedBy], name: "idx_permission_history_changed_by")
+  @@index([createdAt], name: "idx_permission_history_created_at")
+  @@map("permission_history")
+}
+
+// ==================== USER MODEL (EXTENDED) ====================
+
+model User {
+  id                    String         @id @default(cuid())
+  googleId              String?        @unique @map("google_id") @db.VarChar(255)
+  firebaseUid           String?        @unique @map("firebase_uid") @db.VarChar(255)
+  email                 String         @unique @db.VarChar(255)
+  emailVerified         DateTime?      @map("email_verified")
+  name                  String?        @db.VarChar(255)
+  password              String?        @db.VarChar(255)
+  avatarUrl             String?        @map("avatar_url") @db.Text
+  image                 String?
+  role                  String         @default("subscriber") @db.VarChar(50)
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  lastLoginAt           DateTime?      @map("last_login_at") @db.Timestamp(6)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  phone                 String?        @map("phone") @db.VarChar(20)
+  whatsapp              String?        @map("whatsapp") @db.VarChar(20)
+  asaasCustomerId       String?        @unique @map("asaas_customer_id") @db.VarChar(255)
+  preferences           Json?          @map("preferences") @db.JsonB
+
+  // Administrative Fields
+  isManagedByAdmin      Boolean        @default(false) @map("is_managed_by_admin")
+  assignedAdminId       String?        @map("assigned_admin_id")
+  adminNotes            String?        @map("admin_notes") @db.Text
+  riskScore             Int?           @map("risk_score")
+  flaggedForReview      Boolean        @default(false) @map("flagged_for_review")
+  reviewReason          String?        @map("review_reason") @db.Text
+  accountStatus         String         @default("active") @map("account_status") @db.VarChar(50)
+  accountRestrictedAt   DateTime?      @map("account_restricted_at") @db.Timestamp(6)
+  accountRestrictedBy   String?        @map("account_restricted_by")
+  accountRestrictedUntil DateTime?      @map("account_restricted_until") @db.Timestamp(6)
+  lastReviewedAt        DateTime?      @map("last_reviewed_at") @db.Timestamp(6)
+  lastReviewedBy        String?        @map("last_reviewed_by")
+  verificationLevel     String         @default("basic") @map("verification_level") @db.VarChar(50)
+  verifiedAt            DateTime?      @map("verified_at") @db.Timestamp(6)
+  verifiedBy            String?        @map("verified_by")
+  metadata              Json?          @map("metadata") @db.JsonB
+
+  // Relations
+  accounts              Account[]
+  sessions              Session[]
+  subscriptions         Subscription[]
+  supportTickets        SupportTicket[]
+  payments              Payment[]
+  whatsappConversations WhatsAppConversation[]
+  whatsappInteractions  WhatsAppInteraction[]
+  notifications         Notification[]
+  interactions          Interaction[]
+  mlPredictions         MLPrediction[]
+  userBehavior          UserBehavior?
+  consentLogs           ConsentLog[]
+  chatbotAuthCodes      ChatbotAuthCode[]
+  chatbotSessions       ChatbotSession[]
+  subscriptionHistory   SubscriptionHistory[]
+  assignedAdmin         AdminUser?     @relation("AdminAssignedUsers", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  reviews               UserReview[]
+  restrictions          AccountRestriction[]
+
+  @@index([email], name: "idx_users_email")
+  @@index([googleId], name: "idx_users_google_id")
+  @@index([asaasCustomerId], name: "idx_users_asaas_customer_id")
+  @@index([assignedAdminId], name: "idx_users_assigned_admin")
+  @@index([accountStatus], name: "idx_users_account_status")
+  @@index([flaggedForReview], name: "idx_users_flagged_review")
+  @@map("users")
+}
+
+model UserReview {
+  id                    String             @id @default(cuid())
+
+  // Target
+  userId                String             @map("user_id")
+  reviewedBy            String             @map("reviewed_by")
+
+  // Review Details
+  reviewType            String             @map("review_type") @db.VarChar(50)
+  status                String             @map("status") @db.VarChar(50)
+  riskScore             Int?               @map("risk_score")
+  notes                 String             @db.Text
+  actionTaken           String?            @map("action_taken") @db.Text
+
+  // Audit
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+  userAgent             String             @map("user_agent") @db.Text
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_user_reviews_user")
+  @@index([reviewedBy], name: "idx_user_reviews_reviewer")
+  @@index([status], name: "idx_user_reviews_status")
+  @@index([createdAt], name: "idx_user_reviews_created_at")
+  @@map("user_reviews")
+}
+
+model AccountRestriction {
+  id                    String             @id @default(cuid())
+
+  // Target
+  userId                String             @map("user_id")
+
+  // Restriction Details
+  restrictionType       String             @map("restriction_type") @db.VarChar(50)
+  reason                String             @db.Text
+  isActive              Boolean            @default(true)
+
+  // Timing
+  restrictedAt          DateTime           @default(now()) @map("restricted_at") @db.Timestamp(6)
+  restrictedBy          String             @map("restricted_by")
+  expiresAt             DateTime?          @map("expires_at") @db.Timestamp(6)
+  liftedAt              DateTime?          @map("lifted_at") @db.Timestamp(6)
+  liftedBy              String?            @map("lifted_by")
+
+  // Metadata
+  metadata              Json?              @map("metadata") @db.JsonB
+
+  // Relations
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_account_restrictions_user")
+  @@index([isActive], name: "idx_account_restrictions_active")
+  @@index([restrictionType], name: "idx_account_restrictions_type")
+  @@index([expiresAt], name: "idx_account_restrictions_expires")
+  @@map("account_restrictions")
+}
+
+// ==================== SUBSCRIPTION MODEL (EXTENDED) ====================
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @map("user_id")
+  asaasSubscriptionId  String?            @unique @map("asaas_subscription_id") @db.VarChar(255)
+  planType             String             @map("plan_type") @db.VarChar(100)
+  status               SubscriptionStatus @default(ACTIVE)
+  monthlyValue         Decimal            @map("monthly_value") @db.Decimal(10, 2)
+  renewalDate          DateTime           @map("renewal_date") @db.Date
+  startDate            DateTime           @map("start_date") @db.Date
+  paymentMethod        PaymentMethod      @map("payment_method")
+  paymentMethodLast4   String?            @map("payment_method_last4") @db.VarChar(4)
+  shippingAddress      Json?              @map("shipping_address") @db.JsonB
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Additional fields from Airtable
+  lensType             String?            @map("lens_type") @db.VarChar(255)
+  bothEyes             Boolean            @default(false) @map("both_eyes")
+  differentGrades      Boolean            @default(false) @map("different_grades")
+  endDate              DateTime?          @map("end_date") @db.Date
+  cancelReason         String?            @map("cancel_reason") @db.Text
+  contactInfo          Json?              @map("contact_info") @db.JsonB
+  metadata             Json?              @map("metadata") @db.JsonB
+  nextBillingDate      DateTime?          @map("next_billing_date") @db.Date
+
+  // Lifecycle tracking fields
+  lastPaymentId        String?            @map("last_payment_id") @db.VarChar(255)
+  lastPaymentDate      DateTime?          @map("last_payment_date") @db.Timestamp(6)
+  overdueDate          DateTime?          @map("overdue_date") @db.Timestamp(6)
+  daysOverdue          Int?               @map("days_overdue")
+  suspendedDate        DateTime?          @map("suspended_date") @db.Timestamp(6)
+  suspendedReason      String?            @map("suspended_reason") @db.Text
+  refundedDate         DateTime?          @map("refunded_date") @db.Timestamp(6)
+  refundReason         String?            @map("refund_reason") @db.Text
+  refundAmount         Decimal?           @map("refund_amount") @db.Decimal(10, 2)
+  activatedAt          DateTime?          @map("activated_at") @db.Timestamp(6)
+
+  // Administrative Fields
+  isManagedByAdmin     Boolean            @default(false) @map("is_managed_by_admin")
+  assignedAdminId      String?            @map("assigned_admin_id")
+  adminNotes           String?            @map("admin_notes") @db.Text
+  riskLevel            String             @default("low") @map("risk_level") @db.VarChar(50)
+  paymentAttempts      Int                @default(0) @map("payment_attempts")
+  lastPaymentAttempt   DateTime?          @map("last_payment_attempt") @db.Timestamp(6)
+  nextRetryAttempt     DateTime?          @map("next_retry_attempt") @db.Timestamp(6)
+  dunningLevel         Int                @default(0) @map("dunning_level")
+  gracePeriodEndsAt    DateTime?          @map("grace_period_ends_at") @db.Timestamp(6)
+  flaggedForReview     Boolean            @default(false) @map("flagged_for_review")
+  reviewReason         String?            @map("review_reason") @db.Text
+  lastReviewedAt       DateTime?          @map("last_reviewed_at") @db.Timestamp(6)
+  lastReviewedBy       String?            @map("last_reviewed_by")
+  customPricing        Boolean            @default(false) @map("custom_pricing")
+  pricingOverride      Json?              @map("pricing_override") @db.JsonB
+  approvedBy           String?            @map("approved_by")
+  approvedAt           DateTime?          @map("approved_at") @db.Timestamp(6)
+
+  // Relations
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  benefits             SubscriptionBenefit[]
+  orders               Order[]
+  invoices             Invoice[]
+  paymentMethods       PaymentMethodRecord[]
+  payments             Payment[]
+  history              SubscriptionHistory[]
+  assignedAdmin        AdminUser?         @relation("AdminAssignedSubscriptions", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  reviews              SubscriptionReview[]
+  paymentRetries       PaymentRetry[]
+  manualAdjustments    ManualAdjustment[]
+
+  @@index([userId], name: "idx_subscriptions_user_id")
+  @@index([asaasSubscriptionId], name: "idx_subscriptions_asaas_id")
+  @@index([status], name: "idx_subscriptions_status")
+  @@index([assignedAdminId], name: "idx_subscriptions_assigned_admin")
+  @@index([flaggedForReview], name: "idx_subscriptions_flagged_review")
+  @@map("subscriptions")
+}
+
+model SubscriptionReview {
+  id                    String             @id @default(cuid())
+
+  // Target
+  subscriptionId        String             @map("subscription_id")
+  reviewedBy            String             @map("reviewed_by")
+
+  // Review Details
+  reviewType            String             @map("review_type") @db.VarChar(50)
+  previousStatus        String?            @map("previous_status") @db.VarChar(50)
+  newStatus             String?            @map("new_status") @db.VarChar(50)
+  notes                 String             @db.Text
+  actionRequired        Boolean            @default(false) @map("action_required")
+  actionTaken           String?            @map("action_taken") @db.Text
+
+  // Audit
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+  userAgent             String             @map("user_agent") @db.Text
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  subscription          Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId], name: "idx_subscription_reviews_subscription")
+  @@index([reviewedBy], name: "idx_subscription_reviews_reviewer")
+  @@index([reviewType], name: "idx_subscription_reviews_type")
+  @@map("subscription_reviews")
+}
+
+model PaymentRetry {
+  id                    String             @id @default(cuid())
+
+  // Target
+  subscriptionId        String             @map("subscription_id")
+  paymentId             String?            @map("payment_id")
+
+  // Retry Details
+  attemptNumber         Int                @map("attempt_number")
+  retryReason           String             @map("retry_reason") @db.Text
+  scheduledFor          DateTime           @map("scheduled_for") @db.Timestamp(6)
+  attemptedAt           DateTime?          @map("attempted_at") @db.Timestamp(6)
+  success               Boolean?           @map("success")
+  failureReason         String?            @map("failure_reason") @db.Text
+
+  // Automation
+  isAutomated           Boolean            @default(true) @map("is_automated")
+  triggeredBy           String?            @map("triggered_by")
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  subscription          Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId], name: "idx_payment_retries_subscription")
+  @@index([scheduledFor], name: "idx_payment_retries_scheduled")
+  @@index([success], name: "idx_payment_retries_success")
+  @@map("payment_retries")
+}
+
+model ManualAdjustment {
+  id                    String             @id @default(cuid())
+
+  // Target
+  subscriptionId        String             @map("subscription_id")
+
+  // Adjustment Details
+  adjustmentType        String             @map("adjustment_type") @db.VarChar(50)
+  amount                Decimal            @db.Decimal(10, 2)
+  reason                String             @db.Text
+  description           String?            @map("description") @db.Text
+
+  // Timing
+  effectiveFrom         DateTime           @map("effective_from") @db.Date
+  effectiveTo           DateTime?          @map("effective_to") @db.Date
+
+  // Audit
+  createdBy             String             @map("created_by")
+  approvedBy            String?            @map("approved_by")
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  subscription          Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId], name: "idx_manual_adjustments_subscription")
+  @@index([adjustmentType], name: "idx_manual_adjustments_type")
+  @@index([createdBy], name: "idx_manual_adjustments_creator")
+  @@map("manual_adjustments")
+}
+
+// ==================== ORDER MODEL (EXTENDED) ====================
+
+model Order {
+  id              String         @id @default(cuid())
+  subscriptionId  String         @map("subscription_id")
+  orderDate       DateTime       @map("order_date") @db.Date
+  shippingDate    DateTime?      @map("shipping_date") @db.Date
+  deliveryStatus  DeliveryStatus @default(PENDING) @map("delivery_status")
+  trackingCode    String?        @map("tracking_code") @db.VarChar(255)
+  deliveryAddress Json           @map("delivery_address") @db.JsonB
+  products        Json           @map("products") @db.JsonB
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Additional fields from Airtable
+  type            String         @map("type") @db.VarChar(50)
+  totalAmount     Decimal        @map("total_amount") @db.Decimal(10, 2)
+  paymentStatus   String         @map("payment_status") @db.VarChar(50)
+  estimatedDelivery DateTime?    @map("estimated_delivery") @db.Date
+  deliveredAt     DateTime?      @map("delivered_at") @db.Timestamp(6)
+  notes           String?        @map("notes") @db.Text
+  paymentMethodId String?        @map("payment_method_id")
+
+  // Administrative Fields
+  isManagedByAdmin Boolean        @default(false) @map("is_managed_by_admin")
+  assignedAdminId  String?        @map("assigned_admin_id")
+  adminNotes       String?        @map("admin_notes") @db.Text
+  priority         String         @default("normal") @map("priority") @db.VarChar(50)
+  flaggedForReview Boolean        @default(false) @map("flagged_for_review")
+  reviewReason     String?        @map("review_reason") @db.Text
+  lastReviewedAt   DateTime?      @map("last_reviewed_at") @db.Timestamp(6)
+  lastReviewedBy   String?        @map("last_reviewed_by")
+  warehouseProcessedAt DateTime?  @map("warehouse_processed_at") @db.Timestamp(6)
+  processedBy      String?        @map("processed_by")
+  qualityChecked   Boolean        @default(false) @map("quality_checked")
+  qualityCheckedBy String?        @map("quality_checked_by")
+  qualityCheckedAt DateTime?      @map("quality_checked_at") @db.Timestamp(6)
+  specialInstructions String?    @map("special_instructions") @db.Text
+  giftWrap         Boolean        @default(false) @map("gift_wrap")
+  giftMessage     String?        @map("gift_message") @db.Text
+  insuranceValue  Decimal?       @map("insurance_value") @db.Decimal(10, 2)
+
+  // Relations
+  subscription    Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  invoices        Invoice[]
+  paymentMethod   PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
+  assignedAdmin   AdminUser?     @relation("AdminAssignedOrders", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  reviews         OrderReview[]
+  exceptions      OrderException[]
+
+  @@index([subscriptionId], name: "idx_orders_subscription_id")
+  @@index([trackingCode], name: "idx_orders_tracking_code")
+  @@index([deliveryStatus], name: "idx_orders_delivery_status")
+  @@index([assignedAdminId], name: "idx_orders_assigned_admin")
+  @@index([flaggedForReview], name: "idx_orders_flagged_review")
+  @@map("orders")
+}
+
+model OrderReview {
+  id                    String             @id @default(cuid())
+
+  // Target
+  orderId               String             @map("order_id")
+  reviewedBy            String             @map("reviewed_by")
+
+  // Review Details
+  reviewType            String             @map("review_type") @db.VarChar(50)
+  previousStatus        String?            @map("previous_status") @db.VarChar(50)
+  newStatus             String?            @map("new_status") @db.VarChar(50)
+  notes                 String             @db.Text
+  actionRequired        Boolean            @default(false) @map("action_required")
+  actionTaken           String?            @map("action_taken") @db.Text
+
+  // Audit
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+  userAgent             String             @map("user_agent") @db.Text
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  order                 Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], name: "idx_order_reviews_order")
+  @@index([reviewedBy], name: "idx_order_reviews_reviewer")
+  @@index([reviewType], name: "idx_order_reviews_type")
+  @@map("order_reviews")
+}
+
+model OrderException {
+  id                    String             @id @default(cuid())
+
+  // Target
+  orderId               String             @map("order_id")
+
+  // Exception Details
+  exceptionType         String             @map("exception_type") @db.VarChar(50)
+  severity              String             @map("severity") @db.VarChar(50)
+  description           String             @db.Text
+  resolution            String?            @map("resolution") @db.Text
+  status                String             @default("open") @map("status") @db.VarChar(50)
+
+  // Assignment
+  assignedTo            String?            @map("assigned_to")
+  resolvedBy            String?            @map("resolved_by")
+
+  // Timing
+  detectedAt            DateTime           @default(now()) @map("detected_at") @db.Timestamp(6)
+  resolvedAt            DateTime?          @map("resolved_at") @db.Timestamp(6)
+
+  // Impact
+  financialImpact       Decimal?           @map("financial_impact") @db.Decimal(10, 2)
+  customerImpact        String?            @map("customer_impact") @db.Text
+
+  // Communication
+  customerNotified      Boolean            @default(false) @map("customer_notified")
+  internalNotification  Boolean            @default(false) @map("internal_notification")
+
+  // Relations
+  order                 Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], name: "idx_order_exceptions_order")
+  @@index([status], name: "idx_order_exceptions_status")
+  @@index([severity], name: "idx_order_exceptions_severity")
+  @@index([assignedTo], name: "idx_order_exceptions_assigned")
+  @@map("order_exceptions")
+}
+
+// ==================== PAYMENT MODELS ====================
+
+model Payment {
+  id                String         @id @default(cuid())
+  userId            String         @map("user_id")
+  subscriptionId    String         @map("subscription_id")
+
+  // Asaas References
+  asaasPaymentId    String         @unique @map("asaas_payment_id") @db.VarChar(255)
+  asaasCustomerId   String         @map("asaas_customer_id") @db.VarChar(255)
+  asaasSubscriptionId String?      @map("asaas_subscription_id") @db.VarChar(255)
+
+  // Core Payment Data
+  amount            Decimal        @map("amount") @db.Decimal(10, 2)
+  netValue          Decimal?       @map("net_value") @db.Decimal(10, 2)
+  originalValue     Decimal?       @map("original_value") @db.Decimal(10, 2)
+  status            PaymentStatus  @map("status")
+  billingType       String         @map("billing_type") @db.VarChar(50)
+  description       String?        @map("description") @db.Text
+
+  // Date Management
+  dueDate           DateTime       @map("due_date") @db.Date
+  originalDueDate   DateTime?      @map("original_due_date") @db.Date
+  paymentDate       DateTime?      @map("payment_date") @db.Timestamp(6)
+  clientPaymentDate DateTime?      @map("client_payment_date") @db.Timestamp(6)
+  confirmedDate     DateTime?      @map("confirmed_date") @db.Timestamp(6)
+  refundedDate      DateTime?      @map("refunded_date") @db.Timestamp(6)
+
+  // Financial Adjustments
+  discountValue     Decimal?       @map("discount_value") @db.Decimal(10, 2)
+  interestValue     Decimal?       @map("interest_value") @db.Decimal(10, 2)
+  fineValue         Decimal?       @map("fine_value") @db.Decimal(10, 2)
+  refundAmount      Decimal?       @map("refund_amount") @db.Decimal(10, 2)
+
+  // URLs and Documents
+  invoiceUrl        String?        @map("invoice_url") @db.Text
+  invoiceNumber     String?        @map("invoice_number") @db.VarChar(100)
+  bankSlipUrl       String?        @map("bank_slip_url") @db.Text
+  transactionReceiptUrl String?    @map("transaction_receipt_url") @db.Text
+  nossoNumero       String?        @map("nosso_numero") @db.VarChar(100)
+
+  // PIX-specific fields
+  pixQrCodePayload  String?        @map("pix_qr_code_payload") @db.Text
+  pixQrCodeImage    String?        @map("pix_qr_code_image") @db.Text
+  pixExpirationDate DateTime?      @map("pix_expiration_date") @db.Timestamp(6)
+
+  // Additional References
+  externalReference String?        @map("external_reference") @db.VarChar(255)
+  installmentNumber Int?           @map("installment_number")
+
+  // Flags
+  deleted           Boolean        @default(false)
+  anticipated       Boolean        @default(false)
+  postalService     Boolean        @default(false) @map("postal_service")
+
+  // Flexible metadata
+  metadata          Json?          @map("metadata") @db.JsonB
+
+  // Audit Fields
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription      Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId], name: "idx_payments_user_id")
+  @@index([subscriptionId], name: "idx_payments_subscription_id")
+  @@index([asaasPaymentId], name: "idx_payments_asaas_id")
+  @@index([asaasCustomerId], name: "idx_payments_customer_id")
+  @@index([status], name: "idx_payments_status")
+  @@index([dueDate], name: "idx_payments_due_date")
+  @@index([paymentDate], name: "idx_payments_payment_date")
+  @@index([asaasSubscriptionId], name: "idx_payments_asaas_subscription_id")
+  @@map("payments")
+}
+
+model SubscriptionBenefit {
+  id                  String      @id @default(cuid())
+  subscriptionId      String      @map("subscription_id")
+  benefitName         String      @map("benefit_name") @db.VarChar(255)
+  benefitDescription  String      @map("benefit_description") @db.Text
+  benefitIcon         String      @map("benefit_icon") @db.VarChar(100)
+  benefitType         BenefitType @map("benefit_type")
+  quantityTotal       Int?        @map("quantity_total")
+  quantityUsed        Int         @default(0) @map("quantity_used")
+  expirationDate      DateTime?   @map("expiration_date") @db.Date
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId], name: "idx_benefits_subscription_id")
+  @@map("subscription_benefits")
+}
+
+model PaymentMethodRecord {
+  id             String              @id @default(cuid())
+  subscriptionId String              @map("subscription_id")
+  type           PaymentMethodType   @map("type")
+  brand          String?             @map("brand") @db.VarChar(100)
+  last4          String?             @map("last4") @db.VarChar(4)
+  expiryMonth    String?             @map("expiry_month") @db.VarChar(2)
+  expiryYear     String?             @map("expiry_year") @db.VarChar(4)
+  holderName     String              @map("holder_name") @db.VarChar(255)
+  isDefault      Boolean             @default(false) @map("is_default")
+  asaasCardId    String?             @map("asaas_card_id") @db.VarChar(255)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  subscription   Subscription        @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  orders         Order[]
+  invoices       Invoice[]
+
+  @@index([subscriptionId], name: "idx_payment_methods_subscription_id")
+  @@map("payment_method_records")
+}
+
+model Invoice {
+  id              String           @id @default(cuid())
+  subscriptionId  String           @map("subscription_id")
+  orderId         String?          @map("order_id")
+  type            InvoiceType      @map("type")
+  amount          Decimal          @map("amount") @db.Decimal(10, 2)
+  status          InvoiceStatus    @map("status")
+  dueDate         DateTime         @map("due_date") @db.Date
+  paidAt          DateTime?        @map("paid_at") @db.Timestamp(6)
+  paymentMethodId String?          @map("payment_method_id")
+  items           Json              @map("items") @db.JsonB
+  taxes           Decimal          @default(0) @map("taxes") @db.Decimal(10, 2)
+  discounts       Decimal          @default(0) @map("discounts") @db.Decimal(10, 2)
+  pdfUrl          String?          @map("pdf_url") @db.Text
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  subscription    Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  order           Order?           @relation(fields: [orderId], references: [id])
+  paymentMethod   PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([subscriptionId], name: "idx_invoices_subscription_id")
+  @@index([status], name: "idx_invoices_status")
+  @@index([dueDate], name: "idx_invoices_due_date")
+  @@map("invoices")
+}
+
+// ==================== SUPPORT MODELS (EXTENDED) ====================
+
+model SupportTicket {
+  id              String         @id @default(cuid())
+  ticketNumber    String         @unique
+  userId          String         @map("user_id")
+  customerInfo    Json           @map("customer_info") @db.JsonB
+  subject         String
+  description     String
+  category        SupportCategory @map("category")
+  priority        SupportPriority @map("priority")
+  status          SupportStatus  @default(OPEN) @map("status")
+  assignedAgentId String?        @map("assigned_agent_id")
+  escalationId    String?        @map("escalation_id")
+  source          String         @default("whatsapp") @map("source")
+  messageId       String?        @map("message_id")
+  intent          String?        @map("intent")
+  context         Json?          @map("context") @db.JsonB
+  tags            String[]       @default([])
+  slaBreach       Boolean        @default(false) @map("sla_breach")
+  estimatedResolution String?     @map("estimated_resolution")
+  assignedAt      DateTime?      @map("assigned_at")
+  resolvedAt      DateTime?      @map("resolved_at")
+  customerSatisfaction Float?     @map("customer_satisfaction")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Administrative Fields
+  assignedAdminId String?        @map("assigned_admin_id")
+  internalPriority String       @default("medium") @map("internal_priority") @db.VarChar(50)
+  escalationLevel Int            @default(0) @map("escalation_level")
+  slaBreachAt    DateTime?      @map("sla_breach_at") @db.Timestamp(6)
+  firstResponseAt DateTime?      @map("first_response_at") @db.Timestamp(6)
+  resolutionTime Int?           @map("resolution_time")
+  sentimentScore Float?         @map("sentiment_score")
+  internalNotes  String?        @map("internal_notes") @db.Text
+  channel        String         @default("whatsapp") @map("channel") @db.VarChar(50)
+
+  // Relations
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedAdmin   AdminUser?     @relation(fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  messages        TicketMessage[]
+  escalations     TicketEscalation[]
+  resolutions     TicketResolution[]
+  satisfactionReviews SatisfactionReview[]
+
+  @@index([userId], name: "idx_support_tickets_user_id")
+  @@index([status], name: "idx_support_tickets_status")
+  @@index([priority], name: "idx_support_tickets_priority")
+  @@index([category], name: "idx_support_tickets_category")
+  @@index([assignedAgentId], name: "idx_support_tickets_agent_id")
+  @@index([assignedAdminId], name: "idx_support_tickets_admin_id")
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id                    String             @id @default(cuid())
+
+  // Target
+  ticketId              String             @map("ticket_id")
+
+  // Message Details
+  senderType            String             @map("sender_type") @db.VarChar(50)
+  senderId              String?            @map("sender_id")
+  senderName            String?            @map("sender_name") @db.VarChar(255)
+  content               String             @db.Text
+  messageType           String             @map("message_type") @db.VarChar(50)
+
+  // Internal Communication
+  isInternal            Boolean            @default(false) @map("is_internal")
+  internalRecipients    String[]           @default([]) @map("internal_recipients")
+
+  // Media Attachments
+  attachments           Json?              @map("attachments") @db.JsonB
+
+  // Automation
+  isAutomated           Boolean            @default(false) @map("is_automated")
+  templateId            String?            @map("template_id")
+
+  // Metadata
+  metadata              Json?              @map("metadata") @db.JsonB
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  ticket                SupportTicket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId], name: "idx_ticket_messages_ticket")
+  @@index([senderType], name: "idx_ticket_messages_sender_type")
+  @@index([createdAt], name: "idx_ticket_messages_created_at")
+  @@index([isInternal], name: "idx_ticket_messages_internal")
+  @@map("ticket_messages")
+}
+
+model TicketEscalation {
+  id                    String             @id @default(cuid())
+
+  // Target
+  ticketId              String             @map("ticket_id")
+
+  // Escalation Details
+  fromLevel             Int                @map("from_level")
+  toLevel               Int                @map("to_level")
+  reason                String             @db.Text
+  urgency               String             @map("urgency") @db.VarChar(50)
+
+  // Assignment
+  escalatedBy           String             @map("escalated_by")
+  escalatedTo           String?            @map("escalated_to")
+  previousAssignee      String?            @map("previous_assignee")
+
+  // Timing
+  escalatedAt           DateTime           @default(now()) @map("escalated_at") @db.Timestamp(6)
+  acceptedAt            DateTime?          @map("accepted_at") @db.Timestamp(6)
+  resolvedAt            DateTime?          @map("resolved_at") @db.Timestamp(6)
+
+  // Resolution
+  resolution            String?            @map("resolution") @db.Text
+  resolutionBy          String?            @map("resolution_by")
+
+  // SLA Impact
+  slaPausedAt           DateTime?          @map("sla_paused_at") @db.Timestamp(6)
+  slaResumedAt          DateTime?          @map("sla_resumed_at") @db.Timestamp(6)
+
+  // Relations
+  ticket                SupportTicket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId], name: "idx_ticket_escalations_ticket")
+  @@index([escalatedBy], name: "idx_ticket_escalations_escalated_by")
+  @@index([toLevel], name: "idx_ticket_escalations_to_level")
+  @@map("ticket_escalations")
+}
+
+model TicketResolution {
+  id                    String             @id @default(cuid())
+
+  // Target
+  ticketId              String             @map("ticket_id")
+
+  // Resolution Details
+  resolutionType        String             @map("resolution_type") @db.VarChar(50)
+  resolutionCategory    String             @map("resolution_category") @db.VarChar(50)
+  solution              String             @db.Text
+  summary               String             @db.Text
+
+  // Classification
+  customerSatisfaction  Int?               @map("customer_satisfaction")
+  agentEffort           Int?               @map("agent_effort")
+  complexity            String?            @map("complexity") @db.VarChar(50)
+
+  // Time Tracking
+  totalHandleTime       Int?               @map("total_handle_time")
+  firstResponseTime     Int?               @map("first_response_time")
+  resolutionTime        Int?               @map("resolution_time")
+
+  // Assignment
+  resolvedBy            String             @map("resolved_by")
+  approvedBy            String?            @map("approved_by")
+
+  // Follow-up
+  followUpRequired      Boolean            @default(false) @map("follow_up_required")
+  followUpDate          DateTime?          @map("follow_up_date") @db.Timestamp(6)
+  followUpNotes         String?            @map("follow_up_notes") @db.Text
+
+  // Knowledge Base
+  addToKnowledgeBase    Boolean            @default(false) @map("add_to_knowledge_base")
+  knowledgeBaseEntry    String?            @map("knowledge_base_entry")
+
+  resolvedAt            DateTime           @default(now()) @map("resolved_at") @db.Timestamp(6)
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  ticket                SupportTicket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId], name: "idx_ticket_resolutions_ticket")
+  @@index([resolvedBy], name: "idx_ticket_resolutions_resolved_by")
+  @@index([resolutionType], name: "idx_ticket_resolutions_type")
+  @@map("ticket_resolutions")
+}
+
+model SatisfactionReview {
+  id                    String             @id @default(cuid())
+
+  // Target
+  ticketId              String             @map("ticket_id")
+
+  // Review Details
+  rating                Int
+  comment               String?            @db.Text
+  categories            Json?              @map("categories") @db.JsonB
+
+  // Response Timing
+  responseTimeRating    Int?               @map("response_time_rating")
+  solutionQualityRating Int?               @map("solution_quality_rating")
+  agentRating           Int?               @map("agent_rating")
+
+  // Customer Info
+  customerId            String?            @map("customer_id")
+  customerEmail         String?            @map("customer_email") @db.VarChar(255)
+
+  // Request Details
+  requestedAt           DateTime           @default(now()) @map("requested_at") @db.Timestamp(6)
+  respondedAt           DateTime?          @map("responded_at") @db.Timestamp(6)
+  isAnonymous           Boolean            @default(false) @map("is_anonymous")
+
+  // Follow-up
+  followUpContact       Boolean            @default(false) @map("follow_up_contact")
+  followUpCompleted     Boolean            @default(false) @map("follow_up_completed")
+
+  // Relations
+  ticket                SupportTicket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId], name: "idx_satisfaction_reviews_ticket")
+  @@index([rating], name: "idx_satisfaction_reviews_rating")
+  @@index([requestedAt], name: "idx_satisfaction_reviews_requested")
+  @@map("satisfaction_reviews")
+}
+
+// ==================== FINANCIAL ADMINISTRATIVE MODELS ====================
+
+model FinancialTransaction {
+  id                    String             @id @default(cuid())
+
+  // References
+  userId                String             @map("user_id")
+  subscriptionId        String?            @map("subscription_id")
+  paymentId             String?            @map("payment_id")
+  invoiceId             String?            @map("invoice_id")
+  orderId               String?            @map("order_id")
+  refundId              String?            @map("refund_id")
+
+  // Transaction Details
+  transactionType       String             @map("transaction_type") @db.VarChar(50)
+  category              String             @map("category") @db.VarChar(50)
+  amount                Decimal            @db.Decimal(10, 2)
+  currency              String             @default("BRL") @db.VarChar(3)
+
+  // Status
+  status                String             @map("status") @db.VarChar(50)
+  gateway               String             @map("gateway") @db.VarChar(50)
+  gatewayTransactionId  String?            @map("gateway_transaction_id") @db.VarChar(255)
+
+  // Breakdown
+  grossAmount           Decimal            @map("gross_amount") @db.Decimal(10, 2)
+  fees                  Decimal            @default(0) @db.Decimal(10, 2)
+  taxes                 Decimal            @default(0) @db.Decimal(10, 2)
+  netAmount             Decimal            @db.Decimal(10, 2)
+
+  // Dates
+  transactionDate       DateTime           @map("transaction_date") @db.Date
+  processedAt           DateTime?          @map("processed_at") @db.Timestamp(6)
+  settledAt             DateTime?          @map("settled_at") @db.Timestamp(6)
+
+  // Reconciliation
+  reconciled            Boolean            @default(false)
+  reconciledAt          DateTime?          @map("reconciled_at") @db.Timestamp(6)
+  reconciledBy          String?            @map("reconciled_by")
+
+  // Admin Actions
+  manualReview          Boolean            @default(false) @map("manual_review")
+  reviewedBy            String?            @map("reviewed_by")
+  reviewedAt            DateTime?          @map("reviewed_at") @db.Timestamp(6)
+  reviewNotes           String?            @map("review_notes") @db.Text
+
+  // Description and Metadata
+  description           String             @db.Text
+  metadata              Json?              @map("metadata") @db.JsonB
+
+  // Audit
+  createdBy             String?            @map("created_by")
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([userId], name: "idx_financial_transactions_user")
+  @@index([subscriptionId], name: "idx_financial_transactions_subscription")
+  @@index([paymentId], name: "idx_financial_transactions_payment")
+  @@index([transactionType], name: "idx_financial_transactions_type")
+  @@index([status], name: "idx_financial_transactions_status")
+  @@index([transactionDate], name: "idx_financial_transactions_date")
+  @@index([gateway], name: "idx_financial_transactions_gateway")
+  @@index([reconciled], name: "idx_financial_transactions_reconciled")
+  @@map("financial_transactions")
+}
+
+model Refund {
+  id                    String             @id @default(cuid())
+
+  // References
+  userId                String             @map("user_id")
+  subscriptionId        String?            @map("subscription_id")
+  paymentId             String             @map("payment_id")
+  orderId               String?            @map("order_id")
+  financialTransactionId String?           @map("financial_transaction_id")
+
+  // Refund Details
+  refundAmount          Decimal            @db.Decimal(10, 2)
+  originalAmount        Decimal            @map("original_amount") @db.Decimal(10, 2)
+  reason                RefundReason
+  status                RefundStatus       @default(PENDING)
+
+  // Processing
+  processedBy           String?            @map("processed_by")
+  approvedBy            String?            @map("approved_by")
+  rejectedBy            String?            @map("rejected_by")
+
+  // Gateway Information
+  gateway               String             @map("gateway") @db.VarChar(50)
+  gatewayRefundId       String?            @map("gateway_refund_id") @db.VarChar(255)
+  gatewayStatus         String?            @map("gateway_status") @db.VarChar(100)
+
+  // Timing
+  requestedAt           DateTime           @default(now()) @map("requested_at") @db.Timestamp(6)
+  processedAt           DateTime?          @map("processed_at") @db.Timestamp(6)
+  approvedAt            DateTime?          @map("approved_at") @db.Timestamp(6)
+  rejectedAt            DateTime?          @map("rejected_at") @db.Timestamp(6)
+  completedAt           DateTime?          @map("completed_at") @db.Timestamp(6)
+  expectedCompletion    DateTime?          @map("expected_completion") @db.Timestamp(6)
+
+  // Fees and Deductions
+  processingFee         Decimal            @default(0) @db.Decimal(10, 2) @map("processing_fee")
+  refundableAmount      Decimal            @db.Decimal(10, 2) @map("refundable_amount")
+
+  // Communication
+  customerNotified      Boolean            @default(false) @map("customer_notified")
+  notificationSentAt    DateTime?          @map("notification_sent_at") @db.Timestamp(6)
+
+  // Documentation
+  reasonDetails         String?            @map("reason_details") @db.Text
+  adminNotes            String?            @map("admin_notes") @db.Text
+  evidenceAttachments   Json?              @map("evidence_attachments") @db.JsonB
+
+  // Audit
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+  userAgent             String             @map("user_agent") @db.Text
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([userId], name: "idx_refunds_user")
+  @@index([paymentId], name: "idx_refunds_payment")
+  @@index([status], name: "idx_refunds_status")
+  @@index([reason], name: "idx_refunds_reason")
+  @@index([requestedAt], name: "idx_refunds_requested")
+  @@index([processedBy], name: "idx_refunds_processor")
+  @@map("refunds")
+}
+
+model Dispute {
+  id                    String             @id @default(cuid())
+
+  // References
+  userId                String             @map("user_id")
+  paymentId             String             @map("payment_id")
+  refundId              String?            @map("refund_id")
+
+  // Dispute Details
+  disputeType           String             @map("dispute_type") @db.VarChar(50)
+  reason                String             @db.Text
+  amount                Decimal            @db.Decimal(10, 2)
+  currency              String             @default("BRL") @db.VarChar(3)
+
+  // Status
+  status                String             @map("status") @db.VarChar(50)
+  phase                 String             @map("phase") @db.VarChar(50)
+
+  // Gateway Information
+  gateway               String             @map("gateway") @db.VarChar(50)
+  gatewayDisputeId      String?            @map("gateway_dispute_id") @db.VarChar(255)
+
+  // Deadlines
+  responseDue           DateTime?          @map("response_due") @db.Timestamp(6)
+  evidenceDue           DateTime?          @map("evidence_due") @db.Timestamp(6)
+  resolutionExpected    DateTime?          @map("resolution_expected") @db.Timestamp(6)
+
+  // Assignment
+  assignedTo            String?            @map("assigned_to")
+  caseManager           String?            @map("case_manager")
+
+  // Financial Impact
+  provisionalCredit     Decimal?           @map("provisional_credit") @db.Decimal(10, 2)
+  fees                  Decimal            @default(0) @db.Decimal(10, 2)
+
+  // Evidence
+  evidenceSubmitted     Boolean            @default(false) @map("evidence_submitted")
+  evidenceFiles         Json?              @map("evidence_files") @db.JsonB
+  customerEvidence      Json?              @map("customer_evidence") @db.JsonB
+
+  // Communication
+  customerContacted     Boolean            @default(false) @map("customer_contacted")
+  lastContactAt         DateTime?          @map("last_contact_at") @db.Timestamp(6)
+
+  // Resolution
+  outcome               String?            @map("outcome") @db.VarChar(50)
+  resolutionReason      String?            @map("resolution_reason") @db.Text
+  resolvedAt            DateTime?          @map("resolved_at") @db.Timestamp(6)
+  resolvedBy            String?            @map("resolved_by")
+
+  // Notes
+  adminNotes            String?            @map("admin_notes") @db.Text
+  legalNotes            String?            @map("legal_notes") @db.Text
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([userId], name: "idx_disputes_user")
+  @@index([paymentId], name: "idx_disputes_payment")
+  @@index([status], name: "idx_disputes_status")
+  @@index([disputeType], name: "idx_disputes_type")
+  @@index([assignedTo], name: "idx_disputes_assigned")
+  @@map("disputes")
+}
+
+// ==================== EXISTING MODELS (WhatsApp, etc.) ====================
+
+model WhatsAppConversation {
+  id                String   @id @default(cuid())
+  customerPhone     String   @map("customer_phone") @db.VarChar(20)
+  userId            String?  @map("user_id")
+  customerName      String?  @map("customer_name") @db.VarChar(255)
+
+  // Conversation metadata
+  lastMessageAt     DateTime @default(now()) @map("last_message_at") @db.Timestamp(6)
+  messageCount      Int      @default(0) @map("message_count")
+  isActive          Boolean  @default(true) @map("is_active")
+
+  // Last interaction context
+  lastIntent        String?  @map("last_intent") @db.VarChar(50)
+  lastSentiment     String?  @map("last_sentiment") @db.VarChar(50)
+
+  // SendPulse metadata
+  sendpulseContactId String? @map("sendpulse_contact_id") @db.VarChar(255)
+  sendpulseBotId     String? @map("sendpulse_bot_id") @db.VarChar(255)
+
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages          WhatsAppInteraction[]
+  chatbotSessions   ChatbotSession[]
+
+  @@unique([customerPhone], name: "unique_conversation_phone")
+  @@index([customerPhone], name: "idx_conversations_phone")
+  @@index([userId], name: "idx_conversations_user")
+  @@index([lastMessageAt], name: "idx_conversations_last_message")
+  @@index([isActive], name: "idx_conversations_active")
+  @@map("whatsapp_conversations")
+}
+
+model WhatsAppInteraction {
+  id                String   @id @default(cuid())
+  conversationId    String   @map("conversation_id")
+  messageId         String   @unique
+  customerPhone     String   @map("customer_phone")
+  userId            String?  @map("user_id")
+  content           String   @db.Text
+  isFromCustomer    Boolean  @default(true) @map("is_from_customer")
+  intent            String?  @map("intent")
+  sentiment         String?  @map("sentiment")
+  urgency           String?  @map("urgency")
+  response          String?  @map("response") @db.Text
+  escalationRequired Boolean  @default(false) @map("escalation_required")
+  ticketCreated     Boolean  @default(false) @map("ticket_created")
+  ticketId          String?  @map("ticket_id")
+
+  // LangChain metadata
+  llmModel          String?  @map("llm_model") @db.VarChar(100)
+  processingTime    Int?     @map("processing_time")
+
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  conversation      WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user              User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId], name: "idx_whatsapp_interactions_conversation")
+  @@index([customerPhone], name: "idx_whatsapp_interactions_phone")
+  @@index([userId], name: "idx_whatsapp_interactions_user")
+  @@index([intent], name: "idx_whatsapp_interactions_intent")
+  @@index([sentiment], name: "idx_whatsapp_interactions_sentiment")
+  @@index([createdAt], name: "idx_whatsapp_interactions_created_at")
+  @@index([ticketId], name: "idx_whatsapp_interactions_ticket")
+  @@map("whatsapp_interactions")
+}
+
+model FAQ {
+  id                   String   @id @default(cuid())
+  category             String   @map("category")
+  question             String   @map("question")
+  answer               String   @map("answer")
+  keywords             String[] @default([])
+  priority             Int      @default(5)
+  language             String   @default("pt-BR")
+  isActive             Boolean  @default(true) @map("is_active")
+  relatedTopics        String[] @default([])
+  escalationRequired   Boolean  @default(false) @map("escalation_required")
+  confidenceThreshold Float    @default(0.8) @map("confidence_threshold")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([category], name: "idx_faqs_category")
+  @@index([isActive], name: "idx_faqs_active")
+  @@index([priority], name: "idx_faqs_priority")
+  @@map("faqs")
+}
+
+// ==================== NOTIFICATION SYSTEM MODELS ====================
+
+model UserBehavior {
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emailOpenRate           Float     @default(0)
+  emailClickRate          Float     @default(0)
+  whatsappOpenRate        Float     @default(0)
+  whatsappClickRate       Float     @default(0)
+  smsOpenRate             Float     @default(0)
+  smsClickRate            Float     @default(0)
+  pushOpenRate            Float     @default(0)
+  pushClickRate           Float     @default(0)
+
+  bestHourOfDay           Int?
+  averageResponseTime     Int?
+
+  preferredFrequency      Int       @default(3)
+  currentFatigueScore     Float     @default(0)
+
+  conversionRate          Float     @default(0)
+
+  updatedAt               DateTime  @updatedAt
+
+  @@map("user_behaviors")
+}
+
+model Notification {
+  id                String              @id @default(cuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channel           NotificationChannel
+  type              NotificationType    @default(REMINDER)
+
+  subject           String?
+  content           String
+  metadata          Json?
+
+  scheduledAt       DateTime
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+
+  status            NotificationStatus  @default(SCHEDULED)
+  errorMessage      String?
+
+  predictedChannel  NotificationChannel?
+  predictionScore   Float?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  interactions      Interaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([channel])
+  @@map("notifications")
+}
+
+model Interaction {
+  id                String            @id @default(cuid())
+  notificationId    String
+  notification      Notification      @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  actionType        InteractionType
+  metadata          Json?
+
+  timestamp         DateTime          @default(now())
+
+  @@index([notificationId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("interactions")
+}
+
+model MLPrediction {
+  id                  String              @id @default(cuid())
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  predictedChannel    NotificationChannel
+  predictedTime       DateTime
+  confidenceScore     Float
+
+  modelVersion        String
+  features            Json
+
+  actualChannel       NotificationChannel?
+  actualTime          DateTime?
+  wasAccurate         Boolean?
+
+  createdAt           DateTime            @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ml_predictions")
+}
+
+model Campaign {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+
+  type              NotificationType
+  targetChannels    NotificationChannel[]
+
+  content           Json
+
+  scheduledAt       DateTime
+  completedAt       DateTime?
+
+  totalTargets      Int                 @default(0)
+  totalSent         Int                 @default(0)
+  totalDelivered    Int                 @default(0)
+  totalOpened       Int                 @default(0)
+  totalClicked      Int                 @default(0)
+  totalConverted    Int                 @default(0)
+
+  status            String              @default("draft")
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@map("campaigns")
+}
+
+model AnalyticsSnapshot {
+  id                String              @id @default(cuid())
+
+  date              DateTime            @unique
+
+  totalSent         Int                 @default(0)
+  totalDelivered    Int                 @default(0)
+  totalOpened       Int                 @default(0)
+  totalClicked      Int                 @default(0)
+
+  emailMetrics      Json?
+  whatsappMetrics   Json?
+  smsMetrics        Json?
+  pushMetrics       Json?
+
+  avgResponseTime   Float?
+  optOutRate        Float?
+
+  createdAt         DateTime            @default(now())
+
+  @@index([date])
+  @@map("analytics_snapshots")
+}
+
+// ==================== LGPD COMPLIANCE MODELS ====================
+
+model ConsentLog {
+  id              String         @id @default(cuid())
+  userId          String?        @map("user_id")
+  email           String         @db.VarChar(255)
+  consentType     ConsentType    @map("consent_type")
+  status          ConsentStatus  @default(GRANTED)
+  ipAddress       String         @map("ip_address") @db.VarChar(45)
+  userAgent       String         @map("user_agent") @db.Text
+  timestamp       DateTime       @default(now()) @db.Timestamp(6)
+  expiresAt       DateTime?      @map("expires_at") @db.Timestamp(6)
+
+  // Metadata for additional context
+  metadata        Json?          @db.JsonB
+
+  // Relations
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId], name: "idx_consent_logs_user_id")
+  @@index([email], name: "idx_consent_logs_email")
+  @@index([consentType], name: "idx_consent_logs_type")
+  @@index([timestamp], name: "idx_consent_logs_timestamp")
+  @@map("consent_logs")
+}
+
+model DataRequest {
+  id              String              @id @default(cuid())
+  email           String              @db.VarChar(255)
+  name            String              @db.VarChar(255)
+  requestType     DataRequestType     @map("request_type")
+  status          DataRequestStatus   @default(PENDING)
+  reason          String?             @db.Text
+
+  // Request tracking
+  requestedAt     DateTime            @default(now()) @map("requested_at") @db.Timestamp(6)
+  completedAt     DateTime?           @map("completed_at") @db.Timestamp(6)
+
+  // Audit trail
+  ipAddress       String              @map("ip_address") @db.VarChar(45)
+  userAgent       String              @map("user_agent") @db.Text
+
+  // Additional information
+  metadata        Json?               @db.JsonB
+
+  @@index([email], name: "idx_data_requests_email")
+  @@index([status], name: "idx_data_requests_status")
+  @@index([requestType], name: "idx_data_requests_type")
+  @@index([requestedAt], name: "idx_data_requests_requested_at")
+  @@map("data_requests")
+}
+
+// ==================== CHATBOT AUTHENTICATION SYSTEM ====================
+
+model ChatbotAuthCode {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  code            String              @db.VarChar(6)
+  phone           String              @db.VarChar(20)
+
+  // Status e validade
+  status          ChatbotAuthStatus   @default(PENDING)
+  expiresAt       DateTime            @map("expires_at") @db.Timestamp(6)
+  verifiedAt      DateTime?           @map("verified_at") @db.Timestamp(6)
+
+  // Controle de tentativas
+  attempts        Int                 @default(0)
+  maxAttempts     Int                 @default(3) @map("max_attempts")
+
+  // Auditoria
+  ipAddress       String?             @map("ip_address") @db.VarChar(45)
+  userAgent       String?             @map("user_agent") @db.Text
+  metadata        Json?               @db.JsonB
+
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_chatbot_auth_codes_user")
+  @@index([phone], name: "idx_chatbot_auth_codes_phone")
+  @@index([code], name: "idx_chatbot_auth_codes_code")
+  @@index([status], name: "idx_chatbot_auth_codes_status")
+  @@index([expiresAt], name: "idx_chatbot_auth_codes_expires")
+  @@map("chatbot_auth_codes")
+}
+
+model ChatbotSession {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  phone           String              @db.VarChar(20)
+  conversationId  String?             @map("conversation_id")
+
+  // Sessão e token
+  sessionToken    String              @unique @map("session_token") @db.VarChar(255)
+  status          ChatbotSessionStatus @default(ACTIVE)
+
+  // Validade
+  expiresAt       DateTime            @map("expires_at") @db.Timestamp(6)
+  lastActivityAt  DateTime            @default(now()) @map("last_activity_at") @db.Timestamp(6)
+
+  // Controle de atividades
+  commandsExecuted Int                @default(0) @map("commands_executed")
+  dataAccessLog   Json?               @map("data_access_log") @db.JsonB
+
+  // Auditoria e segurança
+  ipAddress       String?             @map("ip_address") @db.VarChar(45)
+  deviceInfo      Json?               @map("device_info") @db.JsonB
+
+  // Encerramento
+  terminatedAt    DateTime?           @map("terminated_at") @db.Timestamp(6)
+  terminationReason String?           @map("termination_reason") @db.Text
+
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation    WhatsAppConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId], name: "idx_chatbot_sessions_user")
+  @@index([phone], name: "idx_chatbot_sessions_phone")
+  @@index([sessionToken], name: "idx_chatbot_sessions_token")
+  @@index([status], name: "idx_chatbot_sessions_status")
+  @@index([expiresAt], name: "idx_chatbot_sessions_expires")
+  @@index([conversationId], name: "idx_chatbot_sessions_conversation")
+  @@map("chatbot_sessions")
+}
+
+// ==================== SUBSCRIPTION HISTORY SYSTEM ====================
+
+model SubscriptionHistory {
+  id              String                  @id @default(cuid())
+  subscriptionId  String                  @map("subscription_id")
+  userId          String                  @map("user_id")
+
+  // Change details
+  changeType      SubscriptionChangeType  @map("change_type")
+  description     String                  @db.Text
+  oldValue        Json?                   @map("old_value") @db.JsonB
+  newValue        Json?                   @map("new_value") @db.JsonB
+  metadata        Json?                   @db.JsonB
+
+  // Audit trail
+  ipAddress       String?                 @map("ip_address") @db.VarChar(45)
+  userAgent       String?                 @map("user_agent") @db.Text
+
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  subscription    Subscription            @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId], name: "idx_subscription_history_subscription")
+  @@index([userId], name: "idx_subscription_history_user")
+  @@index([changeType], name: "idx_subscription_history_change_type")
+  @@index([createdAt(sort: Desc)], name: "idx_subscription_history_created_at")
+  @@map("subscription_history")
+}
+
+// ==================== AUDIT AND LOGGING SYSTEM ====================
+
+model AdminAction {
+  id                    String             @id @default(cuid())
+
+  // Admin Information
+  adminUserId           String             @map("admin_user_id")
+  adminEmail            String             @map("admin_email") @db.VarChar(255)
+
+  // Action Details
+  action                String             @map("action") @db.VarChar(255)
+  resourceType          String             @map("resource_type") @db.VarChar(100)
+  resourceId            String?            @map("resource_id")
+  resourceName          String?            @map("resource_name") @db.VarChar(255)
+
+  // Change Details
+  actionType            String             @map("action_type") @db.VarChar(50)
+  oldValue              Json?              @map("old_value") @db.JsonB
+  newValue              Json?              @map("new_value") @db.JsonB
+  changedFields         String[]           @default([]) @map("changed_fields")
+
+  // Context
+  description           String?            @db.Text
+  reason                String?            @db.Text
+  source                String             @map("source") @db.VarChar(50)
+
+  // Session Information
+  sessionId             String?            @map("session_id")
+
+  // Request Details
+  ipAddress             String             @map("ip_address") @db.VarChar(45)
+  userAgent             String             @map("user_agent") @db.Text
+  requestId             String?            @map("request_id")
+  endpoint              String?            @map("endpoint") @db.Text
+
+  // Timing
+  duration              Int?               // em milissegundos
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Security
+  suspiciousActivity    Boolean            @default(false) @map("suspicious_activity")
+  riskScore             Int?               @map("risk_score")
+  securityFlags         String[]           @default([]) @map("security_flags")
+
+  // Additional Metadata
+  metadata              Json?              @map("metadata") @db.JsonB
+
+  // Relations
+  adminUser             AdminUser          @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId], name: "idx_admin_actions_admin_user")
+  @@index([action], name: "idx_admin_actions_action")
+  @@index([resourceType], name: "idx_admin_actions_resource_type")
+  @@index([resourceId], name: "idx_admin_actions_resource_id")
+  @@index([actionType], name: "idx_admin_actions_type")
+  @@index([createdAt], name: "idx_admin_actions_created_at")
+  @@index([ipAddress], name: "idx_admin_actions_ip")
+  @@index([suspiciousActivity], name: "idx_admin_actions_suspicious")
+  @@map("admin_actions")
+}
+
+model SystemLog {
+  id                    String             @id @default(cuid())
+
+  // Log Details
+  level                 LogLevel
+  event                 SystemEvent
+  message               String             @db.Text
+
+  // Context
+  context               Json?              @map("context") @db.JsonB
+  component             String             @map("component") @db.VarChar(100)
+  service               String?            @map("service") @db.VarChar(100)
+  version               String?            @map("version") @db.VarChar(50)
+
+  // Resource Information
+  resourceType          String?            @map("resource_type") @db.VarChar(100)
+  resourceId            String?            @map("resource_id")
+  userId                String?            @map("user_id")
+  adminUserId           String?            @map("admin_user_id")
+
+  // Request Information
+  requestId             String?            @map("request_id")
+  sessionId             String?            @map("session_id")
+  traceId               String?            @map("trace_id")
+  correlationId         String?            @map("correlation_id")
+
+  // Network Information
+  ipAddress             String?            @map("ip_address") @db.VarChar(45)
+  userAgent             String?            @map("user_agent") @db.Text
+  endpoint              String?            @map("endpoint") @db.Text
+  method                String?            @map("method") @db.VarChar(10)
+
+  // Error Information
+  errorCode             String?            @map("error_code") @db.VarChar(100)
+  errorMessage          String?            @map("error_message") @db.Text
+  stackTrace            String?            @map("stack_trace") @db.Text
+
+  // Performance
+  duration              Int?               // em milissegundos
+  memoryUsage           BigInt?            @map("memory_usage")
+  cpuUsage              Float?             @map("cpu_usage")
+
+  // Environment
+  environment           String             @map("environment") @db.VarChar(50)
+  region                String?            @map("region") @db.VarChar(50)
+  instanceId            String?            @map("instance_id")
+
+  // Alerting
+  alertTriggered        Boolean            @default(false) @map("alert_triggered")
+  alertSent             Boolean            @default(false) @map("alert_sent")
+  alertLevel            String?            @map("alert_level") @db.VarChar(50)
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([level], name: "idx_system_logs_level")
+  @@index([event], name: "idx_system_logs_event")
+  @@index([component], name: "idx_system_logs_component")
+  @@index([resourceType], name: "idx_system_logs_resource_type")
+  @@index([userId], name: "idx_system_logs_user")
+  @@index([adminUserId], name: "idx_system_logs_admin")
+  @@index([createdAt], name: "idx_system_logs_created_at")
+  @@index([alertTriggered], name: "idx_system_logs_alert")
+  @@map("system_logs")
+}
+
+model SecurityEvent {
+  id                    String             @id @default(cuid())
+
+  // Event Details
+  eventType             String             @map("event_type") @db.VarChar(100)
+  severity              String             @map("severity") @db.VarChar(50)
+  title                 String             @db.VarChar(255)
+  description           String             @db.Text
+
+  // Target
+  targetType            String             @map("target_type") @db.VarChar(100)
+  targetId              String?            @map("target_id")
+  targetEmail           String?            @map("target_email") @db.VarChar(255)
+
+  // Source
+  sourceIp              String             @map("source_ip") @db.VarChar(45)
+  sourceUserAgent       String?            @map("source_user_agent") @db.Text
+  sourceLocation        Json?              @map("source_location") @db.JsonB
+
+  // User/Admin Context
+  userId                String?            @map("user_id")
+  adminUserId           String?            @map("admin_user_id")
+
+  // Status
+  status                String             @map("status") @db.VarChar(50)
+  confidence            Float?             @map("confidence")
+
+  // Risk Assessment
+  riskScore             Int?               @map("risk_score")
+  riskLevel             String?            @map("risk_level") @db.VarChar(50)
+  impact                String?            @map("impact") @db.Text
+
+  // Response
+  actionTaken           String?            @map("action_taken") @db.Text
+  automatedResponse     Boolean            @default(false) @map("automated_response")
+  blocked               Boolean            @default(false)
+
+  // Investigation
+  assignedTo            String?            @map("assigned_to")
+  investigationNotes    String?            @map("investigation_notes") @db.Text
+  resolvedAt            DateTime?          @map("resolved_at") @db.Timestamp(6)
+  resolvedBy            String?            @map("resolved_by")
+
+  // Correlation
+  relatedEvents         String[]           @default([]) @map("related_events")
+  parentEventId         String?            @map("parent_event_id")
+
+  // Metadata
+  metadata              Json?              @map("metadata") @db.JsonB
+  rawEvent             Json?              @map("raw_event") @db.JsonB
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([eventType], name: "idx_security_events_type")
+  @@index([severity], name: "idx_security_events_severity")
+  @@index([status], name: "idx_security_events_status")
+  @@index([targetType], name: "idx_security_events_target_type")
+  @@index([userId], name: "idx_security_events_user")
+  @@index([adminUserId], name: "idx_security_events_admin")
+  @@index([sourceIp], name: "idx_security_events_source_ip")
+  @@index([createdAt], name: "idx_security_events_created_at")
+  @@index([riskScore], name: "idx_security_events_risk")
+  @@map("security_events")
+}
+
+// ==================== ADMIN NOTIFICATION SYSTEM ====================
+
+model AdminNotification {
+  id                    String             @id @default(cuid())
+
+  // Target
+  adminUserId           String             @map("admin_user_id")
+
+  // Notification Details
+  type                  String             @map("type") @db.VarChar(100)
+  title                 String             @db.VarChar(255)
+  message               String             @db.Text
+  priority              String             @map("priority") @db.VarChar(50)
+
+  // Status
+  isRead                Boolean            @default(false) @map("is_read")
+  readAt                DateTime?          @map("read_at") @db.Timestamp(6)
+
+  // Action
+  actionUrl             String?            @map("action_url") @db.Text
+  actionText            String?            @map("action_text") @db.VarChar(100)
+  actionRequired        Boolean            @default(false) @map("action_required")
+  actionCompleted       Boolean            @default(false) @map("action_completed")
+
+  // Context
+  context               Json?              @map("context") @db.JsonB
+  resourceType          String?            @map("resource_type") @db.VarChar(100)
+  resourceId            String?            @map("resource_id")
+
+  // Delivery
+  channels              String[]           @default([])
+  sentVia               String[]           @default([]) @map("sent_via")
+
+  // Scheduling
+  scheduledAt           DateTime?          @map("scheduled_at") @db.Timestamp(6)
+  expiresAt             DateTime?          @map("expires_at") @db.Timestamp(6)
+
+  // Metadata
+  metadata              Json?              @map("metadata") @db.JsonB
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  adminUser             AdminUser          @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId], name: "idx_admin_notifications_admin_user")
+  @@index([isRead], name: "idx_admin_notifications_read")
+  @@index([type], name: "idx_admin_notifications_type")
+  @@index([priority], name: "idx_admin_notifications_priority")
+  @@index([createdAt], name: "idx_admin_notifications_created_at")
+  @@map("admin_notifications")
+}
+
+// ==================== ANALYTICS AND PERFORMANCE SYSTEM ====================
+
+model AnalyticsCache {
+  id                    String             @id @default(cuid())
+
+  // Cache Key
+  cacheKey              String             @unique @map("cache_key") @db.VarChar(255)
+
+  // Data
+  data                  Json               @db.JsonB
+  dataType              String             @map("data_type") @db.VarChar(100)
+
+  // Metadata
+  parameters            Json?              @map("parameters") @db.JsonB
+  version               Int                @default(1)
+
+  // Timing
+  generatedAt           DateTime           @default(now()) @map("generated_at") @db.Timestamp(6)
+  expiresAt             DateTime           @map("expires_at") @db.Timestamp(6)
+  lastAccessedAt        DateTime?          @map("last_accessed_at") @db.Timestamp(6)
+
+  // Usage
+  accessCount           Int                @default(0) @map("access_count")
+  sizeBytes             Int?               @map("size_bytes")
+
+  // Status
+  isActive              Boolean            @default(true) @map("is_active")
+  isValid               Boolean            @default(true) @map("is_valid")
+
+  // Generation Info
+  generatedBy           String?            @map("generated_by")
+  generationTime        Int?               @map("generation_time")
+  query                 String?            @db.Text
+
+  @@index([cacheKey], name: "idx_analytics_cache_key")
+  @@index([dataType], name: "idx_analytics_cache_type")
+  @@index([expiresAt], name: "idx_analytics_cache_expires")
+  @@index([isActive], name: "idx_analytics_cache_active")
+  @@map("analytics_cache")
+}
+
+model DashboardConfig {
+  id                    String             @id @default(cuid())
+
+  // Owner
+  adminUserId           String             @map("admin_user_id")
+
+  // Configuration
+  name                  String             @db.VarChar(255)
+  description           String?            @db.Text
+  layout                Json               @db.JsonB
+
+  // Widgets
+  widgets               Json               @db.JsonB
+
+  // Filters and Parameters
+  defaultFilters        Json?              @map("default_filters") @db.JsonB
+  dateRange             Json?              @map("date_range") @db.JsonB
+
+  // Sharing
+  isPublic              Boolean            @default(false) @map("is_public")
+  sharedWith            String[]           @default([]) @map("shared_with")
+
+  // Status
+  isActive              Boolean            @default(true) @map("is_active")
+
+  // Metadata
+  version               Int                @default(1)
+  tags                  String[]           @default([])
+
+  // Audit
+  createdBy             String             @map("created_by")
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+  lastAccessedAt        DateTime?          @map("last_accessed_at") @db.Timestamp(6)
+
+  @@index([adminUserId], name: "idx_dashboard_configs_admin_user")
+  @@index([isActive], name: "idx_dashboard_configs_active")
+  @@index([isPublic], name: "idx_dashboard_configs_public")
+  @@map("dashboard_configs")
+}
+
+model ReportSchedule {
+  id                    String             @id @default(cuid())
+
+  // Report Details
+  name                  String             @db.VarChar(255)
+  description           String?            @db.Text
+  reportType            String             @map("report_type") @db.VarChar(100)
+
+  // Schedule
+  frequency             String             @map("frequency") @db.VarChar(50)
+  cronExpression        String?            @map("cron_expression") @db.VarChar(100)
+  timezone              String             @default("America/Sao_Paulo") @db.VarChar(50)
+  nextRunAt             DateTime           @map("next_run_at") @db.Timestamp(6)
+  lastRunAt             DateTime?          @map("last_run_at") @db.Timestamp(6)
+
+  // Parameters
+  parameters            Json?              @map("parameters") @db.JsonB
+  filters               Json?              @map("filters") @db.JsonB
+
+  // Delivery
+  deliveryMethod        String             @map("delivery_method") @db.VarChar(50)
+  recipients            String[]           @default([])
+  format                String             @default("pdf") @db.VarChar(20)
+
+  // Status
+  isActive              Boolean            @default(true) @map("is_active")
+  status                String             @map("status") @db.VarChar(50)
+
+  // Owner
+  createdBy             String             @map("created_by")
+
+  // Execution History
+  lastSuccessAt         DateTime?          @map("last_success_at") @db.Timestamp(6)
+  lastFailureAt         DateTime?          @map("last_failure_at") @db.Timestamp(6)
+  failureReason         String?            @map("failure_reason") @db.Text
+  consecutiveFailures   Int                @default(0) @map("consecutive_failures")
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([reportType], name: "idx_report_schedules_type")
+  @@index([frequency], name: "idx_report_schedules_frequency")
+  @@index([nextRunAt], name: "idx_report_schedules_next_run")
+  @@index([isActive], name: "idx_report_schedules_active")
+  @@index([status], name: "idx_report_schedules_status")
+  @@map("report_schedules")
+}
+
+model SystemHealth {
+  id                    String             @id @default(cuid())
+
+  // Service Information
+  serviceName           String             @map("service_name") @db.VarChar(100)
+  component             String             @map("component") @db.VarChar(100)
+  environment           String             @map("environment") @db.VarChar(50)
+
+  // Health Status
+  status                String             @map("status") @db.VarChar(50)
+  healthScore           Float?             @map("health_score")
+
+  // Metrics
+  responseTime          Float?             @map("response_time")
+  cpuUsage              Float?             @map("cpu_usage")
+  memoryUsage           Float?             @map("memory_usage")
+  diskUsage             Float?             @map("disk_usage")
+
+  // Error Tracking
+  errorRate             Float?             @map("error_rate")
+  lastErrorAt           DateTime?          @map("last_error_at") @db.Timestamp(6)
+  lastErrorMessage      String?            @map("last_error_message") @db.Text
+
+  // Dependencies
+  dependencies          Json?              @map("dependencies") @db.JsonB
+  externalServices      Json?              @map("external_services") @db.JsonB
+
+  // Configuration
+  version               String?            @map("version") @db.VarChar(50)
+  buildNumber           String?            @map("build_number") @db.VarChar(50)
+  deploymentTime        DateTime?          @map("deployment_time") @db.Timestamp(6)
+
+  // Monitoring
+  uptime                Int?               @map("uptime")
+  restartCount          Int                @default(0) @map("restart_count")
+
+  // Additional Data
+  metrics               Json?              @map("metrics") @db.JsonB
+  metadata              Json?              @map("metadata") @db.JsonB
+
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@unique([serviceName, component, environment])
+  @@index([status], name: "idx_system_health_status")
+  @@index([serviceName], name: "idx_system_health_service")
+  @@index([createdAt], name: "idx_system_health_created_at")
+  @@map("system_health")
+}

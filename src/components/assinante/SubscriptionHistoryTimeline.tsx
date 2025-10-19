@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Clock, Package, MapPin, CreditCard, TrendingUp, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 interface HistoryEntry {
   id: string

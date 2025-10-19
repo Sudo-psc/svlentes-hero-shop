@@ -4,7 +4,7 @@ import { TrustStrip } from '@/components/trust/TrustStrip'
 import { FinalCTA } from '@/components/sections/FinalCTA'
 import Link from 'next/link'
 import { ArrowLeft, Home } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = {
     title: 'Como Funciona - SV Lentes | Processo de Assinatura Passo a Passo',

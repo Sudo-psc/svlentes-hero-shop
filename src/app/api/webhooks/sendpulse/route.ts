@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { langchainSupportProcessor } from '@/lib/langchain-support-processor'
+import { simpleLangChainProcessor } from '@/lib/simple-langchain-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
@@ -20,6 +20,7 @@ import { logger, LogCategory } from '@/lib/logger'
 import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
 import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
 import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
+import { WebhookSecurity } from '@/lib/webhook-security'
 import {
   validateAuthenticatedSession,
   viewSubscriptionCommand,
@@ -110,6 +111,84 @@ const SendPulseLegacyMessageSchema = z.object({
   contact: ContactSchema
 })
 
+// SendPulse Brazilian API format (similar to WhatsApp Business API)
+const SendPulseBrazilianAPISchema = z.object({
+  object: z.literal('whatsapp_business_account'),
+  entry: z.array(z.object({
+    id: z.string(),
+    changes: z.array(z.object({
+      value: z.object({
+        messaging_product: z.literal('whatsapp'),
+        metadata: z.object({
+          display_phone_number: z.string(),
+          phone_number_id: z.string()
+        }),
+        contacts: z.array(z.object({
+          profile: z.object({
+            name: z.string()
+          }),
+          wa_id: z.string()
+        })).optional(),
+        messages: z.array(z.object({
+          from: z.string(),
+          id: z.string(),
+          timestamp: z.string(),
+          text: z.object({
+            body: z.string()
+          }).optional(),
+          type: z.string()
+        })).optional()
+      }),
+      field: z.literal('messages')
+    }))
+  }))
+})
+
+// Rate limiting interfaces and functions
+interface RateLimitResult {
+  limited: boolean
+  remaining: number
+  resetAt: number
+}
+
+interface RateLimitPreset {
+  maxRequests: number
+  windowMs: number
+}
+
+const RateLimitPresets = {
+  WEBHOOK_IP: {
+    maxRequests: 100,
+    windowMs: 60 * 1000 // 1 minute
+  },
+  WEBHOOK: {
+    maxRequests: 50,
+    windowMs: 60 * 1000 // 1 minute
+  }
+}
+
+// Simple in-memory rate limiter
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(config: RateLimitPreset & { identifier: string }): RateLimitResult {
+  const key = config.identifier
+  const now = Date.now()
+
+  let entry = rateLimitStore.get(key)
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + config.windowMs }
+    rateLimitStore.set(key, entry)
+  }
+
+  entry.count += 1
+
+  return {
+    limited: entry.count > config.maxRequests,
+    remaining: Math.max(0, config.maxRequests - entry.count),
+    resetAt: entry.resetAt
+  }
+}
+
 // Set debug level from environment or default to standard
 // if (process.env.DEBUG_LEVEL) {
 //   debugUtilities.setDebugLevel(process.env.DEBUG_LEVEL as DebugLevel)
@@ -135,25 +214,126 @@ export async function POST(request: NextRequest) {
   const requestId = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
 
   try {
-    // C6: Parse and validate JSON payload
-    let body: any
-    try {
-      const rawBody = await request.text()
+    // P4: Rate limiting - IP based protection
+    const ipRateLimit = checkRateLimit({
+      ...RateLimitPresets.WEBHOOK_IP,
+      identifier: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
+                   'unknown'
+    })
 
-      // Limit body size to prevent DoS
-      if (rawBody.length > 500000) { // 500KB limit
-        logger.warn(LogCategory.WEBHOOK, 'Webhook payload too large', {
+    if (ipRateLimit.limited) {
+      logger.warn(LogCategory.WEBHOOK, 'Rate limit exceeded for IP', {
+        requestId,
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        resetAt: new Date(ipRateLimit.resetAt).toISOString()
+      })
+
+      return NextResponse.json(
+        { error: 'RATE_LIMIT_EXCEEDED', requestId },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': String(RateLimitPresets.WEBHOOK_IP.maxRequests),
+            'X-RateLimit-Remaining': String(ipRateLimit.remaining),
+            'X-RateLimit-Reset': new Date(ipRateLimit.resetAt).toISOString()
+          }
+        }
+      )
+    }
+
+    // C6: Enhanced security validation
+    let body: any
+    let rawBody: string
+    try {
+      rawBody = await request.text()
+
+      // Enhanced security validation
+      const securityValidation = WebhookSecurity.validateRequest(request, rawBody, {
+        maxPayloadSize: 500 * 1024, // 500KB
+        requireUserAgent: true,
+        suspiciousPatterns: [
+          /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+          /javascript:/gi,
+          /on\w+\s*=/gi,
+          /union\s+select/gi,
+          /drop\s+table/gi,
+        ]
+      })
+
+      if (!securityValidation.valid) {
+        WebhookSecurity.logSecurityEvent('BLOCKED_REQUEST', {
           requestId,
-          size: rawBody.length
+          reason: securityValidation.reason,
+          riskScore: securityValidation.riskScore,
+          ip: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown'
         })
+
         return NextResponse.json(
-          { error: 'Payload too large', requestId },
-          { status: 413 }
+          {
+            error: 'Security validation failed',
+            requestId,
+            reason: securityValidation.reason
+          },
+          { status: 400 }
         )
+      }
+
+      // Additional signature validation for SendPulse webhooks
+      const signature = request.headers.get('x-sendpulse-signature') ||
+                        request.headers.get('x-signature') ||
+                        request.headers.get('signature')
+
+      if (signature) {
+        const { SendPulseClient } = await import('@/lib/sendpulse-client')
+        const sendpulseClient = new SendPulseClient()
+
+        if (!sendpulseClient.validateWebhook(rawBody, signature)) {
+          WebhookSecurity.logSecurityEvent('BLOCKED_REQUEST', {
+            requestId,
+            reason: 'Invalid webhook signature',
+            signature: signature.substring(0, 20) + '...',
+            ip: request.headers.get('x-forwarded-for') || 'unknown'
+          })
+
+          return NextResponse.json(
+            {
+              error: 'Invalid webhook signature',
+              requestId
+            },
+            { status: 401 }
+          )
+        }
+
+        logger.info(LogCategory.SECURITY, 'Webhook signature validated', {
+          requestId,
+          hasSignature: true
+        })
+      } else {
+        logger.warn(LogCategory.SECURITY, 'Webhook received without signature', {
+          requestId
+        })
+      }
+
+      // Log high-risk requests
+      if (securityValidation.riskScore > 50) {
+        logger.warn(LogCategory.SECURITY, 'High-risk webhook request', {
+          requestId,
+          riskScore: securityValidation.riskScore,
+          ip: request.headers.get('x-forwarded-for') || 'unknown'
+        })
       }
 
       body = JSON.parse(rawBody)
     } catch (parseError) {
+      WebhookSecurity.logSecurityEvent('SUSPICIOUS_PATTERN', {
+        requestId,
+        error: parseError instanceof Error ? parseError.message : 'Unknown',
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      })
+
       logger.error(LogCategory.WEBHOOK, 'Invalid JSON payload', {
         requestId,
         error: parseError instanceof Error ? parseError.message : 'Unknown'
@@ -164,12 +344,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // C7: Analyze request patterns for anomalies
+    const clientIP = request.headers.get('x-forwarded-for') || 'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+    const patternAnalysis = WebhookSecurity.analyzeRequestPattern(
+      requestId,
+      clientIP,
+      userAgent
+    )
+
+    if (patternAnalysis.suspicious) {
+      logger.warn(LogCategory.SECURITY, 'Suspicious request pattern detected', {
+        requestId,
+        clientIP,
+        userAgent,
+        reasons: patternAnalysis.reasons
+      })
+    }
+
     // Log webhook received with tracing
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceWebhookProcessing(body, 'sendpulse')
     logger.logSendPulseWebhook('received', {
       requestId,
-      bodySize: bodyText.length,
+      bodySize: rawBody.length,
       eventType: body.event || body[0]?.title || 'unknown'
     })
 
@@ -188,9 +386,11 @@ export async function POST(request: NextRequest) {
 
       logger.info(LogCategory.SENDPULSE, `Processing ${body.length} events`)
 
+      const validEvents = []
       for (const event of validationResult.data) {
         if (event.title === 'incoming_message' && event.service === 'whatsapp') {
           await processSendPulseNativeMessage(event, requestId)
+          validEvents.push(event)
         }
       }
 
@@ -424,35 +624,58 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
     // TODO: Re-enable authentication and menu handling when chatbot-auth-handler is implemented
     // Currently going straight to LangChain for all messages
 
-    // Autenticação automática pelo número de WhatsApp
+    // Autenticação automática robusta pelo número de WhatsApp
+    logger.info(LogCategory.WHATSAPP, 'Iniciando processo de autenticação', {
+      requestId,
+      customerPhone: customerPhone,
+      messageLength: messageContent?.length || 0
+    })
+
     let authStatus = await isUserAuthenticated(customerPhone)
 
     if (!authStatus.authenticated) {
-      // Tentar autenticar automaticamente
+      // Tentar autenticar automaticamente com validação robusta
+      logger.info(LogCategory.WHATSAPP, 'Usuário não autenticado, tentando autenticação automática', {
+        requestId,
+        phone: customerPhone,
+        contactName: contact.name
+      })
+
       const authResult = await authenticateByPhone(customerPhone)
 
+      logger.info(LogCategory.WHATSAPP, 'Resultado da autenticação automática', {
+        requestId,
+        phone: customerPhone,
+        success: authResult.success,
+        error: authResult.error,
+        userId: authResult.userId
+      })
+
       if (authResult.success) {
-        logger.info(LogCategory.WHATSAPP, 'Autenticação automática bem-sucedida', {
+        logger.info(LogCategory.WHATSAPP, '✅ Autenticação automática bem-sucedida', {
           requestId,
           phone: customerPhone,
-          userId: authResult.userId
+          userId: authResult.userId,
+          userName: authResult.userName
         })
 
         // Enviar mensagem de boas-vindas personalizada
         if (authResult.requiresResponse && authResult.message) {
-          await sendPulseClient.sendMessage({
-            phone: customerPhone,
-            message: authResult.message
-          })
+          try {
+            await sendPulseClient.sendMessage({
+              phone: customerPhone,
+              message: authResult.message
+            })
 
-          logger.info(LogCategory.WHATSAPP, 'Mensagem de boas-vindas enviada', {
-            requestId,
-            phone: customerPhone,
-            userId: authResult.userId
-          })
+            logger.info(LogCategory.WHATSAPP, '✅ Mensagem de boas-vindas enviada com sucesso', {
+              requestId,
+              phone: customerPhone,
+              userId: authResult.userId,
+              messageLength: authResult.message.length
+            })
 
-          // Log welcome message interaction
-          const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+            // Log welcome message interaction
+            const userProfile = await getOrCreateUserProfile(contact, customerPhone)
           await storeInteraction({
             messageId,
             customerPhone,
@@ -465,6 +688,15 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           })
 
           return // Parar processamento após enviar boas-vindas
+          } catch (messageError) {
+            console.error('Failed to send welcome message:', messageError)
+            logger.error(LogCategory.WHATSAPP, 'Erro ao enviar mensagem de boas-vindas', {
+              phone: customerPhone,
+              userId: authResult.userId,
+              error: messageError instanceof Error ? messageError.message : 'Unknown'
+            })
+            // Continue processing even if welcome message fails
+          }
         }
 
         authStatus = {
@@ -584,29 +816,75 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       lastIntent: userHistory.lastIntent
     }
 
-    // Process message with LangChain
-    const langchainTimer = logger.startTimer()
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
-      messageContent,
-      context
-    )
-    const langchainDuration = langchainTimer()
+    // Helper function to check business hours
+  const isBusinessHours = () => {
+    const now = new Date()
+    const hours = now.getHours()
+    const day = now.getDay()
 
-    // Log intent detection
+    // Monday-Friday, 8am-6pm
+    return day >= 1 && day <= 5 && hours >= 8 && hours < 18
+  }
+
+  // Process message with Enhanced LangChain
+  const langchainTimer = logger.startTimer()
+  const processingResult = await simpleLangChainProcessor.processMessage(
+    messageContent,
+    {
+      sessionId: authStatus.sessionToken || `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+      userId: authStatus.userId,
+      userProfile: userProfile,
+      conversationHistory: conversationHistory.map(msg => msg.content),
+      previousTickets: userHistory.tickets,
+      systemState: {
+        currentTime: new Date(),
+        businessHours: isBusinessHours(),
+        emergencyContacts: true,
+        maintenanceMode: false
+      }
+    }
+  )
+  const langchainDuration = langchainTimer()
+
+    // Enhanced logging for the new simple processor
     logger.logWhatsAppIntentDetected(
       processingResult.intent.name,
-      processingResult.intent.confidence || 0.8,
+      processingResult.confidence,
       customerPhone,
-      { requestId, duration: langchainDuration }
+      {
+        requestId,
+        duration: langchainDuration,
+        category: processingResult.intent.category,
+        priority: processingResult.intent.priority,
+        escalationRequired: processingResult.escalationRequired,
+        tokensUsed: processingResult.tokensUsed,
+        estimatedCost: processingResult.estimatedCost
+      }
     )
 
     logger.logLangChainProcessing(
       messageId,
       processingResult.intent.name,
-      processingResult.intent.confidence || 0.8,
+      processingResult.confidence,
       langchainDuration,
-      { requestId }
+      {
+        requestId,
+        enhancedProcessor: true,
+        sessionId: authStatus.sessionToken
+      }
     )
+
+    // Additional detailed logging for the simple processor
+    console.log('🚀 **Simple Enhanced LangChain Processing Log:**')
+    console.log(`📱 Session: ${authStatus.sessionToken || 'temp_session'}`)
+    console.log(`👤 User: ${userProfile.name} (${userProfile.subscriptionStatus})`)
+    console.log(`🎯 Intent: ${processingResult.intent.name} (${processingResult.confidence})`)
+    console.log(`⚡ Priority: ${processingResult.intent.priority}`)
+    console.log(`💰 Cost: $${processingResult.estimatedCost?.toFixed(4) || 'N/A'}`)
+    console.log(`🔗 Tokens: ${processingResult.tokensUsed || 'N/A'}`)
+    console.log(`⏱️  Processing: ${langchainDuration}ms`)
+    console.log(`📊 Sentiment: ${processingResult.intent.sentiment}`)
+    console.log(`🚨 Urgency: ${processingResult.intent.urgency}`)
 
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('langchain_processed', {
@@ -736,9 +1014,20 @@ async function processWhatsAppMessage(message: any, metadata: any) {
     }
 
     // Process message with LangChain
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await simpleLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory?.map(msg => msg.content) || [],
+        previousTickets: [],
+        systemState: {
+          currentTime: new Date(),
+          businessHours: isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
 
     // Store interaction
@@ -807,9 +1096,20 @@ async function processSendPulseMessage(webhookData: any, requestId?: string) {
     }
 
     // Process message with LangChain
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await simpleLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory?.map(msg => msg.content) || [],
+        previousTickets: [],
+        systemState: {
+          currentTime: new Date(),
+          businessHours: isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
 
     // Store interaction

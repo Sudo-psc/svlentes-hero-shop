@@ -2,7 +2,7 @@
     "name": "SV Lentes - Nunca Mais Fique Sem Lentes",
     "short_name": "SV Lentes",
     "description": "Assinatura de lentes de contato com acompanhamento médico especializado do Dr. Philipe Saraiva Cruz (CRM-MG 69.870). Economia de até 40%.",
-    "start_url": "https://svlentes.shop/",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#0f4c75",
@@ -91,7 +91,7 @@
             "name": "Falar no WhatsApp",
             "short_name": "WhatsApp",
             "description": "Entre em contato via WhatsApp",
-            "url": "https://wa.me/5533998601427",
+            "url": "/api/whatsapp-redirect",
             "icons": [
                 {
                     "src": "/android-chrome-192x192.png",

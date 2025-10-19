@@ -7,8 +7,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { debugUtilities } from '@/lib/debug-utilities'
 import { messageStatusTracker } from '@/lib/message-status-tracker'
 import { logger, LogCategory } from '@/lib/logger'
+import { requirePermission } from '@/lib/admin-auth'
 
 export async function GET(request: NextRequest) {
+  // Require admin authentication for debug access
+  const { user, error } = await requirePermission('admin:system')(request)
+
+  if (error) {
+    return error
+  }
   const timer = logger.startTimer()
 
   try {

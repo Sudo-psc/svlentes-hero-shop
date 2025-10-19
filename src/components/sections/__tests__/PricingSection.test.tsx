@@ -49,8 +49,7 @@ describe('PricingSection', () => {
         render(<PricingSection {...mockProps} />)
 
         // Planos aparecem tanto na versão mobile quanto desktop
-        expect(screen.getAllByText('Plano Básico')).toHaveLength(2) // Mobile e desktop
-        expect(screen.getAllByText('Plano Premium')).toHaveLength(2) // Mobile e desktop
+        expect(screen.getAllByText('Plano Express')).toHaveLength(2) // Mobile e desktop
         expect(screen.getAllByText('Plano VIP')).toHaveLength(2) // Mobile e desktop
     })
 
@@ -145,7 +144,7 @@ describe('PricingSection', () => {
         await waitFor(() => {
             expect(trackTabChange).toHaveBeenCalledWith('annual')
             // Preços devem mudar para anuais
-            expect(screen.getByText('R$ 74,99')).toBeInTheDocument()
+            expect(screen.getByText('R$ 91,00')).toBeInTheDocument()
         })
 
         // Voltar para mensal - usar role button para ser mais específico
@@ -155,7 +154,7 @@ describe('PricingSection', () => {
         await waitFor(() => {
             expect(trackTabChange).toHaveBeenCalledWith('monthly')
             // Preços devem voltar para mensais
-            expect(screen.getByText('R$ 89,90')).toBeInTheDocument()
+            expect(screen.getByText('R$ 128,00')).toBeInTheDocument()
         })
     })
 
@@ -489,12 +488,12 @@ describe('PricingSection', () => {
             render(<PricingSection {...mockProps} />)
 
             // Testar na aba mensal
-            const subscribeButtons = screen.getAllByText(/Assinar/)
+            const subscribeButtons = screen.getAllByText('Assinar Agora')
             fireEvent.click(subscribeButtons[0])
 
             await waitFor(() => {
                 expect(handleSubscription).toHaveBeenCalledWith({
-                    planId: 'basic',
+                    planId: 'express-mensal',
                     billingInterval: 'monthly',
                 })
             })
@@ -504,13 +503,13 @@ describe('PricingSection', () => {
             fireEvent.click(anualTab)
 
             await waitFor(() => {
-                const annualSubscribeButtons = screen.getAllByText(/Assinar/)
+                const annualSubscribeButtons = screen.getAllByText('Assinar Agora')
                 fireEvent.click(annualSubscribeButtons[0])
             })
 
             await waitFor(() => {
                 expect(handleSubscription).toHaveBeenCalledWith({
-                    planId: 'basic',
+                    planId: 'vip-anual',
                     billingInterval: 'annual',
                 })
             })

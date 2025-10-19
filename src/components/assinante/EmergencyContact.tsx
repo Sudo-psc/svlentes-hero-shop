@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import {
   Phone,
   Mail,
@@ -217,6 +217,20 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
       </CardContent>
     </Card>
   )
+}
+
+// Componente简化 sem props para uso direto
+export function EmergencyContact() {
+  const contact = {
+    phone: "5533999898026",
+    email: "contato@svlentes.com.br",
+    doctor: {
+      name: "Dr. Philipe Saraiva Cruz",
+      crm: "CRM-MG 69.870"
+    }
+  }
+
+  return <EmergencyContactCard contact={contact} />
 }
 
 export default EmergencyContactCard

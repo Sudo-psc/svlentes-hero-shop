@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { Label } from '@/components/ui/Label';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { usePrivacy } from '@/components/privacy/PrivacyProvider';
 import { setCookieConsent, setMarketingConsent, clearAllPrivacyData } from '@/lib/privacy';
 import { Settings, Shield, Trash2, Download, Eye } from 'lucide-react';

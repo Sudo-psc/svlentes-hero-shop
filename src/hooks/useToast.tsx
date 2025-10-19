@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Toast } from '@/components/ui/Loader'
+import { Toast } from '@/components/ui/loader'
 
 interface ToastConfig {
     message: string

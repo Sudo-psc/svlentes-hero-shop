@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ShoppingCart, ArrowRight, Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { calculateEconomy, formatCurrency } from '@/lib/calculator'
 import { useMemo } from 'react'
 

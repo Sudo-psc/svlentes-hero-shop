@@ -7,13 +7,47 @@ export function cn(...inputs: ClassValue[]) {
 
 // Função para scroll suave para seções
 export function scrollToSection(sectionId: string) {
-    const element = document.getElementById(sectionId)
+    // Tenta encontrar o elemento imediatamente
+    let element = document.getElementById(sectionId)
+
     if (element) {
+        // Se encontrou, faz o scroll suave
         element.scrollIntoView({
             behavior: 'smooth',
             block: 'start',
         })
+        return
     }
+
+    // Se não encontrou, tenta novamente após um pequeno delay
+    // (útil para lazy loading)
+    setTimeout(() => {
+        element = document.getElementById(sectionId)
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        }
+    }, 100)
+
+    // Se ainda não encontrou, tenta novamente com mais tempo
+    setTimeout(() => {
+        element = document.getElementById(sectionId)
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        } else {
+            // Última tentativa: scroll para o final da página
+            console.warn(`Element with id "${sectionId}" not found, scrolling to bottom of page`)
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            })
+        }
+    }, 500)
 }
 
 // Função para gerar link do WhatsApp

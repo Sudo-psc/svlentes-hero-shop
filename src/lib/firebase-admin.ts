@@ -27,5 +27,6 @@ if (!admin.apps.length && hasCredentials) {
 // Export functions that check initialization before use
 export const adminAuth = admin.apps.length > 0 ? admin.auth() : null
 export const adminDb = admin.apps.length > 0 ? admin.firestore() : null
+export const adminMessaging = admin.apps.length > 0 ? admin.messaging() : null
 
 export default admin

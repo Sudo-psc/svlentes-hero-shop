@@ -133,6 +133,29 @@ module.exports = {
                     700: '#15803d',
                     800: '#166534',
                     900: '#14532d',
+                },
+                admin: {
+                    // Admin-specific colors for dashboard
+                    sidebar: 'hsl(var(--admin-sidebar))',
+                    sidebarForeground: 'hsl(var(--admin-sidebar-foreground))',
+                    sidebarHover: 'hsl(var(--admin-sidebar-hover))',
+                    sidebarActive: 'hsl(var(--admin-sidebar-active))',
+                    dashboard: 'hsl(var(--admin-dashboard))',
+                    dashboardCard: 'hsl(var(--admin-dashboard-card))',
+                    metrics: {
+                        revenue: 'hsl(var(--admin-metrics-revenue))',
+                        customers: 'hsl(var(--admin-metrics-customers))',
+                        orders: 'hsl(var(--admin-metrics-orders))',
+                        support: 'hsl(var(--admin-metrics-support))',
+                        growth: 'hsl(var(--admin-metrics-growth))',
+                        warning: 'hsl(var(--admin-metrics-warning))',
+                    },
+                    status: {
+                        online: '#10b981',
+                        offline: '#6b7280',
+                        busy: '#f59e0b',
+                        away: '#3b82f6',
+                    }
                 }
             },
             borderRadius: {

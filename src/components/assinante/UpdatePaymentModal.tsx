@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
+import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { X, Check, AlertCircle, CreditCard, Barcode } from 'lucide-react'
 
 type PaymentType = 'CREDIT_CARD' | 'BOLETO' | 'PIX'

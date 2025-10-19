@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Check } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export interface PricingCardProps {
@@ -95,15 +95,27 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       <CardContent className="flex-1 space-y-6">
         {/* Pricing */}
         <div className="text-center space-y-1">
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-lg font-medium text-silver-600">12x de</span>
-            <span className={cn(
-              "text-4xl font-bold",
-              highlighted ? "text-cyan-600" : "text-silver-900"
-            )}>
-              {formatPrice(price)}
-            </span>
-          </div>
+          {installments > 1 ? (
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-lg font-medium text-silver-600">{installments}x de</span>
+              <span className={cn(
+                "text-4xl font-bold",
+                highlighted ? "text-cyan-600" : "text-silver-900"
+              )}>
+                {formatPrice(price)}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-lg font-medium text-silver-600">R$</span>
+              <span className={cn(
+                "text-4xl font-bold",
+                highlighted ? "text-cyan-600" : "text-silver-900"
+              )}>
+                {formatPrice(price)}
+              </span>
+            </div>
+          )}
           <p className="text-sm text-silver-500">ou à vista com desconto</p>
         </div>
 

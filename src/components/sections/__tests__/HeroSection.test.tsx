@@ -27,42 +27,26 @@ describe('HeroSection', () => {
         expect(screen.getByText('fique sem lentes')).toBeInTheDocument()
 
         // Check for subheadline
-        expect(screen.getByText(/Assinatura integrada com logística e consulta médica especializada/)).toBeInTheDocument()
-        expect(screen.getByText(/Receba suas lentes em casa com acompanhamento do Dr. Philipe Saraiva Cruz/)).toBeInTheDocument()
+        expect(screen.getByText('Assinatura com acompanhamento médico especializado.')).toBeInTheDocument()
+        expect(screen.getByText('Receba suas lentes em casa com logística integrada e consultas regulares.')).toBeInTheDocument()
 
         // Check for CTAs
-        expect(screen.getByRole('button', { name: /Agendar Consulta/i })).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /Falar no WhatsApp/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /Agendar consulta com oftalmologista/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /Tirar dúvidas no WhatsApp/i })).toBeInTheDocument()
     })
 
-    it('displays social proof statistics', () => {
+    it('displays pioneer badge and award icon', () => {
         render(<HeroSection />)
 
-        // Check for social proof stats
-        expect(screen.getByText('5.000+')).toBeInTheDocument()
-        expect(screen.getByText('Pacientes')).toBeInTheDocument()
-        expect(screen.getByText('98%')).toBeInTheDocument()
-        expect(screen.getByText('Satisfação')).toBeInTheDocument()
-        expect(screen.getByText('15+')).toBeInTheDocument()
-        expect(screen.getByText('Anos exp.')).toBeInTheDocument()
-        expect(screen.getByText('24/7')).toBeInTheDocument()
-        expect(screen.getByText('Suporte')).toBeInTheDocument()
-    })
-
-    it('displays trust indicators and additional trust elements', () => {
-        render(<HeroSection />)
-
-        // Check for additional trust elements
-        expect(screen.getByText('Entrega Grátis')).toBeInTheDocument()
-        expect(screen.getByText('Todo Brasil')).toBeInTheDocument()
-        expect(screen.getByText('100% Seguro')).toBeInTheDocument()
-        expect(screen.getByText('SSL + LGPD')).toBeInTheDocument()
+        // Check for pioneer badge with award icon
+        expect(screen.getByText('🏆 Pioneiro no Brasil')).toBeInTheDocument()
+        expect(screen.getByRole('img', { hidden: true })).toBeInTheDocument() // Award icon
     })
 
     it('calls WhatsApp integration when "Agendar Consulta" button is clicked', () => {
         render(<HeroSection />)
 
-        const agendarButton = screen.getByRole('button', { name: /Agendar Consulta/i })
+        const agendarButton = screen.getByRole('button', { name: /Agendar consulta com oftalmologista/i })
         fireEvent.click(agendarButton)
 
         expect(mockOpenWhatsApp).toHaveBeenCalledWith('consultation', {
@@ -74,7 +58,7 @@ describe('HeroSection', () => {
     it('calls WhatsApp integration when "Falar no WhatsApp" button is clicked', () => {
         render(<HeroSection />)
 
-        const whatsappButton = screen.getByRole('button', { name: /Falar no WhatsApp/i })
+        const whatsappButton = screen.getByRole('button', { name: /Tirar dúvidas no WhatsApp/i })
         fireEvent.click(whatsappButton)
 
         expect(mockOpenWhatsApp).toHaveBeenCalledWith('hero', {
@@ -98,26 +82,18 @@ describe('HeroSection', () => {
         expect(mainHeading).toBeInTheDocument()
 
         // Check for buttons with proper labels
-        const agendarButton = screen.getByRole('button', { name: /Agendar Consulta/i })
-        const whatsappButton = screen.getByRole('button', { name: /Falar no WhatsApp/i })
+        const agendarButton = screen.getByRole('button', { name: /Agendar consulta com oftalmologista/i })
+        const whatsappButton = screen.getByRole('button', { name: /Tirar dúvidas no WhatsApp/i })
 
         expect(agendarButton).toBeInTheDocument()
         expect(whatsappButton).toBeInTheDocument()
     })
 
-    it('renders DoctorCard and LeadCaptureForm components', () => {
+    it('displays mobile sticky CTA', () => {
         render(<HeroSection />)
 
-        // The DoctorCard and LeadCaptureForm should be rendered
-        // We can check for elements that would be present in these components
-        expect(screen.getByText('Calcule sua Economia')).toBeInTheDocument()
-    })
-
-    it('handles lead form submission correctly', () => {
-        render(<HeroSection />)
-
-        // The LeadCaptureForm should have an onSubmit handler that scrolls to calculator
-        // This is tested indirectly through the form component's behavior
-        expect(screen.getByText('Calcule sua Economia')).toBeInTheDocument()
+        // Check for mobile sticky CTA (visible in mobile viewport)
+        const mobileStickyCTA = screen.getByLabelText('Agendar consulta - Sticky CTA mobile')
+        expect(mobileStickyCTA).toBeInTheDocument()
     })
 })

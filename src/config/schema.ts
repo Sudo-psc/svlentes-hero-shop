@@ -160,7 +160,7 @@ const ServiceBenefitSchema = z.object({
   title: z.string(),
   description: z.string(),
   icon: z.string(),
-  highlight: z.boolean(),
+  highlight: z.boolean().default(false),
 })
 
 const CoverageInfoSchema = z.object({
@@ -169,7 +169,7 @@ const CoverageInfoSchema = z.object({
   title: z.string(),
   description: z.string(),
   locations: z.array(z.string()).optional(),
-  nationwide: z.boolean(),
+  nationwide: z.boolean().default(false),
 })
 
 const FAQItemSchema = z.object({
@@ -315,7 +315,7 @@ const TrustBadgeSchema = z.object({
   name: z.string(),
   description: z.string(),
   icon: z.string(),
-  verified: z.boolean(),
+  verified: z.boolean().default(false),
 })
 
 const CertificationSchema = z.object({
@@ -324,7 +324,7 @@ const CertificationSchema = z.object({
   institution: z.string(),
   year: z.string().optional(),
   number: z.string().optional(),
-  verified: z.boolean(),
+  verified: z.boolean().default(false),
 })
 
 const SocialProofStatSchema = z.object({
@@ -339,7 +339,7 @@ const HighlightSchema = z.object({
   text: z.string(),
   description: z.string(),
   icon: z.string(),
-  featured: z.boolean(),
+  featured: z.boolean().default(false),
 })
 
 const TrustSchema = z.object({
@@ -369,14 +369,14 @@ const GACustomDimensionsSchema = z.object({
 })
 
 const GAFeaturesSchema = z.object({
-  pageTracking: z.boolean(),
-  scrollTracking: z.boolean(),
-  sessionRecording: z.boolean(),
-  enhancedEcommerce: z.boolean(),
+  pageTracking: z.boolean().default(false),
+  scrollTracking: z.boolean().default(false),
+  sessionRecording: z.boolean().default(false),
+  enhancedEcommerce: z.boolean().default(false),
 })
 
 const GoogleAnalyticsSchema = z.object({
-  enabled: z.boolean(),
+  enabled: z.boolean().default(false),
   measurementId: z.string(),
   consent: GAConsentSchema,
   customDimensions: GACustomDimensionsSchema,
@@ -402,8 +402,8 @@ const VitalsSchema = z.object({
 })
 
 const MonitoringSchema = z.object({
-  errorTracking: z.boolean(),
-  performanceMetrics: z.boolean(),
+  errorTracking: z.boolean().default(false),
+  performanceMetrics: z.boolean().default(false),
   thresholds: MonitoringThresholdsSchema,
   vitals: VitalsSchema,
 })
@@ -418,14 +418,14 @@ const AnalyticsConfigSchema = z.object({
 // 9. PRIVACY & COMPLIANCE (Fase 4)
 // ============================================================================
 const CookieConsentSchema = z.object({
-  essential: z.boolean(),
+  essential: z.boolean().default(false),
   analytics: z.string(),
   marketing: z.string(),
 })
 
 const LGPDSchema = z.object({
-  enabled: z.boolean(),
-  consentRequired: z.boolean(),
+  enabled: z.boolean().default(false),
+  consentRequired: z.boolean().default(false),
   dataRetentionDays: z.number(),
   cookieConsent: CookieConsentSchema,
   dataSubjectRights: z.array(z.string()),
@@ -439,14 +439,30 @@ const PrivacyConfigSchema = z.object({
 // 10. FEATURE FLAGS
 // ============================================================================
 const FeatureFlagsSchema = z.object({
-  useCentralizedConfig: z.boolean(),
-  useCentralizedCopy: z.boolean(),
-  useCentralizedPricing: z.boolean(),
-  useCentralizedSEO: z.boolean(),
-  useCentralizedMedical: z.boolean(),
-  useCentralizedAnalytics: z.boolean(),
-  useCentralizedPrivacy: z.boolean(),
+  useCentralizedConfig: z.boolean().default(false),
+  useCentralizedCopy: z.boolean().default(false),
+  useCentralizedPricing: z.boolean().default(false),
+  useCentralizedSEO: z.boolean().default(false),
+  useCentralizedMedical: z.boolean().default(false),
+  useCentralizedAnalytics: z.boolean().default(false),
+  useCentralizedPrivacy: z.boolean().default(false),
+  usePricingAsfericos: z.boolean().default(false),
+  usePricingToricos: z.boolean().default(false),
 })
+
+// ============================================================================
+// 11. PRICING ASFÉRICOS (Fase 4 - Enhanced)
+// ============================================================================
+const PricingAsfericosSchema = z.object({
+  // Schema flexível para planos asféricos - validação básica
+}).catchall(z.any()) // Permite qualquer estrutura interna por enquanto
+
+// ============================================================================
+// 12. PRICING TÓRICOS (Fase 4 - Enhanced)
+// ============================================================================
+const PricingToricosSchema = z.object({
+  // Schema flexível para planos tóricos - validação básica
+}).catchall(z.any()) // Permite qualquer estrutura interna por enquanto
 
 // ============================================================================
 // ROOT CONFIG SCHEMA (MVP + Fase 2 + Fase 3 + Fase 4)
@@ -457,6 +473,8 @@ export const ConfigSchema = z.object({
   menus: MenusSchema,
   copy: LocalizedCopySchema,
   pricing: PricingConfigSchema,
+  pricing_asfericos: PricingAsfericosSchema.optional(),
+  pricing_toricos: PricingToricosSchema.optional(),
   seo: SEOConfigSchema,
   medical: MedicalConfigSchema,
   analytics: AnalyticsConfigSchema,

@@ -3,7 +3,7 @@
 import { InlineTrustIndicators } from '@/components/trust/TrustBadges'
 import { socialProofStats } from '@/data/trust-indicators'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 
 interface MetricsStripProps {
     className?: string

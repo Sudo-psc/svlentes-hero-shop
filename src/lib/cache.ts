@@ -124,21 +124,6 @@ export const SW_CACHE_STRATEGIES = {
 export const preloadCriticalResources = () => {
     if (typeof window === 'undefined') return
 
-    // Preload critical fonts
-    const fontPreloads = [
-        '/fonts/inter-var.woff2',
-    ]
-
-    fontPreloads.forEach(font => {
-        const link = document.createElement('link')
-        link.rel = 'preload'
-        link.href = font
-        link.as = 'font'
-        link.type = 'font/woff2'
-        link.crossOrigin = 'anonymous'
-        document.head.appendChild(link)
-    })
-
     // Preload critical images
     const imagePreloads = [
         '/icones/drphilipe_perfil.jpeg',

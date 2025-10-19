@@ -2,8 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Logo } from '@/components/ui/Logo'
-import { Button } from '@/components/ui/Button'
+import { Logo } from '@/components/ui/logo'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 function ResetPasswordContent() {

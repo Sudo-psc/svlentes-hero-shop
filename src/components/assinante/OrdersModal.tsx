@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Package, Truck, Calendar, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getOrderStatusColor, getOrderStatusLabel } from '@/lib/subscription-helpers'
 

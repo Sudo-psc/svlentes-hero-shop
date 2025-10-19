@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabItem } from '@/components/ui/tabs'
 import { Icon } from '@/components/ui/Icon'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'

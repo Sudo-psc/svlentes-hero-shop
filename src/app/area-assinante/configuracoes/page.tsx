@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import { Logo } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { NotificationPreferences } from '@/components/NotificationPreferences'
 import { type UserNotificationPreferences } from '@/types/user-preferences'
 import { User, Bell, ChevronLeft, Save, AlertCircle } from 'lucide-react'
@@ -158,7 +157,6 @@ export default function ConfiguracoesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <Logo className="h-8 w-auto" />
               <span className="text-lg font-semibold text-gray-900">Configurações</span>
             </div>
             <div className="flex items-center gap-4">

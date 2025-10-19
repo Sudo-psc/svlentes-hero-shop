@@ -5,8 +5,7 @@ import { useState } from 'react'
 // Force dynamic rendering to avoid SSG config errors
 export const dynamic = 'force-dynamic'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
@@ -115,11 +114,8 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        {/* Logo e Título */}
+        {/* Título */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <Logo />
-          </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Criar Conta
           </h2>
@@ -146,6 +142,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Seu nome completo"
               disabled={isLoading}
@@ -162,6 +159,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="seu@email.com"
               disabled={isLoading}
@@ -179,6 +177,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Mínimo 6 caracteres"
               disabled={isLoading}
@@ -196,6 +195,7 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Digite a senha novamente"
               disabled={isLoading}

@@ -4,19 +4,23 @@ import {
   cleanOldBackups,
   getBackupStats
 } from '@/lib/history-redundancy'
+import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 
 /**
  * GET - Get backup statistics
  */
 export async function GET(req: NextRequest) {
   try {
-    // TODO: Add admin authentication check
-    // For now, this is accessible (should be restricted in production)
+    // Require admin authentication with system administration permission
+    const { user, error } = await requirePermission('admin:system')(req)
+
+    if (error) {
+      return error
+    }
 
     const stats = await getBackupStats()
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       stats: {
         totalBackups: stats.totalBackups,
         oldestBackup: stats.oldestBackup?.toISOString(),
@@ -24,7 +28,7 @@ export async function GET(req: NextRequest) {
         totalSizeBytes: stats.totalSize,
         totalSizeMB: (stats.totalSize / 1024 / 1024).toFixed(2)
       }
-    })
+    }, 'Estatísticas de backup obtidas com sucesso')
   } catch (error) {
     console.error('Error getting backup stats:', error)
     return NextResponse.json(
@@ -39,18 +43,21 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    // TODO: Add admin authentication check
+    // Require admin authentication with system administration permission
+    const { user, error } = await requirePermission('admin:system')(req)
+
+    if (error) {
+      return error
+    }
 
     const result = await recoverHistoryFromBackups()
 
-    return NextResponse.json({
-      success: result.success,
+    return createSuccessResponse({
       recordsRecovered: result.recordsRecovered,
-      errors: result.errors,
-      message: result.recordsRecovered > 0
-        ? `${result.recordsRecovered} registros recuperados com sucesso`
-        : 'Nenhum registro para recuperar'
-    })
+      errors: result.errors
+    }, result.recordsRecovered > 0
+      ? `${result.recordsRecovered} registros recuperados com sucesso`
+      : 'Nenhum registro para recuperar')
   } catch (error) {
     console.error('Error recovering history:', error)
     return NextResponse.json(
@@ -65,7 +72,12 @@ export async function POST(req: NextRequest) {
  */
 export async function DELETE(req: NextRequest) {
   try {
-    // TODO: Add admin authentication check
+    // Require admin authentication with system administration permission
+    const { user, error } = await requirePermission('admin:system')(req)
+
+    if (error) {
+      return error
+    }
 
     const daysToKeep = parseInt(req.nextUrl.searchParams.get('days') || '30')
 
@@ -78,11 +90,10 @@ export async function DELETE(req: NextRequest) {
 
     const deletedCount = await cleanOldBackups(daysToKeep)
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       deletedCount,
-      message: `${deletedCount} backups antigos removidos`
-    })
+      daysToKeep
+    }, `${deletedCount} backups antigos removidos`)
   } catch (error) {
     console.error('Error cleaning backups:', error)
     return NextResponse.json(

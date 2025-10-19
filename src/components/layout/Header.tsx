@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
-import { LogoHeader } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { LogoHeader } from '@/components/ui/logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
+import { useConfigValue } from '@/lib/use-config'
 
 interface HeaderProps {
     className?: string
@@ -16,11 +17,8 @@ export function Header({ className }: HeaderProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
-    // FIXME: Configuração centralizada desabilitada temporariamente
-    // ConfigService requer acesso a fs (Node.js) que não funciona no client
-    // TODO: Implementar servidor de config ou passar como props de server component
-    const useCentralizedConfig = false
-    const headerMenu = null
+    // Use centralized configuration for menu items
+    const headerMenu = useConfigValue('menus.header', null)
 
     // Detectar scroll para adicionar sombra no header
     useEffect(() => {
@@ -45,7 +43,7 @@ export function Header({ className }: HeaderProps) {
     }, [])
 
     const navigation = useMemo(() => {
-        if (useCentralizedConfig && headerMenu) {
+        if (headerMenu && headerMenu.main) {
             return headerMenu.main.map((item: any) => ({
                 name: item.label,
                 href: item.href,
@@ -53,6 +51,7 @@ export function Header({ className }: HeaderProps) {
             }))
         }
 
+        // Fallback to hardcoded menu if config not available
         return [
             { name: 'Calculadora', href: '/calculadora', isAnchor: false },
             { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
@@ -61,11 +60,11 @@ export function Header({ className }: HeaderProps) {
             { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
             { name: 'Contato', href: '#contato', isAnchor: true },
         ]
-    }, [headerMenu, useCentralizedConfig])
+    }, [headerMenu])
 
     const ctaConfig = useMemo(
-        () => (useCentralizedConfig && headerMenu ? headerMenu.cta : null),
-        [headerMenu, useCentralizedConfig]
+        () => (headerMenu ? headerMenu.cta : null),
+        [headerMenu]
     )
 
     const handleNavClick = useCallback((href: string) => {

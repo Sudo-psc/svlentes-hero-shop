@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, FileText, Calendar, Download, CreditCard } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getInvoiceStatusColor, getInvoiceStatusLabel } from '@/lib/subscription-helpers'
 

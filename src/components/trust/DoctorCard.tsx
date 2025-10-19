@@ -1,7 +1,7 @@
 'use client'
 
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
 import { doctorInfo } from '@/data/doctor-info'
 import { socialProofStats } from '@/data/trust-indicators'

@@ -72,12 +72,31 @@ export interface PricingPlan {
     description?: string; // Descrição detalhada do plano
     priceMonthly: number;
     priceAnnual: number;
+    priceTotal?: number; // Alias para priceTotal (para compatibilidade)
+    pricePerLens?: number; // Custo por lente individual
     features: string[];
     recommended?: boolean;
     stripeProductId: string;
     stripePriceId: string;
     asaasProductId?: string; // ID do produto no Asaas (gateway brasileiro)
     ctaText: string; // "Assinar" ou "Agendar"
+
+    // Extended properties for enhanced functionality
+    lensType?: string; // Tipo de lente (ex: 'asferica', 'torica', 'diaria')
+    billingCycle?: string; // Ciclo de cobrança (ex: 'monthly', 'quarterly', 'annual')
+    consultationType?: string; // Tipo de consulta
+    serviceLevel?: string; // Nível de serviço
+    installments?: number; // Número de parcelas
+    economy?: any; // Informações de economia
+    highlight?: boolean; // Destaque visual
+    benefits?: string[]; // Benefícios adicionais
+    deliveryInfo?: any; // Informações de entrega
+    consultationInfo?: any; // Informações de consulta
+    supportInfo?: any; // Informações de suporte
+    tags?: string[]; // Tags para categorização
+    targetAudience?: string[]; // Público-alvo
+    isActive?: boolean; // Status de ativação
+    sortOrder?: number; // Ordenação
 }
 
 export interface PricingSectionProps {

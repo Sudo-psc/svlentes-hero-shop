@@ -1,7 +1,7 @@
 'use client'
 
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { customerProblems, svlentesSolutions, impactStats } from '@/data/problems-solutions'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import {
