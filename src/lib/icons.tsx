@@ -259,10 +259,10 @@ export const ICONS: Record<string, IconMetadata> = {
     filename: 'ten_year_anniversary_badge.png',
     path: '/icones/ten_year_anniversary_badge.png',
     category: 'badges',
-    description: 'Selo de 10 anos - experiência e tradição',
+    description: 'Selo comemorativo - tradição e qualidade',
     recommendedSize: { width: 64, height: 64 },
     suggestedUse: ['sobre nós', 'credibilidade', 'footer', 'testimonials'],
-    defaultAlt: '10 anos de experiência',
+    defaultAlt: 'Qualidade e tradição',
     emoji: '🎉'
   },
 

@@ -12,8 +12,8 @@ jest.mock('@/data/doctor-info', () => ({
         name: 'Dr. Philipe Saraiva Cruz',
         crm: 'CRM 69.870',
         specialty: 'Oftalmologia',
-        experience: '15+ anos de experiência',
-        bio: 'Especialista em lentes de contato com mais de 15 anos de experiência.',
+        experience: 'Especialista em oftalmologia',
+        bio: 'Especialista em lentes de contato com formação completa em oftalmologia.',
         credentials: [
             'Graduação em Medicina - UFMT',
             'Residência em Oftalmologia - UNIFESP',
@@ -27,8 +27,7 @@ jest.mock('@/data/trust-indicators', () => ({
     socialProofStats: [
         { id: '1', value: '5000+', label: 'Pacientes' },
         { id: '2', value: '98%', label: 'Satisfação' },
-        { id: '3', value: '15+', label: 'Anos' },
-        { id: '4', value: '24/7', label: 'Suporte' }
+        { id: '3', value: '24/7', label: 'Suporte' }
     ]
 }))
 
@@ -44,7 +43,7 @@ describe('DoctorCard', () => {
             // Check doctor name and credentials
             expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
             expect(screen.getByText('CRM 69.870 | Oftalmologia')).toBeInTheDocument()
-            expect(screen.getByText('15+ anos de experiência')).toBeInTheDocument()
+            expect(screen.getByText('Especialista em oftalmologia')).toBeInTheDocument()
         })
 
         it('displays trust badges', () => {
@@ -140,14 +139,14 @@ describe('DoctorCard', () => {
             // Should show all doctor information
             expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
             expect(screen.getByText('CRM 69.870 | Oftalmologia')).toBeInTheDocument()
-            expect(screen.getByText('15+ anos de experiência')).toBeInTheDocument()
+            expect(screen.getByText('Especialista em oftalmologia')).toBeInTheDocument()
         })
 
         it('displays bio and credentials', () => {
             render(<DoctorCard variant="full" />)
 
             // Check for bio
-            expect(screen.getByText(/Especialista em lentes de contato com mais de 15 anos/)).toBeInTheDocument()
+            expect(screen.getByText(/Especialista em lentes de contato com formação completa/)).toBeInTheDocument()
 
             // Check for credentials section
             expect(screen.getByText('Formação e Especialização')).toBeInTheDocument()

@@ -1,35 +1,7 @@
 import { CalculatorInput, CalculatorResult } from '@/types'
 import { usagePatterns, lensTypes, planRecommendations, planPrices, consultationPrices } from '@/data/calculator-data'
 
-export interface UnifiedCalculatorInput {
-  lensType: 'daily' | 'weekly' | 'monthly'
-  usagePattern: 'occasional' | 'regular' | 'daily'
-  customUsageDays?: number
-  annualContactLensCost?: number
-  annualConsultationCost?: number
-}
-
-export interface UnifiedCalculatorResult {
-  monthlyAvulso: number
-  monthlySubscription: number
-  monthlySavings: number
-  yearlyAvulso: number
-  yearlySubscription: number
-  yearlySavings: number
-  savingsPercentage: number
-  recommendedPlan: string
-  totalCurrentAnnualCost: number
-  totalSVLentesAnnualCost: number
-  totalAnnualSavings: number
-  includedConsultations: number
-  lensesPerMonth: number
-  costPerLens: {
-    current: number
-    subscription: number
-  }
-}
-
-export function calculateEconomy(input: UnifiedCalculatorInput): UnifiedCalculatorResult {
+export function calculateEconomy(input: CalculatorInput): CalculatorResult {
   const usagePattern = usagePatterns.find(p => p.id === input.usagePattern)
   const lensType = lensTypes.find(l => l.id === input.lensType)
 
@@ -99,7 +71,7 @@ export function formatPercentage(value: number): string {
   return `${Math.round(value)}%`
 }
 
-export function validateCalculatorInput(input: Partial<UnifiedCalculatorInput>): {
+export function validateCalculatorInput(input: Partial<CalculatorInput>): {
   isValid: boolean
   errors: string[]
 } {
@@ -141,11 +113,6 @@ export function validateCalculatorInput(input: Partial<UnifiedCalculatorInput>):
 export function validateCustomUsageDays(value: string): number | null {
   const trimmed = value.trim()
   if (!trimmed) return null
-
-  // Rejeitar se tiver ponto decimal
-  if (trimmed.includes('.') || trimmed.includes(',')) {
-    return null
-  }
 
   const num = parseInt(trimmed, 10)
 

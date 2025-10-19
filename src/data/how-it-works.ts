@@ -96,7 +96,7 @@ export const serviceFeatures = [
     {
         id: 'medical-expertise',
         title: 'Expertise Médica',
-        description: 'Dr. Philipe Saraiva Cruz - 15+ anos de experiência',
+        description: 'Dr. Philipe Saraiva Cruz - Especialista em Oftalmologia',
         icon: '👨‍⚕️',
         highlight: true
     },

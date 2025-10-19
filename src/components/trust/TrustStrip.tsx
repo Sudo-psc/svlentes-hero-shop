@@ -46,8 +46,8 @@ export function TrustStrip({ variant = 'full', className = '' }: TrustStripProps
     },
     {
       icon: <Clock className="w-4 h-4" />,
-      text: '10+ anos',
-      key: 'experience',
+      text: 'Atendimento Rápido',
+      key: 'fast-service',
     },
     {
       icon: <Truck className="w-4 h-4" />,

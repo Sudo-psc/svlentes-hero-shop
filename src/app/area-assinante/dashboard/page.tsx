@@ -13,12 +13,17 @@ import {
   MapPin,
   FileText,
   RefreshCcw,
-  Settings
+  Settings,
+  Edit
 } from 'lucide-react'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
 import { DashboardError } from '@/components/assinante/DashboardError'
 import { OrdersModal } from '@/components/assinante/OrdersModal'
 import { InvoicesModal } from '@/components/assinante/InvoicesModal'
+import { ChangePlanModal } from '@/components/assinante/ChangePlanModal'
+import { UpdateAddressModal } from '@/components/assinante/UpdateAddressModal'
+import { UpdatePaymentModal } from '@/components/assinante/UpdatePaymentModal'
+import { SubscriptionHistoryTimeline } from '@/components/assinante/SubscriptionHistoryTimeline'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
 
@@ -28,12 +33,84 @@ export default function DashboardPage() {
   const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
   const [showOrdersModal, setShowOrdersModal] = useState(false)
   const [showInvoicesModal, setShowInvoicesModal] = useState(false)
+  const [showChangePlanModal, setShowChangePlanModal] = useState(false)
+  const [showUpdateAddressModal, setShowUpdateAddressModal] = useState(false)
+  const [showUpdatePaymentModal, setShowUpdatePaymentModal] = useState(false)
+  const [availablePlans, setAvailablePlans] = useState<any[]>([])
+
+  // Load pricing plans
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const { default: plansData } = await import('@/data/pricing-plans')
+        setAvailablePlans(plansData)
+      } catch (error) {
+        console.error('Error loading plans:', error)
+      }
+    }
+    loadPlans()
+  }, [])
 
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/area-assinante/login')
     }
   }, [authUser, authLoading, router])
+
+  // Handler functions for modals
+  const handlePlanChange = async (newPlanId: string) => {
+    const response = await fetch('/api/subscription/change-plan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': authUser?.uid || ''
+      },
+      body: JSON.stringify({ newPlanId })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erro ao alterar plano')
+    }
+
+    await refetch()
+  }
+
+  const handleAddressUpdate = async (addressData: any) => {
+    const response = await fetch('/api/subscription/update-address', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': authUser?.uid || ''
+      },
+      body: JSON.stringify(addressData)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erro ao atualizar endereço')
+    }
+
+    await refetch()
+  }
+
+  const handlePaymentUpdate = async (paymentData: any) => {
+    const response = await fetch('/api/subscription/update-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': authUser?.uid || ''
+      },
+      body: JSON.stringify(paymentData)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erro ao atualizar forma de pagamento')
+    }
+
+    await refetch()
+  }
 
   if (authLoading || subLoading) {
     return <DashboardLoading />
@@ -92,8 +169,8 @@ export default function DashboardPage() {
                     <Package className="h-5 w-5 text-cyan-600" />
                     Status da Assinatura
                   </h3>
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusColor(subscription.status)}`}>
-                    {getStatusLabel(subscription.status)}
+                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${getSubscriptionStatusColor(subscription.status)}`}>
+                    {getSubscriptionStatusLabel(subscription.status)}
                   </span>
                 </div>
                 <div className="space-y-3">
@@ -114,7 +191,16 @@ export default function DashboardPage() {
                       {formatDate(subscription.nextBillingDate)}
                     </span>
                   </div>
-                  <div className="pt-3 border-t">
+                  <div className="pt-3 border-t grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowChangePlanModal(true)}
+                      className="w-full"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Mudar Plano
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -122,7 +208,7 @@ export default function DashboardPage() {
                       className="w-full"
                     >
                       <RefreshCcw className="h-4 w-4 mr-2" />
-                      Atualizar Dados
+                      Atualizar
                     </Button>
                   </div>
                 </div>
@@ -162,6 +248,26 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   )}
+                  <div className="pt-3 border-t grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowUpdatePaymentModal(true)}
+                      className="w-full"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Forma Pagamento
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowUpdateAddressModal(true)}
+                      className="w-full"
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Endereço
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -220,6 +326,15 @@ export default function DashboardPage() {
                 Configurações
               </Button>
             </div>
+
+            {/* Subscription History Timeline */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
+              <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                <RefreshCcw className="h-5 w-5 text-cyan-600" />
+                Histórico de Alterações
+              </h3>
+              <SubscriptionHistoryTimeline userId={authUser.uid} />
+            </div>
           </>
         )}
 
@@ -263,6 +378,39 @@ export default function DashboardPage() {
       {/* Modals */}
       <OrdersModal isOpen={showOrdersModal} onClose={() => setShowOrdersModal(false)} />
       <InvoicesModal isOpen={showInvoicesModal} onClose={() => setShowInvoicesModal(false)} />
+
+      {subscription && (
+        <>
+          <ChangePlanModal
+            isOpen={showChangePlanModal}
+            onClose={() => setShowChangePlanModal(false)}
+            currentPlan={{
+              id: subscription.plan.id,
+              name: subscription.plan.name,
+              price: subscription.plan.price
+            }}
+            availablePlans={availablePlans}
+            onPlanChange={handlePlanChange}
+          />
+
+          <UpdateAddressModal
+            isOpen={showUpdateAddressModal}
+            onClose={() => setShowUpdateAddressModal(false)}
+            currentAddress={subscription.shippingAddress}
+            onAddressUpdate={handleAddressUpdate}
+          />
+
+          <UpdatePaymentModal
+            isOpen={showUpdatePaymentModal}
+            onClose={() => setShowUpdatePaymentModal(false)}
+            currentPaymentMethod={{
+              type: subscription.paymentMethod as any,
+              last4: subscription.paymentMethodLast4
+            }}
+            onPaymentUpdate={handlePaymentUpdate}
+          />
+        </>
+      )}
     </div>
   )
 }

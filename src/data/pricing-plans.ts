@@ -31,70 +31,75 @@ function getPricingPlans(): PricingPlan[] {
   return hardcodedPlans
 }
 
-// Hardcoded fallback data
+// Hardcoded fallback data (sincronizado com base.yaml)
 const hardcodedPlans: PricingPlan[] = [
     {
         id: 'basico',
-        name: 'Plano Básico',
-        badge: 'Pioneiro no Brasil',
-        priceMonthly: 89.00,
-        priceAnnual: 979.00, // 1 mês grátis
-        description: 'Plano básico de lentes de contato com acompanhamento 100% online via telemedicina.',
+        name: 'Plano Express Mensal',
+        badge: 'Sem Fidelidade',
+        priceMonthly: 128.00,
+        priceAnnual: 1091.00,
+        description: 'Plano básico de lentes asféricas mensais com entrega em casa. Sem fidelidade, cancele quando quiser.',
         features: [
-            '12 pares de lentes gelatinosas asféricas',
-            '1 consulta de telemedicina por ano',
-            'Acompanhamento médico mensal online',
-            'Lembretes mensais de troca',
-            'Entrega em casa sem custo adicional',
+            '1 par de lentes asféricas mensais',
+            'Entrega em casa',
+            'Sem fidelidade - cancele quando quiser',
+            'Acompanhamento via WhatsApp',
+            'Troca gratuita em caso de defeito',
             'Atendimento em todo o Brasil'
         ],
         recommended: false,
         stripeProductId: 'prod_basic_svlentes',
         stripePriceId: 'price_basic_monthly',
         asaasProductId: 'prod_basico_svlentes',
-        ctaText: 'Assinar Plano Básico'
+        ctaText: 'Assinar Plano Express'
     },
     {
         id: 'padrao',
-        name: 'Plano Padrão Online',
+        name: 'Plano VIP Anual',
         badge: 'RECOMENDADO',
-        popularBadge: 'Mais Popular',
-        priceMonthly: 119.00,
-        priceAnnual: 1309.00, // 1 mês grátis
-        description: 'Plano completo com lentes premium e acompanhamento online prioritário.',
+        popularBadge: 'Mais Popular - Economia de 29%',
+        priceMonthly: 91.00,
+        priceAnnual: 1091.00,
+        description: 'Plano anual com máxima economia. 12 pares de lentes + acessórios + frete grátis. Economize R$ 445/ano!',
         features: [
-            'Todos os benefícios do Plano Básico',
-            '13 pares de lentes gelatinosas premium',
-            '2 consultas de telemedicina por ano',
-            'Prioridade no agendamento',
-            'Frete expresso grátis',
-            'Suporte via WhatsApp 24/7'
+            '12 pares de lentes asféricas (1 ano completo)',
+            '3 estojos protetores (R$ 60 em brindes)',
+            '3 soluções multiuso 300ml (R$ 90 em brindes)',
+            'Frete grátis (2 envios/ano)',
+            'Desconto de 29% vs plano mensal',
+            'Parcelamento: 12x de R$ 90,92 sem juros',
+            'Suporte via WhatsApp 24/7',
+            'Economia total: R$ 445 + R$ 150 em acessórios'
         ],
         recommended: true,
         stripeProductId: 'prod_standard_svlentes',
         stripePriceId: 'price_standard_monthly',
         asaasProductId: 'prod_padrao_svlentes',
-        ctaText: 'Assinar Plano Padrão'
+        ctaText: 'Assinar Plano VIP Anual'
     },
     {
         id: 'premium',
-        name: 'Plano Premium Online',
-        badge: 'Premium',
-        priceMonthly: 149.00,
-        priceAnnual: 1639.00, // 1 mês grátis
-        description: 'Experiência VIP online com lentes multifocais e atendimento personalizado exclusivo.',
+        name: 'Plano Saúde Ocular Anual',
+        badge: 'Premium com Telemedicina',
+        priceMonthly: 138.00,
+        priceAnnual: 1661.00,
+        description: 'Acompanhamento preventivo completo com 4 consultas de telemedicina/ano. Ideal para grau instável, diabéticos e +50 anos.',
         features: [
-            'Todos os benefícios do Plano Padrão',
-            '14 pares de lentes premium multifocais',
-            '4 consultas de telemedicina por ano',
-            'Kit premium de higienização',
-            'Atendimento personalizado exclusivo'
+            '✅ 4 consultas por telemedicina/ano (1 por trimestre)',
+            '12 pares de lentes asféricas',
+            '3 estojos protetores (R$ 60)',
+            '3 soluções multiuso 300ml (R$ 90)',
+            'Frete grátis (2 envios/ano)',
+            'Ajustes de grau ilimitados',
+            'Prioridade no atendimento',
+            'Parcelamento: 12x de R$ 138,42 sem juros'
         ],
         recommended: false,
         stripeProductId: 'prod_premium_svlentes',
         stripePriceId: 'price_premium_monthly',
         asaasProductId: 'prod_premium_svlentes',
-        ctaText: 'Assinar Plano Premium'
+        ctaText: 'Assinar Plano Saúde Ocular'
     }
 ]
 

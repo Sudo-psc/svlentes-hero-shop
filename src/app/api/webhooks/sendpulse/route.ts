@@ -9,6 +9,7 @@ import { langchainSupportProcessor } from '@/lib/langchain-support-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
+import { sendMessageWithFallback } from '@/lib/mcp-sendpulse-client'
 import {
   getConversationHistory,
   getUserSupportHistory,
@@ -16,77 +17,97 @@ import {
   storeInteraction
 } from '@/lib/whatsapp-conversation-service'
 import { logger, LogCategory } from '@/lib/logger'
-import { checkRateLimit, RateLimitPresets } from '@/lib/rate-limiter'
-// TODO: Re-enable chatbot authentication when chatbot-auth-handler is implemented
-// import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
-// import {
-//   viewSubscriptionCommand,
-//   nextDeliveryCommand
-// } from '@/lib/subscription-management-commands'
-// TODO: Re-enable when message-status-tracker and debug-utilities are implemented
-// import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
-// import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
+import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
+import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
+import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
+import {
+  validateAuthenticatedSession,
+  viewSubscriptionCommand,
+  pauseSubscriptionCommand,
+  reactivateSubscriptionCommand,
+  nextDeliveryCommand
+} from '@/lib/subscription-management-commands'
 
-// C6: Zod validation schemas for webhook payloads (500KB limit)
-const MAX_PAYLOAD_SIZE = 500 * 1024 // 500KB
+// C6: Zod schemas for webhook payload validation
+const MessageTextSchema = z.object({
+  body: z.string().max(5000).optional()
+})
 
-// Message status enum (simplified without message-status-tracker)
-enum MessageStatus {
-  QUEUED = 'QUEUED',
-  SENDING = 'SENDING',
-  SENT = 'SENT',
-  DELIVERED = 'DELIVERED',
-  READ = 'READ',
-  FAILED = 'FAILED',
-  REJECTED = 'REJECTED',
-  EXPIRED = 'EXPIRED'
-}
+const InteractiveButtonReplySchema = z.object({
+  type: z.literal('button_reply'),
+  button_reply: z.object({
+    title: z.string().max(200)
+  })
+})
+
+const InteractiveListReplySchema = z.object({
+  type: z.literal('list_reply'),
+  list_reply: z.object({
+    title: z.string().max(200)
+  })
+})
+
+const InteractiveSchema = z.union([
+  InteractiveButtonReplySchema,
+  InteractiveListReplySchema
+])
+
+const MessageChannelDataSchema = z.object({
+  message: z.object({
+    type: z.string().optional(),
+    text: MessageTextSchema.optional(),
+    interactive: InteractiveSchema.optional()
+  }).optional()
+}).optional()
+
+const MessageSchema = z.object({
+  id: z.string(),
+  type: z.string().optional(),
+  text: z.union([z.string(), MessageTextSchema]).optional(),
+  body: z.string().optional(),
+  channel_data: MessageChannelDataSchema
+})
+
+const ContactSchema = z.object({
+  id: z.string().optional(),
+  phone: z.string().regex(/^\d{10,15}$/, 'Invalid phone number format'),
+  name: z.string().max(200).optional(),
+  username: z.string().max(200).optional(),
+  is_chat_opened: z.boolean().optional()
+})
 
 const SendPulseNativeEventSchema = z.object({
-  title: z.string(),
-  service: z.string().optional(),
+  title: z.literal('incoming_message'),
+  service: z.literal('whatsapp'),
   info: z.object({
-    message: z.object({
-      id: z.string().optional(),
-      channel_data: z.any().optional(),
-      text: z.string().optional(),
-      body: z.string().optional()
-    }).optional()
-  }).optional(),
-  contact: z.object({
-    phone: z.string(),
-    name: z.string().optional(),
-    username: z.string().optional()
+    message: MessageSchema
   }),
-  bot: z.any().optional()
+  contact: ContactSchema,
+  bot: z.object({
+    id: z.string()
+  }).optional()
 })
 
-const SendPulseBrazilianAPISchema = z.object({
-  entry: z.array(z.object({
-    changes: z.array(z.object({
-      value: z.object({
-        messages: z.array(z.any()).optional(),
-        metadata: z.any().optional(),
-        contacts: z.array(z.any()).optional()
-      })
-    }))
-  }))
+const SendPulseArraySchema = z.array(SendPulseNativeEventSchema)
+
+const SendPulseWebhookVerifySchema = z.object({
+  event: z.literal('webhook.verify')
 })
 
-const SendPulseLegacyEventSchema = z.object({
-  event: z.string(),
-  message: z.any().optional(),
-  contact: z.object({
-    phone: z.string().optional(),
-    identifier: z.string().optional(),
-    name: z.string().optional()
-  }).optional(),
-  message_id: z.string().optional(),
-  status: z.string().optional(),
+const SendPulseMessageStatusSchema = z.object({
+  event: z.literal('message.status'),
+  message_id: z.string(),
+  status: z.string(),
   error_code: z.string().optional(),
   error_message: z.string().optional(),
   timestamp: z.string().optional(),
   metadata: z.any().optional()
+})
+
+const SendPulseLegacyMessageSchema = z.object({
+  event: z.literal('message.new'),
+  message: MessageSchema,
+  contact: ContactSchema
 })
 
 // Set debug level from environment or default to standard
@@ -114,63 +135,31 @@ export async function POST(request: NextRequest) {
   const requestId = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
 
   try {
-    // P4: Rate limiting - IP-based protection
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-    const ipRateLimit = checkRateLimit({
-      ...RateLimitPresets.WEBHOOK_IP,
-      identifier: ip
-    })
-
-    if (ipRateLimit.limited) {
-      logger.warn(LogCategory.WEBHOOK, 'Rate limit exceeded for IP', {
-        requestId,
-        ip,
-        resetAt: new Date(ipRateLimit.resetAt).toISOString()
-      })
-
-      return NextResponse.json(
-        {
-          error: 'Too many requests',
-          retryAfter: Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000)
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000)),
-            'X-RateLimit-Limit': String(RateLimitPresets.WEBHOOK_IP.maxRequests),
-            'X-RateLimit-Remaining': String(ipRateLimit.remaining),
-            'X-RateLimit-Reset': new Date(ipRateLimit.resetAt).toISOString()
-          }
-        }
-      )
-    }
-
-    const bodyText = await request.text()
-
-    // C6: Validate payload size (500KB limit)
-    if (bodyText.length > MAX_PAYLOAD_SIZE) {
-      logger.error(LogCategory.WEBHOOK, 'Payload too large', {
-        requestId,
-        size: bodyText.length,
-        maxSize: MAX_PAYLOAD_SIZE
-      })
-      return NextResponse.json(
-        { error: 'Payload too large', maxSize: MAX_PAYLOAD_SIZE },
-        { status: 413 }
-      )
-    }
-
-    // C6: Parse and validate JSON
+    // C6: Parse and validate JSON payload
     let body: any
     try {
-      body = JSON.parse(bodyText)
+      const rawBody = await request.text()
+
+      // Limit body size to prevent DoS
+      if (rawBody.length > 500000) { // 500KB limit
+        logger.warn(LogCategory.WEBHOOK, 'Webhook payload too large', {
+          requestId,
+          size: rawBody.length
+        })
+        return NextResponse.json(
+          { error: 'Payload too large', requestId },
+          { status: 413 }
+        )
+      }
+
+      body = JSON.parse(rawBody)
     } catch (parseError) {
       logger.error(LogCategory.WEBHOOK, 'Invalid JSON payload', {
         requestId,
-        error: parseError instanceof Error ? parseError.message : 'Unknown error'
+        error: parseError instanceof Error ? parseError.message : 'Unknown'
       })
       return NextResponse.json(
-        { error: 'Invalid JSON payload' },
+        { error: 'Invalid JSON payload', requestId },
         { status: 400 }
       )
     }
@@ -184,37 +173,26 @@ export async function POST(request: NextRequest) {
       eventType: body.event || body[0]?.title || 'unknown'
     })
 
-    // Handle SendPulse native format (array of events)
+    // C6: Handle SendPulse native format (array of events) with validation
     if (Array.isArray(body) && body.length > 0) {
+      // Validate array format
+      const validationResult = SendPulseArraySchema.safeParse(body)
+      if (!validationResult.success) {
+        logger.warn(LogCategory.WEBHOOK, 'Invalid SendPulse array format', {
+          requestId,
+          errors: validationResult.error.errors
+        })
+        // Return 200 to prevent SendPulse retries on malformed data
+        return NextResponse.json({ status: 'invalid_format', requestId })
+      }
+
       logger.info(LogCategory.SENDPULSE, `Processing ${body.length} events`)
 
-      // P2: Bulk message processing - validate and prepare all events first
-      const validEvents = body
-        .map(event => {
-          const validation = SendPulseNativeEventSchema.safeParse(event)
-          if (!validation.success) {
-            logger.warn(LogCategory.WEBHOOK, 'Invalid native event format', {
-              requestId,
-              errors: validation.error.errors
-            })
-            return null
-          }
-          return event
-        })
-        .filter(event => event !== null && event.title === 'incoming_message' && event.service === 'whatsapp')
-
-      // P2: Process all valid messages in parallel for better performance
-      const processingPromises = validEvents.map(event =>
-        processSendPulseNativeMessage(event, requestId).catch(error => {
-          logger.error(LogCategory.SENDPULSE, 'Error processing event in batch', {
-            requestId,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            eventPhone: event.contact?.phone
-          })
-        })
-      )
-
-      await Promise.all(processingPromises)
+      for (const event of validationResult.data) {
+        if (event.title === 'incoming_message' && event.service === 'whatsapp') {
+          await processSendPulseNativeMessage(event, requestId)
+        }
+      }
 
       const duration = timer()
       logger.logPerformance('webhook_processed', {
@@ -265,22 +243,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'processed', requestId })
     }
 
-    // Handle legacy events for backward compatibility
+    // C6: Handle legacy events for backward compatibility with validation
     if (body.event === 'message.new') {
-      // C6: Validate legacy event format
-      const validation = SendPulseLegacyEventSchema.safeParse(body)
-      if (!validation.success) {
-        logger.warn(LogCategory.WEBHOOK, 'Invalid legacy event format', {
+      const validationResult = SendPulseLegacyMessageSchema.safeParse(body)
+      if (!validationResult.success) {
+        logger.warn(LogCategory.WEBHOOK, 'Invalid legacy message format', {
           requestId,
-          errors: validation.error.errors
+          errors: validationResult.error.errors
         })
-        return NextResponse.json(
-          { error: 'Invalid webhook format', details: validation.error.errors },
-          { status: 400 }
-        )
+        return NextResponse.json({ status: 'invalid_format', requestId })
       }
 
-      await processSendPulseMessage(body, requestId)
+      await processSendPulseMessage(validationResult.data, requestId)
 
       const duration = timer()
       logger.logPerformance('webhook_processed', { requestId, duration })
@@ -288,22 +262,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'processed', requestId })
     }
 
-    // Handle message status updates
+    // C6: Handle message status updates with validation
     if (body.event === 'message.status') {
-      // C6: Validate status update format
-      const validation = SendPulseLegacyEventSchema.safeParse(body)
-      if (!validation.success) {
-        logger.warn(LogCategory.WEBHOOK, 'Invalid status update format', {
+      const validationResult = SendPulseMessageStatusSchema.safeParse(body)
+      if (!validationResult.success) {
+        logger.warn(LogCategory.WEBHOOK, 'Invalid message status format', {
           requestId,
-          errors: validation.error.errors
+          errors: validationResult.error.errors
         })
-        return NextResponse.json(
-          { error: 'Invalid webhook format', details: validation.error.errors },
-          { status: 400 }
-        )
+        return NextResponse.json({ status: 'invalid_format', requestId })
       }
 
-      await updateMessageStatus(body, requestId)
+      await updateMessageStatus(validationResult.data, requestId)
 
       const duration = timer()
       logger.logPerformance('status_updated', { requestId, duration })
@@ -311,19 +281,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'updated', requestId })
     }
 
-    // Handle webhook verification/test
+    // C6: Handle webhook verification/test with validation
     if (body.event === 'webhook.verify') {
-      // C6: Validate verification event format
-      const validation = SendPulseLegacyEventSchema.safeParse(body)
-      if (!validation.success) {
-        logger.warn(LogCategory.WEBHOOK, 'Invalid verification event format', {
-          requestId,
-          errors: validation.error.errors
+      const validationResult = SendPulseWebhookVerifySchema.safeParse(body)
+      if (!validationResult.success) {
+        logger.warn(LogCategory.WEBHOOK, 'Invalid webhook verify format', {
+          requestId
         })
-        return NextResponse.json(
-          { error: 'Invalid webhook format', details: validation.error.errors },
-          { status: 400 }
-        )
+        return NextResponse.json({ status: 'invalid_format', requestId })
       }
 
       logger.info(LogCategory.WEBHOOK, 'Webhook verification request')
@@ -399,11 +364,34 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
 
     // Extract message text from the message object
     // SendPulse sends text in: message.channel_data.message.text.body
-    const messageContent =
-      message.channel_data?.message?.text?.body || // SendPulse real format
-      message.text || // Fallback
-      message.body || // Fallback
-      null
+    let messageContent: string | null = null
+
+    // Check for interactive messages (button replies, list replies)
+    if (message.channel_data?.message?.type === 'interactive') {
+      console.log('[DEBUG] Interactive message detected!')
+      console.log('[DEBUG] Interactive type:', message.channel_data.message.interactive?.type)
+      console.log('[DEBUG] Interactive data:', JSON.stringify(message.channel_data.message.interactive, null, 2))
+
+      const interactive = message.channel_data.message.interactive
+      if (interactive?.type === 'button_reply') {
+        messageContent = interactive.button_reply.title
+        console.log('[DEBUG] Button reply extracted:', messageContent)
+      } else if (interactive?.type === 'list_reply') {
+        messageContent = interactive.list_reply.title
+        console.log('[DEBUG] List reply extracted:', messageContent)
+      }
+    }
+
+    // Fallback to text messages
+    if (!messageContent) {
+      messageContent =
+        message.channel_data?.message?.text?.body || // SendPulse real format
+        message.text || // Fallback
+        message.body || // Fallback
+        null
+    }
+
+    console.log('[DEBUG] Final messageContent:', messageContent)
 
     if (!messageContent || typeof messageContent !== 'string') {
       console.warn('No text content in SendPulse message')
@@ -411,6 +399,8 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       console.warn('[DEBUG] Message.text:', message.text)
       console.warn('[DEBUG] Message.body:', message.body)
       console.warn('[DEBUG] Message.channel_data:', message.channel_data)
+      console.warn('[DEBUG] Message.type:', message.channel_data?.message?.type)
+      console.warn('[DEBUG] Message.interactive:', message.channel_data?.message?.interactive)
       return
     }
 
@@ -433,6 +423,149 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
 
     // TODO: Re-enable authentication and menu handling when chatbot-auth-handler is implemented
     // Currently going straight to LangChain for all messages
+
+    // Autenticação automática pelo número de WhatsApp
+    let authStatus = await isUserAuthenticated(customerPhone)
+
+    if (!authStatus.authenticated) {
+      // Tentar autenticar automaticamente
+      const authResult = await authenticateByPhone(customerPhone)
+
+      if (authResult.success) {
+        logger.info(LogCategory.WHATSAPP, 'Autenticação automática bem-sucedida', {
+          requestId,
+          phone: customerPhone,
+          userId: authResult.userId
+        })
+
+        // Enviar mensagem de boas-vindas personalizada
+        if (authResult.requiresResponse && authResult.message) {
+          await sendPulseClient.sendMessage({
+            phone: customerPhone,
+            message: authResult.message
+          })
+
+          logger.info(LogCategory.WHATSAPP, 'Mensagem de boas-vindas enviada', {
+            requestId,
+            phone: customerPhone,
+            userId: authResult.userId
+          })
+
+          // Log welcome message interaction
+          const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+          await storeInteraction({
+            messageId,
+            customerPhone,
+            content: messageContent,
+            intent: { name: 'authenticated_welcome', confidence: 1.0 },
+            response: authResult.message,
+            escalationRequired: false,
+            ticketCreated: false,
+            userProfile
+          })
+
+          return // Parar processamento após enviar boas-vindas
+        }
+
+        authStatus = {
+          authenticated: true,
+          sessionToken: authResult.sessionToken,
+          userId: authResult.userId,
+          userName: authResult.userName
+        }
+      } else if (authResult.requiresResponse) {
+        // Enviar mensagem de erro de autenticação
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: authResult.message
+        })
+
+        logger.info(LogCategory.WHATSAPP, 'Mensagem de falha na autenticação enviada', {
+          requestId,
+          phone: customerPhone,
+          error: authResult.error
+        })
+
+        // Log auth failure interaction
+        const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+        await storeInteraction({
+          messageId,
+          customerPhone,
+          content: messageContent,
+          intent: { name: 'auth_failed', confidence: 1.0 },
+          response: authResult.message,
+          escalationRequired: false,
+          ticketCreated: false,
+          userProfile
+        })
+
+        return // Parar processamento para usuários não autenticados
+      }
+    }
+
+    // Verificar se a mensagem é uma opção do menu (1-8)
+    const menuOption = await handleMenuOption(messageContent, customerPhone)
+    if (menuOption) {
+      if (menuOption.requiresResponse) {
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: menuOption.message
+        })
+
+        logger.info(LogCategory.WHATSAPP, 'Resposta de opção do menu enviada', {
+          requestId,
+          phone: customerPhone,
+          option: messageContent
+        })
+      }
+
+      // Log menu option interaction
+      const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+      await storeInteraction({
+        messageId,
+        customerPhone,
+        content: messageContent,
+        intent: { name: 'menu_option', confidence: 1.0 },
+        response: menuOption.message,
+        escalationRequired: false,
+        ticketCreated: false,
+        userProfile
+      })
+
+      return // Pular processamento LangChain para opções do menu
+    }
+
+    // Verificar se a mensagem é um comando de gestão de assinatura
+    const subscriptionCommandResult = await handleSubscriptionCommand(messageContent, customerPhone)
+    if (subscriptionCommandResult) {
+      if (subscriptionCommandResult.requiresResponse) {
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: subscriptionCommandResult.message
+        })
+
+        logger.info(LogCategory.WHATSAPP, 'Resposta de comando de assinatura enviada', {
+          requestId,
+          phone: customerPhone,
+          success: subscriptionCommandResult.success
+        })
+      }
+
+      // Log subscription command interaction
+      const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+      await storeInteraction({
+        messageId,
+        customerPhone,
+        content: messageContent,
+        intent: { name: 'subscription_command', confidence: 1.0 },
+        response: subscriptionCommandResult.message,
+        escalationRequired: false,
+        ticketCreated: false,
+        userProfile
+      })
+
+      return // Pular processamento LangChain para comandos de assinatura
+    }
 
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(contact, customerPhone)
@@ -745,7 +878,12 @@ function extractMessageContent(message: any): string | null {
 }
 
 /**
- * Send response via SendPulse API
+ * Send response via SendPulse API with template fallback
+ *
+ * CRITICAL FIX: Do NOT assume window is open just because we're in a webhook
+ * - Webhook flag is_chat_opened can be unreliable (test data, old data)
+ * - SendPulseClient will verify window status via API before sending
+ * - If window is closed, it will automatically use template message fallback
  */
 async function sendSendPulseResponse(
   customerPhone: string,
@@ -755,42 +893,205 @@ async function sendSendPulseResponse(
   requestId?: string
 ) {
   try {
-    // IMPORTANT: If we're responding to a webhook message, the user just sent us a message,
-    // so the 24h conversation window is DEFINITELY open. We must pass isChatOpened=true.
-    const isChatOpened = true
+    console.log(`[Webhook] Responding to incoming message from ${customerPhone}`)
+    console.log(`[Webhook] SendPulseClient will verify 24h window status via API`)
 
-    console.log(`[Webhook] Responding to incoming message - window is open: isChatOpened=${isChatOpened}`)
+    // Try direct API first (will auto-fallback to template if window closed)
+    try {
+      // Send message via SendPulse client
+      // DO NOT pass isChatOpened - let the client verify via API
+      if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
+        await sendPulseClient.sendMessageWithQuickReplies(
+          customerPhone,
+          processingResult.response,
+          processingResult.quickReplies
+        )
+      } else {
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: processingResult.response
+        })
+      }
 
-    // Send message via SendPulse client
-    if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
-      await sendPulseClient.sendMessageWithQuickReplies(
-        customerPhone,
-        processingResult.response,
-        processingResult.quickReplies,
-        { isChatOpened }
-      )
-    } else {
-      await sendPulseClient.sendMessage({
+      logger.info(LogCategory.SENDPULSE, `✅ Message sent successfully`, {
+        requestId,
         phone: customerPhone,
-        message: processingResult.response,
-        isChatOpened
+        method: 'sendpulse_client'
       })
-    }
 
-    console.log(`SendPulse message sent to ${customerPhone}`)
+      // Log quick replies if available
+      if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
+        console.log(`Quick replies: ${processingResult.quickReplies.join(', ')}`)
+      }
 
-    // Log quick replies if available
-    if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
-      console.log(`Quick replies: ${processingResult.quickReplies.join(', ')}`)
+    } catch (directApiError) {
+      // Direct API failed (including template fallback) - try MCP as last resort
+      logger.warn(LogCategory.SENDPULSE, '⚠️ SendPulse client failed (including template fallback), trying MCP', {
+        requestId,
+        phone: customerPhone,
+        error: directApiError instanceof Error ? directApiError.message : 'Unknown'
+      })
+
+      const botId = process.env.SENDPULSE_BOT_ID
+      if (!botId) {
+        throw new Error('SENDPULSE_BOT_ID not configured for MCP fallback')
+      }
+
+      // Use MCP as absolute last resort
+      const fallbackResult = await sendMessageWithFallback(
+        sendPulseClient,
+        {
+          phone: customerPhone,
+          message: processingResult.response,
+          botId
+        }
+      )
+
+      if (fallbackResult.success) {
+        logger.info(LogCategory.SENDPULSE, `✅ Message sent via ${fallbackResult.method.toUpperCase()} fallback`, {
+          requestId,
+          phone: customerPhone,
+          method: fallbackResult.method
+        })
+      } else {
+        throw new Error(`All delivery methods failed: ${fallbackResult.error}`)
+      }
     }
 
   } catch (error) {
-    logger.logSendPulseError('send_response', error as Error, {
+    logger.logSendPulseError('send_response_all_methods_failed', error as Error, {
       requestId,
       customerPhone,
       responseLength: processingResult.response?.length
     })
+
+    // Log critical failure
+    logger.error(LogCategory.SENDPULSE, '🚨 CRITICAL: All message delivery methods failed', {
+      requestId,
+      phone: customerPhone,
+      error: error instanceof Error ? error.message : 'Unknown',
+      recommendation: 'Configure approved template message in SendPulse dashboard'
+    })
+
+    // Don't throw - webhook should return 200 OK even if delivery fails
+    // to prevent SendPulse from retrying indefinitely
   }
+}
+
+/**
+ * Handle menu options (1-8 from welcome message)
+ */
+async function handleMenuOption(
+  message: string,
+  phone: string
+): Promise<any | null> {
+  const cleanMessage = message.trim()
+
+  // Match only single digits or with emoji prefix
+  const menuMatch = cleanMessage.match(/^[1-8]$|^[1-8]️⃣/)
+
+  if (!menuMatch) {
+    return null
+  }
+
+  const option = parseInt(cleanMessage.replace(/[^\d]/g, ''))
+
+  switch (option) {
+    case 1:
+      // Ver detalhes da assinatura
+      return await viewSubscriptionCommand(phone)
+
+    case 2:
+      // Rastrear pedido
+      return await nextDeliveryCommand(phone)
+
+    case 3:
+      // Baixar nota fiscal
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '📄 *Notas Fiscais*\n\nPara acessar suas notas fiscais:\n\n1. Acesse a área do assinante: https://svlentes.shop/area-assinante\n2. Faça login com seu e-mail\n3. Clique em "Minhas Faturas"\n\nSe precisar de ajuda, estou aqui! 😊'
+      }
+
+    case 4:
+      // Atualizar endereço
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '📍 *Atualizar Endereço*\n\nPara atualizar seu endereço de entrega:\n\n1. Acesse: https://svlentes.shop/area-assinante/configuracoes\n2. Faça login com seu e-mail\n3. Atualize seu endereço\n\nOu me envie o novo endereço completo que atualizo para você! 📬'
+      }
+
+    case 5:
+      // Atualizar forma de pagamento
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '💳 *Atualizar Forma de Pagamento*\n\nPara atualizar seus dados de pagamento:\n\n1. Acesse: https://svlentes.shop/area-assinante/configuracoes\n2. Faça login\n3. Clique em "Forma de Pagamento"\n\nPrecisa de ajuda? Entre em contato:\n📞 (33) 98606-1427'
+      }
+
+    case 6:
+      // Alterar plano
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '🔄 *Alterar Plano*\n\nQuer mudar seu plano de assinatura?\n\nNossos planos disponíveis:\n📦 Mensal - Entrega todo mês\n📦 Trimestral - Economia de 10%\n📦 Semestral - Economia de 15%\n📦 Anual - Economia de 20%\n\nMe diga qual plano te interessa ou entre em contato:\n📞 (33) 98606-1427'
+      }
+
+    case 7:
+      // Pausar/Cancelar assinatura
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '⏸️ *Pausar ou Cancelar Assinatura*\n\n*Pausar assinatura:*\nVocê pode pausar por 30, 60 ou 90 dias.\nEnvie: "pausar assinatura 30 dias"\n\n*Cancelar assinatura:*\nSentiremos sua falta! 😢\nPara cancelar, entre em contato:\n📞 (33) 98606-1427\n\nPosso ajudar com mais alguma coisa?'
+      }
+
+    case 8:
+      // Falar com atendente
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '💬 *Atendimento Humano*\n\nVou transferir você para nossa equipe!\n\nEntre em contato diretamente:\n📞 WhatsApp: (33) 98606-1427\n📧 Email: saraivavision@gmail.com\n\n*Horário de atendimento:*\nSegunda a Sexta: 8h às 18h\nSábado: 8h às 12h\n\nEm que mais posso ajudar? 😊'
+      }
+
+    default:
+      return null
+  }
+}
+
+/**
+ * Handle subscription management commands
+ */
+async function handleSubscriptionCommand(
+  message: string,
+  phone: string
+): Promise<any | null> {
+  const cleanMessage = message.trim().toLowerCase()
+
+  // Comandos de visualização de assinatura
+  if (/\b(minha\s+assinatura|ver\s+assinatura|detalhes\s+assinatura|status\s+assinatura)\b/i.test(cleanMessage)) {
+    return await viewSubscriptionCommand(phone)
+  }
+
+  // Comandos de pausa
+  if (/\b(pausar\s+assinatura|pausar)\b/i.test(cleanMessage)) {
+    // Detectar duração da pausa (30, 60, 90 dias)
+    const daysMatch = cleanMessage.match(/(\d+)\s*dias?/)
+    const days = daysMatch ? parseInt(daysMatch[1]) : 30
+    return await pauseSubscriptionCommand(phone, days)
+  }
+
+  // Comandos de reativação
+  if (/\b(reativar\s+assinatura|ativar\s+assinatura|voltar\s+assinatura|retomar)\b/i.test(cleanMessage)) {
+    return await reactivateSubscriptionCommand(phone)
+  }
+
+  // Comandos de consulta de entrega
+  if (/\b(pr[óo]xima\s+entrega|pr[óo]ximo\s+pedido|quando\s+chega|rastreamento)\b/i.test(cleanMessage)) {
+    return await nextDeliveryCommand(phone)
+  }
+
+  // Não é um comando de assinatura
+  return null
 }
 
 /**

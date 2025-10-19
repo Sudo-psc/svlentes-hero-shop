@@ -102,7 +102,8 @@ CATEGORIAS PRINCIPAIS:
 - TECHNICAL: Problemas técnicos, site, app, sistema
 - PRODUCT: Informações sobre produtos, troca, qualidade, tipos de lentes
 - DELIVERY: Entrega, frete, rastreamento, atraso, correios
-- ACCOUNT: Conta, login, senha, dados pessoais
+- ACCOUNT: Conta, login, senha, dados pessoais, autenticação
+- SUBSCRIPTION: Gestão de assinatura (pausar, reativar, cancelar, alterar)
 - COMPLAINT: Reclamações, insatisfação, problemas
 - COMPLIMENT: Elogios, feedback positivo
 - EMERGENCY: Emergências médicas, problemas oculares urgentes
@@ -363,12 +364,13 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
 
   /**
    * Classify support intent from message
+   * C5: With input sanitization to prevent prompt injection
    */
   private async classifySupportIntent(message: string, context: SupportContext): Promise<SupportIntent> {
-    // C5: Sanitize user input before LLM processing
+    // C5: Sanitize user input before passing to LLM
     const sanitizedMessage = sanitizeUserInput(message)
-    const sanitizedHistory = sanitizeHistory(context.conversationHistory)
-    const history = sanitizedHistory.slice(-5).join(' | ')
+    const sanitizedHistory = sanitizeHistory(context.conversationHistory, 5)
+    const history = sanitizedHistory.join(' | ')
     const customerData = this.formatCustomerData(context)
 
     const runConfig = getLangSmithRunConfig({
@@ -434,10 +436,11 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
 
   /**
    * Detect emergency in message
+   * C5: With input sanitization
    */
   private async detectEmergency(message: string): Promise<string> {
     try {
-      // C5: Sanitize user input before LLM processing
+      // C5: Sanitize input before emergency detection
       const sanitizedMessage = sanitizeUserInput(message)
 
       const runConfig = getLangSmithRunConfig({
@@ -497,6 +500,7 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
 
   /**
    * Generate support response
+   * C5: With input sanitization to prevent prompt injection
    */
   private async generateSupportResponse(
     originalMessage: string,
@@ -504,16 +508,15 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     context: SupportContext,
     knowledgeBaseInfo: string
   ): Promise<string> {
-    // C5: Sanitize user input before LLM processing
+    // C5: Sanitize all user-provided content
     const sanitizedMessage = sanitizeUserInput(originalMessage)
-    const sanitizedCustomerName = sanitizeUserInput(context.userProfile?.name || 'Cliente', 100)
-    const sanitizedTicketSubjects = context.previousTickets
+    const customerName = sanitizeUserInput(context.userProfile?.name || 'Cliente', 100)
+    const customerType = context.subscriptionInfo ? 'Assinante' : 'Potencial cliente'
+    const subscriptionStatus = context.subscriptionInfo?.status || 'Não aplicável'
+    const recentHistory = context.previousTickets
       .slice(0, 3)
       .map(t => sanitizeUserInput(t.subject, 200))
       .join(', ') || 'Nenhum'
-
-    const customerType = context.subscriptionInfo ? 'Assinante' : 'Potencial cliente'
-    const subscriptionStatus = context.subscriptionInfo?.status || 'Não aplicável'
 
     const specificInstructions = this.getSpecificInstructions(intent)
 
@@ -563,6 +566,7 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
 
   /**
    * Determine if escalation is needed
+   * C5: With input sanitization
    */
   private async determineEscalation(
     message: string,
@@ -573,10 +577,10 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       return true
     }
 
-    // C5: Sanitize user input before LLM processing
+    // C5: Sanitize user input and history
     const sanitizedMessage = sanitizeUserInput(message)
-    const sanitizedHistory = sanitizeHistory(context.conversationHistory)
-    const conversationHistory = sanitizedHistory.slice(-10).join(' | ')
+    const sanitizedHistory = sanitizeHistory(context.conversationHistory, 10)
+    const conversationHistory = sanitizedHistory.join(' | ')
     const attempts = context.conversationHistory.length
 
     try {
@@ -623,6 +627,9 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     const quickReplyMap = {
       subscription_pause: ['Pausar 30 dias', 'Pausar 60 dias', 'Cancelar pausa'],
       subscription_cancel: ['Cancelar assinatura', 'Falar com atendente', 'Reconsiderar'],
+      subscription_view: ['Ver detalhes', 'Próxima entrega', 'Alterar endereço'],
+      subscription_reactivate: ['Reativar agora', 'Falar com atendente'],
+      subscription_modify: ['Alterar endereço', 'Mudar plano', 'Falar com atendente'],
       payment_failed: ['Atualizar cartão', 'Pagar com PIX', 'Falar com atendente'],
       delivery_tracking: ['Rastrear pedido', 'Problemas na entrega', 'Falar com atendente'],
       product_exchange: ['Solicitar troca', 'Informações sobre produto', 'Falar com atendente'],

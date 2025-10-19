@@ -22,6 +22,10 @@ export enum LogCategory {
   PERFORMANCE = 'performance',
   BUSINESS = 'business',
   SYSTEM = 'system',
+  SENDPULSE = 'sendpulse',
+  WHATSAPP = 'whatsapp',
+  LANGCHAIN = 'langchain',
+  DATABASE = 'database',
 }
 
 interface LogMetadata {
@@ -233,6 +237,104 @@ class Logger {
     this.info(LogCategory.BUSINESS, `Business event: ${event}`, metadata)
   }
 
+  // SendPulse specific logging
+
+  logSendPulseWebhook(event: string, metadata: LogMetadata): void {
+    this.info(LogCategory.SENDPULSE, `SendPulse webhook: ${event}`, this.sanitizeMetadata(metadata))
+  }
+
+  logSendPulseMessageSent(phone: string, messageId: string, messageLength: number, metadata?: LogMetadata): void {
+    this.info(LogCategory.SENDPULSE, `Message sent`, this.sanitizeMetadata({
+      phone: this.sanitizePhone(phone),
+      messageId,
+      messageLength,
+      ...metadata
+    }))
+  }
+
+  logSendPulseMessageStatus(messageId: string, oldStatus: string, newStatus: string, duration?: number, metadata?: LogMetadata): void {
+    this.info(LogCategory.SENDPULSE, `Message status: ${oldStatus} → ${newStatus}`, this.sanitizeMetadata({
+      messageId,
+      oldStatus,
+      newStatus,
+      duration,
+      ...metadata
+    }))
+  }
+
+  logSendPulseError(operation: string, error: Error, metadata?: LogMetadata): void {
+    this.error(LogCategory.SENDPULSE, `SendPulse error: ${operation}`, error, this.sanitizeMetadata(metadata || {}))
+  }
+
+  // WhatsApp specific logging
+
+  logWhatsAppMessageReceived(phone: string, messageId: string, contentLength: number, metadata?: LogMetadata): void {
+    this.info(LogCategory.WHATSAPP, `Message received`, this.sanitizeMetadata({
+      phone: this.sanitizePhone(phone),
+      messageId,
+      contentLength,
+      ...metadata
+    }))
+  }
+
+  logWhatsAppConversationStarted(phone: string, conversationId: string, metadata?: LogMetadata): void {
+    this.info(LogCategory.WHATSAPP, `Conversation started`, this.sanitizeMetadata({
+      phone: this.sanitizePhone(phone),
+      conversationId,
+      ...metadata
+    }))
+  }
+
+  logWhatsAppIntentDetected(intent: string, confidence: number, phone: string, metadata?: LogMetadata): void {
+    this.info(LogCategory.WHATSAPP, `Intent detected: ${intent}`, this.sanitizeMetadata({
+      intent,
+      confidence,
+      phone: this.sanitizePhone(phone),
+      ...metadata
+    }))
+  }
+
+  logWhatsAppEscalation(phone: string, reason: string, priority: string, metadata?: LogMetadata): void {
+    this.warn(LogCategory.WHATSAPP, `Escalation required: ${reason}`, this.sanitizeMetadata({
+      phone: this.sanitizePhone(phone),
+      reason,
+      priority,
+      ...metadata
+    }))
+  }
+
+  // LangChain specific logging
+
+  logLangChainProcessing(messageId: string, intent: string, confidence: number, duration: number, metadata?: LogMetadata): void {
+    this.info(LogCategory.LANGCHAIN, `Message processed: ${intent}`, this.sanitizeMetadata({
+      messageId,
+      intent,
+      confidence,
+      duration,
+      ...metadata
+    }))
+  }
+
+  logLangChainError(operation: string, error: Error, metadata?: LogMetadata): void {
+    this.error(LogCategory.LANGCHAIN, `LangChain error: ${operation}`, error, this.sanitizeMetadata(metadata || {}))
+  }
+
+  // Database specific logging
+
+  logDatabaseQuery(operation: string, table: string, duration: number, recordCount?: number, metadata?: LogMetadata): void {
+    this.debug(LogCategory.DATABASE, `${operation} on ${table}`, this.sanitizeMetadata({
+      operation,
+      table,
+      duration,
+      recordCount,
+      ...metadata
+    }))
+  }
+
+  logDatabaseError(operation: string, table: string, error: Error, metadata?: LogMetadata): void {
+    this.error(LogCategory.DATABASE, `Database error: ${operation} on ${table}`, error, this.sanitizeMetadata(metadata || {}))
+  }
+
   // Helper para medir duração de operações
   startTimer(): () => number {
     const start = Date.now()
@@ -291,13 +393,37 @@ class Logger {
     return sanitized
   }
 
+  /**
+   * Sanitize phone numbers for LGPD compliance
+   * Masks middle digits: 5533999898026 -> 5533****8026
+   */
+  private sanitizePhone(phone: string): string {
+    if (!phone || typeof phone !== 'string') return '[INVALID_PHONE]'
+    const cleaned = phone.replace(/\D/g, '')
+    if (cleaned.length < 8) return '****'
+    return `${cleaned.substring(0, 4)}****${cleaned.substring(cleaned.length - 4)}`
+  }
+
   sanitizeMetadata(metadata: LogMetadata): LogMetadata {
     const sanitized = { ...metadata }
     const sensitiveKeys = ['password', 'token', 'secret', 'apiKey', 'creditCard', 'cvv']
 
     for (const key of Object.keys(sanitized)) {
+      // Sanitize phone numbers for LGPD compliance
+      if (key.toLowerCase().includes('phone') && typeof sanitized[key] === 'string') {
+        sanitized[key] = this.sanitizePhone(sanitized[key])
+        continue
+      }
+
+      // Redact sensitive keys
       if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
         sanitized[key] = '[REDACTED]'
+        continue
+      }
+
+      // Recursively sanitize nested objects
+      if (typeof sanitized[key] === 'object' && sanitized[key] !== null && !Array.isArray(sanitized[key])) {
+        sanitized[key] = this.sanitizeMetadata(sanitized[key] as LogMetadata)
       }
     }
 

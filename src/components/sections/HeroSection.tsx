@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { HeroImage } from '@/components/sections/HeroImage'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
-import { useTranslation } from '@/lib/translation'
-import { config } from '@/config/loader'
 import { Phone, MessageCircle, Award } from 'lucide-react'
 
 interface HeroSectionProps {
@@ -13,22 +11,9 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ className = '' }: HeroSectionProps) {
-    const t = useTranslation()
-    const appConfig = config.load()
-    const useCentralizedCopy = config.isFeatureEnabled('useCentralizedCopy')
-
-    // Fallback para textos hardcoded se feature flag desativada
-    const copy = useCentralizedCopy ? {
-        badge: t('hero.badge'),
-        title: {
-            line1: t('hero.title.line1'),
-            line2: t('hero.title.line2'),
-        },
-        subtitle: t('hero.subtitle'),
-        description: t('hero.description'),
-        ctaPrimary: t('hero.ctaPrimary'),
-        ctaSecondary: t('hero.ctaSecondary'),
-    } : {
+    // FIXME: Centralized config disabled - using hardcoded copy
+    // Always use hardcoded text (centralized config not available in client components)
+    const copy = {
         badge: '🏆 Pioneiro no Brasil',
         title: {
             line1: 'Nunca mais',

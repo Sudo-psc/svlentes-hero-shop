@@ -110,15 +110,23 @@ export class SendPulseWhatsAppClient {
     return cleanPhone
   }
 
-  private botId: string = process.env.SENDPULSE_BOT_ID || '68f176502ca6f03a9705c489'
-  
+  private botId: string | null = null
+
   private async getBotId(): Promise<string> {
     if (this.botId) {
       return this.botId
     }
 
+    // Require SENDPULSE_BOT_ID to be explicitly configured
+    const configuredBotId = process.env.SENDPULSE_BOT_ID
+    if (configuredBotId) {
+      this.botId = configuredBotId
+      return this.botId
+    }
+
+    // Fallback: auto-discover bot from API
     const token = await this.getAccessToken()
-    
+
     const response = await fetch('https://api.sendpulse.com/whatsapp/bots', {
       method: 'GET',
       headers: {
@@ -132,7 +140,7 @@ export class SendPulseWhatsAppClient {
 
     const data = await response.json()
     if (!data.success || !data.data || data.data.length === 0) {
-      throw new Error('No WhatsApp bots configured in SendPulse')
+      throw new Error('No WhatsApp bots configured in SendPulse. Please set SENDPULSE_BOT_ID environment variable.')
     }
 
     this.botId = data.data[0].id

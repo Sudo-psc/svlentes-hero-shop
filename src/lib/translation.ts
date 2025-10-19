@@ -1,24 +1,14 @@
 /**
  * Translation Utility - i18n Support
  *
- * Versão: 1.0.0-fase2
+ * Versão: 1.0.0-fase2 (Client-Side Safe)
  * Fase: MVP - Copy/Content (i18n)
  *
- * Provides type-safe translation function with fallback support
+ * FIXME: Centralized config disabled - always returns key
+ * TODO: Implement client-safe translation loading (API route or build-time generation)
  */
-
-import { config } from '@/config/loader'
-import type { AppConfig } from '@/config/schema'
 
 type LocaleCode = 'pt-BR' | 'en-US'
-
-/**
- * Get nested property from object using dot notation
- * Example: get(obj, 'hero.title.line1')
- */
-function getNestedValue(obj: any, path: string): any {
-  return path.split('.').reduce((current, key) => current?.[key], obj)
-}
 
 /**
  * Get translation for a given key and locale
@@ -28,32 +18,9 @@ function getNestedValue(obj: any, path: string): any {
  * @returns Translated string or key if not found
  */
 export function getTranslation(key: string, locale: LocaleCode = 'pt-BR'): string {
-  try {
-    const appConfig = config.load()
-    const useCentralizedCopy = config.isFeatureEnabled('useCentralizedCopy')
-
-    if (!useCentralizedCopy) {
-      // Feature flag disabled - return key as fallback
-      return key
-    }
-
-    const localeCopy = appConfig.copy[locale]
-    if (!localeCopy) {
-      console.warn(`[Translation] Locale not found: ${locale}`)
-      return key
-    }
-
-    const value = getNestedValue(localeCopy, key)
-    if (value === undefined || value === null) {
-      console.warn(`[Translation] Key not found: ${key} for locale ${locale}`)
-      return key
-    }
-
-    return value
-  } catch (error) {
-    console.error(`[Translation] Error getting translation for key ${key}:`, error)
-    return key
-  }
+  // FIXME: Config service disabled on client - return key as fallback
+  // Centralized config requires Node.js fs which doesn't work in browser
+  return key
 }
 
 /**
@@ -98,14 +65,6 @@ export function getTranslations(
  * @returns true if key exists, false otherwise
  */
 export function hasTranslation(key: string, locale: LocaleCode = 'pt-BR'): boolean {
-  try {
-    const appConfig = config.load()
-    const localeCopy = appConfig.copy[locale]
-    if (!localeCopy) return false
-
-    const value = getNestedValue(localeCopy, key)
-    return value !== undefined && value !== null
-  } catch {
-    return false
-  }
+  // FIXME: Config service disabled - always return false
+  return false
 }

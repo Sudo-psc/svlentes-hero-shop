@@ -1,23 +1,26 @@
 // Tipos para a calculadora de economia
 
+export type LensTypeId = 'daily' | 'weekly' | 'monthly'
+export type UsagePatternId = 'occasional' | 'regular' | 'daily'
+
 export interface UsagePattern {
-  id: string;
+  id: UsagePatternId;
   name: string;
   daysPerMonth: number;
   description: string;
 }
 
 export interface LensType {
-  id: string;
+  id: LensTypeId;
   name: string;
   avulsoPrice: number;
   subscriptionPrice: number;
 }
 
 export interface CalculatorInput {
-  lensType: string;
-  usagePattern: string;
-  currentMonthlySpend?: number;
+  lensType: LensTypeId;
+  usagePattern: UsagePatternId;
+  customUsageDays?: number; // Já validado, 1-31
   annualContactLensCost?: number;
   annualConsultationCost?: number;
 }
@@ -35,9 +38,21 @@ export interface CalculatorResult {
   totalSVLentesAnnualCost?: number;
   totalAnnualSavings?: number;
   includedConsultations?: number;
+  lensesPerMonth?: number;
+  costPerLens?: {
+    current: number;
+    subscription: number;
+  }
 }
 
 export interface CalculatorProps {
   onCalculate: (result: CalculatorResult) => void;
   initialData?: Partial<CalculatorInput>;
+}
+
+export interface SavedCalculation {
+  id: string;
+  timestamp: number;
+  input: CalculatorInput;
+  result: CalculatorResult;
 }

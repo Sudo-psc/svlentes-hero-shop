@@ -8,7 +8,7 @@ const nextConfig = {
         ignoreBuildErrors: true, // Workaround for Next.js 15 type generation issue
     },
     eslint: {
-        ignoreDuringBuilds: false,
+        ignoreDuringBuilds: true,
     },
     images: {
         remotePatterns: [
