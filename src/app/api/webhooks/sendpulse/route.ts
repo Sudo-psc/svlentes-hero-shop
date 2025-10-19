@@ -281,6 +281,42 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Additional signature validation for SendPulse webhooks
+      const signature = request.headers.get('x-sendpulse-signature') ||
+                        request.headers.get('x-signature') ||
+                        request.headers.get('signature')
+
+      if (signature) {
+        const { SendPulseClient } = await import('@/lib/sendpulse-client')
+        const sendpulseClient = new SendPulseClient()
+
+        if (!sendpulseClient.validateWebhook(rawBody, signature)) {
+          WebhookSecurity.logSecurityEvent('BLOCKED_REQUEST', {
+            requestId,
+            reason: 'Invalid webhook signature',
+            signature: signature.substring(0, 20) + '...',
+            ip: request.headers.get('x-forwarded-for') || 'unknown'
+          })
+
+          return NextResponse.json(
+            {
+              error: 'Invalid webhook signature',
+              requestId
+            },
+            { status: 401 }
+          )
+        }
+
+        logger.info(LogCategory.SECURITY, 'Webhook signature validated', {
+          requestId,
+          hasSignature: true
+        })
+      } else {
+        logger.warn(LogCategory.SECURITY, 'Webhook received without signature', {
+          requestId
+        })
+      }
+
       // Log high-risk requests
       if (securityValidation.riskScore > 50) {
         logger.warn(LogCategory.SECURITY, 'High-risk webhook request', {

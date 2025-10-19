@@ -723,11 +723,38 @@ export class SendPulseClient {
 
   /**
    * Validate webhook signature
+   * Enhanced validation using HMAC-SHA256 if signature is provided
    */
-  validateWebhook(payload: string, signature: string): boolean {
-    // TODO: Implement webhook signature validation if SendPulse provides it
-    // For now, just check if webhook token is configured
-    return !!this.webhookToken
+  validateWebhook(payload: string, signature?: string): boolean {
+    // Basic token validation
+    if (!this.webhookToken) {
+      console.warn('SendPulse webhook token not configured')
+      return false
+    }
+
+    // If no signature provided, use basic token validation as fallback
+    if (!signature) {
+      console.warn('Webhook signature not provided - using basic validation')
+      return true // Allow but log warning for SendPulse webhooks
+    }
+
+    // Verify HMAC signature if provided
+    try {
+      const crypto = require('crypto')
+      const expectedSignature = crypto
+        .createHmac('sha256', this.webhookToken)
+        .update(payload, 'utf8')
+        .digest('hex')
+
+      // Use timing-safe comparison to prevent timing attacks
+      return crypto.timingSafeEqual(
+        Buffer.from(signature, 'hex'),
+        Buffer.from(expectedSignature, 'hex')
+      )
+    } catch (error) {
+      console.error('Error validating webhook signature:', error)
+      return false
+    }
   }
 
   /**
