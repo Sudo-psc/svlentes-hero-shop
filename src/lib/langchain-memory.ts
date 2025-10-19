@@ -481,7 +481,7 @@ export class LangChainBotMemory extends BaseMemory {
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error updating session activity', {
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
     }
   }
@@ -517,7 +517,7 @@ export class LangChainBotMemory extends BaseMemory {
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error getting context', {
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
 
       return {

@@ -43,7 +43,7 @@ export function Header({ className }: HeaderProps) {
     }, [])
 
     const navigation = useMemo(() => {
-        if (useCentralizedConfig && headerMenu) {
+        if (headerMenu && headerMenu.main) {
             return headerMenu.main.map((item: any) => ({
                 name: item.label,
                 href: item.href,
@@ -51,6 +51,7 @@ export function Header({ className }: HeaderProps) {
             }))
         }
 
+        // Fallback to hardcoded menu if config not available
         return [
             { name: 'Calculadora', href: '/calculadora', isAnchor: false },
             { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
@@ -59,11 +60,11 @@ export function Header({ className }: HeaderProps) {
             { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
             { name: 'Contato', href: '#contato', isAnchor: true },
         ]
-    }, [headerMenu, useCentralizedConfig])
+    }, [headerMenu])
 
     const ctaConfig = useMemo(
-        () => (useCentralizedConfig && headerMenu ? headerMenu.cta : null),
-        [headerMenu, useCentralizedConfig]
+        () => (headerMenu ? headerMenu.cta : null),
+        [headerMenu]
     )
 
     const handleNavClick = useCallback((href: string) => {
