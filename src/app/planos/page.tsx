@@ -20,9 +20,11 @@ export default function PlanosPage() {
       <section className="relative pt-32 pb-20 bg-gradient-to-br from-cyan-700 via-cyan-600 to-cyan-500 text-white overflow-hidden">
         {/* Enhanced Background Pattern */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="7" cy="7" r="7"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-300/20 rounded-full filter blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full filter blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-300/20 rounded-full filter blur-3xl animate-pulse delay-700"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full filter blur-2xl"></div>
+          </div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">

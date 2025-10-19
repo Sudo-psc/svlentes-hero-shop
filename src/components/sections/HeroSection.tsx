@@ -5,24 +5,27 @@ import { Badge } from '@/components/ui/Badge'
 import { HeroImage } from '@/components/sections/HeroImage'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import { Phone, MessageCircle, Award } from 'lucide-react'
+import { useConfigValue } from '@/lib/use-config'
 
 interface HeroSectionProps {
     className?: string
 }
 
 export function HeroSection({ className = '' }: HeroSectionProps) {
-    // FIXME: Centralized config disabled - using hardcoded copy
-    // Always use hardcoded text (centralized config not available in client components)
+    // Use centralized configuration with fallback to hardcoded values
+    const heroContent = useConfigValue('content.hero', {})
+
     const copy = {
         badge: '🏆 Pioneiro no Brasil',
         title: {
-            line1: 'Nunca mais',
-            line2: 'fique sem lentes',
+            line1: heroContent?.title?.line1 || 'Nunca mais',
+            line2: heroContent?.title?.line2 || 'fique sem lentes',
+            line3: heroContent?.title?.line3 || 'Receba no conforto da sua casa',
         },
-        subtitle: 'Assinatura com acompanhamento médico especializado.',
-        description: 'Receba suas lentes em casa com logística integrada e consultas regulares.',
-        ctaPrimary: 'Agendar consulta com oftalmologista',
-        ctaSecondary: 'Tirar dúvidas no WhatsApp',
+        subtitle: heroContent?.subtitle || 'Assinatura com acompanhamento médico especializado.',
+        description: heroContent?.description || 'Lentes de contato de qualidade com entrega mensal e suporte dedicado.',
+        ctaPrimary: heroContent?.cta?.primary || 'Agendar consulta com oftalmologista',
+        ctaSecondary: heroContent?.cta?.secondary || 'Tirar dúvidas no WhatsApp',
     }
 
     const handleAgendarConsulta = () => {
