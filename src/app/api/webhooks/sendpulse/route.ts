@@ -588,35 +588,58 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
     // TODO: Re-enable authentication and menu handling when chatbot-auth-handler is implemented
     // Currently going straight to LangChain for all messages
 
-    // Autenticação automática pelo número de WhatsApp
+    // Autenticação automática robusta pelo número de WhatsApp
+    logger.info(LogCategory.WHATSAPP, 'Iniciando processo de autenticação', {
+      requestId,
+      customerPhone: customerPhone,
+      messageLength: messageContent?.length || 0
+    })
+
     let authStatus = await isUserAuthenticated(customerPhone)
 
     if (!authStatus.authenticated) {
-      // Tentar autenticar automaticamente
+      // Tentar autenticar automaticamente com validação robusta
+      logger.info(LogCategory.WHATSAPP, 'Usuário não autenticado, tentando autenticação automática', {
+        requestId,
+        phone: customerPhone,
+        contactName: contact.name
+      })
+
       const authResult = await authenticateByPhone(customerPhone)
 
+      logger.info(LogCategory.WHATSAPP, 'Resultado da autenticação automática', {
+        requestId,
+        phone: customerPhone,
+        success: authResult.success,
+        error: authResult.error,
+        userId: authResult.userId
+      })
+
       if (authResult.success) {
-        logger.info(LogCategory.WHATSAPP, 'Autenticação automática bem-sucedida', {
+        logger.info(LogCategory.WHATSAPP, '✅ Autenticação automática bem-sucedida', {
           requestId,
           phone: customerPhone,
-          userId: authResult.userId
+          userId: authResult.userId,
+          userName: authResult.userName
         })
 
         // Enviar mensagem de boas-vindas personalizada
         if (authResult.requiresResponse && authResult.message) {
-          await sendPulseClient.sendMessage({
-            phone: customerPhone,
-            message: authResult.message
-          })
+          try {
+            await sendPulseClient.sendMessage({
+              phone: customerPhone,
+              message: authResult.message
+            })
 
-          logger.info(LogCategory.WHATSAPP, 'Mensagem de boas-vindas enviada', {
-            requestId,
-            phone: customerPhone,
-            userId: authResult.userId
-          })
+            logger.info(LogCategory.WHATSAPP, '✅ Mensagem de boas-vindas enviada com sucesso', {
+              requestId,
+              phone: customerPhone,
+              userId: authResult.userId,
+              messageLength: authResult.message.length
+            })
 
-          // Log welcome message interaction
-          const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+            // Log welcome message interaction
+            const userProfile = await getOrCreateUserProfile(contact, customerPhone)
           await storeInteraction({
             messageId,
             customerPhone,
@@ -629,6 +652,15 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           })
 
           return // Parar processamento após enviar boas-vindas
+          } catch (messageError) {
+            console.error('Failed to send welcome message:', messageError)
+            logger.error(LogCategory.WHATSAPP, 'Erro ao enviar mensagem de boas-vindas', {
+              phone: customerPhone,
+              userId: authResult.userId,
+              error: messageError instanceof Error ? messageError.message : 'Unknown'
+            })
+            // Continue processing even if welcome message fails
+          }
         }
 
         authStatus = {
