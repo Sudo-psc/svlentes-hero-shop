@@ -1,0 +1,3809 @@
+openapi: 3.0.3
+info:
+  title: SVlentes API
+  version: "2024-05-01"
+  description: |
+    Documentação oficial das rotas da plataforma SVlentes.
+servers:
+  - url: https://svlentes.com.br
+    description: Produção
+  - url: http://localhost:3000
+    description: Desenvolvimento local
+tags:
+  - name: Auth
+    description: Fluxos de autenticação e recuperação de conta.
+  - name: Usuário
+    description: Preferências e perfil do usuário autenticado.
+  - name: Assinante
+    description: Gestão da assinatura médica, pedidos e faturamento.
+  - name: Pagamentos
+    description: Integrações com ASAAS e criação de checkouts.
+  - name: Suporte
+    description: Operações relacionadas a suporte omnichannel e WhatsApp.
+  - name: Lembretes
+    description: Orquestração de lembretes e interações.
+  - name: Privacidade
+    description: Rotas LGPD para consentimento, exportação e solicitações de dados.
+  - name: Monitoramento
+    description: Coleta de métricas, erros e alertas operacionais.
+  - name: Analytics
+    description: Métricas avançadas do atendimento e exportações.
+  - name: Saúde
+    description: Monitoramento básico de disponibilidade.
+paths:
+  /api/auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verificar e-mail
+      description: |
+        Valida o token enviado por e-mail e confirma a conta do usuário.
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+          description: Token de verificação recebido no e-mail.
+      responses:
+        '200':
+          description: Email verificado com sucesso.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+              examples:
+                sucesso:
+                  value:
+                    message: Email verificado com sucesso
+                    email: paciente@svlentes.com.br
+        '400':
+          description: Token ausente ou inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                tokenInvalido:
+                  value:
+                    error: INVALID_TOKEN
+                    message: Token inválido ou expirado
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                usuarioAusente:
+                  value:
+                    error: USER_NOT_FOUND
+                    message: Usuário não encontrado
+        '500':
+          description: Erro inesperado ao verificar e-mail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicitar recuperação de senha
+      description: |
+        Inicia o fluxo de recuperação sem revelar se o e-mail existe.
+
+        TypeScript schema:
+        ```ts
+        interface ForgotPasswordInput {
+          email: string
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+            examples:
+              default:
+                value:
+                  email: paciente@svlentes.com.br
+      responses:
+        '200':
+          description: Solicitação recebida (sempre sucesso aparente).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailInvalido:
+                  value:
+                    error: VALIDATION_ERROR
+                    message: Email inválido
+        '500':
+          description: Falha ao processar a solicitação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Redefinir senha
+      description: |
+        Atualiza a senha do usuário usando o token de recuperação.
+
+        TypeScript schema:
+        ```ts
+        interface ResetPasswordInput {
+          token: string
+          password: string
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 6
+                  maxLength: 100
+            examples:
+              default:
+                value:
+                  token: r3set-t0ken
+                  password: NovaSenha@123
+      responses:
+        '200':
+          description: Senha redefinida com sucesso.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Token inválido ou dados incorretos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                tokenInvalido:
+                  value:
+                    error: INVALID_TOKEN
+                    message: Token inválido ou expirado
+        '404':
+          description: Usuário inexistente para o token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao redefinir senha.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/resend-verification:
+    post:
+      tags: [Auth]
+      summary: Reenviar e-mail de verificação
+      description: |
+        Gera novo token de verificação quando o usuário ainda não confirmou o e-mail.
+
+        TypeScript schema:
+        ```ts
+        interface ResendVerificationInput {
+          email: string
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+            examples:
+              default:
+                value:
+                  email: paciente@svlentes.com.br
+      responses:
+        '200':
+          description: Solicitação processada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Email inválido ou já verificado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                jaVerificado:
+                  value:
+                    error: ALREADY_VERIFIED
+                    message: Este email já foi verificado
+        '500':
+          description: Falha ao enviar o e-mail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/user/preferences:
+    get:
+      tags: [Usuário]
+      summary: Consultar preferências de notificação
+      description: |
+        Recupera as preferências de canais de notificação do usuário.
+
+        Autenticação: header `x-user-id`.
+      security:
+        - UserIdHeader: []
+      responses:
+        '200':
+          description: Preferências retornadas.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preferences:
+                    $ref: '#/components/schemas/NotificationPreferences'
+                  phone:
+                    type: string
+                    nullable: true
+              examples:
+                default:
+                  value:
+                    preferences:
+                      channel: EMAIL
+                      subscriptionReminders: true
+                      orderUpdates: true
+                      appointmentReminders: true
+                      marketingMessages: false
+                    phone: '+5533999999999'
+        '401':
+          description: Usuário não autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao consultar preferências.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Usuário]
+      summary: Atualizar preferências de notificação
+      description: |
+        Atualiza os canais preferidos de comunicação.
+
+        Autenticação: header `x-user-id`.
+
+        TypeScript schema:
+        ```ts
+        type UpdatePreferencesInput = NotificationPreferences
+        ```
+      security:
+        - UserIdHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferences'
+            examples:
+              whatsapp:
+                value:
+                  channel: WHATSAPP
+                  subscriptionReminders: true
+                  orderUpdates: true
+                  appointmentReminders: true
+                  marketingMessages: false
+      responses:
+        '200':
+          description: Preferências atualizadas.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  preferences:
+                    $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          description: Dados inválidos ou falta de telefone para WhatsApp.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Usuário não autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao salvar preferências.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/user/profile:
+    get:
+      tags: [Usuário]
+      summary: Consultar perfil
+      description: |
+        Retorna os dados básicos do perfil.
+
+        Autenticação: header `x-user-id`.
+      security:
+        - UserIdHeader: []
+      responses:
+        '200':
+          description: Perfil retornado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Não autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao buscar perfil.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Usuário]
+      summary: Atualizar perfil
+      description: |
+        Permite atualizar nome e telefones.
+
+        Autenticação: header `x-user-id`.
+
+        TypeScript schema:
+        ```ts
+        interface UpdateProfileInput {
+          name?: string
+          phone?: string | ''
+          whatsapp?: string | ''
+        }
+        ```
+      security:
+        - UserIdHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                phone:
+                  type: string
+                  nullable: true
+                whatsapp:
+                  type: string
+                  nullable: true
+            examples:
+              default:
+                value:
+                  name: Ana Usuária
+                  phone: '+5533999999999'
+                  whatsapp: '+5533988888888'
+      responses:
+        '200':
+          description: Perfil atualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Não autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao atualizar perfil.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/assinante/register:
+    post:
+      tags: [Assinante]
+      summary: Registrar novo assinante
+      description: |
+        Cria conta manual para a área do assinante.
+
+        Segurança: cookie `csrf_token` + header `x-csrf-token`.
+
+        TypeScript schema:
+        ```ts
+        interface RegisterInput {
+          name: string
+          email: string
+          password: string
+        }
+        ```
+      security:
+        - CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                  maxLength: 100
+            examples:
+              default:
+                value:
+                  name: Ana Paciente
+                  email: paciente@svlentes.com.br
+                  password: Segura!123
+      responses:
+        '201':
+          description: Conta criada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      email:
+                        type: string
+                  emailSent:
+                    type: boolean
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email já cadastrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Falha no token CSRF.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao registrar conta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/assinante/subscription:
+    get:
+      tags: [Assinante]
+      summary: Detalhes da assinatura ativa
+      description: |
+        Recupera a assinatura ativa do usuário autenticado (Firebase Bearer token).
+      security:
+        - FirebaseBearerAuth: []
+      responses:
+        '200':
+          description: Dados da assinatura ou null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '401':
+          description: Token ausente ou inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Firebase indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Assinante]
+      summary: Atualizar endereço da assinatura
+      description: |
+        Permite atualizar o endereço de entrega da assinatura ativa.
+
+        Segurança: Firebase Bearer token + cookie/header CSRF.
+
+        TypeScript schema:
+        ```ts
+        interface UpdateSubscriptionInput {
+          shippingAddress: Record<string, unknown>
+        }
+        ```
+      security:
+        - FirebaseBearerAuth: []
+        - CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shippingAddress]
+              properties:
+                shippingAddress:
+                  type: object
+                  additionalProperties: true
+            examples:
+              default:
+                value:
+                  shippingAddress:
+                    street: Rua das Lentes, 100
+                    city: Caratinga
+                    state: MG
+                    postalCode: '35300000'
+      responses:
+        '200':
+          description: Endereço atualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  subscription:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      shippingAddress:
+                        type: object
+                        additionalProperties: true
+                      updatedAt:
+                        type: string
+                        format: date-time
+        '401':
+          description: Token inválido ou ausência de autenticação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: CSRF inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário ou assinatura inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao atualizar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Firebase indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/assinante/invoices:
+    get:
+      tags: [Assinante]
+      summary: Listar faturas
+      description: |
+        Retorna histórico paginado de faturas do assinante.
+      security:
+        - FirebaseBearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Página (default 1).
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Itens por página (default 10).
+      responses:
+        '200':
+          description: Lista de faturas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceListResponse'
+        '401':
+          description: Token inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao buscar faturas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/assinante/orders:
+    get:
+      tags: [Assinante]
+      summary: Listar pedidos
+      description: |
+        Retorna pedidos associados às assinaturas do usuário.
+      security:
+        - FirebaseBearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Página (default 1).
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Itens por página (default 10).
+      responses:
+        '200':
+          description: Lista de pedidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          description: Token inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao buscar pedidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/asaas/create-payment:
+    post:
+      tags: [Pagamentos]
+      summary: Criar assinatura ou pagamento ASAAS
+      description: |
+        Gera cliente e assinatura/pagamento único via ASAAS.
+
+        TypeScript schema:
+        ```ts
+        interface CreatePaymentInput {
+          planId: 'basic' | 'premium' | 'vip'
+          billingInterval: 'monthly' | 'annual'
+          billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX'
+          customerData: {
+            name: string
+            email: string
+            phone?: string
+            cpfCnpj?: string
+          }
+          metadata?: Record<string, string>
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentInput'
+            examples:
+              mensal:
+                value:
+                  planId: basic
+                  billingInterval: monthly
+                  billingType: PIX
+                  customerData:
+                    name: Ana Cliente
+                    email: paciente@svlentes.com.br
+                    phone: '+5533999999999'
+      responses:
+        '200':
+          description: Assinatura mensal ou cobrança anual criada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentResponse'
+        '400':
+          description: Dados inválidos ou plano inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha na integração ASAAS.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/create-checkout:
+    post:
+      tags: [Pagamentos]
+      summary: Criar checkout de assinatura
+      description: |
+        Cria cliente, assinatura e retorna dados do primeiro pagamento no ASAAS.
+
+        TypeScript schema:
+        ```ts
+        interface CreateCheckoutInput {
+          planId: 'basic' | 'premium' | 'vip'
+          billingInterval: 'monthly' | 'annual'
+          billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX'
+          customerData: {
+            name: string
+            email: string
+            phone: string
+            cpfCnpj: string
+            address?: {
+              street: string
+              number: string
+              complement?: string
+              neighborhood: string
+              postalCode: string
+              city: string
+              state: string
+            }
+          }
+          metadata?: Record<string, string>
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckoutInput'
+            examples:
+              pixAnual:
+                value:
+                  planId: premium
+                  billingInterval: annual
+                  billingType: PIX
+                  customerData:
+                    name: Ana Paciente
+                    email: paciente@svlentes.com.br
+                    phone: '+5533999999999'
+                    cpfCnpj: '12345678901'
+                    address:
+                      street: Rua das Lentes
+                      number: '100'
+                      neighborhood: Centro
+                      postalCode: '35300000'
+                      city: Caratinga
+                      state: MG
+                  metadata:
+                    source: hero
+      responses:
+        '200':
+          description: Checkout criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCheckoutResponse'
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha na criação do checkout.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/sendpulse:
+    get:
+      tags: [Suporte]
+      summary: Status da integração SendPulse
+      description: |
+        Permite testar conexão ou consultar dados da conta.
+      parameters:
+        - in: query
+          name: action
+          schema:
+            type: string
+            enum: [test, account]
+          description: Seleciona ação `test` ou `account`.
+      responses:
+        '200':
+          description: Resultado da consulta.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              examples:
+                test:
+                  value:
+                    connected: true
+                    timestamp: '2024-05-15T12:00:00.000Z'
+        '500':
+          description: Falha na consulta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Suporte]
+      summary: Operações SendPulse
+      description: |
+        Executa registro de webhook, envio de mensagem ou criação de contato.
+
+        TypeScript schema:
+        ```ts
+        type SendPulseActionRequest =
+          | { action: 'register-webhook'; webhookUrl: string }
+          | { action: 'send-message'; phone: string; message: string; quickReplies?: string[] }
+          | { action: 'create-contact'; phone: string; name?: string; email?: string; variables?: Record<string, any>; tags?: string[] }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/RegisterWebhookRequest'
+                - $ref: '#/components/schemas/SendPulseMessageRequest'
+                - $ref: '#/components/schemas/SendPulseContactRequest'
+            examples:
+              registrar:
+                value:
+                  action: register-webhook
+                  webhookUrl: https://svlentes.com.br/api/webhooks/sendpulse
+              mensagem:
+                value:
+                  action: send-message
+                  phone: '+5533999999999'
+                  message: Olá! Como posso ajudar?
+                  quickReplies:
+                    - Falar com atendente
+                    - Ver planos
+      responses:
+        '200':
+          description: Ação executada.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Ação inválida ou campos obrigatórios ausentes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha na integração SendPulse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/whatsapp/support:
+    get:
+      tags: [Suporte]
+      summary: Verificação de webhook WhatsApp
+      description: |
+        Responde ao desafio de verificação do WhatsApp Cloud API.
+      parameters:
+        - in: query
+          name: hub.mode
+          schema:
+            type: string
+        - in: query
+          name: hub.verify_token
+          schema:
+            type: string
+        - in: query
+          name: hub.challenge
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Desafio atendido.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '403':
+          description: Token inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Suporte]
+      summary: Webhook de suporte WhatsApp
+      description: |
+        Processa webhooks oficiais do WhatsApp ou chamadas diretas de teste.
+
+        TypeScript schema:
+        ```ts
+        type WhatsAppSupportInput =
+          | WhatsAppWebhookPayload
+          | { action: 'send_message'; customerPhone: string; message: string; type?: string }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/WhatsAppWebhookPayload'
+                - $ref: '#/components/schemas/WhatsAppDirectMessage'
+            examples:
+              webhook:
+                value:
+                  object: whatsapp_business_account
+                  entry:
+                    - changes:
+                        - value:
+                            messages:
+                              - id: wamid.HBgM
+                                from: '5533999999999'
+                                text:
+                                  body: Olá, gostaria de saber sobre assinaturas
+                            metadata:
+                              phone_number_id: '123456789'
+              teste:
+                value:
+                  action: send_message
+                  customerPhone: '+5533999999999'
+                  message: Mensagem de teste manual
+      responses:
+        '200':
+          description: Webhook processado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '400':
+          description: Payload inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao processar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/whatsapp-redirect:
+    get:
+      tags: [Suporte]
+      summary: Consultar contextos de WhatsApp
+      description: |
+        Lista contextos, mensagens e status de atendimento.
+      parameters:
+        - in: query
+          name: include_messages
+          schema:
+            type: string
+            enum: ['true', 'false']
+          description: Define se o texto completo deve ser incluído.
+      responses:
+        '200':
+          description: Contextos e metadados retornados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhatsAppContextsResponse'
+        '500':
+          description: Falha ao obter dados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Suporte]
+      summary: Gerar link contextual do WhatsApp
+      description: |
+        Gera mensagem personalizada e link de redirecionamento.
+
+        TypeScript schema:
+        ```ts
+        interface WhatsAppRedirectInput {
+          context: 'hero' | 'pricing' | 'consultation' | 'support' | 'calculator' | 'emergency'
+          userData?: { nome?: string; email?: string; whatsapp?: string }
+          contextData: {
+            page: string
+            section?: string
+            planInterest?: string
+            calculatedEconomy?: number
+            customMessage?: string
+          }
+          trackingData?: {
+            source?: string
+            medium?: string
+            campaign?: string
+            sessionId?: string
+          }
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhatsAppRedirectInput'
+            examples:
+              exemplo:
+                value:
+                  context: consultation
+                  userData:
+                    nome: Ana
+                    email: paciente@svlentes.com.br
+                  contextData:
+                    page: /planos
+                    planInterest: premium
+                    customMessage: Tenho astigmatismo
+                  trackingData:
+                    source: ads
+                    campaign: lentes-q2
+      responses:
+        '200':
+          description: Link gerado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhatsAppRedirectResponse'
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha interna.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Suporte]
+      summary: Registrar evento de analytics
+      description: |
+        Registra visualizações, cliques ou cópias sem gerar redirecionamento.
+
+        TypeScript schema:
+        ```ts
+        interface WhatsAppTrackingInput {
+          context: string
+          page: string
+          action: 'click' | 'view' | 'copy'
+          userData?: { hasName: boolean; hasEmail: boolean; hasPhone: boolean }
+          timestamp?: string
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhatsAppTrackingInput'
+            examples:
+              exemplo:
+                value:
+                  context: hero
+                  page: /
+                  action: click
+                  userData:
+                    hasName: true
+                    hasEmail: true
+                    hasPhone: false
+      responses:
+        '200':
+          description: Evento registrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  tracked:
+                    type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha no registro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/schedule-consultation:
+    post:
+      tags: [Suporte]
+      summary: Agendar consulta médica
+      description: |
+        Registra solicitação de consulta com dados completos do paciente.
+
+        TypeScript schema:
+        ```ts
+        interface ScheduleConsultationInput {
+          leadInfo: LeadForm
+          personalInfo: PersonalInfo
+          prescription: PrescriptionInfo
+          preferences: PreferencesInfo
+          selectedPlan: 'basic' | 'premium' | 'vip'
+          scheduling: {
+            preferredDate: string
+            preferredTime: 'morning' | 'afternoon' | 'evening'
+            consultationType: 'initial' | 'followup' | 'emergency'
+            additionalNotes?: string
+          }
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleConsultationInput'
+            examples:
+              exemplo:
+                value:
+                  leadInfo:
+                    nome: Ana Paciente
+                    whatsapp: '+5533999999999'
+                    email: paciente@svlentes.com.br
+                    lgpdConsent: true
+                  personalInfo:
+                    fullName: Ana Paciente
+                    cpf: '12345678901'
+                    birthDate: '1990-05-10'
+                    address:
+                      cep: '35300000'
+                      street: Rua das Lentes
+                      number: '100'
+                      city: Caratinga
+                      state: MG
+                  prescription:
+                    hasValidPrescription: true
+                    rightEye:
+                      sphere: -2
+                      cylinder: -0.5
+                      axis: 90
+                    leftEye:
+                      sphere: -1.75
+                      cylinder: -0.25
+                      axis: 100
+                    prescriptionDate: '2024-04-01'
+                    doctorName: Dr. Philipe Saraiva Cruz
+                    needsConsultation: true
+                  preferences:
+                    lensType: monthly
+                    deliveryFrequency: monthly
+                    addOns:
+                      - limpeza
+                  selectedPlan: premium
+                  scheduling:
+                    preferredDate: '2024-05-20'
+                    preferredTime: morning
+                    consultationType: initial
+      responses:
+        '200':
+          description: Agendamento criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleConsultationResponse'
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha no processamento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/analytics/support:
+    get:
+      tags: [Analytics]
+      summary: Analytics de suporte
+      description: |
+        Retorna métricas completas do atendimento WhatsApp.
+      parameters:
+        - in: query
+          name: timeRange
+          schema:
+            type: string
+            enum: [1d, 7d, 30d, 90d]
+          description: Intervalo analisado (default 7d).
+      responses:
+        '200':
+          description: Métricas agregadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportAnalyticsResponse'
+        '500':
+          description: Falha ao calcular métricas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Analytics]
+      summary: Exportar analytics
+      description: |
+        Exporta métricas detalhadas em CSV.
+
+        TypeScript schema:
+        ```ts
+        interface ExportAnalyticsInput {
+          action: 'export'
+          data?: {
+            timeRange?: string
+            format?: 'csv'
+          }
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportAnalyticsInput'
+            examples:
+              ultimoMes:
+                value:
+                  action: export
+                  data:
+                    timeRange: 30d
+      responses:
+        '200':
+          description: Arquivo CSV.
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Ação inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao exportar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/reminders/send:
+    get:
+      tags: [Lembretes]
+      summary: Informações da API de lembretes
+      description: |
+        Retorna descrição dos endpoints disponíveis.
+      responses:
+        '200':
+          description: Mensagem informativa.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+    post:
+      tags: [Lembretes]
+      summary: Enviar lembrete imediato
+      description: |
+        Envia um lembrete único por e-mail.
+
+        TypeScript schema:
+        ```ts
+        interface SendReminderInput {
+          reminder: ReminderMessage
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reminder]
+              properties:
+                reminder:
+                  $ref: '#/components/schemas/ReminderMessage'
+            examples:
+              exemplo:
+                value:
+                  reminder:
+                    userId: usr_123
+                    email: paciente@svlentes.com.br
+                    name: Ana Paciente
+                    subject: Renovação de assinatura
+                    message: Seu ciclo termina em 3 dias
+                    reminderType: subscription_renewal
+      responses:
+        '200':
+          description: Lembrete enviado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  channel:
+                    type: string
+        '400':
+          description: Dados ausentes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha no envio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/reminders/schedule:
+    post:
+      tags: [Lembretes]
+      summary: Agendar lembrete
+      description: |
+        Agendamento imediato utilizando o serviço de e-mail.
+
+        TypeScript schema:
+        ```ts
+        interface ScheduleReminderInput {
+          reminder: ReminderMessage
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reminder]
+              properties:
+                reminder:
+                  $ref: '#/components/schemas/ReminderMessage'
+      responses:
+        '200':
+          description: Resultado do agendamento.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  channel:
+                    type: string
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao agendar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/reminders/bulk:
+    post:
+      tags: [Lembretes]
+      summary: Enviar lote de lembretes
+      description: |
+        Envia até 100 lembretes sequenciais via e-mail.
+
+        TypeScript schema:
+        ```ts
+        interface BulkReminderInput {
+          reminders: ReminderMessage[]
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reminders]
+              properties:
+                reminders:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ReminderMessage'
+            examples:
+              exemplo:
+                value:
+                  reminders:
+                    - userId: usr_1
+                      email: primeiro@svlentes.com.br
+                      message: Chegou a hora de renovar
+                      reminderType: subscription_renewal
+                    - userId: usr_2
+                      email: segundo@svlentes.com.br
+                      message: Sua entrega saiu para envio
+                      reminderType: order_delivery
+      responses:
+        '200':
+          description: Resultado agregado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    type: object
+                    properties:
+                      sent:
+                        type: integer
+                      failed:
+                        type: integer
+                      total:
+                        type: integer
+                      successRate:
+                        type: string
+                  channel:
+                    type: string
+        '400':
+          description: Lista vazia ou acima do limite.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha no envio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/reminders:
+    get:
+      tags: [Lembretes]
+      summary: Histórico de lembretes inteligentes
+      description: |
+        Retorna lembretes registrados para um usuário específico.
+      parameters:
+        - in: query
+          name: userId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Histórico retornado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  reminders:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  count:
+                    type: integer
+        '400':
+          description: userId ausente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao buscar dados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Lembretes]
+      summary: Criar lembrete inteligente
+      description: |
+        Cria lembrete considerando preferências e fadiga do usuário.
+
+        TypeScript schema:
+        ```ts
+        interface CreateReminderInput {
+          userId: string
+          type: NotificationType
+          content: string
+          subject?: string
+          metadata?: Record<string, any>
+          scheduledAt?: string
+          preferredChannel?: NotificationChannel
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, type, content]
+              properties:
+                userId:
+                  type: string
+                type:
+                  $ref: '#/components/schemas/NotificationType'
+                content:
+                  type: string
+                subject:
+                  type: string
+                metadata:
+                  type: object
+                  additionalProperties: true
+                scheduledAt:
+                  type: string
+                  format: date-time
+                preferredChannel:
+                  $ref: '#/components/schemas/NotificationChannel'
+            examples:
+              exemplo:
+                value:
+                  userId: usr_123
+                  type: REMINDER
+                  content: Sua reposição será enviada amanhã
+                  preferredChannel: EMAIL
+      responses:
+        '200':
+          description: Lembrete criado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notificationId:
+                    type: string
+                  message:
+                    type: string
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Usuário em estado de fadiga (limite de envio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao criar lembrete.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/interactions:
+    post:
+      tags: [Lembretes]
+      summary: Registrar interação com notificação
+      description: |
+        Atualiza status de abertura, clique, descadastro etc.
+
+        TypeScript schema:
+        ```ts
+        interface RecordInteractionInput {
+          notificationId: string
+          userId: string
+          actionType: InteractionType
+          metadata?: Record<string, any>
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notificationId, userId, actionType]
+              properties:
+                notificationId:
+                  type: string
+                userId:
+                  type: string
+                actionType:
+                  $ref: '#/components/schemas/InteractionType'
+                metadata:
+                  type: object
+                  additionalProperties: true
+            examples:
+              click:
+                value:
+                  notificationId: notif_123
+                  userId: usr_123
+                  actionType: CLICKED
+                  metadata:
+                    button: renovar
+      responses:
+        '200':
+          description: Interação registrada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Campos obrigatórios faltando ou ação inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao registrar interação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/privacy/consent-log:
+    get:
+      tags: [Privacidade]
+      summary: Consultar logs de consentimento
+      description: |
+        Recupera até 100 registros de consentimento por e-mail.
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: consentType
+          schema:
+            type: string
+            enum: [TERMS, DATA_PROCESSING, MARKETING, MEDICAL_DATA]
+      responses:
+        '200':
+          description: Logs retornados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentLogListResponse'
+        '400':
+          description: Email ausente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao consultar logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Privacidade]
+      summary: Registrar consentimento
+      description: |
+        Salva evento de consentimento com auditoria.
+
+        Segurança: cookie `csrf_token` + header `x-csrf-token`.
+
+        TypeScript schema:
+        ```ts
+        interface ConsentLogInput {
+          email: string
+          consentType: 'TERMS' | 'DATA_PROCESSING' | 'MARKETING' | 'MEDICAL_DATA'
+          status?: 'GRANTED' | 'REVOKED' | 'EXPIRED'
+          userId?: string
+          metadata?: {
+            source?: string
+            planId?: string
+            version?: string
+          }
+        }
+        ```
+      security:
+        - CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentLogInput'
+      responses:
+        '200':
+          description: Log criado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  logId:
+                    type: string
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: CSRF inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao salvar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/privacy/data-request:
+    get:
+      tags: [Privacidade]
+      summary: Consultar solicitações de dados
+      description: |
+        Recupera solicitações por ID ou e-mail.
+      parameters:
+        - in: query
+          name: requestId
+          schema:
+            type: string
+        - in: query
+          name: email
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Solicitações encontradas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequestQueryResponse'
+        '400':
+          description: Falta requestId ou email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Solicitação não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro ao consultar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Privacidade]
+      summary: Registrar solicitação LGPD
+      description: |
+        Cria registro para acesso, exclusão, portabilidade etc.
+
+        Segurança: cookie `csrf_token` + header `x-csrf-token`.
+
+        TypeScript schema:
+        ```ts
+        interface DataRequestInput {
+          email: string
+          name: string
+          requestType: 'ACCESS' | 'RECTIFICATION' | 'DELETION' | 'PORTABILITY' | 'OPPOSITION'
+          reason?: string
+          cpfCnpj?: string
+        }
+        ```
+      security:
+        - CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequestInput'
+      responses:
+        '200':
+          description: Solicitação registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequestCreatedResponse'
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: CSRF inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao registrar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/privacy/data-export:
+    get:
+      tags: [Privacidade]
+      summary: Verificar usuário antes da exportação
+      description: |
+        Confirma existência do usuário antes de exportar dados sensíveis.
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Usuário encontrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      registeredSince:
+                        type: string
+                        format: date-time
+        '400':
+          description: Email ausente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha na verificação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Privacidade]
+      summary: Exportar dados pessoais
+      description: |
+        Retorna exportação completa opcionalmente com dados médicos.
+
+        Segurança: cookie `csrf_token` + header `x-csrf-token`.
+
+        TypeScript schema:
+        ```ts
+        interface DataExportInput {
+          email: string
+          includePersonalData?: boolean
+          includeSubscriptions?: boolean
+          includeOrders?: boolean
+          includeConsents?: boolean
+          includeMedicalData?: boolean
+        }
+        ```
+      security:
+        - CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataExportInput'
+      responses:
+        '200':
+          description: Exportação concluída.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    additionalProperties: true
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: CSRF inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao exportar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/monitoring/performance:
+    get:
+      tags: [Monitoramento]
+      summary: Métricas de performance do servidor
+      description: |
+        Retorna métricas agregadas e status de saúde.
+      responses:
+        '200':
+          description: Métricas atuais.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetricsResponse'
+        '500':
+          description: Falha ao consultar métricas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Monitoramento]
+      summary: Registrar métrica de performance
+      description: |
+        Recebe métricas coletadas no cliente para agregação.
+
+        TypeScript schema:
+        ```ts
+        interface PerformanceMetricInput {
+          name: string
+          value: number
+          url?: string
+          navigationType?: string
+          timestamp?: string
+          context?: Record<string, any>
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerformanceMetricInput'
+      responses:
+        '200':
+          description: Métrica registrada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+        '500':
+          description: Falha ao processar métrica.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    options:
+      tags: [Monitoramento]
+      summary: Pré-flight CORS
+      responses:
+        '200':
+          description: Cabeçalhos CORS liberados.
+  /api/monitoring/errors:
+    post:
+      tags: [Monitoramento]
+      summary: Registrar erro do cliente
+      description: |
+        Recebe relatórios de erro do front-end.
+
+        TypeScript schema:
+        ```ts
+        interface ErrorReportInput {
+          message: string
+          stack?: string
+          name?: string
+          metadata?: Record<string, any>
+          breadcrumb?: any[]
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorReportInput'
+      responses:
+        '200':
+          description: Erro registrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+        '500':
+          description: Falha ao processar erro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    options:
+      tags: [Monitoramento]
+      summary: Pré-flight CORS
+      responses:
+        '200':
+          description: Cabeçalhos CORS liberados.
+  /api/monitoring/alerts:
+    get:
+      tags: [Monitoramento]
+      summary: Listar alertas recentes
+      description: |
+        Retorna alertas mockados para dashboards.
+      responses:
+        '200':
+          description: Lista de alertas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+        '500':
+          description: Falha ao consultar alertas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Monitoramento]
+      summary: Registrar alerta
+      description: |
+        Processa alertas de performance, erros ou uptime.
+
+        TypeScript schema:
+        ```ts
+        interface AlertInput {
+          type: string
+          data?: Record<string, any>
+          environment?: string
+          timestamp?: string
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertInput'
+      responses:
+        '200':
+          description: Alerta processado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  alertId:
+                    type: string
+                  severity:
+                    type: string
+        '500':
+          description: Falha ao processar alerta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    options:
+      tags: [Monitoramento]
+      summary: Pré-flight CORS
+      responses:
+        '200':
+          description: Cabeçalhos CORS liberados.
+  /api/webhooks/sendpulse:
+    get:
+      tags: [Suporte]
+      summary: Verificação de webhook SendPulse
+      description: |
+        Responde ao parâmetro `challenge` para validação do endpoint.
+      parameters:
+        - in: query
+          name: challenge
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Desafio atendido ou status ativo.
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+    post:
+      tags: [Suporte]
+      summary: Webhook SendPulse
+      description: |
+        Recebe eventos de mensagens em múltiplos formatos (nativo, API brasileira ou legado).
+
+        TypeScript schema:
+        ```ts
+        type SendPulseWebhookInput = SendPulseNativeEvent[] | SendPulseBrazilianPayload | SendPulseLegacyEvent
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendPulseWebhookInput'
+      responses:
+        '200':
+          description: Eventos processados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  processedEvents:
+                    type: integer
+                  details:
+                    type: object
+                    additionalProperties: true
+        '400':
+          description: JSON inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Payload excede 500KB.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit atingido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao processar webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/webhooks/asaas:
+    post:
+      tags: [Pagamentos]
+      summary: Webhook ASAAS
+      description: |
+        Recebe notificações de pagamentos ASAAS. Requer header `asaas-access-token` com token configurado.
+
+        TypeScript schema:
+        ```ts
+        interface AsaasWebhookInput {
+          event: string
+          payment?: {
+            id: string
+            customer: string
+            subscription?: string
+            value: number
+            netValue: number
+            description: string
+            billingType: string
+            status: string
+            dueDate: string
+            originalDueDate: string
+            paymentDate?: string
+            invoiceUrl: string
+            externalReference?: string
+          }
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsaasWebhookInput'
+      responses:
+        '200':
+          description: Evento recebido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+        '401':
+          description: Token inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Payload inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Falha ao processar evento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/health-check:
+    get:
+      tags: [Saúde]
+      summary: Health check da aplicação
+      description: |
+        Retorna status geral e verificações de dependências (ASAAS, memória, uptime).
+      responses:
+        '200':
+          description: Sistema saudável ou com avisos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: Serviço degradado ou indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+    options:
+      tags: [Saúde]
+      summary: Pré-flight CORS
+      responses:
+        '200':
+          description: Cabeçalhos CORS liberados.
+components:
+  securitySchemes:
+    FirebaseBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token do Firebase (header `Authorization: Bearer <token>`).
+    UserIdHeader:
+      type: apiKey
+      in: header
+      name: x-user-id
+      description: Identificador interno do usuário autenticado.
+    CsrfToken:
+      type: apiKey
+      in: header
+      name: x-csrf-token
+      description: Token CSRF pareado com cookie `csrf_token` (Double Submit Cookie).
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          description: Detalhes adicionais do erro.
+          oneOf:
+            - type: string
+            - type: object
+            - type: array
+      required: [error, message]
+    NotificationPreferences:
+      type: object
+      required:
+        - channel
+        - subscriptionReminders
+        - orderUpdates
+        - appointmentReminders
+        - marketingMessages
+      properties:
+        channel:
+          type: string
+          enum: [EMAIL, WHATSAPP, BOTH]
+        subscriptionReminders:
+          type: boolean
+        orderUpdates:
+          type: boolean
+        appointmentReminders:
+          type: boolean
+        marketingMessages:
+          type: boolean
+    UserProfile:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        whatsapp:
+          type: string
+          nullable: true
+    SubscriptionResponse:
+      type: object
+      properties:
+        subscription:
+          oneOf:
+            - type: object
+              properties:
+                id:
+                  type: string
+                status:
+                  type: string
+                plan:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    price:
+                      type: number
+                    billingCycle:
+                      type: string
+                currentPeriodStart:
+                  type: string
+                  format: date-time
+                currentPeriodEnd:
+                  type: string
+                  format: date-time
+                nextBillingDate:
+                  type: string
+                  format: date-time
+                benefits:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      icon:
+                        type: string
+                        nullable: true
+                      type:
+                        type: string
+                      quantityTotal:
+                        type: integer
+                        nullable: true
+                      quantityUsed:
+                        type: integer
+                        nullable: true
+                      expirationDate:
+                        type: string
+                        format: date-time
+                        nullable: true
+                shippingAddress:
+                  type: object
+                  additionalProperties: true
+                  nullable: true
+                paymentMethod:
+                  type: string
+                  nullable: true
+                paymentMethodLast4:
+                  type: string
+                  nullable: true
+                createdAt:
+                  type: string
+                  format: date-time
+                updatedAt:
+                  type: string
+                  format: date-time
+            - type: 'null'
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+              nullable: true
+            email:
+              type: string
+              format: email
+            avatarUrl:
+              type: string
+              nullable: true
+    InvoiceListResponse:
+      type: object
+      properties:
+        invoices:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              subscriptionId:
+                type: string
+              status:
+                type: string
+              planName:
+                type: string
+              amount:
+                type: number
+              dueDate:
+                type: string
+                format: date-time
+              paidAt:
+                type: string
+                format: date-time
+                nullable: true
+              invoiceUrl:
+                type: string
+                nullable: true
+              boletoUrl:
+                type: string
+                nullable: true
+              pixCode:
+                type: string
+                nullable: true
+              pixQrCode:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+    OrderListResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              subscriptionId:
+                type: string
+              status:
+                type: string
+              planName:
+                type: string
+              amount:
+                type: number
+              trackingCode:
+                type: string
+                nullable: true
+              shippingDate:
+                type: string
+                format: date-time
+                nullable: true
+              deliveryDate:
+                type: string
+                format: date-time
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+              updatedAt:
+                type: string
+                format: date-time
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+    CustomerDataBase:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        cpfCnpj:
+          type: string
+          nullable: true
+    CustomerDataWithAddress:
+      allOf:
+        - $ref: '#/components/schemas/CustomerDataBase'
+        - type: object
+          required: [phone, cpfCnpj]
+          properties:
+            phone:
+              type: string
+            cpfCnpj:
+              type: string
+            address:
+              type: object
+              properties:
+                street:
+                  type: string
+                number:
+                  type: string
+                complement:
+                  type: string
+                  nullable: true
+                neighborhood:
+                  type: string
+                postalCode:
+                  type: string
+                city:
+                  type: string
+                state:
+                  type: string
+              required: [street, number, neighborhood, postalCode, city, state]
+    CreatePaymentInput:
+      type: object
+      required: [planId, billingInterval, billingType, customerData]
+      properties:
+        planId:
+          type: string
+          enum: [basic, premium, vip]
+        billingInterval:
+          type: string
+          enum: [monthly, annual]
+        billingType:
+          type: string
+          enum: [BOLETO, CREDIT_CARD, PIX]
+        customerData:
+          $ref: '#/components/schemas/CustomerDataBase'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+    CreatePaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        subscriptionId:
+          type: string
+          nullable: true
+        paymentId:
+          type: string
+          nullable: true
+        customerId:
+          type: string
+        invoiceUrl:
+          type: string
+          nullable: true
+        bankSlipUrl:
+          type: string
+          nullable: true
+        amount:
+          type: number
+        dueDate:
+          type: string
+          format: date
+        billingType:
+          type: string
+        pixQrCode:
+          type: object
+          additionalProperties: true
+          nullable: true
+    CreateCheckoutInput:
+      allOf:
+        - $ref: '#/components/schemas/CreatePaymentInput'
+        - type: object
+          properties:
+            customerData:
+              $ref: '#/components/schemas/CustomerDataWithAddress'
+    CreateCheckoutResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        customer:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            name:
+              type: string
+        subscription:
+          type: object
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+            nextDueDate:
+              type: string
+            value:
+              type: number
+        payment:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+            dueDate:
+              type: string
+            value:
+              type: number
+            invoiceUrl:
+              type: string
+              nullable: true
+            bankSlipUrl:
+              type: string
+              nullable: true
+            pix:
+              type: object
+              nullable: true
+              properties:
+                qrCode:
+                  type: string
+                payload:
+                  type: string
+                expirationDate:
+                  type: string
+        plan:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            billingInterval:
+              type: string
+            amount:
+              type: number
+    RegisterWebhookRequest:
+      type: object
+      required: [action, webhookUrl]
+      properties:
+        action:
+          type: string
+          enum: [register-webhook]
+        webhookUrl:
+          type: string
+          format: uri
+    SendPulseMessageRequest:
+      type: object
+      required: [action, phone, message]
+      properties:
+        action:
+          type: string
+          enum: [send-message]
+        phone:
+          type: string
+        message:
+          type: string
+        quickReplies:
+          type: array
+          items:
+            type: string
+          nullable: true
+    SendPulseContactRequest:
+      type: object
+      required: [action, phone]
+      properties:
+        action:
+          type: string
+          enum: [create-contact]
+        phone:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        variables:
+          type: object
+          additionalProperties: true
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+    WhatsAppWebhookPayload:
+      type: object
+      properties:
+        object:
+          type: string
+        entry:
+          type: array
+          items:
+            type: object
+            properties:
+              changes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    value:
+                      type: object
+                      properties:
+                        messages:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: true
+                        metadata:
+                          type: object
+                          additionalProperties: true
+                        contacts:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: true
+    WhatsAppDirectMessage:
+      type: object
+      required: [action, customerPhone, message]
+      properties:
+        action:
+          type: string
+          enum: [send_message]
+        customerPhone:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          nullable: true
+    WhatsAppContextsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        attendance:
+          type: object
+          additionalProperties: true
+        contexts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              message:
+                type: string
+                nullable: true
+        whatsappNumber:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            totalContexts:
+              type: integer
+            businessHours:
+              type: object
+              properties:
+                start:
+                  type: integer
+                end:
+                  type: integer
+                timezone:
+                  type: string
+    WhatsAppRedirectInput:
+      type: object
+      required: [context, contextData]
+      properties:
+        context:
+          type: string
+          enum: [hero, pricing, consultation, support, calculator, emergency]
+        userData:
+          type: object
+          properties:
+            nome:
+              type: string
+              nullable: true
+            email:
+              type: string
+              nullable: true
+            whatsapp:
+              type: string
+              nullable: true
+        contextData:
+          type: object
+          required: [page]
+          properties:
+            page:
+              type: string
+            section:
+              type: string
+              nullable: true
+            planInterest:
+              type: string
+              nullable: true
+            calculatedEconomy:
+              type: number
+              nullable: true
+            customMessage:
+              type: string
+              nullable: true
+        trackingData:
+          type: object
+          properties:
+            source:
+              type: string
+              nullable: true
+            medium:
+              type: string
+              nullable: true
+            campaign:
+              type: string
+              nullable: true
+            sessionId:
+              type: string
+              nullable: true
+    WhatsAppRedirectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        whatsappLink:
+          type: string
+        message:
+          type: object
+          properties:
+            preview:
+              type: string
+            context:
+              type: string
+            fullMessage:
+              type: string
+        attendance:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+    WhatsAppTrackingInput:
+      type: object
+      required: [context, page, action]
+      properties:
+        context:
+          type: string
+        page:
+          type: string
+        action:
+          type: string
+          enum: [click, view, copy]
+        userData:
+          type: object
+          properties:
+            hasName:
+              type: boolean
+            hasEmail:
+              type: boolean
+            hasPhone:
+              type: boolean
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+    LeadForm:
+      type: object
+      required: [nome, whatsapp, email, lgpdConsent]
+      properties:
+        nome:
+          type: string
+        whatsapp:
+          type: string
+        email:
+          type: string
+        lgpdConsent:
+          type: boolean
+    PersonalInfo:
+      type: object
+      required: [fullName, cpf, birthDate, address]
+      properties:
+        fullName:
+          type: string
+        cpf:
+          type: string
+        birthDate:
+          type: string
+        address:
+          type: object
+          required: [cep, street, number, city, state]
+          properties:
+            cep:
+              type: string
+            street:
+              type: string
+            number:
+              type: string
+            complement:
+              type: string
+              nullable: true
+            city:
+              type: string
+            state:
+              type: string
+    PrescriptionInfo:
+      type: object
+      required: [hasValidPrescription, rightEye, leftEye, prescriptionDate, doctorName, needsConsultation]
+      properties:
+        hasValidPrescription:
+          type: boolean
+        rightEye:
+          $ref: '#/components/schemas/EyePrescription'
+        leftEye:
+          $ref: '#/components/schemas/EyePrescription'
+        prescriptionDate:
+          type: string
+        doctorName:
+          type: string
+        needsConsultation:
+          type: boolean
+    EyePrescription:
+      type: object
+      required: [sphere, cylinder, axis]
+      properties:
+        sphere:
+          type: number
+        cylinder:
+          type: number
+        axis:
+          type: number
+    PreferencesInfo:
+      type: object
+      required: [lensType, deliveryFrequency, addOns]
+      properties:
+        lensType:
+          type: string
+          enum: [daily, weekly, monthly]
+        deliveryFrequency:
+          type: string
+          enum: [monthly, quarterly, semiannual]
+        specialNeeds:
+          type: string
+          nullable: true
+        addOns:
+          type: array
+          items:
+            type: string
+    ScheduleConsultationInput:
+      type: object
+      required: [leadInfo, personalInfo, prescription, preferences, selectedPlan, scheduling]
+      properties:
+        leadInfo:
+          $ref: '#/components/schemas/LeadForm'
+        personalInfo:
+          $ref: '#/components/schemas/PersonalInfo'
+        prescription:
+          $ref: '#/components/schemas/PrescriptionInfo'
+        preferences:
+          $ref: '#/components/schemas/PreferencesInfo'
+        selectedPlan:
+          type: string
+          enum: [basic, premium, vip]
+        scheduling:
+          type: object
+          required: [preferredDate, preferredTime, consultationType]
+          properties:
+            preferredDate:
+              type: string
+            preferredTime:
+              type: string
+              enum: [morning, afternoon, evening]
+            consultationType:
+              type: string
+              enum: [initial, followup, emergency]
+            additionalNotes:
+              type: string
+              nullable: true
+    ScheduleConsultationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        schedulingId:
+          type: string
+        message:
+          type: string
+        estimatedConfirmation:
+          type: string
+        nextSteps:
+          type: array
+          items:
+            type: string
+    SupportAnalyticsResponse:
+      type: object
+      properties:
+        totalTickets:
+          type: integer
+        activeTickets:
+          type: integer
+        resolvedTickets:
+          type: integer
+        averageResponseTime:
+          type: number
+        customerSatisfaction:
+          type: number
+        escalationRate:
+          type: number
+        firstContactResolution:
+          type: number
+        ticketsByPriority:
+          type: array
+          items:
+            type: object
+            properties:
+              priority:
+                type: string
+              count:
+                type: integer
+              avgResolutionTime:
+                type: string
+        ticketsByCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+              avgResolutionTime:
+                type: string
+              satisfaction:
+                type: number
+        responseTimeTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              avgResponseTime:
+                type: number
+              targetTime:
+                type: number
+        satisfactionTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              satisfaction:
+                type: number
+              tickets:
+                type: integer
+        agentPerformance:
+          type: array
+          items:
+            type: object
+            properties:
+              agentId:
+                type: string
+              agentName:
+                type: string
+              ticketsHandled:
+                type: integer
+              avgResponseTime:
+                type: number
+              satisfaction:
+                type: number
+              escalationRate:
+                type: number
+              specializations:
+                type: array
+                items:
+                  type: string
+        sentimentAnalysis:
+          type: array
+          items:
+            type: object
+            properties:
+              sentiment:
+                type: string
+              count:
+                type: integer
+              percentage:
+                type: number
+              color:
+                type: string
+        escalationReasons:
+          type: array
+          items:
+            type: object
+            properties:
+              reason:
+                type: string
+              count:
+                type: integer
+              percentage:
+                type: number
+              trend:
+                type: string
+    ExportAnalyticsInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [export]
+        data:
+          type: object
+          properties:
+            timeRange:
+              type: string
+            format:
+              type: string
+    ReminderMessage:
+      type: object
+      required: [userId, email, message]
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        message:
+          type: string
+        subject:
+          type: string
+          nullable: true
+        reminderType:
+          type: string
+          enum: [subscription_renewal, order_delivery, appointment, general]
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+    NotificationType:
+      type: string
+      enum: [REMINDER, PROMOTION, UPDATE, ALERT]
+    NotificationChannel:
+      type: string
+      enum: [EMAIL, WHATSAPP, SMS, PUSH]
+    InteractionType:
+      type: string
+      enum: [SENT, DELIVERED, OPENED, CLICKED, DISMISSED, OPTED_OUT, CONVERTED]
+    ConsentLogListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        logs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              consentType:
+                type: string
+              status:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              metadata:
+                type: object
+                additionalProperties: true
+              ipAddress:
+                type: string
+        total:
+          type: integer
+    ConsentLogInput:
+      type: object
+      required: [email, consentType]
+      properties:
+        email:
+          type: string
+          format: email
+        consentType:
+          type: string
+          enum: [TERMS, DATA_PROCESSING, MARKETING, MEDICAL_DATA]
+        status:
+          type: string
+          enum: [GRANTED, REVOKED, EXPIRED]
+          default: GRANTED
+        userId:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+    DataRequestQueryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        request:
+          type: object
+          nullable: true
+          additionalProperties: true
+        requests:
+          type: array
+          nullable: true
+          items:
+            type: object
+            additionalProperties: true
+        total:
+          type: integer
+          nullable: true
+    DataRequestInput:
+      type: object
+      required: [email, name, requestType]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        requestType:
+          type: string
+          enum: [ACCESS, RECTIFICATION, DELETION, PORTABILITY, OPPOSITION]
+        reason:
+          type: string
+          nullable: true
+        cpfCnpj:
+          type: string
+          nullable: true
+    DataRequestCreatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        requestId:
+          type: string
+        estimatedTime:
+          type: string
+        nextSteps:
+          type: array
+          items:
+            type: string
+    DataExportInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        includePersonalData:
+          type: boolean
+          default: true
+        includeSubscriptions:
+          type: boolean
+          default: true
+        includeOrders:
+          type: boolean
+          default: true
+        includeConsents:
+          type: boolean
+          default: true
+        includeMedicalData:
+          type: boolean
+          default: true
+    PerformanceMetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        responseTime:
+          type: number
+        server:
+          type: object
+          properties:
+            uptime:
+              type: integer
+            uptimeHours:
+              type: integer
+            memory:
+              type: object
+              properties:
+                rss:
+                  type: integer
+                heapTotal:
+                  type: integer
+                heapUsed:
+                  type: integer
+                external:
+                  type: integer
+            nodeVersion:
+              type: string
+            platform:
+              type: string
+            pid:
+              type: integer
+        metrics:
+          type: object
+          additionalProperties: true
+        trends:
+          type: object
+          additionalProperties: true
+        health:
+          type: object
+          additionalProperties: true
+    PerformanceMetricInput:
+      type: object
+      required: [name, value]
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        url:
+          type: string
+          nullable: true
+        navigationType:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        context:
+          type: object
+          additionalProperties: true
+          nullable: true
+    ErrorReportInput:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        stack:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+        breadcrumb:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          nullable: true
+    AlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              severity:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              data:
+                type: object
+                additionalProperties: true
+              status:
+                type: string
+        summary:
+          type: object
+          properties:
+            active:
+              type: integer
+            resolved:
+              type: integer
+            total:
+              type: integer
+    AlertInput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        environment:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          nullable: true
+    SendPulseWebhookInput:
+      description: Payload flexível aceitando formatos nativo (array), brasileiro ou legado.
+      oneOf:
+        - type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              service:
+                type: string
+                nullable: true
+              info:
+                type: object
+                additionalProperties: true
+              contact:
+                type: object
+                additionalProperties: true
+              bot:
+                type: object
+                additionalProperties: true
+        - type: object
+          properties:
+            entry:
+              type: array
+              items:
+                type: object
+                properties:
+                  changes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: object
+                          properties:
+                            messages:
+                              type: array
+                              items:
+                                type: object
+                                additionalProperties: true
+                            metadata:
+                              type: object
+                              additionalProperties: true
+                            contacts:
+                              type: array
+                              items:
+                                type: object
+                                additionalProperties: true
+        - type: object
+          properties:
+            event:
+              type: string
+            message:
+              type: object
+              additionalProperties: true
+            contact:
+              type: object
+              additionalProperties: true
+            message_id:
+              type: string
+              nullable: true
+            status:
+              type: string
+              nullable: true
+            error_code:
+              type: string
+              nullable: true
+            error_message:
+              type: string
+              nullable: true
+            timestamp:
+              type: string
+              nullable: true
+            metadata:
+              type: object
+              additionalProperties: true
+              nullable: true
+    AsaasWebhookInput:
+      type: object
+      required: [event]
+      properties:
+        event:
+          type: string
+        payment:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            customer:
+              type: string
+            subscription:
+              type: string
+              nullable: true
+            value:
+              type: number
+            netValue:
+              type: number
+            description:
+              type: string
+            billingType:
+              type: string
+            status:
+              type: string
+            dueDate:
+              type: string
+            originalDueDate:
+              type: string
+            paymentDate:
+              type: string
+              nullable: true
+            invoiceUrl:
+              type: string
+            externalReference:
+              type: string
+              nullable: true
+    HealthCheckResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy, warning]
+        version:
+          type: string
+        environment:
+          type: string
+        uptime:
+          type: number
+        checks:
+          type: object
+          properties:
+            database:
+              type: object
+              additionalProperties: true
+            asaas:
+              type: object
+              additionalProperties: true
+            memory:
+              type: object
+              additionalProperties: true
+        responseTime:
+          type: number
