@@ -446,7 +446,23 @@ const FeatureFlagsSchema = z.object({
   useCentralizedMedical: z.boolean(),
   useCentralizedAnalytics: z.boolean(),
   useCentralizedPrivacy: z.boolean(),
+  usePricingAsfericos: z.boolean(),
+  usePricingToricos: z.boolean(),
 })
+
+// ============================================================================
+// 11. PRICING ASFÉRICOS (Fase 4 - Enhanced)
+// ============================================================================
+const PricingAsfericosSchema = z.object({
+  // Schema flexível para planos asféricos - validação básica
+}).catchall(z.any()) // Permite qualquer estrutura interna por enquanto
+
+// ============================================================================
+// 12. PRICING TÓRICOS (Fase 4 - Enhanced)
+// ============================================================================
+const PricingToricosSchema = z.object({
+  // Schema flexível para planos tóricos - validação básica
+}).catchall(z.any()) // Permite qualquer estrutura interna por enquanto
 
 // ============================================================================
 // ROOT CONFIG SCHEMA (MVP + Fase 2 + Fase 3 + Fase 4)
@@ -457,6 +473,8 @@ export const ConfigSchema = z.object({
   menus: MenusSchema,
   copy: LocalizedCopySchema,
   pricing: PricingConfigSchema,
+  pricing_asfericos: PricingAsfericosSchema.optional(),
+  pricing_toricos: PricingToricosSchema.optional(),
   seo: SEOConfigSchema,
   medical: MedicalConfigSchema,
   analytics: AnalyticsConfigSchema,

@@ -8,19 +8,41 @@
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
 
-import { PricingPlan } from '@/types'
+import { PricingPlan, PricingPlanGroup } from '@/types'
 import { config } from '@/config/loader'
 
 /**
- * Get pricing plans from centralized config
+ * Get pricing plans from centralized config (new aspheric and toric system)
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getPricingPlans(): PricingPlan[] {
   try {
     const appConfig = config.load()
+    const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
+    const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
 
-    if (useCentralizedPricing) {
+    let allPlans: PricingPlan[] = []
+
+    // Load aspheric plans
+    if (usePricingAsfericos && appConfig.pricing_asfericos) {
+      const asphericPlans = Object.values(appConfig.pricing_asfericos) as any[]
+      allPlans.push(...asphericPlans.map(convertYamlPlanToPricingPlan))
+    }
+
+    // Load toric plans
+    if (usePricingToricos && appConfig.pricing_toricos) {
+      const toricPlans = Object.values(appConfig.pricing_toricos) as any[]
+      allPlans.push(...toricPlans.map(convertYamlPlanToPricingPlan))
+    }
+
+    // Return combined plans if any are loaded
+    if (allPlans.length > 0) {
+      return allPlans.sort((a, b) => a.sortOrder - b.sortOrder)
+    }
+
+    // Legacy system: Use old pricing structure
+    if (useCentralizedPricing && appConfig.pricing?.plans) {
       return appConfig.pricing.plans as PricingPlan[]
     }
   } catch (error) {
@@ -31,83 +53,338 @@ function getPricingPlans(): PricingPlan[] {
   return hardcodedPlans
 }
 
-// Hardcoded fallback data (sincronizado com base.yaml)
+/**
+ * Convert YAML plan structure to PricingPlan interface
+ */
+function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
+  return {
+    // Identificação
+    id: yamlPlan.id,
+    name: yamlPlan.name,
+    description: yamlPlan.description,
+
+    // Categorização
+    lensType: yamlPlan.lensType,
+    billingCycle: yamlPlan.billingCycle,
+    consultationType: yamlPlan.consultationType,
+    serviceLevel: yamlPlan.serviceLevel,
+
+    // Preços
+    priceMonthly: yamlPlan.pricing.priceMonthly,
+    priceTotal: yamlPlan.pricing.priceTotal,
+    pricePerLens: yamlPlan.pricing.pricePerLens,
+    installments: yamlPlan.pricing.installments,
+
+    // Economia
+    economy: yamlPlan.economy,
+
+    // Visual
+    badge: yamlPlan.badge,
+    popularBadge: yamlPlan.popularBadge,
+    recommended: yamlPlan.recommended,
+    highlight: yamlPlan.highlight,
+
+    // Conteúdo
+    features: yamlPlan.features,
+    benefits: yamlPlan.benefits,
+
+    // Entrega e Logística
+    deliveryInfo: yamlPlan.deliveryInfo,
+
+    // Consultas
+    consultationInfo: yamlPlan.consultationInfo,
+
+    // Suporte
+    supportInfo: yamlPlan.supportInfo,
+
+    // Integrações (placeholder para implementação futura)
+    stripeProductId: `prod_${yamlPlan.id}`,
+    stripePriceId: `price_${yamlPlan.id}_${yamlPlan.billingCycle}`,
+    asaasProductId: `prod_${yamlPlan.id}`,
+
+    // Marketing
+    ctaText: yamlPlan.ctaText,
+    tags: yamlPlan.tags,
+    targetAudience: yamlPlan.targetAudience,
+
+    // Metadados
+    isActive: yamlPlan.isActive,
+    sortOrder: yamlPlan.sortOrder
+  }
+}
+
+/**
+ * Get pricing plans grouped by lens type (new system)
+ */
+function getPricingPlanGroups(): PricingPlanGroup[] {
+  try {
+    const appConfig = config.load()
+    const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
+    const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
+
+    if (usePricingAsfericos || usePricingToricos) {
+      // Group plans by lens type
+      const plans = getPricingPlans()
+      const groups: PricingPlanGroup[] = []
+
+      // Aspheric lenses group
+      const asphericPlans = plans.filter(plan => plan.lensType === 'asferica')
+      if (asphericPlans.length > 0) {
+        groups.push({
+          id: 'asfericas',
+          name: 'Lentes Asféricas',
+          description: 'Lentes com design avançado para maior conforto e visão nítida',
+          lensType: 'asferica',
+          icon: 'eye',
+          plans: asphericPlans.sort((a, b) => a.sortOrder - b.sortOrder),
+          order: 1
+        })
+      }
+
+      // Toric lenses group
+      const toricPlans = plans.filter(plan => plan.lensType === 'torica')
+      if (toricPlans.length > 0) {
+        groups.push({
+          id: 'toricas',
+          name: 'Lentes Tóricas (Astigmatismo)',
+          description: 'Lentes especializadas para correção de astigmatismo com máxima precisão',
+          lensType: 'torica',
+          icon: 'target',
+          plans: toricPlans.sort((a, b) => a.sortOrder - b.sortOrder),
+          order: 2
+        })
+      }
+
+      // Future groups for other lens types can be added here
+      return groups.sort((a, b) => a.order - b.order)
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading plan groups, using fallback:', error)
+  }
+
+  return []
+}
+
+// Hardcoded fallback data (sincronizado com base.yaml) - Novo formato asférico
 const hardcodedPlans: PricingPlan[] = [
     {
-        id: 'basico',
-        name: 'Plano Express Mensal',
-        badge: 'Sem Fidelidade',
+        // Identificação
+        id: 'express-mensal',
+        name: 'Plano Express',
+        description: 'Plano essencial para uso regular de lentes asféricas',
+
+        // Categorização
+        lensType: 'asferica',
+        billingCycle: 'monthly',
+        consultationType: 'none',
+        serviceLevel: 'express',
+
+        // Preços
         priceMonthly: 128.00,
-        priceAnnual: 1091.00,
-        description: 'Plano básico de lentes asféricas mensais com entrega em casa. Sem fidelidade, cancele quando quiser.',
-        features: [
-            '1 par de lentes asféricas mensais',
-            'Entrega em casa',
-            'Sem fidelidade - cancele quando quiser',
-            'Acompanhamento via WhatsApp',
-            'Troca gratuita em caso de defeito',
-            'Atendimento em todo o Brasil'
-        ],
+        priceTotal: 128.00,
+        pricePerLens: 4.27,
+        installments: {
+            count: 1,
+            value: 128.00,
+            show: false
+        },
+
+        // Economia
+        economy: {
+            percentage: 0,
+            amount: 0,
+            previousPrice: 0,
+            accessoriesValue: 0
+        },
+
+        // Visual
+        badge: null,
+        popularBadge: null,
         recommended: false,
-        stripeProductId: 'prod_basic_svlentes',
-        stripePriceId: 'price_basic_monthly',
-        asaasProductId: 'prod_basico_svlentes',
-        ctaText: 'Assinar Plano Express'
+        highlight: false,
+
+        // Conteúdo
+        features: [
+            'Lentes asféricas mensais',
+            'Suporte por WhatsApp',
+            'Entrega padrão',
+            'Cancelamento a qualquer momento'
+        ],
+        benefits: [
+            {
+                id: 'lentes-mensais',
+                name: 'Lentes Asféricas',
+                description: '1 par de lentes de alta qualidade',
+                icon: 'eye',
+                included: true,
+                quantity: 1,
+                value: 128.00
+            },
+            {
+                id: 'suporte-whatsapp',
+                name: 'Suporte por WhatsApp',
+                description: 'Atendimento de segunda a sexta',
+                icon: 'message-circle',
+                included: true,
+                quantity: 1,
+                value: 0
+            }
+        ],
+
+        // Entrega e Logística
+        deliveryInfo: {
+            frequency: 'mensal',
+            freightFree: false,
+            locations: ['Brasil']
+        },
+
+        // Consultas
+        consultationInfo: {
+            included: false,
+            type: 'none',
+            count: 0,
+            location: []
+        },
+
+        // Suporte
+        supportInfo: {
+            type: 'WhatsApp',
+            availability: 'Seg-Sex 9h-18h',
+            priority: 'standard'
+        },
+
+        // Integrações
+        stripeProductId: 'prod_express_mensal',
+        stripePriceId: 'price_express_mensal_monthly',
+        asaasProductId: 'prod_express_mensal',
+
+        // Marketing
+        ctaText: 'Assinar Agora',
+        tags: ['essencial', 'flexível'],
+        targetAudience: ['primeira-compra', 'orçamento-limitado'],
+
+        // Metadados
+        isActive: true,
+        sortOrder: 1
     },
     {
-        id: 'padrao',
-        name: 'Plano VIP Anual',
-        badge: 'RECOMENDADO',
-        popularBadge: 'Mais Popular - Economia de 29%',
+        // Identificação
+        id: 'vip-anual',
+        name: 'Plano VIP',
+        description: 'A experiência mais completa e exclusiva para sua saúde ocular',
+
+        // Categorização
+        lensType: 'asferica',
+        billingCycle: 'annual',
+        consultationType: 'hybrid',
+        serviceLevel: 'vip',
+
+        // Preços
         priceMonthly: 91.00,
-        priceAnnual: 1091.00,
-        description: 'Plano anual com máxima economia. 12 pares de lentes + acessórios + frete grátis. Economize R$ 445/ano!',
-        features: [
-            '12 pares de lentes asféricas (1 ano completo)',
-            '3 estojos protetores (R$ 60 em brindes)',
-            '3 soluções multiuso 300ml (R$ 90 em brindes)',
-            'Frete grátis (2 envios/ano)',
-            'Desconto de 29% vs plano mensal',
-            'Parcelamento: 12x de R$ 90,92 sem juros',
-            'Suporte via WhatsApp 24/7',
-            'Economia total: R$ 445 + R$ 150 em acessórios'
-        ],
+        priceTotal: 1091.00,
+        pricePerLens: 3.03,
+        installments: {
+            count: 12,
+            value: 91.00,
+            show: true
+        },
+
+        // Economia
+        economy: {
+            percentage: 29,
+            amount: 445,
+            previousPrice: 1536.00,
+            accessoriesValue: 120.00
+        },
+
+        // Visual
+        badge: 'Exclusivo VIP',
+        popularBadge: null,
         recommended: true,
-        stripeProductId: 'prod_standard_svlentes',
-        stripePriceId: 'price_standard_monthly',
-        asaasProductId: 'prod_padrao_svlentes',
-        ctaText: 'Assinar Plano VIP Anual'
-    },
-    {
-        id: 'premium',
-        name: 'Plano Saúde Ocular Anual',
-        badge: 'Premium com Telemedicina',
-        priceMonthly: 138.00,
-        priceAnnual: 1661.00,
-        description: 'Acompanhamento preventivo completo com 4 consultas de telemedicina/ano. Ideal para grau instável, diabéticos e +50 anos.',
+        highlight: true,
+
+        // Conteúdo
         features: [
-            '✅ 4 consultas por telemedicina/ano (1 por trimestre)',
-            '12 pares de lentes asféricas',
-            '3 estojos protetores (R$ 60)',
-            '3 soluções multiuso 300ml (R$ 90)',
-            'Frete grátis (2 envios/ano)',
-            'Ajustes de grau ilimitados',
-            'Prioridade no atendimento',
-            'Parcelamento: 12x de R$ 138,42 sem juros'
+            'Lentes asféricas anuais premium',
+            'Consultas híbridas ilimitadas',
+            'Entrega prioritária em 24h',
+            'Acessórios exclusivos VIP',
+            'Economia de 29%',
+            'Suporte pessoal dedicado',
+            'Serviços oftalmológicos completos'
         ],
-        recommended: false,
-        stripeProductId: 'prod_premium_svlentes',
-        stripePriceId: 'price_premium_monthly',
-        asaasProductId: 'prod_premium_svlentes',
-        ctaText: 'Assinar Plano Saúde Ocular'
+        benefits: [
+            {
+                id: 'lentes-anuais',
+                name: 'Lentes Asféricas Premium',
+                description: '12 pares de lentes de tecnologia superior',
+                icon: 'eye',
+                included: true,
+                quantity: 12,
+                value: 1536.00
+            },
+            {
+                id: 'consultas-hibridas',
+                name: 'Consultas Híbridas',
+                description: 'Consultas ilimitadas (presenciais + online)',
+                icon: 'users',
+                included: true,
+                quantity: 99,
+                value: 1200.00
+            },
+            {
+                id: 'entrega-24h',
+                name: 'Entrega 24h',
+                description: 'Entrega prioritária em 24 horas',
+                icon: 'zap',
+                included: true,
+                quantity: 12,
+                value: 240.00
+            }
+        ],
+
+        // Entrega e Logística
+        deliveryInfo: {
+            frequency: 'mensal',
+            freightFree: true,
+            locations: ['Todo Brasil (prioridade em capitais)']
+        },
+
+        // Consultas
+        consultationInfo: {
+            included: true,
+            type: 'hybrid',
+            count: 99,
+            location: ['Clínica Saraiva Vision', 'Online'],
+            value: 1200.00
+        },
+
+        // Suporte
+        supportInfo: {
+            type: 'Assistente Pessoal + WhatsApp VIP',
+            availability: '24/7',
+            priority: 'vip'
+        },
+
+        // Integrações
+        stripeProductId: 'prod_vip_anual',
+        stripePriceId: 'price_vip_anual_annual',
+        asaasProductId: 'prod_vip_anual',
+
+        // Marketing
+        ctaText: 'Assinar VIP',
+        tags: ['vip', 'exclusivo', 'completo', 'economia-maxima'],
+        targetAudience: ['luxo', 'saude-ocular', 'conveniencia-total'],
+
+        // Metadados
+        isActive: true,
+        sortOrder: 4
     }
 ]
 
-// Export via função para suportar centralização
-export const pricingPlans: PricingPlan[] = getPricingPlans()
-
-// Comparação de features entre planos
-export const featureComparison = getFeatureComparison()
+// ============================================================================
+// HELPER FUNCTIONS - Must be defined BEFORE exports to avoid TDZ
+// ============================================================================
 
 function getFeatureComparison() {
   try {
@@ -123,6 +400,70 @@ function getFeatureComparison() {
 
   return hardcodedFeatureComparison
 }
+
+function getServiceBenefits() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.serviceBenefits
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading service benefits, using fallback:', error)
+  }
+
+  return hardcodedServiceBenefits
+}
+
+function getCoverageInfo() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.coverageInfo
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading coverage info, using fallback:', error)
+  }
+
+  return hardcodedCoverageInfo
+}
+
+function getPricingFAQ() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing) {
+      return appConfig.pricing.faq
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading FAQ, using fallback:', error)
+  }
+
+  return hardcodedPricingFAQ
+}
+
+function getEconomyCalculatorData() {
+  try {
+    const appConfig = config.load()
+    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+
+    if (useCentralizedPricing && appConfig.pricing?.economyCalculator) {
+      return appConfig.pricing.economyCalculator
+    }
+  } catch (error) {
+    console.warn('[Pricing] Error loading calculator data, using fallback:', error)
+  }
+
+  return hardcodedEconomyCalculatorData
+}
+
+// ============================================================================
+// HARDCODED FALLBACK DATA
+// ============================================================================
 
 const hardcodedFeatureComparison = {
     features: [
@@ -201,24 +542,6 @@ const hardcodedFeatureComparison = {
     ]
 }
 
-// Benefícios gerais do serviço
-export const serviceBenefits = getServiceBenefits()
-
-function getServiceBenefits() {
-  try {
-    const appConfig = config.load()
-    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
-    if (useCentralizedPricing) {
-      return appConfig.pricing.serviceBenefits
-    }
-  } catch (error) {
-    console.warn('[Pricing] Error loading service benefits, using fallback:', error)
-  }
-
-  return hardcodedServiceBenefits
-}
-
 const hardcodedServiceBenefits = [
     {
         id: 'economy',
@@ -264,24 +587,6 @@ const hardcodedServiceBenefits = [
     }
 ]
 
-// Informações de cobertura geográfica
-export const coverageInfo = getCoverageInfo()
-
-function getCoverageInfo() {
-  try {
-    const appConfig = config.load()
-    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
-    if (useCentralizedPricing) {
-      return appConfig.pricing.coverageInfo
-    }
-  } catch (error) {
-    console.warn('[Pricing] Error loading coverage info, using fallback:', error)
-  }
-
-  return hardcodedCoverageInfo
-}
-
 const hardcodedCoverageInfo = [
     {
         id: 'presencial',
@@ -306,24 +611,6 @@ const hardcodedCoverageInfo = [
         nationwide: true
     }
 ]
-
-// FAQ específica de planos
-export const pricingFAQ = getPricingFAQ()
-
-function getPricingFAQ() {
-  try {
-    const appConfig = config.load()
-    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
-    if (useCentralizedPricing) {
-      return appConfig.pricing.faq
-    }
-  } catch (error) {
-    console.warn('[Pricing] Error loading FAQ, using fallback:', error)
-  }
-
-  return hardcodedPricingFAQ
-}
 
 const hardcodedPricingFAQ = [
     {
@@ -368,24 +655,6 @@ const hardcodedPricingFAQ = [
     }
 ]
 
-// Dados para calculadora de economia
-export const economyCalculatorData = getEconomyCalculatorData()
-
-function getEconomyCalculatorData() {
-  try {
-    const appConfig = config.load()
-    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
-    if (useCentralizedPricing) {
-      return appConfig.pricing.economyCalculator
-    }
-  } catch (error) {
-    console.warn('[Pricing] Error loading economy calculator, using fallback:', error)
-  }
-
-  return hardcodedEconomyCalculatorData
-}
-
 const hardcodedEconomyCalculatorData = {
     averagePrices: {
         daily: {
@@ -407,3 +676,28 @@ const hardcodedEconomyCalculatorData = {
         daily: { daysPerMonth: 30, multiplier: 1.0 }
     }
 }
+
+// ============================================================================
+// EXPORTS - All functions and data are defined above
+// ============================================================================
+
+// Export via função para suportar centralização
+export const pricingPlans: PricingPlan[] = getPricingPlans()
+
+// Novo sistema: Grupos de planos por tipo de lente  
+export const pricingPlanGroups: PricingPlanGroup[] = getPricingPlanGroups()
+
+// Comparação de features entre planos
+export const featureComparison = getFeatureComparison()
+
+// Benefícios gerais do serviço
+export const serviceBenefits = getServiceBenefits()
+
+// Informações de cobertura geográfica
+export const coverageInfo = getCoverageInfo()
+
+// FAQ específica de planos
+export const pricingFAQ = getPricingFAQ()
+
+// Dados para calculadora de economia
+export const economyCalculatorData = getEconomyCalculatorData()

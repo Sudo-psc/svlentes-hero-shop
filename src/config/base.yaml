@@ -369,30 +369,36 @@ pricing:
       nationwide: true
 
   faq:
+    - id: "tipos-lentes"
+      question: "Quais tipos de lentes estão disponíveis?"
+      answer: "Oferecemos lentes asféricas (planos mensal, trimestral, semestral e anual), lentes diárias, lentes tóricas para astigmatismo e lentes multifocais para presbiopia. Cada tipo tem planos específicos com diferentes benefícios e preços."
     - id: "entrega"
       question: "Como funciona a entrega?"
-      answer: "As lentes são entregues mensalmente no seu endereço cadastrado, sem custo adicional de frete. Você recebe automaticamente antes de acabar suas lentes atuais, garantindo que nunca fique sem suas lentes de contato."
+      answer: "As lentes são entregues regularmente no seu endereço cadastrado. A frequência varia conforme o plano: mensal para planos mensais, a cada 3 meses para trimestrais, etc. Frete grátis em planos trimestrais e superiores."
     - id: "consultas"
       question: "As consultas estão incluídas?"
-      answer: "Sim! Todos os planos incluem consultas de acompanhamento com oftalmologista, tanto presenciais quanto por telemedicina, para garantir a saúde dos seus olhos. A quantidade de consultas varia de acordo com o plano escolhido."
-    - id: "diferenca"
-      question: "Qual a diferença entre os planos?"
-      answer: "A principal diferença está na quantidade de lentes, frequência de consultas e benefícios adicionais. O Plano Padrão oferece mais consultas e telemedicina ilimitada. O Plano Premium inclui lentes multifocais, exames complementares e kit de higienização."
+      answer: "Sim! Os planos incluem diferentes tipos de consultas: Plano Express não inclui consultas, Plano Smart inclui telemedicina, Plano Premium inclui consultas presenciais, e Plano VIP inclui consultas híbridas (presenciais + online) ilimitadas."
+    - id: "diferenca-planos"
+      question: "Qual a diferença entre os ciclos de pagamento?"
+      answer: "Planos mensais oferecem flexibilidade sem fidelidade. Planos trimestrais, semestrais e anuais oferecem economia progressiva: 13% no trimestral, 19% no semestral e 29% no anual, além de mais benefícios como consultas inclusas e entrega gratuita."
+    - id: "lentes-especiais"
+      question: "Como funcionam as lentes tóricas e multifocais?"
+      answer: "Lentes tóricas corrigem astigmatismo e multifocais corrigem presbiopia (vista cansada). Ambas exigem consulta obrigatória com Dr. Philipe para avaliação e adaptação. Os preços são: Tóricas a partir de R$ 159/mês e Multifocais a partir de R$ 189/mês."
     - id: "cancelamento"
       question: "Posso cancelar a assinatura?"
       answer: "Sim, você pode pausar ou cancelar sua assinatura a qualquer momento, sem multas ou taxas de cancelamento. Basta entrar em contato através do portal do cliente ou via WhatsApp."
     - id: "pagamento"
       question: "Como funciona o pagamento?"
-      answer: "Você pode pagar em até 12 vezes no cartão de crédito ou à vista com desconto via PIX ou boleto bancário. O pagamento é processado de forma segura através da plataforma Asaas."
+      answer: "Você pode parcelar em até 12 vezes nos planos trimestrais, semestrais e anuais, ou pagar mensalmente nos planos mensais. Aceitamos cartão de crédito, PIX com desconto e boleto bancário através da plataforma Asaas."
     - id: "receita"
       question: "Preciso de receita médica?"
-      answer: "Sim, para sua segurança e saúde ocular, é necessário ter uma receita médica válida. Se você ainda não tem, podemos agendar uma consulta de avaliação e adaptação de lentes de contato."
+      answer: "Sim, para sua segurança e saúde ocular, é necessário ter uma receita médica válida. Se você ainda não tem, podemos agendar uma consulta de avaliação e adaptação de lentes de contato com Dr. Philipe."
     - id: "qualidade"
       question: "As lentes são de qualidade?"
       answer: "Sim! Trabalhamos apenas com lentes de contato de marcas reconhecidas e certificadas pela ANVISA. Todas as lentes são embaladas individualmente e em ambiente estéril, garantindo máxima segurança e qualidade."
-    - id: "acompanhamento"
-      question: "Como funciona o acompanhamento médico?"
-      answer: "Você terá acesso a consultas de acompanhamento com oftalmologista, tanto presenciais em nossas clínicas quanto por telemedicina. Além disso, oferecemos suporte via WhatsApp para dúvidas sobre uso e cuidados com as lentes."
+    - id: "economia"
+      question: "Como funciona a economia nos planos?"
+      answer: "A economia é progressiva: plano trimestral oferece 13% de desconto, semestral 19% e anual 29% em comparação com o plano mensal. Além disso, você economiza em consultas médicas e frete, que são incluídos nos planos mais completos."
 
   economyCalculator:
     averagePrices:
@@ -666,6 +672,454 @@ privacy:
       - "objection"
 
 # ============================================================================
+# PRICING & PLANS (Fase 3) - PLANOS ASFÉRICOS COMPLETOS
+# ============================================================================
+pricing_asfericos:
+  # Plano Express Mensal
+  express-mensal:
+    id: express-mensal
+    name: Plano Express
+    description: Plano essencial para uso regular de lentes asféricas
+    lensType: asferica
+    billingCycle: monthly
+    consultationType: none
+    serviceLevel: express
+    pricing:
+      priceMonthly: 128.00
+      priceTotal: 128.00
+      pricePerLens: 4.27
+      installments:
+        count: 1
+        value: 128.00
+        show: false
+    economy:
+      percentage: 0
+      amount: 0
+      previousPrice: 0
+      accessoriesValue: 0
+    badge: null
+    popularBadge: null
+    recommended: false
+    highlight: false
+    features:
+      - "Lentes asféricas mensais"
+      - "Suporte por WhatsApp"
+      - "Entrega padrão"
+      - "Cancelamento a qualquer momento"
+    benefits:
+      - id: lentes-mensais
+        name: "Lentes Asféricas"
+        description: "1 par de lentes de alta qualidade"
+        icon: "eye"
+        included: true
+        quantity: 1
+        value: 128.00
+      - id: suporte-whatsapp
+        name: "Suporte por WhatsApp"
+        description: "Atendimento de segunda a sexta"
+        icon: "message-circle"
+        included: true
+        quantity: 1
+        value: 0
+      - id: entrega-padrao
+        name: "Entrega Padrão"
+        description: "Entrega em até 7 dias úteis"
+        icon: "truck"
+        included: true
+        quantity: 12
+        value: 0
+    deliveryInfo:
+      frequency: "mensal"
+      freightFree: false
+      locations: ["Brasil"]
+    consultationInfo:
+      included: false
+      type: none
+      count: 0
+      location: []
+    supportInfo:
+      type: "WhatsApp"
+      availability: "Seg-Sex 9h-18h"
+      priority: "standard"
+    ctaText: "Assinar Agora"
+    tags: ["essencial", "flexível"]
+    targetAudience: ["primeira-compra", "orçamento-limitado"]
+    sortOrder: 1
+    isActive: true
+
+  # Plano Smart Trimestral
+  smart-trimestral:
+    id: smart-trimestral
+    name: Plano Smart
+    description: "Equilíbrio perfeito entre economia e conveniência"
+    lensType: asferica
+    billingCycle: quarterly
+    consultationType: telemedicina
+    serviceLevel: smart
+    pricing:
+      priceMonthly: 111.00
+      priceTotal: 332.00
+      pricePerLens: 3.70
+      installments:
+        count: 3
+        value: 111.00
+        show: true
+    economy:
+      percentage: 13
+      amount: 52
+      previousPrice: 384.00
+      accessoriesValue: 15.00
+    badge: "Economia Inteligente"
+    popularBadge: "Mais Popular"
+    recommended: true
+    highlight: true
+    features:
+      - "Lentes asféricas trimestrais"
+      - "Consultas online inclusas"
+      - "Entrega gratuita"
+      - "Economia de 13%"
+      - "Suporte prioritário"
+    benefits:
+      - id: lentes-trimestrais
+        name: "Lentes Asféricas"
+        description: "3 pares de lentes de alta qualidade"
+        icon: "eye"
+        included: true
+        quantity: 3
+        value: 333.00
+      - id: consultas-online
+        name: "Consultas Online"
+        description: "2 consultas por telemedicina"
+        icon: "video"
+        included: true
+        quantity: 2
+        value: 200.00
+      - id: entrega-gratis
+        name: "Entrega Grátis"
+        description: "Entrega em até 5 dias úteis"
+        icon: "truck"
+        included: true
+        quantity: 4
+        value: 40.00
+      - id: suporte-prioritario
+        name: "Suporte Prioritário"
+        description: "Atendimento exclusivo no WhatsApp"
+        icon: "zap"
+        included: true
+        quantity: 1
+        value: 30.00
+    deliveryInfo:
+      frequency: "trimestral"
+      freightFree: true
+      locations: ["Brasil"]
+    consultationInfo:
+      included: true
+      type: telemedicina
+      count: 2
+      location: ["online"]
+      value: 200.00
+    supportInfo:
+      type: "WhatsApp Prioritário"
+      availability: "Seg-Sex 8h-20h"
+      priority: "priority"
+    ctaText: "Assinar Smart"
+    tags: ["popular", "economia", "telemedicina"]
+    targetAudience: ["bom-custo-beneficio", "usos-regular"]
+    sortOrder: 2
+    isActive: true
+
+  # Plano Premium Semestral
+  premium-semestral:
+    id: premium-semestral
+    name: Plano Premium
+    description: "Experiência completa com cuidados premium para sua visão"
+    lensType: asferica
+    billingCycle: semiannual
+    consultationType: presencial
+    serviceLevel: premium
+    pricing:
+      priceMonthly: 104.00
+      priceTotal: 621.00
+      pricePerLens: 3.46
+      installments:
+        count: 6
+        value: 104.00
+        show: true
+    economy:
+      percentage: 19
+      amount: 147
+      previousPrice: 768.00
+      accessoriesValue: 45.00
+    badge: "Experiência Premium"
+    popularBadge: null
+    recommended: false
+    highlight: true
+    features:
+      - "Lentes asféricas semestrais"
+      - "Consultas presenciais inclusas"
+      - "Entrega expressa gratuita"
+      - "Acessórios premium"
+      - "Economia de 19%"
+      - "Suporte VIP"
+    benefits:
+      - id: lentes-semestrais
+        name: "Lentes Asféricas"
+        description: "6 pares de lentes de máxima qualidade"
+        icon: "eye"
+        included: true
+        quantity: 6
+        value: 768.00
+      - id: consultas-presenciais
+        name: "Consultas Presenciais"
+        description: "3 consultas na clínica Saraiva Vision"
+        icon: "activity"
+        included: true
+        quantity: 3
+        value: 450.00
+      - id: entrega-expressa
+        name: "Entrega Expressa"
+        description: "Entrega em até 48h para principais cidades"
+        icon: "zap"
+        included: true
+        quantity: 6
+        value: 120.00
+      - id: acessorios-premium
+        name: "Kit Acessórios Premium"
+        description: "Estojo, líquido de limpeza e espelho"
+        icon: "gift"
+        included: true
+        quantity: 2
+        value: 80.00
+      - id: suporte-vip
+        name: "Suporte VIP"
+        description: "Atendimento personalizado 24/7"
+        icon: "crown"
+        included: true
+        quantity: 1
+        value: 60.00
+    deliveryInfo:
+      frequency: "bimestral"
+      freightFree: true
+      locations: ["Brasil (capitais e regiões metropolitanas)"]
+    consultationInfo:
+      included: true
+      type: presencial
+      count: 3
+      location: ["Clínica Saraiva Vision - Caratinga/MG"]
+      value: 450.00
+    supportInfo:
+      type: "WhatsApp VIP + Telefone"
+      availability: "24/7"
+      priority: "vip"
+    ctaText: "Assinar Premium"
+    tags: ["premium", "consultas-presenciais", "entrega-expressa"]
+    targetAudience: ["exigencia-alta", "conforto", "serviço-completo"]
+    sortOrder: 3
+    isActive: true
+
+  # Plano VIP Anual
+  vip-anual:
+    id: vip-anual
+    name: Plano VIP
+    description: "A experiência mais completa e exclusiva para sua saúde ocular"
+    lensType: asferica
+    billingCycle: annual
+    consultationType: hybrid
+    serviceLevel: vip
+    pricing:
+      priceMonthly: 91.00
+      priceTotal: 1091.00
+      pricePerLens: 3.03
+      installments:
+        count: 12
+        value: 91.00
+        show: true
+    economy:
+      percentage: 29
+      amount: 445
+      previousPrice: 1536.00
+      accessoriesValue: 120.00
+    badge: "Exclusivo VIP"
+    popularBadge: null
+    recommended: false
+    highlight: true
+    features:
+      - "Lentes asféricas anuais premium"
+      - "Consultas híbridas ilimitadas"
+      - "Entrega prioritária em 24h"
+      - "Acessórios exclusivos VIP"
+      - "Economia de 29%"
+      - "Suporte pessoal dedicado"
+      - "Serviços oftalmológicos completos"
+    benefits:
+      - id: lentes-anuais
+        name: "Lentes Asféricas Premium"
+        description: "12 pares de lentes de tecnologia superior"
+        icon: "eye"
+        included: true
+        quantity: 12
+        value: 1536.00
+      - id: consultas-hibridas
+        name: "Consultas Híbridas"
+        description: "Consultas ilimitadas (presenciais + online)"
+        icon: "users"
+        included: true
+        quantity: 99
+        location: ["Presencial", "Online"]
+        value: 1200.00
+      - id: entrega-24h
+        name: "Entrega 24h"
+        description: "Entrega prioritária em 24 horas"
+        icon: "zap"
+        included: true
+        quantity: 12
+        value: 240.00
+      - id: kit-vip
+        name: "Kit Exclusivo VIP"
+        description: "Estojo de couro, soluções premium e espelho de bolso"
+        icon: "diamond"
+        included: true
+        quantity: 4
+        value: 200.00
+      - id: servicos-oftalmologicos
+        name: "Serviços Oftalmológicos"
+        description: "Mapeamento de retina e exames complementares"
+        icon: "heart"
+        included: true
+        quantity: 2
+        value: 400.00
+      - id: suporte-dedicado
+        name: "Assistente Pessoal"
+        description: "Atendente exclusivo para seu plano"
+        icon: "crown"
+        included: true
+        quantity: 1
+        value: 300.00
+      - id: consultoria-estilo
+        name: "Consultoria de Estilo"
+        description: "Avaliação facial e recomendações de estilos"
+        icon: "sparkles"
+        included: true
+        quantity: 1
+        value: 150.00
+    deliveryInfo:
+      frequency: "mensal"
+      freightFree: true
+      locations: ["Todo Brasil (prioridade em capitais)"]
+    consultationInfo:
+      included: true
+      type: hybrid
+      count: 99
+      location: ["Clínica Saraiva Vision", "Online"]
+      value: 1200.00
+    supportInfo:
+      type: "Assistente Pessoal + WhatsApp VIP"
+      availability: "24/7"
+      priority: "vip"
+    ctaText: "Assinar VIP"
+    tags: ["vip", "exclusivo", "completo", "economia-maxima"]
+    targetAudience: ["luxo", "saude-ocular", "conveniencia-total"]
+    sortOrder: 4
+    isActive: true
+
+# Configurações dos Planos Asféricos
+config_planos_asfericos:
+  ciclos_faturamento:
+    mensal:
+      duracao: 1
+      desconto_base: 0
+      popularidade: "alta"
+    trimestral:
+      duracao: 3
+      desconto_base: 0.10
+      popularidade: "media"
+    semestral:
+      duracao: 6
+      desconto_base: 0.15
+      popularidade: "media"
+    anual:
+      duracao: 12
+      desconto_base: 0.20
+      popularidade: "alta"
+
+  tipos_consulta:
+    none:
+      nome: "Sem Consulta"
+      incluida: false
+      valor: 0
+    presencial:
+      nome: "Consulta Presencial"
+      incluida: true
+      local: "Clínica Saraiva Vision - Caratinga/MG"
+      duracao: "45 minutos"
+      valor_base: 150
+    telemedicina:
+      nome: "Telemedicina"
+      incluida: true
+      local: "Videochamada segura"
+      duracao: "30 minutos"
+      valor_base: 100
+    hybrid:
+      nome: "Consulta Híbrida"
+      incluida: true
+      local: "Presencial + Online"
+      duracao: "45 minutos"
+      valor_base: 200
+
+  niveis_servico:
+    basic:
+      nome: "Básico"
+      prioridade: 1
+      suporte: "WhatsApp padrão"
+      tempo_resposta: "24h"
+    express:
+      nome: "Express"
+      prioridade: 2
+      suporte: "WhatsApp prioritário"
+      tempo_resposta: "12h"
+    smart:
+      nome: "Smart"
+      prioridade: 3
+      suporte: "WhatsApp + Telefone"
+      tempo_resposta: "6h"
+    premium:
+      nome: "Premium"
+      prioridade: 4
+      suporte: "WhatsApp VIP + Telefone"
+      tempo_resposta: "2h"
+    vip:
+      nome: "VIP"
+      prioridade: 5
+      suporte: "Assistente pessoal dedicado"
+      tempo_resposta: "imediato"
+
+# Metadados para SEO e Marketing
+metadata_asfericos:
+  titulo_seo: "Planos de Lentes Asféricas | SV Lentes"
+  descricao_seo: "Planos completos de lentes asféricas com consultas e entrega. Economia de até 29% nos planos anuais."
+  keywords_seo:
+    - "lentes asféricas"
+    - "lentes de contato"
+    - "plano assinatura lentes"
+    - "saude ocular"
+    - "oftalmologista Caratinga"
+    - "lentes mensais"
+    - "lentes anuais"
+
+  beneficios_principais:
+    - "Visão nítida e confortável"
+    - "Acompanhamento oftalmológico"
+    - "Entrega em todo Brasil"
+    - "Economia garantida"
+
+  diferenciais_competitivos:
+    - "Atendimento médico especializado"
+    - "Tecnologia de ponta em lentes"
+    - "Planos flexíveis para todos os perfis"
+    - "Economia progressiva até 29%"
+    - "Rede de atendimento completa"
+
+# ============================================================================
 # FEATURE FLAGS
 # ============================================================================
 featureFlags:
@@ -676,3 +1130,260 @@ featureFlags:
   useCentralizedMedical: true      # Ativar config centralizado de dados médicos
   useCentralizedAnalytics: true    # Ativar config centralizado de analytics
   useCentralizedPrivacy: true      # Ativar config centralizado de privacy
+  usePricingAsfericos: true        # Ativar novos planos asféricos categorizados
+  usePricingToricos: true          # Ativar planos de lentes tóricas para astigmatismo
+
+# ============================================================================
+# PRICING & PLANOS - LENTES TÓRICAS (ASTIGMATISMO)
+# ============================================================================
+pricing_toricos:
+  # Plano Tórico Trimestral
+  torico-trimestral:
+    id: torico-trimestral
+    name: Plano Tórico Trimestral
+    description: "Plano especial para correção de astigmatismo com lentes tóricas de alta precisão"
+    lensType: torica
+    billingCycle: quarterly
+    consultationType: presencial
+    serviceLevel: smart
+    pricing:
+      priceMonthly: 191.00
+      priceTotal: 573.00
+      pricePerLens: 6.37
+      installments:
+        count: 3
+        value: 191.00
+        show: true
+    economy:
+      percentage: 13
+      amount: 75
+      previousPrice: 498.00
+      accessoriesValue: 50.00
+    badge: "Correção de Astigmatismo"
+    popularBadge: null
+    recommended: false
+    highlight: true
+    features:
+      - "3 pares de lentes tóricas para astigmatismo"
+      - "1 estojo protetor premium"
+      - "1 solução multiuso 300ml"
+      - "Desconto de 13% vs mensal equivalente"
+      - "Ajuste de grau personalizado"
+      - "Consulta presencial inclusa"
+    benefits:
+      - id: lentes-toricas
+        name: "Lentes Tóricas"
+        description: "3 pares de lentes tóricas de alta precisão"
+        icon: "eye"
+        included: true
+        quantity: 3
+        value: 478.00
+      - id: estojo-premium
+        name: "Estojo Premium"
+        description: "Estojo protetor de alta qualidade"
+        icon: "briefcase"
+        included: true
+        quantity: 1
+        value: 20.00
+      - id: solucao-multiuso
+        name: "Solução Multiuso"
+        description: "Solução para limpeza e conservação 300ml"
+        icon: "droplet"
+        included: true
+        quantity: 1
+        value: 30.00
+      - id: consulta-presencial
+        name: "Consulta Presencial"
+        description: "Avaliação e adaptação com Dr. Philipe"
+        icon: "activity"
+        included: true
+        quantity: 1
+        value: 150.00
+      - id: ajuste-grau
+        name: "Ajuste de Grau"
+        description: "Ajustes sem custo adicional durante o plano"
+        icon: "settings"
+        included: true
+        quantity: 1
+        value: 50.00
+    deliveryInfo:
+      frequency: "trimestral"
+      freightFree: false
+      locations: ["Brasil"]
+    consultationInfo:
+      included: true
+      type: presencial
+      count: 1
+      location: ["Clínica Saraiva Vision - Caratinga/MG"]
+      value: 150.00
+    supportInfo:
+      type: "WhatsApp Especializado"
+      availability: "Seg-Sex 8h-18h"
+      priority: "priority"
+    ctaText: "Assinar Plano Tórico"
+    tags: ["astigmatismo", "torica", "consulta-inclusa"]
+    targetAudience: ["astigmatismo", "primeira-compra-torica", "correcao-visual"]
+    sortOrder: 5
+    isActive: true
+
+  # Plano Tórico Anual
+  torico-anual:
+    id: torico-anual
+    name: Plano Tórico Anual
+    description: "Plano completo anual para astigmatismo com máxima economia e benefícios exclusivos"
+    lensType: torica
+    billingCycle: annual
+    consultationType: hybrid
+    serviceLevel: premium
+    pricing:
+      priceMonthly: 152.92
+      priceTotal: 1835.00
+      pricePerLens: 5.10
+      installments:
+        count: 12
+        value: 152.92
+        show: true
+    economy:
+      percentage: 20
+      amount: 239
+      previousPrice: 1596.00
+      accessoriesValue: 150.00
+    badge: "Plano Completo Anual"
+    popularBadge: "Melhor Economia - 20% OFF"
+    recommended: true
+    highlight: true
+    features:
+      - "12 pares de lentes tóricas anuais"
+      - "3 estojos protetores premium"
+      - "3 soluções multiuso 300ml"
+      - "Frete grátis (2 envios/ano)"
+      - "Ajuste de grau sem custo"
+      - "Desconto de 20% vs mensal equivalente"
+      - "Parcelamento: 12x de R$ 152,92 sem juros"
+      - "Consultas híbridas ilimitadas"
+    benefits:
+      - id: lentes-toricas-anuais
+        name: "Lentes Tóricas Anuais"
+        description: "12 pares de lentes tóricas de última geração"
+        icon: "eye"
+        included: true
+        quantity: 12
+        value: 1912.00
+      - id: estojos-premium
+        name: "Estojos Premium"
+        description: "3 estojos protetores de luxo"
+        icon: "briefcase"
+        included: true
+        quantity: 3
+        value: 60.00
+      - id: solucoes-multiuso
+        name: "Soluções Multiuso"
+        description: "3 soluções multiuso 300ml"
+        icon: "droplet"
+        included: true
+        quantity: 3
+        value: 90.00
+      - id: frete-gratis
+        name: "Frete Grátis"
+        description: "Entrega gratuita em todo Brasil"
+        icon: "truck"
+        included: true
+        quantity: 2
+        value: 80.00
+      - id: ajuste-grau-ilimitado
+        name: "Ajuste de Grau Ilimitado"
+        description: "Ajustes de grau sem custo adicional"
+        icon: "settings"
+        included: true
+        quantity: 99
+        value: 300.00
+      - id: consultas-hibridas
+        name: "Consultas Híbridas"
+        description: "Consultas presenciais + online ilimitadas"
+        icon: "users"
+        included: true
+        quantity: 99
+        location: ["Presencial", "Online"]
+        value: 600.00
+    deliveryInfo:
+      frequency: "bimestral"
+      freightFree: true
+      locations: ["Todo Brasil"]
+    consultationInfo:
+      included: true
+      type: hybrid
+      count: 99
+      location: ["Clínica Saraiva Vision", "Online"]
+      value: 600.00
+    supportInfo:
+      type: "WhatsApp Premium + Assessor Especializado"
+      availability: "24/7"
+      priority: "vip"
+    ctaText: "Assinar Plano Tórico Anual"
+    tags: ["astigmatismo", "torica", "economia-maxima", "plano-completo"]
+    targetAudience: ["astigmatismo", "economia", "conveniencia", "saude-ocular"]
+    sortOrder: 6
+    isActive: true
+
+# Configurações dos Planos Tóricos
+config_planos_toricos:
+  ciclos_faturamento:
+    trimestral:
+      duracao: 3
+      desconto_base: 0.10
+      valor_mensal_equivalente: 191.00
+      popularidade: "alta"
+    anual:
+      duracao: 12
+      desconto_base: 0.15
+      valor_mensal_equivalente: 152.92
+      popularidade: "muito-alta"
+
+  especifiacoes_tecnicas:
+    material: "Methafilcon A de alta hidratação"
+    diametro: "14.5mm"
+    faixa_potencia: "-6.00 a +6.00"
+    faixa_cilindro: "-0.75 a -2.25"
+    faixa_eixo: "10° a 180°"
+    te_transmissibilidade: "138 Dk/t"
+    conteudo_agua: "55%"
+    modulos: "Flexível para adaptação confortável"
+
+  beneficios_medicos:
+    avaliacao_inicial: "Consulta completa com mapeamento corneano"
+    adaptacao_personalizada: "Até 3 sessões de adaptação"
+    acompanhamento_trimestral: "Avaliações regulares da saúde ocular"
+    ajustes_gratuitos: "Ajustes de grau sem custo adicional"
+    emergencia_24h: "Suporte para complicações pós-adaptação"
+
+  cuidados_especiais:
+    manuseio: "Instruções detalhadas para lentes tóricas"
+    limpeza: "Técnica específica para não danificar eixo"
+    armazenamento: "Posicionamento correto no estojo"
+    rotacao: "Verificação de rotação e estabilidade"
+
+# Metadados para SEO e Marketing - Lentes Tóricas
+metadata_toricos:
+  titulo_seo: "Planos de Lentes Tóricas para Astigmatismo | SV Lentes"
+  descricao_seo: "Planos especializados de lentes tóricas para correção de astigmatismo. Consultas inclusas e economia de até 20%. Ajuste de grau sem custo."
+  keywords_seo:
+    - "lentes tóricas"
+    - "astigmatismo"
+    - "lentes para astigmatismo"
+    - "correção astigmatismo"
+    - "plano lentes tóricas"
+    - "lentes de contato astigmatismo"
+    - "oftalmologista astigmatismo"
+
+  beneficios_principais:
+    - "Correção precisa de astigmatismo"
+    - "Visão nítida e estável"
+    - "Conforto prolongado"
+    - "Acompanhamento médico especializado"
+
+  diferenciais_competitivos:
+    - "Especialistas em lentes tóricas"
+    - "Tecnologia de última geração"
+    - "Adaptação personalizada"
+    - "Economia de até 20%"
+    - "Ajustes de grau gratuitos"
