@@ -162,13 +162,31 @@ export class SendPulseClient {
 
     const data: SendPulseContactsResponse = await response.json()
 
+    // CRITICAL FIX: Use exact phone number match, not substring
+    // channel_data.phone is stored as number (without country code prefix in some cases)
+    const phoneNum = parseInt(phone)
     const contact = data.data.find(c =>
-      c.channel_data.phone.toString().includes(phone.slice(-8))
+      c.channel_data.phone === phoneNum ||
+      c.channel_data.phone.toString() === phone ||
+      c.channel_data.phone.toString() === phone.replace(/^55/, '')
     )
 
     if (!contact) {
+      console.error(`[SendPulse] Contact not found for phone ${phone}`)
+      console.error(`[SendPulse] Available contacts:`, data.data.map(c => ({
+        id: c.id,
+        phone: c.channel_data.phone,
+        name: c.channel_data.name
+      })))
       throw new SendPulseContactError(`Contact with phone ${phone} not found`)
     }
+
+    console.log(`[SendPulse] Found contact:`, {
+      id: contact.id,
+      phone: contact.channel_data.phone,
+      name: contact.channel_data.name,
+      is_chat_opened: contact.is_chat_opened
+    })
 
     // Cache the found contact
     contactCache.set(botId, phone, contact)
@@ -220,10 +238,10 @@ export class SendPulseClient {
   /**
    * Send message to contact by ID with rate limiting, retry, and template fallback
    *
-   * CRITICAL FIX: ALWAYS check contact status via API before sending
+   * CRITICAL FIX: Use isChatOpenedOverride when available (from fresh findContactByPhone)
    * - The 24h window is ONLY open when user sends a message to US
-   * - Webhook flag is_chat_opened is unreliable (can be from test/old data)
-   * - We MUST verify window status with real API call to avoid 400 errors
+   * - getContactById returns STALE data - DON'T use it!
+   * - findContactByPhone has FRESH data from the list endpoint
    */
   private async sendMessageToContact(
     contactId: string,
@@ -237,24 +255,32 @@ export class SendPulseClient {
       await rateLimiter.acquire()
 
       // 2. Check if contact is in 24-hour window (skip ONLY for template messages)
-      // CRITICAL: We CANNOT trust webhook flags - must verify via API
       if (message.type !== 'template') {
-        console.log(`[SendPulse] Checking 24h window status via API (contactId: ${contactId})`)
+        // CRITICAL: Use override from fresh contact data if available
+        // Only fallback to API call if no override provided
+        let isActive: boolean
 
-        const isActive = await this.isContactActive(contactId)
+        if (isChatOpenedOverride !== undefined) {
+          isActive = isChatOpenedOverride
+          console.log(`[SendPulse] Using fresh contact data: is_chat_opened=${isActive}`)
+        } else {
+          console.log(`[SendPulse] No override - checking via API (contactId: ${contactId})`)
+          isActive = await this.isContactActive(contactId)
+        }
 
         if (!isActive) {
-          console.log(`[SendPulse] ❌ Contact window CLOSED - API confirmed is_chat_opened=false`)
-          console.log(`[SendPulse] Attempting template message fallback...`)
+          console.log(`[SendPulse] ❌ Contact window CLOSED - is_chat_opened=false`)
+          console.log(`[SendPulse] ⚠️ Cannot send message - 24h window expired. User must send message first to reopen window.`)
 
-          if (useTemplateFallback) {
-            return await this.sendTemplateMessageFallback(contactId, message as WhatsAppMessage)
-          }
+          // TEMPORARY FIX: Skip template fallback until templates are approved
+          // Template fallback requires approved templates in SendPulse account
+          console.warn(`[SendPulse] Template fallback disabled - configure approved templates in SendPulse to enable`)
 
+          // Return early without sending - avoids template errors
           throw new ConversationWindowExpiredError(contactId)
         }
 
-        console.log(`[SendPulse] ✅ Contact window OPEN - API confirmed is_chat_opened=true`)
+        console.log(`[SendPulse] ✅ Contact window OPEN - is_chat_opened=true`)
       }
 
       // 3. Send with retry logic
@@ -371,6 +397,17 @@ export class SendPulseClient {
       // Get or create contact from phone
       const contact = await this.getOrCreateContact(params.phone)
 
+      // CRITICAL: Use the is_chat_opened from the contact we just fetched
+      // The getOrCreateContact uses findContactByPhone which has FRESH data
+      // DON'T use getContactById again - it has stale data!
+      const isChatOpened = params.isChatOpened !== undefined ? params.isChatOpened : contact.is_chat_opened
+
+      console.log(`[SendPulse] Contact status from fresh data:`, {
+        contactId: contact.id,
+        is_chat_opened: contact.is_chat_opened,
+        override: params.isChatOpened
+      })
+
       // Build message based on params
       let message: WhatsAppMessage
 
@@ -418,7 +455,7 @@ export class SendPulseClient {
         } as TextMessage
       }
 
-      return await this.sendMessageToContact(contact.id, message, true, params.isChatOpened, params.phone)
+      return await this.sendMessageToContact(contact.id, message, true, isChatOpened, params.phone)
 
     } catch (error) {
       console.error('Error sending SendPulse message:', error)

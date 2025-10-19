@@ -3,8 +3,22 @@
 import Link from 'next/link'
 import { ShoppingCart, ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { calculateEconomy, formatCurrency } from '@/lib/calculator'
+import { useMemo } from 'react'
 
 export function QuickStartSection() {
+    // Calcular economia média baseado em uso típico (20 dias/mês, lentes mensais)
+    const averageYearlySavings = useMemo(() => {
+        try {
+            const result = calculateEconomy({
+                lensType: 'monthly',
+                usagePattern: 'regular',
+            })
+            return result.yearlySavings
+        } catch {
+            return 480 // Fallback se houver erro
+        }
+    }, [])
     return (
         <div className="py-20 sm:py-24">
             <div className="container-custom">
@@ -52,7 +66,7 @@ export function QuickStartSection() {
                         Ou <Link href="/calculadora" className="text-white underline hover:text-primary-200 transition-colors group inline-flex items-center gap-1">
                             calcule sua economia primeiro
                             <span className="opacity-75 group-hover:opacity-100 text-xs">
-                                (economia média de R$ 480/ano)
+                                (economia média de {formatCurrency(averageYearlySavings)}/ano)
                             </span>
                         </Link>
                     </p>

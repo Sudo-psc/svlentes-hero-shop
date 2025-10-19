@@ -27,7 +27,7 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
       where: {
         OR: [
           { phone },
-          { whatsappPhone: phone }
+          { whatsapp: phone }
         ]
       },
       include: {
@@ -69,25 +69,35 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24) // 24 horas
 
-    await prisma.chatbotSession.upsert({
-      where: {
-        phone
-      },
-      create: {
-        userId: user.id,
-        phone,
-        sessionToken,
-        status: 'ACTIVE',
-        expiresAt,
-        lastActivityAt: new Date()
-      },
-      update: {
-        sessionToken,
-        status: 'ACTIVE',
-        expiresAt,
-        lastActivityAt: new Date()
-      }
+    // Verificar se já existe sessão ativa para este telefone
+    const existingSession = await prisma.chatbotSession.findFirst({
+      where: { phone }
     })
+
+    if (existingSession) {
+      // Atualizar sessão existente
+      await prisma.chatbotSession.update({
+        where: { id: existingSession.id },
+        data: {
+          sessionToken,
+          status: 'ACTIVE',
+          expiresAt,
+          lastActivityAt: new Date()
+        }
+      })
+    } else {
+      // Criar nova sessão
+      await prisma.chatbotSession.create({
+        data: {
+          userId: user.id,
+          phone,
+          sessionToken,
+          status: 'ACTIVE',
+          expiresAt,
+          lastActivityAt: new Date()
+        }
+      })
+    }
 
     logger.info(LogCategory.WHATSAPP, 'Autenticação automática por telefone bem-sucedida', {
       phone,
@@ -95,10 +105,48 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
       userName: user.name
     })
 
+    // Obter detalhes da assinatura para mensagem personalizada
+    const subscription = user.subscriptions[0]
+    const statusEmoji = {
+      ACTIVE: '✅',
+      PAUSED: '⏸️',
+      OVERDUE: '⚠️',
+      SUSPENDED: '🔒'
+    }[subscription.status] || '📋'
+
+    const statusLabel = {
+      ACTIVE: 'Ativa',
+      PAUSED: 'Pausada',
+      OVERDUE: 'Em Atraso',
+      SUSPENDED: 'Suspensa'
+    }[subscription.status] || subscription.status
+
+    // Mensagem de boas-vindas personalizada
+    const welcomeMessage = `${statusEmoji} *Assinatura Reconhecida!*
+
+Olá ${user.name || 'Cliente'}! 👋
+
+Sua assinatura está *${statusLabel}*
+📦 Plano: ${subscription.planType}
+📅 Renovação: ${new Date(subscription.renewalDate).toLocaleDateString('pt-BR')}
+
+*Como posso ajudar?*
+
+1️⃣ 📋 Ver detalhes da assinatura
+2️⃣ 📦 Rastrear pedido
+3️⃣ 📄 Baixar nota fiscal
+4️⃣ 📍 Atualizar endereço
+5️⃣ 💳 Atualizar forma de pagamento
+6️⃣ 🔄 Alterar plano
+7️⃣ ⏸️ Pausar/Cancelar assinatura
+8️⃣ 💬 Falar com atendente
+
+Digite o número da opção ou envie sua dúvida! 😊`
+
     return {
       success: true,
-      message: '',
-      requiresResponse: false,
+      message: welcomeMessage,
+      requiresResponse: true,
       sessionToken,
       userId: user.id,
       userName: user.name || undefined

@@ -187,6 +187,7 @@ model User {
   consentLogs          ConsentLog[]
   chatbotAuthCodes     ChatbotAuthCode[]
   chatbotSessions      ChatbotSession[]
+  subscriptionHistory  SubscriptionHistory[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -238,6 +239,7 @@ model Subscription {
   invoices Invoice[]
   paymentMethods PaymentMethodRecord[]
   payments Payment[]
+  history SubscriptionHistory[]
 
   @@index([userId], name: "idx_subscriptions_user_id")
   @@index([asaasSubscriptionId], name: "idx_subscriptions_asaas_id")
@@ -969,4 +971,47 @@ model ChatbotSession {
   @@index([expiresAt], name: "idx_chatbot_sessions_expires")
   @@index([conversationId], name: "idx_chatbot_sessions_conversation")
   @@map("chatbot_sessions")
+}
+
+// ==================== SUBSCRIPTION HISTORY SYSTEM ====================
+
+enum SubscriptionChangeType {
+  PLAN_CHANGE
+  ADDRESS_UPDATE
+  PAYMENT_METHOD_UPDATE
+  STATUS_CHANGE
+  PRICE_ADJUSTMENT
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_CANCELLED
+  SUBSCRIPTION_PAUSED
+  SUBSCRIPTION_RESUMED
+}
+
+model SubscriptionHistory {
+  id              String                  @id @default(cuid())
+  subscriptionId  String                  @map("subscription_id")
+  userId          String                  @map("user_id")
+  
+  // Change details
+  changeType      SubscriptionChangeType  @map("change_type")
+  description     String                  @db.Text
+  oldValue        Json?                   @map("old_value") @db.JsonB
+  newValue        Json?                   @map("new_value") @db.JsonB
+  metadata        Json?                   @db.JsonB
+  
+  // Audit trail
+  ipAddress       String?                 @map("ip_address") @db.VarChar(45)
+  userAgent       String?                 @map("user_agent") @db.Text
+  
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  // Relations
+  subscription    Subscription            @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([subscriptionId], name: "idx_subscription_history_subscription")
+  @@index([userId], name: "idx_subscription_history_user")
+  @@index([changeType], name: "idx_subscription_history_change_type")
+  @@index([createdAt(sort: Desc)], name: "idx_subscription_history_created_at")
+  @@map("subscription_history")
 }

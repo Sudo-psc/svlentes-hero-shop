@@ -11,7 +11,7 @@ const profileSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const user = await prisma.user.findUnique({
+    // Try to find user by database ID first, then by Firebase UID
+    let user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         name: true,
@@ -28,6 +29,19 @@ export async function GET(req: NextRequest) {
         whatsapp: true
       }
     })
+
+    // If not found by ID, try Firebase UID
+    if (!user) {
+      user = await prisma.user.findUnique({
+        where: { firebaseUid: userId },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          whatsapp: true
+        }
+      })
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -49,7 +63,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
@@ -60,8 +74,28 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = profileSchema.parse(body)
 
-    const updatedUser = await prisma.user.update({
+    // Try to find user by database ID first, then by Firebase UID
+    let user = await prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      user = await prisma.user.findUnique({
+        where: { firebaseUid: userId },
+        select: { id: true }
+      })
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
       data: {
         ...(validatedData.name && { name: validatedData.name }),
         ...(validatedData.phone !== undefined && { phone: validatedData.phone || null }),
@@ -86,7 +120,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     console.error('Error updating profile:', error)
     return NextResponse.json(
       { error: 'Erro ao atualizar perfil' },

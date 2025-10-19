@@ -1,35 +1,7 @@
 import { CalculatorInput, CalculatorResult } from '@/types'
 import { usagePatterns, lensTypes, planRecommendations, planPrices, consultationPrices } from '@/data/calculator-data'
 
-export interface UnifiedCalculatorInput {
-  lensType: 'daily' | 'weekly' | 'monthly'
-  usagePattern: 'occasional' | 'regular' | 'daily'
-  currentSpending?: number
-  annualContactLensCost?: number
-  annualConsultationCost?: number
-}
-
-export interface UnifiedCalculatorResult {
-  monthlyAvulso: number
-  monthlySubscription: number
-  monthlySavings: number
-  yearlyAvulso: number
-  yearlySubscription: number
-  yearlySavings: number
-  savingsPercentage: number
-  recommendedPlan: string
-  totalCurrentAnnualCost: number
-  totalSVLentesAnnualCost: number
-  totalAnnualSavings: number
-  includedConsultations: number
-  lensesPerMonth: number
-  costPerLens: {
-    current: number
-    subscription: number
-  }
-}
-
-export function calculateEconomy(input: UnifiedCalculatorInput): UnifiedCalculatorResult {
+export function calculateEconomy(input: CalculatorInput): CalculatorResult {
   const usagePattern = usagePatterns.find(p => p.id === input.usagePattern)
   const lensType = lensTypes.find(l => l.id === input.lensType)
 
@@ -37,7 +9,9 @@ export function calculateEconomy(input: UnifiedCalculatorInput): UnifiedCalculat
     throw new Error('Padrão de uso ou tipo de lente inválido')
   }
 
-  const lensesPerMonth = usagePattern.daysPerMonth * 2
+  // Se tiver customUsageDays, usa ele. Senão usa o padrão do usagePattern
+  const daysPerMonth = input.customUsageDays ?? usagePattern.daysPerMonth
+  const lensesPerMonth = daysPerMonth * 2 // 2 lentes por dia (ambos os olhos)
 
   const monthlyAvulso = lensesPerMonth * lensType.avulsoPrice
   const monthlySubscription = lensesPerMonth * lensType.subscriptionPrice
@@ -91,7 +65,7 @@ export function formatPercentage(value: number): string {
   return `${Math.round(value)}%`
 }
 
-export function validateCalculatorInput(input: Partial<UnifiedCalculatorInput>): {
+export function validateCalculatorInput(input: Partial<CalculatorInput>): {
   isValid: boolean
   errors: string[]
 } {
@@ -105,17 +79,40 @@ export function validateCalculatorInput(input: Partial<UnifiedCalculatorInput>):
     errors.push('Padrão de uso é obrigatório')
   }
 
-  if (input.currentSpending !== undefined) {
-    if (input.currentSpending < 0) {
-      errors.push('Gasto atual não pode ser negativo')
+  if (input.customUsageDays !== undefined) {
+    if (!Number.isInteger(input.customUsageDays) || input.customUsageDays < 1 || input.customUsageDays > 31) {
+      errors.push('Dias de uso deve ser entre 1 e 31')
     }
-    if (input.currentSpending > 1000) {
-      errors.push('Gasto atual parece muito alto, verifique o valor')
-    }
+  }
+
+  if (input.annualContactLensCost !== undefined && input.annualContactLensCost < 0) {
+    errors.push('Custo de lentes não pode ser negativo')
+  }
+
+  if (input.annualConsultationCost !== undefined && input.annualConsultationCost < 0) {
+    errors.push('Custo de consultas não pode ser negativo')
   }
 
   return {
     isValid: errors.length === 0,
     errors,
   }
+}
+
+/**
+ * Valida e converte string de dias customizados para número
+ * @param value String representando número de dias
+ * @returns Número validado ou null se inválido
+ */
+export function validateCustomUsageDays(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const num = parseInt(trimmed, 10)
+
+  if (isNaN(num) || num < 1 || num > 31) {
+    return null
+  }
+
+  return num
 }

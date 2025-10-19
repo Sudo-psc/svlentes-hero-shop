@@ -12,8 +12,8 @@ interface ImprovedCalculatorProps {
 }
 
 export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
-    const [lensType, setLensType] = useState<string>('monthly')
-    const [usagePattern, setUsagePattern] = useState<string>('regular')
+    const [lensType, setLensType] = useState<'daily' | 'weekly' | 'monthly'>('monthly')
+    const [usagePattern, setUsagePattern] = useState<'occasional' | 'regular' | 'daily'>('regular')
     const [annualContactLensCost, setAnnualContactLensCost] = useState<number>(1200)
     const [annualConsultationCost, setAnnualConsultationCost] = useState<number>(400)
     const [result, setResult] = useState<CalculatorResult | null>(null)

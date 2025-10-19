@@ -376,6 +376,36 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           phone: customerPhone,
           userId: authResult.userId
         })
+
+        // Enviar mensagem de boas-vindas personalizada
+        if (authResult.requiresResponse && authResult.message) {
+          await sendPulseClient.sendMessage({
+            phone: customerPhone,
+            message: authResult.message
+          })
+
+          logger.info(LogCategory.WHATSAPP, 'Mensagem de boas-vindas enviada', {
+            requestId,
+            phone: customerPhone,
+            userId: authResult.userId
+          })
+
+          // Log welcome message interaction
+          const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+          await storeInteraction({
+            messageId,
+            customerPhone,
+            content: messageContent,
+            intent: { name: 'authenticated_welcome', confidence: 1.0 },
+            response: authResult.message,
+            escalationRequired: false,
+            ticketCreated: false,
+            userProfile
+          })
+
+          return // Parar processamento após enviar boas-vindas
+        }
+
         authStatus = {
           authenticated: true,
           sessionToken: authResult.sessionToken,
@@ -410,6 +440,38 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
 
         return // Parar processamento para usuários não autenticados
       }
+    }
+
+    // Verificar se a mensagem é uma opção do menu (1-8)
+    const menuOption = await handleMenuOption(messageContent, customerPhone)
+    if (menuOption) {
+      if (menuOption.requiresResponse) {
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: menuOption.message
+        })
+
+        logger.info(LogCategory.WHATSAPP, 'Resposta de opção do menu enviada', {
+          requestId,
+          phone: customerPhone,
+          option: messageContent
+        })
+      }
+
+      // Log menu option interaction
+      const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+      await storeInteraction({
+        messageId,
+        customerPhone,
+        content: messageContent,
+        intent: { name: 'menu_option', confidence: 1.0 },
+        response: menuOption.message,
+        escalationRequired: false,
+        ticketCreated: false,
+        userProfile
+      })
+
+      return // Pular processamento LangChain para opções do menu
     }
 
     // Verificar se a mensagem é um comando de gestão de assinatura
@@ -850,6 +912,86 @@ async function sendSendPulseResponse(
 
     // Don't throw - webhook should return 200 OK even if delivery fails
     // to prevent SendPulse from retrying indefinitely
+  }
+}
+
+/**
+ * Handle menu options (1-8 from welcome message)
+ */
+async function handleMenuOption(
+  message: string,
+  phone: string
+): Promise<any | null> {
+  const cleanMessage = message.trim()
+
+  // Match only single digits or with emoji prefix
+  const menuMatch = cleanMessage.match(/^[1-8]$|^[1-8]️⃣/)
+
+  if (!menuMatch) {
+    return null
+  }
+
+  const option = parseInt(cleanMessage.replace(/[^\d]/g, ''))
+
+  switch (option) {
+    case 1:
+      // Ver detalhes da assinatura
+      return await viewSubscriptionCommand(phone)
+
+    case 2:
+      // Rastrear pedido
+      return await nextDeliveryCommand(phone)
+
+    case 3:
+      // Baixar nota fiscal
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '📄 *Notas Fiscais*\n\nPara acessar suas notas fiscais:\n\n1. Acesse a área do assinante: https://svlentes.shop/area-assinante\n2. Faça login com seu e-mail\n3. Clique em "Minhas Faturas"\n\nSe precisar de ajuda, estou aqui! 😊'
+      }
+
+    case 4:
+      // Atualizar endereço
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '📍 *Atualizar Endereço*\n\nPara atualizar seu endereço de entrega:\n\n1. Acesse: https://svlentes.shop/area-assinante/configuracoes\n2. Faça login com seu e-mail\n3. Atualize seu endereço\n\nOu me envie o novo endereço completo que atualizo para você! 📬'
+      }
+
+    case 5:
+      // Atualizar forma de pagamento
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '💳 *Atualizar Forma de Pagamento*\n\nPara atualizar seus dados de pagamento:\n\n1. Acesse: https://svlentes.shop/area-assinante/configuracoes\n2. Faça login\n3. Clique em "Forma de Pagamento"\n\nPrecisa de ajuda? Entre em contato:\n📞 (33) 98606-1427'
+      }
+
+    case 6:
+      // Alterar plano
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '🔄 *Alterar Plano*\n\nQuer mudar seu plano de assinatura?\n\nNossos planos disponíveis:\n📦 Mensal - Entrega todo mês\n📦 Trimestral - Economia de 10%\n📦 Semestral - Economia de 15%\n📦 Anual - Economia de 20%\n\nMe diga qual plano te interessa ou entre em contato:\n📞 (33) 98606-1427'
+      }
+
+    case 7:
+      // Pausar/Cancelar assinatura
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '⏸️ *Pausar ou Cancelar Assinatura*\n\n*Pausar assinatura:*\nVocê pode pausar por 30, 60 ou 90 dias.\nEnvie: "pausar assinatura 30 dias"\n\n*Cancelar assinatura:*\nSentiremos sua falta! 😢\nPara cancelar, entre em contato:\n📞 (33) 98606-1427\n\nPosso ajudar com mais alguma coisa?'
+      }
+
+    case 8:
+      // Falar com atendente
+      return {
+        success: true,
+        requiresResponse: true,
+        message: '💬 *Atendimento Humano*\n\nVou transferir você para nossa equipe!\n\nEntre em contato diretamente:\n📞 WhatsApp: (33) 98606-1427\n📧 Email: saraivavision@gmail.com\n\n*Horário de atendimento:*\nSegunda a Sexta: 8h às 18h\nSábado: 8h às 12h\n\nEm que mais posso ajudar? 😊'
+      }
+
+    default:
+      return null
   }
 }
 
