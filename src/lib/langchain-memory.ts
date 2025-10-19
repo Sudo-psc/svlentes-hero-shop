@@ -353,7 +353,7 @@ export class LangChainBotMemory extends BaseMemory {
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error compressing history', {
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
     }
   }
@@ -387,7 +387,7 @@ export class LangChainBotMemory extends BaseMemory {
       }
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error creating summary', {
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
       return null
     }
