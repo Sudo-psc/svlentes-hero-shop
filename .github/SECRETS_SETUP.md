@@ -82,6 +82,24 @@ This guide provides instructions for configuring GitHub repository secrets requi
 - **Required for**: Production monitoring
 - **Note**: Append specific webhook paths in workflows
 
+#### SLACK_WEBHOOK_URL
+- **Value**: Slack incoming webhook URL
+- **Usage**: Post-deployment monitoring alerts
+- **Required for**: Production monitoring alerts
+- **Security**: Store full webhook URL securely
+
+#### MONITORING_EMAIL_RECIPIENTS
+- **Value**: Comma-separated list of alert recipients
+- **Usage**: Email notifications via Resend during monitoring incidents
+- **Required for**: Production monitoring alerts
+- **Format**: `ops@svlentes.com.br,dev@svlentes.com.br`
+
+#### STRIPE_MONITORING_SECRET
+- **Value**: Stripe secret key dedicated to monitoring checks
+- **Usage**: Validates legacy Stripe fallback availability pós-deploy
+- **Required for**: Production monitoring alerts
+- **Recommendation**: Create restricted key with read-only balance scope
+
 ### Optional Integrations
 
 #### RESEND_API_KEY

@@ -158,6 +158,19 @@ jobs:
           curl -f https://svlentes.shop/assinar
           curl -f https://svlentes.shop/api/monitoring/performance
 
+      - name: Run automated post-deployment monitoring
+        run: scripts/post-deploy-monitoring.sh
+        env:
+          BASE_URL: https://svlentes.shop
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_MONITORING_SECRET }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MONITORING_EMAIL_RECIPIENTS: ${{ secrets.MONITORING_EMAIL_RECIPIENTS }}
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+
       - name: Send success notification
         if: success()
         run: |

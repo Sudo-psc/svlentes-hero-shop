@@ -76,7 +76,8 @@ Code Push → CI Tests → Security Scan → Build → Deploy → Health Check �
 8. Restart production systemd service
 9. Multi-retry health check (5 attempts)
 10. Smoke test critical endpoints
-11. Send success/failure notification to n8n
+11. Automated post-deployment monitoring (API health, Stripe fallback, synthetic checkout, 10-minute error watch with rollback)
+12. Send success/failure notification to n8n
 
 **Rollback**: Automatic on failure with git revert
 
@@ -157,7 +158,8 @@ git push origin master
 # 5. Run database migrations
 # 6. Restart systemd service
 # 7. Verify with smoke tests
-# 8. Send notifications
+# 8. Run automated monitoring (health checks, Stripe verification, synthetic checkout, rollback guard)
+# 9. Send notifications
 
 # Manual deployment (emergency)
 gh workflow run deploy-production.yml
