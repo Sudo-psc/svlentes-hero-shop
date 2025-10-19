@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useResilientSubscription } from '@/hooks/useResilientSubscription'
+import { ResilientDashboardWrapper } from '@/components/assinante/ResilientDashboardWrapper'
 import { AccessibleDashboard } from '@/components/assinante/AccessibleDashboard'
 import { ToastContainer } from '@/components/assinante/ToastFeedback'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
@@ -19,11 +21,13 @@ import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
 import { motion } from 'framer-motion'
 import { useToast } from '@/components/assinante/ToastFeedback'
+import { Button } from '@/components/ui/button'
+import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings } from 'lucide-react'
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
-  const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
+  const { subscription, user, loading: subLoading, error, refetch } = useResilientSubscription()
   const { toasts, removeToast } = useToast()
 
   // Modal states
@@ -565,6 +569,17 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  )
+}
+
+}
+
+// Wrapper principal com sistema resiliente
+export default function DashboardPage() {
+  return (
+    <ResilientDashboardWrapper>
+      <DashboardContent />
+    </ResilientDashboardWrapper>
   )
 }
 
