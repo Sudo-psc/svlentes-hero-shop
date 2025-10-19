@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import {
+    validateCPF as validateCPFBase,
+    formatCPF as formatCPFBase,
+    formatPhone as formatPhoneBase,
+} from './validators'
 
 // Schema para dados de lead (formulário do hero)
 export const leadFormSchema = z.object({
@@ -137,61 +142,10 @@ export const whatsappContactSchema = z.object({
         .max(1000, 'Mensagem deve ter no máximo 1000 caracteres')
 })
 
-// Função para validar CPF
-export function validateCPF(cpf: string): boolean {
-    // Remove caracteres não numéricos
-    const cleanCPF = cpf.replace(/\D/g, '')
-
-    // Verifica se tem 11 dígitos
-    if (cleanCPF.length !== 11) return false
-
-    // Verifica se todos os dígitos são iguais
-    if (/^(\d)\1{10}$/.test(cleanCPF)) return false
-
-    // Validação do primeiro dígito verificador
-    let sum = 0
-    for (let i = 0; i < 9; i++) {
-        sum += parseInt(cleanCPF[i]) * (10 - i)
-    }
-    let remainder = sum % 11
-    const digit1 = remainder < 2 ? 0 : 11 - remainder
-
-    if (parseInt(cleanCPF[9]) !== digit1) return false
-
-    // Validação do segundo dígito verificador
-    sum = 0
-    for (let i = 0; i < 10; i++) {
-        sum += parseInt(cleanCPF[i]) * (11 - i)
-    }
-    remainder = sum % 11
-    const digit2 = remainder < 2 ? 0 : 11 - remainder
-
-    return parseInt(cleanCPF[10]) === digit2
-}
-
 // Função para validar CEP
 export function validateCEP(cep: string): boolean {
     const cleanCEP = cep.replace(/\D/g, '')
     return /^\d{8}$/.test(cleanCEP)
-}
-
-// Função para formatar telefone/WhatsApp
-export function formatPhone(phone: string): string {
-    const cleanPhone = phone.replace(/\D/g, '')
-
-    if (cleanPhone.length === 11) {
-        return cleanPhone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-    } else if (cleanPhone.length === 10) {
-        return cleanPhone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
-    }
-
-    return phone
-}
-
-// Função para formatar CPF
-export function formatCPF(cpf: string): string {
-    const cleanCPF = cpf.replace(/\D/g, '')
-    return cleanCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
 }
 
 // Função para formatar CEP
@@ -199,6 +153,10 @@ export function formatCEP(cep: string): string {
     const cleanCEP = cep.replace(/\D/g, '')
     return cleanCEP.replace(/(\d{5})(\d{3})/, '$1-$2')
 }
+
+export const validateCPF = validateCPFBase
+export const formatCPF = formatCPFBase
+export const formatPhone = formatPhoneBase
 
 // Tipos derivados dos schemas
 export type LeadFormData = z.infer<typeof leadFormSchema>
