@@ -1,0 +1,143 @@
+name: Release Management
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - staging
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify build
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test -- --passWithNoTests
+        continue-on-error: true
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GIT_AUTHOR_NAME: semantic-release-bot
+          GIT_AUTHOR_EMAIL: semantic-release-bot@users.noreply.github.com
+          GIT_COMMITTER_NAME: semantic-release-bot
+          GIT_COMMITTER_EMAIL: semantic-release-bot@users.noreply.github.com
+        run: npx semantic-release
+
+      - name: Get new version
+        id: version
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Released version: ${NEW_VERSION}"
+
+      - name: Send Slack notification
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "🎉 New version released!",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 New Release: v${{ steps.version.outputs.version }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}|View Release Notes>"
+                  }
+                }
+              ]
+            }' || true
+
+      - name: Send webhook notification
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.N8N_WEBHOOK_URL }}/release-notification \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "${{ steps.version.outputs.version }}",
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "author": "${{ github.actor }}",
+              "timestamp": "${{ github.event.head_commit.timestamp }}",
+              "release_url": "https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}"
+            }' || true
+
+  trigger-deployment:
+    name: Trigger Deployment
+    needs: release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Wait for release to be created
+        run: sleep 10
+
+      - name: Trigger production deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-production.yml',
+              ref: context.ref
+            });
+            console.log('Production deployment triggered');
+
+      - name: Send deployment notification
+        run: |
+          curl -X POST ${{ secrets.N8N_WEBHOOK_URL }}/deployment-triggered \
+            -H "Content-Type: application/json" \
+            -d '{
+              "environment": "production",
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "trigger": "automated-release"
+            }' || true

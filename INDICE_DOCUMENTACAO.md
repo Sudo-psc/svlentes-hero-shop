@@ -27,6 +27,56 @@ Se você é novo no projeto, comece por aqui:
 
 ## 👨‍💻 Para Desenvolvedores
 
+### Versionamento e Release
+
+**[VERSIONING.md](VERSIONING.md)** ⭐ NOVO
+- **Finalidade**: Guia completo do sistema de versionamento automático
+- **Público**: Todos os desenvolvedores
+- **Tamanho**: ~10KB
+- **Conteúdo**:
+  - Conventional Commits (feat, fix, docs, etc.)
+  - Como fazer commits corretamente
+  - Versionamento semântico (MAJOR.MINOR.PATCH)
+  - CHANGELOG automático
+  - Git tags e GitHub releases
+  - Deploy automático
+  - Notificações
+  - Comandos úteis e troubleshooting
+
+**[docs/RELEASE_MANAGEMENT.md](docs/RELEASE_MANAGEMENT.md)** ⭐ NOVO
+- **Finalidade**: Documentação técnica do gerenciamento de releases
+- **Público**: DevOps, Tech Leads
+- **Tamanho**: ~12KB
+- **Conteúdo**:
+  - Arquitetura do sistema de release
+  - Componentes (Commitlint, Semantic Release, Husky)
+  - Fluxo completo de release
+  - Estratégias de branching
+  - Configuração de secrets
+  - Monitoramento e métricas
+  - Troubleshooting avançado
+
+**[docs/QUICK_REFERENCE_VERSIONING.md](docs/QUICK_REFERENCE_VERSIONING.md)** ⭐ NOVO
+- **Finalidade**: Referência rápida para commits e releases
+- **Público**: Desenvolvedores (consulta rápida)
+- **Tamanho**: ~4KB
+- **Conteúdo**:
+  - Tabela de tipos de commit
+  - Exemplos práticos
+  - Comandos rápidos
+  - Checklist antes de commitar
+
+**[docs/VERSIONING_EXAMPLE.md](docs/VERSIONING_EXAMPLE.md)** ⭐ NOVO
+- **Finalidade**: Exemplos práticos do sistema de versionamento
+- **Público**: Desenvolvedores iniciantes
+- **Tamanho**: ~11KB
+- **Conteúdo**:
+  - 7 cenários reais de uso
+  - Feature, bugfix, breaking change, hotfix
+  - CHANGELOG gerado em cada cenário
+  - Timeline de release
+  - Boas práticas
+
 ### Entendendo o Projeto
 
 **[CLAUDE.md](CLAUDE.md)**
