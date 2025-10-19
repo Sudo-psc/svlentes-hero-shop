@@ -15,7 +15,7 @@ import {
   FacebookAuthProvider,
   GithubAuthProvider,
 } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { auth, OAUTH_CLIENT_ID } from '@/lib/firebase'
 
 interface AuthContextType {
   user: User | null
@@ -101,9 +101,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider()
     provider.setCustomParameters({
       prompt: 'select_account',
+      // Explicitly use the correct OAuth Client ID
+      client_id: OAUTH_CLIENT_ID,
     })
 
     console.log('[GOOGLE_AUTH] Starting Google login flow...')
+    console.log('[GOOGLE_AUTH] Using OAuth Client ID:', OAUTH_CLIENT_ID)
+    console.log('[GOOGLE_AUTH] Current domain:', typeof window !== 'undefined' ? window.location.origin : 'server-side')
 
     try {
       console.log('[GOOGLE_AUTH] Opening popup...')
@@ -133,6 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       if (error.code === 'auth/unauthorized-domain') {
         throw new Error('Domínio não autorizado. Entre em contato com o suporte.')
+      }
+      if (error.code === 'auth/network-request-failed') {
+        // Enhanced error message for network issues
+        throw new Error('Erro de conexão com Google. Verifique se o OAuth Client ID está configurado corretamente no Google Cloud Console.')
       }
 
       // For any other error, throw with detailed message

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Direto OAuth Google</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .button { background: #4285F4; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }
+        .button:hover { background: #3367D6; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        .debug { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+        .warning { color: orange; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste Direto OAuth Google</h1>
+    <p>Este teste usa OAuth 2.0 diretamente sem Firebase para isolar o problema.</p>
+
+    <div id="config" class="debug">
+        <h3>Configuração OAuth:</h3>
+        <pre id="config-display"></pre>
+    </div>
+
+    <button class="button" onclick="testDirectOAuth()">🔑 Testar OAuth Direto</button>
+    <button class="button" onclick="testGoogleDiscovery()">🔍 Testar Discovery Endpoint</button>
+
+    <div id="result"></div>
+    <div id="debug" class="debug" style="display: none;">
+        <h3>Debug Info:</h3>
+        <pre id="debug-info"></pre>
+    </div>
+
+    <script>
+        // Configuração OAuth direta
+        const oauthConfig = {
+            clientId: '107000561699355223011', // Client ID da Service Account (NÃO é o correto para web)
+            redirectUri: 'https://svlentes.com.br/test-direct-oauth.html',
+            scope: 'openid email profile',
+            authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+            discoveryUrl: 'https://accounts.google.com/.well-known/openid_configuration'
+        };
+
+        document.getElementById('config-display').textContent = JSON.stringify(oauthConfig, null, 2);
+
+        async function testGoogleDiscovery() {
+            const result = document.getElementById('result');
+            const debug = document.getElementById('debug');
+
+            result.innerHTML = '<div>🔄 Testando discovery endpoint...</div>';
+            debug.style.display = 'block';
+
+            try {
+                const response = await fetch(oauthConfig.discoveryUrl);
+                const data = await response.json();
+
+                result.innerHTML = '<div class="success">✅ Discovery endpoint funcionando!</div>';
+                document.getElementById('debug-info').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Erro no discovery: ${error.message}</div>`;
+                document.getElementById('debug-info').textContent = error.stack;
+            }
+        }
+
+        function testDirectOAuth() {
+            const result = document.getElementById('result');
+            const debug = document.getElementById('debug');
+
+            result.innerHTML = '<div>🔄 Iniciando OAuth flow...</div>';
+            debug.style.display = 'block';
+
+            // Construir URL de autorização OAuth
+            const params = new URLSearchParams({
+                client_id: oauthConfig.clientId,
+                redirect_uri: oauthConfig.redirectUri,
+                scope: oauthConfig.scope,
+                response_type: 'code',
+                access_type: 'offline',
+                prompt: 'select_account'
+            });
+
+            const authUrl = `${oauthConfig.authUrl}?${params.toString()}`;
+
+            console.log('[OAUTH_DIRECT] URL de autorização:', authUrl);
+
+            // Tentar abrir popup
+            const popup = window.open(authUrl, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+
+            if (!popup) {
+                result.innerHTML = '<div class="error">❌ Popup bloqueado. Permita popups para este site.</div>';
+                return;
+            }
+
+            // Monitorar popup
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    result.innerHTML = '<div class="warning">⚠️ Popup fechado pelo usuário</div>';
+                }
+            }, 1000);
+
+            // Listener para mensagens do popup (se implementado)
+            window.addEventListener('message', (event) => {
+                if (event.origin === window.location.origin) {
+                    clearInterval(checkClosed);
+                    popup.close();
+
+                    if (event.data.error) {
+                        result.innerHTML = `<div class="error">❌ Erro OAuth: ${event.data.error}</div>`;
+                    } else {
+                        result.innerHTML = `<div class="success">✅ OAuth successful!</div>`;
+                    }
+
+                    document.getElementById('debug-info').textContent = JSON.stringify(event.data, null, 2);
+                }
+            });
+
+            document.getElementById('debug-info').textContent = `
+                Iniciando OAuth flow direto...
+                URL: ${authUrl}
+
+                NOTA: Este teste usa o Client ID da Service Account.
+                Para funcionar corretamente, precisamos de um OAuth Client ID
+                específico para Web Application no Google Cloud Console.
+            `;
+        }
+
+        // Verificar se há parâmetros na URL (callback OAuth)
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const error = params.get('error');
+
+            if (code || error) {
+                const result = document.getElementById('result');
+                const debug = document.getElementById('debug');
+
+                debug.style.display = 'block';
+
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Erro OAuth: ${error}</div>`;
+                    document.getElementById('debug-info').textContent = `
+                        Parâmetros recebidos:
+                        ${window.location.search}
+
+                        Erro: ${error}
+                        Descrição: ${params.get('error_description') || 'N/A'}
+                    `;
+                } else if (code) {
+                    result.innerHTML = `<div class="success">✅ Código OAuth recebido!</div>`;
+                    document.getElementById('debug-info').textContent = `
+                        Código de autorização recebido:
+                        ${code}
+
+                        Próximo passo: Trocar este código por access token
+                        (isso precisaria ser feito no backend)
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Firebase Auth v9 (Compatibilidade)</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .button { background: #4285F4; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }
+        .button:hover { background: #3367D6; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        .debug { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+        .warning { color: orange; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste Firebase Auth v9 (Compatibilidade)</h1>
+    <p>Esta página usa a versão compatibilidade do Firebase SDK (v9 compat) para testar se há problema de versão.</p>
+
+    <div id="config" class="debug">
+        <h3>Configuração Firebase:</h3>
+        <pre id="config-display"></pre>
+    </div>
+
+    <button class="button" onclick="testGoogleAuthV9()">🔑 Testar Login Google (v9 Compat)</button>
+    <button class="button" onclick="testDirectRedirect()">🔀 Testar Redirect Flow</button>
+    <button class="button" onclick="testSignInWithRedirect()">🔄 Testar Direct Redirect</button>
+
+    <div id="result"></div>
+    <div id="debug" class="debug" style="display: none;">
+        <h3>Debug Info:</h3>
+        <pre id="debug-info"></pre>
+    </div>
+
+    <!-- Firebase v9 Compatibility (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+    <script>
+        // Configuração Firebase (mesma do aplicativo)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMcVfgzCkiePLtBVJykumpf_1pz-O6n0I",
+            authDomain: "svlentes.firebaseapp.com",
+            projectId: "svlentes",
+            storageBucket: "svlentes.firebasestorage.app",
+            messagingSenderId: "541878793409",
+            appId: "1:541878793409:web:44dd7e75c1ca4d93b8d040"
+        };
+
+        // Inicializar Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('✅ Firebase inicializado com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao inicializar Firebase:', error);
+        }
+
+        const auth = firebase.auth();
+
+        // Exibir configuração
+        document.getElementById('config-display').textContent = JSON.stringify(firebaseConfig, null, 2);
+
+        function testGoogleAuthV9() {
+            const result = document.getElementById('result');
+            const debug = document.getElementById('debug');
+            const debugInfo = document.getElementById('debug-info');
+
+            result.innerHTML = '<div>🔄 Testando autenticação com v9 compat...</div>';
+            debug.style.display = 'block';
+
+            // Configurar provider com mais opções de debug
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({
+                prompt: 'select_account',
+                access_type: 'offline'
+            });
+
+            // Adicionar escopos adicionais para teste
+            provider.addScope('email');
+            provider.addScope('profile');
+
+            console.log('[AUTH_V9] Iniciando popup com provider:', provider);
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log('[AUTH_V9] Sucesso:', result);
+
+                    document.getElementById('result').innerHTML = \`
+                        <div class="success">
+                            ✅ Login successful com v9 compat!
+                            <br>User: \${result.user.displayName}
+                            <br>Email: \${result.user.email}
+                            <br>UID: \${result.user.uid}
+                            <br>Email Verified: \${result.user.emailVerified}
+                            <br>Provider: \${result.user.providerData[0].providerId}
+                        </div>
+                    \`;
+
+                    debugInfo.textContent = \`
+                        User Info: \${JSON.stringify(result.user, null, 2)}
+                        Credential: \${result.credential ? JSON.stringify(result.credential, null, 2) : 'N/A'}
+                        Additional UserInfo: \${result.additionalUserInfo ? JSON.stringify(result.additionalUserInfo, null, 2) : 'N/A'}
+                    \`;
+                })
+                .catch((error) => {
+                    console.error('[AUTH_V9] Erro detalhado:', error);
+
+                    document.getElementById('result').innerHTML = \`
+                        <div class="error">
+                            ❌ Erro de autenticação: \${error.code}
+                            <br>Mensagem: \${error.message}
+                        </div>
+                    \`;
+
+                    debugInfo.textContent = \`
+                        Erro Completo: \${JSON.stringify(error, null, 2)}
+
+                        Análise do Erro:
+                        - Código: \${error.code}
+                        - Mensagem: \${error.message}
+                        - Email: \${error.email || 'N/A'}
+                        - Credential: \${error.credential || 'N/A'}
+                        - CustomData: \${error.customData ? JSON.stringify(error.customData) : 'N/A'}
+
+                        Possíveis Soluções:
+                        - auth/network-request-failed: Verificar OAuth no Google Cloud Console
+                        - auth/popup-blocked: Permitir popups
+                        - auth/unauthorized-domain: Domínios já estão autorizados
+                        - auth/too-many-requests: Aguardar e tentar novamente
+                    \`;
+
+                    // Análise específica baseada no erro
+                    if (error.code === 'auth/network-request-failed') {
+                        result.innerHTML += \`
+                            <div class="warning" style="margin-top: 10px;">
+                                <strong>Análise do network-error-failed:</strong><br>
+                                Domínios estão autorizados, então provavelmente é:<br>
+                                1. OAuth Client ID não configurado no Google Cloud<br>
+                                2. Firewall/proxy bloqueando requisições<br>
+                                3. Problema com certificado SSL<br>
+                                <br>
+                                <strong>Ação recomendada:</strong><br>
+                                Acesse <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a><br>
+                                Verifique se existe OAuth 2.0 Client ID para Web Application
+                            </div>
+                        \`;
+                    }
+                });
+        }
+
+        function testDirectRedirect() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div>🔄 Testando redirect direto...</div>';
+
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            auth.signInWithRedirect(provider)
+                .then(() => {
+                    result.innerHTML = '<div class="success">✅ Redirect iniciado</div>';
+                })
+                .catch((error) => {
+                    result.innerHTML = \`
+                        <div class="error">
+                            ❌ Erro no redirect: \${error.code}<br>
+                            \${error.message}
+                        </div>
+                    \`;
+                });
+        }
+
+        function testSignInWithRedirect() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div>🔄 Testando getRedirectResult...</div>';
+
+            auth.getRedirectResult()
+                .then((result) => {
+                    if (result.user) {
+                        result.innerHTML = \`
+                            <div class="success">
+                                ✅ Login via redirect successful!<br>
+                                User: \${result.user.displayName}
+                            </div>
+                        \`;
+                    } else {
+                        result.innerHTML = '<div>⚠️ Nenhum resultado de redirect pendente</div>';
+                    }
+                })
+                .catch((error) => {
+                    result.innerHTML = \`
+                        <div class="error">
+                            ❌ Erro no redirect result: \${error.code}<br>
+                            \${error.message}
+                        </div>
+                    \`;
+                });
+        }
+
+        // Monitorar estado de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('[AUTH_STATE] Usuário autenticado:', user);
+                const resultDiv = document.getElementById('result');
+                if (!resultDiv.innerHTML.includes('Login successful')) {
+                    resultDiv.innerHTML = \`
+                        <div class="success">
+                            ✅ Usuário já autenticado: \${user.displayName} (\${user.email})
+                        </div>
+                    \`;
+                }
+            } else {
+                console.log('[AUTH_STATE] Nenhum usuário autenticado');
+            }
+        });
+
+        // Verificar se há erros de configuração
+        window.addEventListener('load', () => {
+            console.log('[CONFIG] Firebase apps:', firebase.apps);
+            console.log('[CONFIG] Auth instance:', auth);
+            console.log('[CONFIG] Current user:', auth.currentUser);
+        });
+    </script>
+</body>
+</html>

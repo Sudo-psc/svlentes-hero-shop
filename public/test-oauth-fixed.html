@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste OAuth com Client ID Correto</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .button { background: #4285F4; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }
+        .button:hover { background: #3367D6; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        .debug { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+        .warning { color: orange; margin: 10px 0; }
+        .info { background: #e3f2fd; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste OAuth com Client ID Correto</h1>
+
+    <div class="info">
+        <strong>OAuth Client ID Detectado:</strong><br>
+        541878793409-a4v5619865slilel2ssi4r7qhfd4255q.apps.googleusercontent.com
+    </div>
+
+    <div id="config" class="debug">
+        <h3>Configuração OAuth:</h3>
+        <pre id="config-display"></pre>
+    </div>
+
+    <button class="button" onclick="testGoogleAuthFixed()">🔑 Testar com OAuth Client ID Correto</button>
+    <button class="button" onclick="testFirebaseWithCorrectId()">🔥 Testar Firebase com ID Correto</button>
+    <button class="button" onclick="checkOAuthConfig()">🔍 Verificar Configuração OAuth</button>
+
+    <div id="result"></div>
+    <div id="debug" class="debug" style="display: none;">
+        <h3>Debug Info:</h3>
+        <pre id="debug-info"></pre>
+    </div>
+
+    <!-- Firebase v9 Compatibility (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+    <script>
+        // Configuração Firebase com OAuth Client ID correto
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMcVfgzCkiePLtBVJykumpf_1pz-O6n0I",
+            authDomain: "svlentes.firebaseapp.com",
+            projectId: "svlentes",
+            storageBucket: "svlentes.firebasestorage.app",
+            messagingSenderId: "541878793409",
+            appId: "1:541878793409:web:44dd7e75c1ca4d93b8d040"
+        };
+
+        // OAuth Client ID correto
+        const oauthClientId = "541878793409-a4v5619865slilel2ssi4r7qhfd4255q.apps.googleusercontent.com";
+
+        document.getElementById('config-display').textContent = JSON.stringify({
+            firebase: firebaseConfig,
+            oauthClientId: oauthClientId,
+            currentDomain: window.location.origin
+        }, null, 2);
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function testGoogleAuthFixed() {
+            const result = document.getElementById('result');
+            const debug = document.getElementById('debug');
+
+            result.innerHTML = '<div>🔄 Testando com OAuth Client ID correto...</div>';
+            debug.style.display = 'block';
+
+            console.log('[OAUTH_FIXED] Usando OAuth Client ID:', oauthClientId);
+            console.log('[OAUTH_FIXED] Domínio atual:', window.location.origin);
+
+            // Configurar provider com o Client ID correto
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            // O Firebase geralmente usa o Client ID automaticamente,
+            // mas podemos forçar para debug
+            provider.setCustomParameters({
+                prompt: 'select_account',
+                access_type: 'offline',
+                // Forçar o Client ID específico se necessário
+                client_id: oauthClientId
+            });
+
+            console.log('[OAUTH_FIXED] Provider configurado:', provider);
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log('[OAUTH_FIXED] ✅ Sucesso!', result);
+
+                    document.getElementById('result').innerHTML = \`
+                        <div class="success">
+                            ✅ LOGIN GOOGLE BEM-SUCEDIDO!
+                            <br><br>
+                            <strong>Usuário:</strong> \${result.user.displayName}<br>
+                            <strong>Email:</strong> \${result.user.email}<br>
+                            <strong>UID:</strong> \${result.user.uid}<br>
+                            <strong>Verificado:</strong> \${result.user.emailVerified ? 'Sim' : 'Não'}<br>
+                            <strong>Provider:</strong> \${result.user.providerData[0].providerId}
+                        </div>
+                    \`;
+
+                    document.getElementById('debug-info').textContent = \`
+                        ✅ AUTENTICAÇÃO BEM-SUCEDIDA!
+
+                        Dados do Usuário:
+                        \${JSON.stringify({
+                            displayName: result.user.displayName,
+                            email: result.user.email,
+                            uid: result.user.uid,
+                            emailVerified: result.user.emailVerified,
+                            photoURL: result.user.photoURL
+                        }, null, 2)}
+
+                        Token Info:
+                        \${result.credential ? JSON.stringify({
+                            provider: result.credential.providerId,
+                            signInMethod: result.credential.signInMethod
+                        }, null, 2) : 'N/A'}
+                    \`;
+                })
+                .catch((error) => {
+                    console.error('[OAUTH_FIXED] ❌ Erro:', error);
+
+                    document.getElementById('result').innerHTML = \`
+                        <div class="error">
+                            ❌ Erro de autenticação: \${error.code}<br>
+                            Mensagem: \${error.message}
+                        </div>
+                    \`;
+
+                    document.getElementById('debug-info').textContent = \`
+                        ❌ ERRO DETALHADO:
+
+                        Código: \${error.code}
+                        Mensagem: \${error.message}
+                        Email: \${error.email || 'N/A'}
+                        Credential: \${error.credential || 'N/A'}
+
+                        CustomData: \${error.customData ? JSON.stringify(error.customData, null, 2) : 'N/A'}
+
+                        Análise:
+                        - Se continuar "auth/network-request-failed", o problema pode ser:
+                          1. OAuth Client ID não está configurado no Google Cloud Console
+                          2. Origins JavaScript não autorizadas no OAuth Client
+                          3. Problema de rede/firewall
+                    \`;
+
+                    // Análise específica
+                    if (error.code === 'auth/network-request-failed') {
+                        result.innerHTML += \`
+                            <div class="warning" style="margin-top: 15px;">
+                                <strong>ANÁLISE DO ERRO:</strong><br>
+                                OAuth Client ID correto está sendo usado, mas ainda falha.<br><br>
+                                <strong>Próximas verificações:</strong><br>
+                                1. No Google Cloud Console → APIs & Services → Credentials<br>
+                                2. Verifique se o OAuth Client ID está configurado para "Web application"<br>
+                                3. Em "Authorized JavaScript origins", adicione:<br>
+                                   • https://svlentes.com.br<br>
+                                   • https://svlentes.shop<br>
+                                   • http://localhost:3000<br>
+                                4. Em "Authorized redirect URIs", adicione:<br>
+                                   • https://svlentes.firebaseapp.com/__/auth/handler
+                            </div>
+                        \`;
+                    }
+                });
+        }
+
+        function testFirebaseWithCorrectId() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div>🔄 Testando Firebase com configuração manual...</div>';
+
+            // Tentar configurar manualmente o OAuth Client ID no Firebase
+            try {
+                auth.tenantId = oauthClientId; // Isso pode não funcionar, mas vamos testar
+
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({
+                    prompt: 'select_account',
+                    // Forçar parâmetros específicos
+                    hd: 'gmail.com' // Opcional: restringir a um domínio
+                });
+
+                auth.signInWithPopup(provider)
+                    .then((result) => {
+                        result.innerHTML = \`
+                            <div class="success">
+                                ✅ Firebase com ID correto funcionou!<br>
+                                User: \${result.user.displayName}
+                            </div>
+                        \`;
+                    })
+                    .catch((error) => {
+                        result.innerHTML = \`
+                            <div class="error">
+                                ❌ Erro: \${error.code}<br>
+                                \${error.message}
+                            </div>
+                        \`;
+                    });
+            } catch (error) {
+                result.innerHTML = \`<div class="error">❌ Erro na configuração: \${error.message}</div>\`;
+            }
+        }
+
+        function checkOAuthConfig() {
+            const result = document.getElementById('result');
+            const debug = document.getElementById('debug');
+
+            result.innerHTML = '<div>🔍 Verificando configuração OAuth...</div>';
+            debug.style.display = 'block';
+
+            // Verificar se conseguimos acessar o discovery endpoint do Google
+            fetch('https://accounts.google.com/.well-known/openid_configuration')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('debug-info').textContent = \`
+                        ✅ Discovery Endpoint Acessível
+
+                        Configuração Atual:
+                        - OAuth Client ID: \${oauthClientId}
+                        - Domínio Atual: \${window.location.origin}
+                        - Auth Domain Firebase: \${firebaseConfig.authDomain}
+
+                        Google OAuth Info:
+                        - Auth Endpoint: \${data.authorization_endpoint}
+                        - Token Endpoint: \${data.token_endpoint}
+                        - Issuer: \${data.issuer}
+
+                        Próximos Passos:
+                        1. Verifique se \${oauthClientId} está configurado no Google Cloud Console
+                        2. Verifique se \${window.location.origin} está nas "Authorized JavaScript origins"
+                        3. Verifique se o redirect URI está configurado
+                    \`;
+
+                    result.innerHTML = '<div class="success">✅ Configuração OAuth acessível</div>';
+                })
+                .catch(error => {
+                    result.innerHTML = '<div class="error">❌ Erro ao acessar configuração OAuth</div>';
+                    document.getElementById('debug-info').textContent = \`Erro: \${error.message}\`;
+                });
+        }
+
+        // Monitorar estado de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('[AUTH_STATE] Usuário autenticado:', user.displayName);
+                document.getElementById('result').innerHTML = \`
+                    <div class="success">
+                        ✅ Usuário já autenticado: \${user.displayName} (\${user.email})
+                    </div>
+                \`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Firebase Auth</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .button { background: #4285F4; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }
+        .button:hover { background: #3367D6; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        .debug { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste de Autenticação Firebase</h1>
+
+    <div id="config" class="debug">
+        <h3>Configuração Firebase:</h3>
+        <pre id="config-display"></pre>
+    </div>
+
+    <button class="button" onclick="testGoogleAuth()">🔑 Testar Login Google</button>
+    <button class="button" onclick="checkConnectivity()">🌐 Verificar Conectividade</button>
+
+    <div id="result"></div>
+    <div id="debug" class="debug" style="display: none;">
+        <h3>Debug Info:</h3>
+        <pre id="debug-info"></pre>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+    <script>
+        // Configuração Firebase (mesma do aplicativo)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMcVfgzCkiePLtBVJykumpf_1pz-O6n0I",
+            authDomain: "svlentes.firebaseapp.com",
+            projectId: "svlentes",
+            storageBucket: "svlentes.firebasestorage.app",
+            messagingSenderId: "541878793409",
+            appId: "1:541878793409:web:44dd7e75c1ca4d93b8d040"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Exibir configuração
+        document.getElementById('config-display').textContent = JSON.stringify(firebaseConfig, null, 2);
+
+        function testGoogleAuth() {
+            const result = document.getElementById('result');
+            const debug = document.getElementById('debug');
+            const debugInfo = document.getElementById('debug-info');
+
+            result.innerHTML = '<div>🔄 Testando autenticação...</div>';
+            debug.style.display = 'block';
+
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    document.getElementById('result').innerHTML = `
+                        <div class="success">
+                            ✅ Login successful!
+                            <br>User: ${result.user.displayName}
+                            <br>Email: ${result.user.email}
+                            <br>UID: ${result.user.uid}
+                        </div>
+                    `;
+
+                    debugInfo.textContent = `
+                        User Info: ${JSON.stringify(result.user, null, 2)}
+                        Token: ${result.credential.accessToken ? result.credential.accessToken.substring(0, 50) + '...' : 'N/A'}
+                    `;
+                })
+                .catch((error) => {
+                    document.getElementById('result').innerHTML = `
+                        <div class="error">
+                            ❌ Erro de autenticação: ${error.code}
+                            <br>Mensagem: ${error.message}
+                        </div>
+                    `;
+
+                    debugInfo.textContent = `
+                        Error Code: ${error.code}
+                        Error Message: ${error.message}
+                        Error Details: ${JSON.stringify(error, null, 2)}
+
+                        Diagnóstico:
+                        - auth/network-request-failed: Verifique domínios autorizados no Firebase Console
+                        - auth/popup-blocked: Permita popups no navegador
+                        - auth/unauthorized-domain: Adicione este domínio aos autorizados
+                    `;
+
+                    // Análise específica do erro
+                    if (error.code === 'auth/network-request-failed') {
+                        result.innerHTML += `
+                            <div class="error" style="margin-top: 10px;">
+                                <strong>Solução provável:</strong><br>
+                                1. Acesse <a href="https://console.firebase.google.com/project/svlentes/authentication/settings" target="_blank">Firebase Console</a><br>
+                                2. Adicione os domínios autorizados:<br>
+                                - svlentes.com.br<br>
+                                - svlentes.shop<br>
+                                - localhost (para dev)<br>
+                                3. Salve e teste novamente
+                            </div>
+                        `;
+                    }
+                });
+        }
+
+        function checkConnectivity() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div>🔄 Verificando conectividade...</div>';
+
+            const tests = [
+                { name: 'Firebase Config', url: 'https://firebase.googleapis.com' },
+                { name: 'Google OAuth', url: 'https://accounts.google.com' },
+                { name: 'Firebase Auth', url: 'https://identitytoolkit.googleapis.com' }
+            ];
+
+            let results = [];
+
+            Promise.all(tests.map(test =>
+                fetch(test.url, { method: 'HEAD' })
+                    .then(() => results.push(`✅ ${test.name}: OK`))
+                    .catch(() => results.push(`❌ ${test.name}: Falha`))
+            )).then(() => {
+                result.innerHTML = `
+                    <h3>Resultados da Conectividade:</h3>
+                    ${results.join('<br>')}
+                `;
+            });
+        }
+
+        // Monitorar estado de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('result').innerHTML = `
+                    <div class="success">
+                        ✅ Usuário autenticado: ${user.displayName} (${user.email})
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

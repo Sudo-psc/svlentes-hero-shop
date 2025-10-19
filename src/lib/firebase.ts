@@ -11,6 +11,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
+// OAuth Client ID for Google Sign-In (explicit configuration)
+const OAUTH_CLIENT_ID = "541878793409-a4v5619865slilel2ssi4r7qhfd4255q.apps.googleusercontent.com"
+
 // Initialize Firebase (singleton pattern)
 let app: FirebaseApp
 let auth: Auth
@@ -25,4 +28,4 @@ if (typeof window !== 'undefined') {
   auth = getAuth(app)
 }
 
-export { app, auth }
+export { app, auth, OAUTH_CLIENT_ID }
