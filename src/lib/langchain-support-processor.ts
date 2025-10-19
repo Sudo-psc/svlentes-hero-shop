@@ -11,6 +11,8 @@ import { Document } from '@langchain/core/documents'
 import { SupportKnowledgeBase, FAQCategory } from './support-knowledge-base'
 import { supportTicketManager, TicketCategory, TicketPriority } from './support-ticket-manager'
 import { getLangSmithConfig, logLangSmithStatus, getLangSmithRunConfig } from './langsmith-config'
+import { responseCache } from './response-cache'
+import { logger } from './logger'
 
 interface SupportIntent {
   name: string
@@ -297,7 +299,7 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
   }
 
   /**
-   * Process customer support message
+   * Process customer support message with intelligent caching
    */
   async processSupportMessage(
     message: string,
@@ -309,6 +311,7 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     escalationRequired: boolean
     ticketCreated: boolean
     actions: string[]
+    cacheHit: boolean
   }> {
     const runConfig = getLangSmithRunConfig({
       userId: context.userProfile?.id,
@@ -320,33 +323,116 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
     })
 
     try {
+      // Step 0: Check cache for similar responses (before expensive AI processing)
+      const cacheKey = this.generateCacheKey(message, context)
+      const cachedResponse = responseCache.get(message, context)
+
+      if (cachedResponse) {
+        logger.debug('Cache hit for support message', {
+          intent: cachedResponse.intent,
+          confidence: cachedResponse.confidence,
+          userId: context.userProfile?.id
+        })
+
+        return {
+          intent: {
+            name: cachedResponse.intent,
+            confidence: cachedResponse.confidence,
+            category: this.mapIntentToCategory(cachedResponse.intent),
+            priority: TicketPriority.MEDIUM,
+            escalationRequired: false,
+            entities: {
+              sentiment: 'neutral',
+              urgency: 'low',
+              emotions: [],
+              keywords: []
+            },
+            suggestedActions: [],
+            responseStrategy: 'automated'
+          },
+          response: cachedResponse.response,
+          quickReplies: cachedResponse.quickReplies,
+          escalationRequired: false,
+          ticketCreated: false,
+          actions: [],
+          cacheHit: true
+        }
+      }
+
       // Step 1: Check for emergency
       const emergencyCheck = await this.detectEmergency(message)
       if (emergencyCheck === 'EMERGENCY_TRUE') {
-        return this.handleEmergencyResponse(context.userProfile?.name)
+        const emergencyResponse = this.handleEmergencyResponse(context.userProfile?.name)
+        // Cache emergency responses for a shorter time
+        responseCache.set(
+          message,
+          emergencyResponse.response,
+          'emergency',
+          1.0,
+          emergencyResponse.quickReplies,
+          context,
+          ['emergency']
+        )
+        return { ...emergencyResponse, cacheHit: false }
       }
 
       // Step 2: Classify intent
       const intent = await this.classifySupportIntent(message, context)
 
-      // Step 3: Get relevant knowledge base entries
+      // Step 3: Check semantic cache after intent classification
+      const semanticCached = responseCache.getSemantic(message, intent.name)
+      if (semanticCached) {
+        logger.debug('Semantic cache hit for support message', {
+          intent: semanticCached.intent,
+          confidence: semanticCached.confidence,
+          semanticIntent: intent.name
+        })
+
+        return {
+          intent: {
+            ...intent,
+            confidence: Math.max(intent.confidence, semanticCached.confidence)
+          },
+          response: semanticCached.response,
+          quickReplies: semanticCached.quickReplies,
+          escalationRequired: false,
+          ticketCreated: false,
+          actions: intent.suggestedActions,
+          cacheHit: true
+        }
+      }
+
+      // Step 4: Get relevant knowledge base entries
       const knowledgeBaseInfo = await this.getRelevantKnowledge(intent.category, message)
 
-      // Step 4: Generate response
+      // Step 5: Generate response
       const response = await this.generateSupportResponse(message, intent, context, knowledgeBaseInfo)
 
-      // Step 5: Determine escalation needs
+      // Step 6: Determine escalation needs
       const escalationDecision = await this.determineEscalation(message, intent, context)
 
-      // Step 6: Create ticket if needed
+      // Step 7: Create ticket if needed
       let ticketCreated = false
       if (this.shouldCreateTicket(intent, escalationDecision)) {
         await this.createSupportTicket(message, intent, context)
         ticketCreated = true
       }
 
-      // Step 7: Generate quick replies
+      // Step 8: Generate quick replies
       const quickReplies = this.generateQuickReplies(intent, response)
+
+      // Step 9: Cache the response if appropriate
+      if (this.shouldCacheResponse(intent, response)) {
+        responseCache.set(
+          message,
+          response,
+          intent.name,
+          intent.confidence,
+          quickReplies,
+          context,
+          [intent.category, intent.responseStrategy]
+        )
+      }
 
       return {
         intent,
@@ -354,12 +440,71 @@ Responda com "ESCALATE_TRUE" ou "ESCALATE_FALSE" e justifique em uma linha.
         quickReplies,
         escalationRequired: escalationDecision,
         ticketCreated,
-        actions: intent.suggestedActions
+        actions: intent.suggestedActions,
+        cacheHit: false
       }
     } catch (error) {
       console.error('Error processing support message:', error)
-      return this.handleErrorProcessing(context.userProfile?.name)
+      return { ...this.handleErrorProcessing(context.userProfile?.name), cacheHit: false }
     }
+  }
+
+  /**
+   * Helper methods for response caching
+   */
+  private generateCacheKey(message: string, context: SupportContext): string {
+    const normalizedMessage = message.toLowerCase().trim()
+    const contextHash = context.userProfile?.id || 'anonymous'
+    return `${normalizedMessage}:${contextHash}`
+  }
+
+  private mapIntentToCategory(intentName: string): TicketCategory {
+    const mapping: Record<string, TicketCategory> = {
+      'billing_inquiry': TicketCategory.BILLING,
+      'payment_issue': TicketCategory.BILLING,
+      'technical_support': TicketCategory.TECHNICAL,
+      'product_question': TicketCategory.PRODUCT,
+      'delivery_inquiry': TicketCategory.DELIVERY,
+      'account_issue': TicketCategory.ACCOUNT,
+      'subscription_management': TicketCategory.SUBSCRIPTION,
+      'complaint': TicketCategory.COMPLAINT,
+      'compliment': TicketCategory.COMPLIMENT,
+      'emergency': TicketCategory.EMERGENCY,
+      'general_inquiry': TicketCategory.GENERAL
+    }
+    return mapping[intentName] || TicketCategory.GENERAL
+  }
+
+  private shouldCacheResponse(intent: SupportIntent, response: string): boolean {
+    // Don't cache if confidence is too low
+    if (intent.confidence < 0.8) return false
+
+    // Don't cache escalated responses
+    if (intent.escalationRequired) return false
+
+    // Don't cache very short or very long responses
+    if (response.length < 20 || response.length > 1000) return false
+
+    // Don't cache emergency or complaint responses
+    const nonCacheableIntents = ['emergency', 'complaint', 'escalation_required']
+    if (nonCacheableIntents.includes(intent.name.toLowerCase())) return false
+
+    return true
+  }
+
+  private getCacheTTL(intent: SupportIntent): number {
+    // Different TTL based on intent type
+    const ttlMapping: Record<string, number> = {
+      'billing_inquiry': 60 * 60 * 1000, // 1 hour
+      'general_inquiry': 30 * 60 * 1000, // 30 minutes
+      'product_question': 45 * 60 * 1000, // 45 minutes
+      'technical_support': 20 * 60 * 1000, // 20 minutes
+      'delivery_inquiry': 15 * 60 * 1000, // 15 minutes
+      'emergency': 5 * 60 * 1000, // 5 minutes
+      'complaint': 10 * 60 * 1000 // 10 minutes
+    }
+
+    return ttlMapping[intent.name] || 30 * 60 * 1000 // Default 30 minutes
   }
 
   /**
@@ -530,10 +675,10 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     })
 
     return await this.responseChain.invoke({
-      customerName: sanitizedCustomerName,
+      customerName: customerName,
       customerType,
       subscriptionStatus,
-      recentHistory: sanitizedTicketSubjects,
+      recentHistory: recentHistory,
       intent: intent.name,
       category: intent.category,
       priority: intent.priority,

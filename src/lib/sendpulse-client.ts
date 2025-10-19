@@ -235,6 +235,59 @@ export class SendPulseClient {
   }
 
   /**
+   * Get fresh contact data with real-time validation
+   * Bypasses cache for conversation status if data is stale
+   */
+  async getFreshContact(phone: string): Promise<SendPulseContact | null> {
+    const botId = await this.getBotId()
+    const cleanPhone = phone.toString().replace(/\D/g, '')
+
+    // Check cache first
+    const cachedContactId = contactCache.getContactId(botId, cleanPhone)
+    if (cachedContactId) {
+      // Check if conversation status is fresh
+      if (contactCache.isConversationStatusFresh(botId, cleanPhone)) {
+        const contact = await this.getContactById(cachedContactId)
+        if (contact) {
+          return contact
+        }
+      } else {
+        // Conversation status is stale, get fresh data
+        console.log(`🔄 Refreshing stale conversation status for ${phone}`)
+        const freshContact = await this.getContactById(cachedContactId)
+        if (freshContact) {
+          // Update cache with fresh data
+          contactCache.set(botId, cleanPhone, freshContact)
+          return freshContact
+        }
+      }
+    }
+
+    // No cached contact, search for it
+    return await this.findContactByPhone(phone)
+  }
+
+  /**
+   * Validate conversation window status in real-time
+   * Use this before sending messages to ensure 24h window is still open
+   */
+  async validateConversationWindow(phone: string): Promise<boolean> {
+    const botId = await this.getBotId()
+    const cleanPhone = phone.toString().replace(/\D/g, '')
+
+    // Get fresh contact data
+    const contact = await this.getFreshContact(phone)
+    if (!contact) {
+      return false
+    }
+
+    // Update cache with fresh conversation status
+    contactCache.updateConversationCheckTime(botId, cleanPhone)
+
+    return contact.is_chat_opened || false
+  }
+
+  /**
    * Check if contact is in 24-hour conversation window
    */
   private async isContactActive(contactId: string): Promise<boolean> {
@@ -270,8 +323,11 @@ export class SendPulseClient {
         if (isChatOpenedOverride !== undefined) {
           isActive = isChatOpenedOverride
           console.log(`[SendPulse] Using fresh contact data: is_chat_opened=${isActive}`)
+        } else if (contactPhone) {
+          console.log(`[SendPulse] No override - validating conversation window via fresh API check (phone: ${contactPhone})`)
+          isActive = await this.validateConversationWindow(contactPhone)
         } else {
-          console.log(`[SendPulse] No override - checking via API (contactId: ${contactId})`)
+          console.log(`[SendPulse] No override or phone - checking via API (contactId: ${contactId})`)
           isActive = await this.isContactActive(contactId)
         }
 

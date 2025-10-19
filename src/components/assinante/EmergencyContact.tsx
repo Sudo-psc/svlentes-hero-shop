@@ -219,4 +219,18 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
   )
 }
 
+// Componente简化 sem props para uso direto
+export function EmergencyContact() {
+  const contact = {
+    phone: "5533999898026",
+    email: "contato@svlentes.com.br",
+    doctor: {
+      name: "Dr. Philipe Saraiva Cruz",
+      crm: "CRM-MG 69.870"
+    }
+  }
+
+  return <EmergencyContactCard contact={contact} />
+}
+
 export default EmergencyContactCard

@@ -14,6 +14,8 @@ interface CachedContact {
   isChatOpened: boolean
   cachedAt: number
   expiresAt: number
+  conversationCheckedAt: number // Track when conversation status was last checked
+  freshnessThreshold: number // Max age for conversation status before refresh needed
 }
 
 export class ContactCache {
@@ -46,7 +48,9 @@ export class ContactCache {
       name: contact.channel_data.name,
       isChatOpened: contact.is_chat_opened,
       cachedAt: now,
-      expiresAt: now + this.ttl
+      expiresAt: now + this.ttl,
+      conversationCheckedAt: now,
+      freshnessThreshold: 5 * 60 * 1000 // 5 minutes for conversation status freshness
     })
   }
 
@@ -84,6 +88,48 @@ export class ContactCache {
   isContactActive(botId: string, phone: string): boolean | null {
     const cached = this.get(botId, phone)
     return cached ? cached.isChatOpened : null
+  }
+
+  /**
+   * Check if conversation status data is fresh enough
+   */
+  isConversationStatusFresh(botId: string, phone: string): boolean {
+    const cached = this.get(botId, phone)
+    if (!cached) return false
+
+    const now = Date.now()
+    return (now - cached.conversationCheckedAt) < cached.freshnessThreshold
+  }
+
+  /**
+   * Mark conversation status as freshly checked
+   */
+  updateConversationCheckTime(botId: string, phone: string): void {
+    const key = this.getCacheKey(botId, phone)
+    const cached = this.cache.get(key)
+
+    if (cached) {
+      cached.conversationCheckedAt = Date.now()
+      this.cache.set(key, cached)
+    }
+  }
+
+  /**
+   * Get contacts that need conversation status refresh
+   */
+  getStaleConversationContacts(botId: string): CachedContact[] {
+    const now = Date.now()
+    const staleContacts: CachedContact[] = []
+
+    Array.from(this.cache.values()).forEach(contact => {
+      if (contact.botId === botId &&
+          now <= contact.expiresAt &&
+          (now - contact.conversationCheckedAt) > contact.freshnessThreshold) {
+        staleContacts.push(contact)
+      }
+    })
+
+    return staleContacts
   }
 
   /**

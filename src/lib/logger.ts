@@ -26,6 +26,7 @@ export enum LogCategory {
   WHATSAPP = 'whatsapp',
   LANGCHAIN = 'langchain',
   DATABASE = 'database',
+  CACHE = 'cache',
 }
 
 interface LogMetadata {

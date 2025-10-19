@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, Mail, MessageCircle, Smartphone, Clock, Shield, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { Label } from '@/components/ui/Label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/Input'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import {

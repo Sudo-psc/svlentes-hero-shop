@@ -20,6 +20,7 @@ import { logger, LogCategory } from '@/lib/logger'
 import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
 import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
 import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
+import { WebhookSecurity } from '@/lib/webhook-security'
 import {
   validateAuthenticatedSession,
   viewSubscriptionCommand,
@@ -110,6 +111,84 @@ const SendPulseLegacyMessageSchema = z.object({
   contact: ContactSchema
 })
 
+// SendPulse Brazilian API format (similar to WhatsApp Business API)
+const SendPulseBrazilianAPISchema = z.object({
+  object: z.literal('whatsapp_business_account'),
+  entry: z.array(z.object({
+    id: z.string(),
+    changes: z.array(z.object({
+      value: z.object({
+        messaging_product: z.literal('whatsapp'),
+        metadata: z.object({
+          display_phone_number: z.string(),
+          phone_number_id: z.string()
+        }),
+        contacts: z.array(z.object({
+          profile: z.object({
+            name: z.string()
+          }),
+          wa_id: z.string()
+        })).optional(),
+        messages: z.array(z.object({
+          from: z.string(),
+          id: z.string(),
+          timestamp: z.string(),
+          text: z.object({
+            body: z.string()
+          }).optional(),
+          type: z.string()
+        })).optional()
+      }),
+      field: z.literal('messages')
+    }))
+  }))
+})
+
+// Rate limiting interfaces and functions
+interface RateLimitResult {
+  limited: boolean
+  remaining: number
+  resetAt: number
+}
+
+interface RateLimitPreset {
+  maxRequests: number
+  windowMs: number
+}
+
+const RateLimitPresets = {
+  WEBHOOK_IP: {
+    maxRequests: 100,
+    windowMs: 60 * 1000 // 1 minute
+  },
+  WEBHOOK: {
+    maxRequests: 50,
+    windowMs: 60 * 1000 // 1 minute
+  }
+}
+
+// Simple in-memory rate limiter
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(config: RateLimitPreset & { identifier: string }): RateLimitResult {
+  const key = config.identifier
+  const now = Date.now()
+
+  let entry = rateLimitStore.get(key)
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + config.windowMs }
+    rateLimitStore.set(key, entry)
+  }
+
+  entry.count += 1
+
+  return {
+    limited: entry.count > config.maxRequests,
+    remaining: Math.max(0, config.maxRequests - entry.count),
+    resetAt: entry.resetAt
+  }
+}
+
 // Set debug level from environment or default to standard
 // if (process.env.DEBUG_LEVEL) {
 //   debugUtilities.setDebugLevel(process.env.DEBUG_LEVEL as DebugLevel)
@@ -135,25 +214,90 @@ export async function POST(request: NextRequest) {
   const requestId = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
 
   try {
-    // C6: Parse and validate JSON payload
-    let body: any
-    try {
-      const rawBody = await request.text()
+    // P4: Rate limiting - IP based protection
+    const ipRateLimit = checkRateLimit({
+      ...RateLimitPresets.WEBHOOK_IP,
+      identifier: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
+                   'unknown'
+    })
 
-      // Limit body size to prevent DoS
-      if (rawBody.length > 500000) { // 500KB limit
-        logger.warn(LogCategory.WEBHOOK, 'Webhook payload too large', {
+    if (ipRateLimit.limited) {
+      logger.warn(LogCategory.WEBHOOK, 'Rate limit exceeded for IP', {
+        requestId,
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        resetAt: new Date(ipRateLimit.resetAt).toISOString()
+      })
+
+      return NextResponse.json(
+        { error: 'RATE_LIMIT_EXCEEDED', requestId },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': String(RateLimitPresets.WEBHOOK_IP.maxRequests),
+            'X-RateLimit-Remaining': String(ipRateLimit.remaining),
+            'X-RateLimit-Reset': new Date(ipRateLimit.resetAt).toISOString()
+          }
+        }
+      )
+    }
+
+    // C6: Enhanced security validation
+    let body: any
+    let rawBody: string
+    try {
+      rawBody = await request.text()
+
+      // Enhanced security validation
+      const securityValidation = WebhookSecurity.validateRequest(request, rawBody, {
+        maxPayloadSize: 500 * 1024, // 500KB
+        requireUserAgent: true,
+        suspiciousPatterns: [
+          /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+          /javascript:/gi,
+          /on\w+\s*=/gi,
+          /union\s+select/gi,
+          /drop\s+table/gi,
+        ]
+      })
+
+      if (!securityValidation.valid) {
+        WebhookSecurity.logSecurityEvent('BLOCKED_REQUEST', {
           requestId,
-          size: rawBody.length
+          reason: securityValidation.reason,
+          riskScore: securityValidation.riskScore,
+          ip: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown'
         })
+
         return NextResponse.json(
-          { error: 'Payload too large', requestId },
-          { status: 413 }
+          {
+            error: 'Security validation failed',
+            requestId,
+            reason: securityValidation.reason
+          },
+          { status: 400 }
         )
+      }
+
+      // Log high-risk requests
+      if (securityValidation.riskScore > 50) {
+        logger.warn(LogCategory.SECURITY, 'High-risk webhook request', {
+          requestId,
+          riskScore: securityValidation.riskScore,
+          ip: request.headers.get('x-forwarded-for') || 'unknown'
+        })
       }
 
       body = JSON.parse(rawBody)
     } catch (parseError) {
+      WebhookSecurity.logSecurityEvent('SUSPICIOUS_PATTERN', {
+        requestId,
+        error: parseError instanceof Error ? parseError.message : 'Unknown',
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      })
+
       logger.error(LogCategory.WEBHOOK, 'Invalid JSON payload', {
         requestId,
         error: parseError instanceof Error ? parseError.message : 'Unknown'
@@ -164,12 +308,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // C7: Analyze request patterns for anomalies
+    const clientIP = request.headers.get('x-forwarded-for') || 'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+    const patternAnalysis = WebhookSecurity.analyzeRequestPattern(
+      requestId,
+      clientIP,
+      userAgent
+    )
+
+    if (patternAnalysis.suspicious) {
+      logger.warn(LogCategory.SECURITY, 'Suspicious request pattern detected', {
+        requestId,
+        clientIP,
+        userAgent,
+        reasons: patternAnalysis.reasons
+      })
+    }
+
     // Log webhook received with tracing
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceWebhookProcessing(body, 'sendpulse')
     logger.logSendPulseWebhook('received', {
       requestId,
-      bodySize: bodyText.length,
+      bodySize: rawBody.length,
       eventType: body.event || body[0]?.title || 'unknown'
     })
 
@@ -188,9 +350,11 @@ export async function POST(request: NextRequest) {
 
       logger.info(LogCategory.SENDPULSE, `Processing ${body.length} events`)
 
+      const validEvents = []
       for (const event of validationResult.data) {
         if (event.title === 'incoming_message' && event.service === 'whatsapp') {
           await processSendPulseNativeMessage(event, requestId)
+          validEvents.push(event)
         }
       }
 
