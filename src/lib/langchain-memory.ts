@@ -539,7 +539,7 @@ export class LangChainBotMemory extends BaseMemory {
       const deletedSessions = await prisma.chatbotSession.deleteMany({
         where: {
           lastActivityAt: { lt: cutoffDate },
-          status: { in: ['EXPIRED', 'INACTIVE'] }
+          status: 'EXPIRED'
         }
       })
 
