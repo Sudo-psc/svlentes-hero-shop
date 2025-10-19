@@ -28,31 +28,32 @@ export const useIntersectionObserver = (
 ) => {
     const [isIntersecting, setIsIntersecting] = React.useState(false)
     const [hasIntersected, setHasIntersected] = React.useState(false)
+    const observerOptions = React.useMemo(
+        () => ({ threshold: 0.1, rootMargin: '50px', ...options }),
+        [options]
+    )
+    const observerCallback = React.useCallback(
+        ([entry]: IntersectionObserverEntry[]) => {
+            const entryState = entry.isIntersecting
+            setIsIntersecting(entryState)
+            if (entryState && !hasIntersected) {
+                setHasIntersected(true)
+            }
+        },
+        [hasIntersected]
+    )
 
     React.useEffect(() => {
         const element = elementRef.current
         if (!element) return
 
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsIntersecting(entry.isIntersecting)
-                if (entry.isIntersecting && !hasIntersected) {
-                    setHasIntersected(true)
-                }
-            },
-            {
-                threshold: 0.1,
-                rootMargin: '50px',
-                ...options,
-            }
-        )
-
+        const observer = new IntersectionObserver(observerCallback, observerOptions)
         observer.observe(element)
 
         return () => {
-            observer.unobserve(element)
+            observer.disconnect()
         }
-    }, [elementRef, hasIntersected, options])
+    }, [elementRef, observerCallback, observerOptions])
 
     return { isIntersecting, hasIntersected }
 }

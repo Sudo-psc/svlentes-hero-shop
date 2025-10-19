@@ -3,10 +3,12 @@
  * Manages subscription data fetching and state for authenticated users
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCsrfProtection } from './useCsrfProtection'
 import type { Subscription, SubscriptionUser, SubscriptionResponse, SubscriptionStatus } from '@/types/subscription'
+
+const subscriptionCache = new Map<string, SubscriptionResponse>()
 
 interface UseSubscriptionReturn {
   subscription: Subscription | null
@@ -27,9 +29,21 @@ export function useSubscription(): UseSubscriptionReturn {
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<SubscriptionStatus>('loading')
 
+  const cacheKey = useMemo(() => authUser?.uid ?? null, [authUser])
+
   const fetchSubscription = useCallback(async () => {
-    if (!authUser) {
+    if (!authUser || !cacheKey) {
       setStatus('unauthenticated')
+      setLoading(false)
+      return
+    }
+
+    const cached = subscriptionCache.get(cacheKey)
+    if (cached) {
+      setSubscription(cached.subscription)
+      setUser(cached.user)
+      setStatus('authenticated')
+      setError(null)
       setLoading(false)
       return
     }
@@ -38,7 +52,6 @@ export function useSubscription(): UseSubscriptionReturn {
       setLoading(true)
       setError(null)
 
-      // Get Firebase ID token
       const token = await authUser.getIdToken()
 
       const response = await fetch('/api/assinante/subscription', {
@@ -59,6 +72,7 @@ export function useSubscription(): UseSubscriptionReturn {
       }
 
       const data: SubscriptionResponse = await response.json()
+      subscriptionCache.set(cacheKey, data)
 
       setSubscription(data.subscription)
       setUser(data.user)
@@ -70,7 +84,7 @@ export function useSubscription(): UseSubscriptionReturn {
     } finally {
       setLoading(false)
     }
-  }, [authUser])
+  }, [authUser, cacheKey])
 
   const updateShippingAddress = useCallback(async (address: any): Promise<boolean> => {
     if (!authUser) {
@@ -95,7 +109,9 @@ export function useSubscription(): UseSubscriptionReturn {
         throw new Error(errorData.message || 'Erro ao atualizar endereço')
       }
 
-      // Refetch subscription data after update
+      if (cacheKey) {
+        subscriptionCache.delete(cacheKey)
+      }
       await fetchSubscription()
       return true
     } catch (err: any) {
@@ -103,7 +119,7 @@ export function useSubscription(): UseSubscriptionReturn {
       setError(err.message || 'Erro ao atualizar endereço')
       return false
     }
-  }, [authUser, fetchSubscription])
+  }, [authUser, cacheKey, fetchSubscription, withCsrfHeaders])
 
   // Initial fetch
   useEffect(() => {

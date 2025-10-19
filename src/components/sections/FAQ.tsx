@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/Accordion'
 import { featuredFAQ } from '@/data/faq-data'
 import { FAQProps } from '@/types/wireframe'
@@ -11,33 +11,38 @@ interface FAQSectionProps {
 }
 
 export default function FAQ({ className }: FAQSectionProps) {
-    const faqProps: FAQProps = {
-        items: featuredFAQ,
-        layout: 'accordion',
-        numbering: true
-    }
+    const faqProps: FAQProps = useMemo(
+        () => ({
+            items: featuredFAQ,
+            layout: 'accordion',
+            numbering: true,
+        }),
+        []
+    )
 
-    const handleFAQClick = (questionId: string, questionText: string, position: number) => {
+    const handleFAQClick = useCallback((questionId: string, questionText: string, position: number) => {
         trackEvent('faq_opened', {
             question_id: questionId,
             question_text: questionText,
             section_position: position,
         })
-    }
+    }, [])
 
-    // Structured data for SEO
-    const structuredData = {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: faqProps.items.map((item) => ({
-            '@type': 'Question',
-            name: item.question,
-            acceptedAnswer: {
-                '@type': 'Answer',
-                text: item.answer
-            }
-        }))
-    }
+    const structuredData = useMemo(
+        () => ({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqProps.items.map((item) => ({
+                '@type': 'Question',
+                name: item.question,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: item.answer,
+                },
+            })),
+        }),
+        [faqProps.items]
+    )
 
     return (
         <section

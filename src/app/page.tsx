@@ -1,10 +1,7 @@
 import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
-import { LazySection } from '@/components/ui/LazySection'
-import { QuickStartSection } from '@/components/sections/QuickStartSection'
-import FAQ from '@/components/sections/FAQ'
-import { FinalCTA } from '@/components/sections/FinalCTA'
 import { TrustStrip } from '@/components/trust/TrustStrip'
+import { HomeLazySections } from '@/components/sections/HomeLazySections'
 
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
@@ -44,19 +41,7 @@ export default function HomePage() {
             </section>
 
             {/* Seção com opções de calculadora e assinatura direta */}
-            <section id="planos-precos" className="bg-gradient-to-br from-primary-600 to-primary-700">
-                <QuickStartSection />
-            </section>
-
-            {/* Nunca Mais Fique Sem Suas Lentes - CTA Final */}
-            <LazySection id="contato">
-                <FinalCTA />
-            </LazySection>
-
-            {/* Perguntas Frequentes */}
-            <LazySection id="perguntas-frequentes">
-                <FAQ />
-            </LazySection>
+            <HomeLazySections />
         </div>
     )
 }

@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/Button'
 import { ChevronDown } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 interface VideoHeroSectionProps {
     className?: string
@@ -20,20 +20,12 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
         }
     }, [])
 
-    const handleVerPlanos = () => {
-        // Scroll suave para a seção de planos
-        const planosSection = document.getElementById('planos-precos')
-        if (planosSection) {
-            planosSection.scrollIntoView({ behavior: 'smooth' })
-        }
-    }
-
-    const handleScrollDown = () => {
+    const handleScrollDown = useCallback(() => {
         window.scrollTo({
             top: window.innerHeight,
             behavior: 'smooth'
         })
-    }
+    }, [])
 
     return (
         <section className={`relative w-full h-screen overflow-hidden ${className}`}>

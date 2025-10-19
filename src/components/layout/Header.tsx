@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { LogoHeader } from '@/components/ui/Logo'
@@ -17,12 +17,14 @@ export function Header({ className }: HeaderProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
-    // Carregar configuração centralizada
-    const appConfig = config.load()
-    const useCentralizedConfig = config.isFeatureEnabled('useCentralizedConfig')
-
-    // Obter menus da configuração
-    const headerMenu = useCentralizedConfig ? config.getMenu('pt-BR', 'header') : null
+    const useCentralizedConfig = useMemo(
+        () => config.isFeatureEnabled('useCentralizedConfig'),
+        []
+    )
+    const headerMenu = useMemo(
+        () => (useCentralizedConfig ? config.getMenu('pt-BR', 'header') : null),
+        [useCentralizedConfig]
+    )
 
     // Detectar scroll para adicionar sombra no header
     useEffect(() => {
@@ -46,14 +48,16 @@ export function Header({ className }: HeaderProps) {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    // Navegação principal: usar config centralizado se disponível
-    const navigation = useCentralizedConfig && headerMenu
-        ? headerMenu.main.map((item: any) => ({
-            name: item.label,
-            href: item.href,
-            isAnchor: item.isAnchor || false
-        }))
-        : [
+    const navigation = useMemo(() => {
+        if (useCentralizedConfig && headerMenu) {
+            return headerMenu.main.map((item: any) => ({
+                name: item.label,
+                href: item.href,
+                isAnchor: item.isAnchor || false,
+            }))
+        }
+
+        return [
             { name: 'Calculadora', href: '/calculadora', isAnchor: false },
             { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
             { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
@@ -61,17 +65,20 @@ export function Header({ className }: HeaderProps) {
             { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
             { name: 'Contato', href: '#contato', isAnchor: true },
         ]
+    }, [headerMenu, useCentralizedConfig])
 
-    // CTAs: usar config centralizado se disponível
-    const ctaConfig = useCentralizedConfig && headerMenu ? headerMenu.cta : null
+    const ctaConfig = useMemo(
+        () => (useCentralizedConfig && headerMenu ? headerMenu.cta : null),
+        [headerMenu, useCentralizedConfig]
+    )
 
-    const handleNavClick = (href: string) => {
+    const handleNavClick = useCallback((href: string) => {
         const sectionId = href.replace('#', '')
         scrollToSection(sectionId)
         setIsMenuOpen(false)
-    }
+    }, [])
 
-    const handleAgendarConsulta = () => {
+    const handleAgendarConsulta = useCallback(() => {
         const whatsappMessage = `Olá! Gostaria de agendar uma consulta com o Dr. Philipe Saraiva Cruz para avaliar minha necessidade de lentes de contato.
 
 Vim através do site SV Lentes e tenho interesse no serviço de assinatura com acompanhamento médico.`
@@ -82,16 +89,16 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
         )
 
         window.open(whatsappLink, '_blank')
-    }
+    }, [])
 
-    const handleLogin = () => {
+    const handleLogin = useCallback(() => {
         window.location.href = '/area-assinante/login'
-    }
+    }, [])
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         await signOut()
         window.location.href = '/'
-    }
+    }, [signOut])
 
     return (
         <header

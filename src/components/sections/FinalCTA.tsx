@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 import { LeadCaptureForm } from '@/components/forms/LeadCaptureForm'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
@@ -8,7 +8,6 @@ import { trackEvent } from '@/lib/analytics'
 import { serviceBenefits } from '@/data/pricing-plans'
 import {
     Calendar,
-    MessageCircle,
     CheckCircle,
     Star,
     Shield,
@@ -20,44 +19,31 @@ import {
 export function FinalCTA() {
     const [showMobileForm, setShowMobileForm] = useState(false)
 
-    const handleScheduleConsultation = () => {
+    const handleScheduleConsultation = useCallback(() => {
         openWhatsAppWithContext('consultation', {
             page: 'landing-page',
             section: 'final-cta'
         })
 
-        // Analytics tracking
         trackEvent('cta_agendar_clicked', {
             section: 'final_cta',
             position: 'primary',
             user_journey_stage: 'consideration',
         })
-    }
+    }, [])
 
-    const handleWhatsAppClick = () => {
-        openWhatsAppWithContext('hero', {
-            page: 'landing-page',
-            section: 'final-cta'
-        })
-
-        // Analytics tracking
-        trackEvent('cta_whatsapp_clicked', {
-            section: 'final_cta',
-            context: 'support',
-            has_user_data: false,
-        })
-    }
-
-    const handleMobileFormSubmit = (data: any) => {
+    const handleMobileFormSubmit = useCallback((data: any) => {
         openWhatsAppWithContext('hero', {
             page: 'landing-page',
             section: 'final-cta-mobile-form',
             userInfo: data
         })
-    }
+    }, [])
 
-    // Benefícios destacados para o CTA final
-    const highlightedBenefits = serviceBenefits.filter(benefit => benefit.highlight)
+    const highlightedBenefits = useMemo(
+        () => serviceBenefits.filter((benefit) => benefit.highlight),
+        []
+    )
 
     return (
         <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 py-16 lg:py-24">
