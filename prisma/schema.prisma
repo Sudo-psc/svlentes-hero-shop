@@ -185,6 +185,8 @@ model User {
   mlPredictions        MLPrediction[]
   userBehavior         UserBehavior?
   consentLogs          ConsentLog[]
+  chatbotAuthCodes     ChatbotAuthCode[]
+  chatbotSessions      ChatbotSession[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -530,6 +532,7 @@ model WhatsAppConversation {
   // Relations
   user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
   messages          WhatsAppInteraction[]
+  chatbotSessions   ChatbotSession[]
 
   @@unique([customerPhone], name: "unique_conversation_phone")
   @@index([customerPhone], name: "idx_conversations_phone")
@@ -871,4 +874,99 @@ model DataRequest {
   @@index([requestType], name: "idx_data_requests_type")
   @@index([requestedAt], name: "idx_data_requests_requested_at")
   @@map("data_requests")
+}
+
+// ==================== CHATBOT AUTHENTICATION SYSTEM ====================
+
+enum ChatbotAuthStatus {
+  PENDING      // Código gerado, aguardando uso
+  VERIFIED     // Código verificado com sucesso
+  EXPIRED      // Código expirou
+  REVOKED      // Código revogado manualmente
+  USED         // Código já foi usado
+}
+
+enum ChatbotSessionStatus {
+  ACTIVE       // Sessão ativa
+  EXPIRED      // Sessão expirada por tempo
+  TERMINATED   // Sessão terminada pelo usuário
+  REVOKED      // Sessão revogada por segurança
+}
+
+// Authentication Codes - Códigos OTP para login via WhatsApp
+model ChatbotAuthCode {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  code            String              @db.VarChar(6) // Código de 6 dígitos
+  phone           String              @db.VarChar(20) // Telefone que solicitou
+
+  // Status e validade
+  status          ChatbotAuthStatus   @default(PENDING)
+  expiresAt       DateTime            @map("expires_at") @db.Timestamp(6)
+  verifiedAt      DateTime?           @map("verified_at") @db.Timestamp(6)
+
+  // Controle de tentativas
+  attempts        Int                 @default(0) // Tentativas de verificação
+  maxAttempts     Int                 @default(3) @map("max_attempts")
+
+  // Auditoria
+  ipAddress       String?             @map("ip_address") @db.VarChar(45)
+  userAgent       String?             @map("user_agent") @db.Text
+  metadata        Json?               @db.JsonB
+
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_chatbot_auth_codes_user")
+  @@index([phone], name: "idx_chatbot_auth_codes_phone")
+  @@index([code], name: "idx_chatbot_auth_codes_code")
+  @@index([status], name: "idx_chatbot_auth_codes_status")
+  @@index([expiresAt], name: "idx_chatbot_auth_codes_expires")
+  @@map("chatbot_auth_codes")
+}
+
+// Chatbot Sessions - Sessões autenticadas do chatbot
+model ChatbotSession {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  phone           String              @db.VarChar(20)
+  conversationId  String?             @map("conversation_id")
+
+  // Sessão e token
+  sessionToken    String              @unique @map("session_token") @db.VarChar(255)
+  status          ChatbotSessionStatus @default(ACTIVE)
+
+  // Validade
+  expiresAt       DateTime            @map("expires_at") @db.Timestamp(6)
+  lastActivityAt  DateTime            @default(now()) @map("last_activity_at") @db.Timestamp(6)
+
+  // Controle de atividades
+  commandsExecuted Int                @default(0) @map("commands_executed")
+  dataAccessLog   Json?               @map("data_access_log") @db.JsonB // Log de acessos
+
+  // Auditoria e segurança
+  ipAddress       String?             @map("ip_address") @db.VarChar(45)
+  deviceInfo      Json?               @map("device_info") @db.JsonB
+
+  // Encerramento
+  terminatedAt    DateTime?           @map("terminated_at") @db.Timestamp(6)
+  terminationReason String?           @map("termination_reason") @db.Text
+
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation    WhatsAppConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId], name: "idx_chatbot_sessions_user")
+  @@index([phone], name: "idx_chatbot_sessions_phone")
+  @@index([sessionToken], name: "idx_chatbot_sessions_token")
+  @@index([status], name: "idx_chatbot_sessions_status")
+  @@index([expiresAt], name: "idx_chatbot_sessions_expires")
+  @@index([conversationId], name: "idx_chatbot_sessions_conversation")
+  @@map("chatbot_sessions")
 }

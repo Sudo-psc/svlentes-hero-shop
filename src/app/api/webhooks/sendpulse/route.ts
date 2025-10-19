@@ -19,6 +19,14 @@ import {
 import { logger, LogCategory } from '@/lib/logger'
 import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
 import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
+import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
+import {
+  validateAuthenticatedSession,
+  viewSubscriptionCommand,
+  pauseSubscriptionCommand,
+  reactivateSubscriptionCommand,
+  nextDeliveryCommand
+} from '@/lib/subscription-management-commands'
 
 // C6: Zod schemas for webhook payload validation
 const MessageTextSchema = z.object({
@@ -354,6 +362,87 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       phone: customerPhone,
       contentLength: messageContent.length
     })
+
+    // Autenticação automática pelo número de WhatsApp
+    let authStatus = await isUserAuthenticated(customerPhone)
+
+    if (!authStatus.authenticated) {
+      // Tentar autenticar automaticamente
+      const authResult = await authenticateByPhone(customerPhone)
+
+      if (authResult.success) {
+        logger.info(LogCategory.WHATSAPP, 'Autenticação automática bem-sucedida', {
+          requestId,
+          phone: customerPhone,
+          userId: authResult.userId
+        })
+        authStatus = {
+          authenticated: true,
+          sessionToken: authResult.sessionToken,
+          userId: authResult.userId,
+          userName: authResult.userName
+        }
+      } else if (authResult.requiresResponse) {
+        // Enviar mensagem de erro de autenticação
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: authResult.message
+        })
+
+        logger.info(LogCategory.WHATSAPP, 'Mensagem de falha na autenticação enviada', {
+          requestId,
+          phone: customerPhone,
+          error: authResult.error
+        })
+
+        // Log auth failure interaction
+        const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+        await storeInteraction({
+          messageId,
+          customerPhone,
+          content: messageContent,
+          intent: { name: 'auth_failed', confidence: 1.0 },
+          response: authResult.message,
+          escalationRequired: false,
+          ticketCreated: false,
+          userProfile
+        })
+
+        return // Parar processamento para usuários não autenticados
+      }
+    }
+
+    // Verificar se a mensagem é um comando de gestão de assinatura
+    const subscriptionCommandResult = await handleSubscriptionCommand(messageContent, customerPhone)
+    if (subscriptionCommandResult) {
+      if (subscriptionCommandResult.requiresResponse) {
+        await sendPulseClient.sendMessage({
+          phone: customerPhone,
+          message: subscriptionCommandResult.message
+        })
+
+        logger.info(LogCategory.WHATSAPP, 'Resposta de comando de assinatura enviada', {
+          requestId,
+          phone: customerPhone,
+          success: subscriptionCommandResult.success
+        })
+      }
+
+      // Log subscription command interaction
+      const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+      await storeInteraction({
+        messageId,
+        customerPhone,
+        content: messageContent,
+        intent: { name: 'subscription_command', confidence: 1.0 },
+        response: subscriptionCommandResult.message,
+        escalationRequired: false,
+        ticketCreated: false,
+        userProfile
+      })
+
+      return // Pular processamento LangChain para comandos de assinatura
+    }
 
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(contact, customerPhone)
@@ -762,6 +851,42 @@ async function sendSendPulseResponse(
     // Don't throw - webhook should return 200 OK even if delivery fails
     // to prevent SendPulse from retrying indefinitely
   }
+}
+
+/**
+ * Handle subscription management commands
+ */
+async function handleSubscriptionCommand(
+  message: string,
+  phone: string
+): Promise<any | null> {
+  const cleanMessage = message.trim().toLowerCase()
+
+  // Comandos de visualização de assinatura
+  if (/\b(minha\s+assinatura|ver\s+assinatura|detalhes\s+assinatura|status\s+assinatura)\b/i.test(cleanMessage)) {
+    return await viewSubscriptionCommand(phone)
+  }
+
+  // Comandos de pausa
+  if (/\b(pausar\s+assinatura|pausar)\b/i.test(cleanMessage)) {
+    // Detectar duração da pausa (30, 60, 90 dias)
+    const daysMatch = cleanMessage.match(/(\d+)\s*dias?/)
+    const days = daysMatch ? parseInt(daysMatch[1]) : 30
+    return await pauseSubscriptionCommand(phone, days)
+  }
+
+  // Comandos de reativação
+  if (/\b(reativar\s+assinatura|ativar\s+assinatura|voltar\s+assinatura|retomar)\b/i.test(cleanMessage)) {
+    return await reactivateSubscriptionCommand(phone)
+  }
+
+  // Comandos de consulta de entrega
+  if (/\b(pr[óo]xima\s+entrega|pr[óo]ximo\s+pedido|quando\s+chega|rastreamento)\b/i.test(cleanMessage)) {
+    return await nextDeliveryCommand(phone)
+  }
+
+  // Não é um comando de assinatura
+  return null
 }
 
 /**

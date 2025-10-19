@@ -268,7 +268,8 @@ src/
 ```bash
 # Application
 NEXT_PUBLIC_APP_URL=https://svlentes.shop
-NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # (33) 99989-8026
+NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # Chatbot: (33) 99989-8026
+# Note: Direct support number is (33) 98606-1427 - used in messages, not env vars
 
 # Asaas Payment (Required for production)
 ASAAS_ENV=production
@@ -328,6 +329,22 @@ NEXTAUTH_URL=https://svlentes.shop
 - Automated response generation with context awareness
 - Ticket escalation for complex queries
 - Direct contact flow via `/api/whatsapp-redirect`
+
+**Chatbot Authentication System (src/lib/chatbot-auth-handler.ts):**
+- **Automatic phone-based authentication**: No OTP codes required
+- When user sends WhatsApp message, system automatically checks if phone number is registered
+- If registered with active subscription, creates 24-hour session automatically
+- Authentication flow:
+  1. Message received → Check existing session
+  2. If no session → Lookup user by phone in database
+  3. If found + active subscription → Create ChatbotSession (24h validity)
+  4. If not found → Send registration link message
+- Session managed via `ChatbotSession` model in Prisma
+- Subscription management commands available after authentication:
+  - `"minha assinatura"` - View subscription details
+  - `"pausar assinatura"` - Pause subscription (default 30 days)
+  - `"reativar assinatura"` - Reactivate paused subscription
+  - `"próxima entrega"` - Check next delivery details
 
 ## Development Workflow
 
@@ -425,9 +442,14 @@ curl https://svlentes.com.br/api/health-check
 - **Emergency Care**: Mandatory emergency contact information for medical services
 
 ### Contact Information
-- **WhatsApp**: +55 33 99989-8026 (5533999898026)
-  - **IMPORTANT**: The correct number is (33) 99989-8026, NOT (33) 99898-026
-  - This is used throughout the application for customer support and reminders
+- **WhatsApp Chatbot**: +55 33 99989-8026 (5533999898026)
+  - **Format**: (33) 99989-8026
+  - This is the SendPulse chatbot number for automated customer support
+  - Users send messages to this number for subscription management
+- **Direct Support (Human)**: +55 33 98606-1427 (5533986061427)
+  - **Format**: (33) 98606-1427
+  - This is the SaraivaVision team contact for direct human support
+  - Used for escalations and complex issues
 - **Email**: saraivavision@gmail.com
 - **Website**: svlentes.shop
 - **Responsible Physician**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)

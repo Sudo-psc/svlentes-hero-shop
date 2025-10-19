@@ -617,7 +617,7 @@ export class SupportEscalationSystem {
     }
 
     if (escalation.reason === EscalationReason.EMERGENCY) {
-      steps.push('Em caso de emergência, ligue para (33) 99989-8026')
+      steps.push('Em caso de emergência, entre em contato com a Saraiva Vision: (33) 98606-1427')
     }
 
     steps.push('Seu caso tem prioridade máxima em nossa fila')

@@ -102,7 +102,8 @@ CATEGORIAS PRINCIPAIS:
 - TECHNICAL: Problemas técnicos, site, app, sistema
 - PRODUCT: Informações sobre produtos, troca, qualidade, tipos de lentes
 - DELIVERY: Entrega, frete, rastreamento, atraso, correios
-- ACCOUNT: Conta, login, senha, dados pessoais
+- ACCOUNT: Conta, login, senha, dados pessoais, autenticação
+- SUBSCRIPTION: Gestão de assinatura (pausar, reativar, cancelar, alterar)
 - COMPLAINT: Reclamações, insatisfação, problemas
 - COMPLIMENT: Elogios, feedback positivo
 - EMERGENCY: Emergências médicas, problemas oculares urgentes
@@ -161,7 +162,8 @@ REGRAS DE ATENDIMENTO:
 INFORMAÇÕES DA EMPRESA:
 - Clínica: Saraiva Vision - Caratinga/MG
 - Responsável: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
-- WhatsApp: (33) 99989-8026
+- WhatsApp Clínica: (33) 98606-1427
+- WhatsApp Chatbot: (33) 99989-8026
 - E-mail: contato@svlentes.com.br
 - Site: svlentes.com.br
 
@@ -466,12 +468,14 @@ Sua mensagem indica uma possível emergência oftalmológica. **NÃO ESPERE!**
 - Pronto-socorro oftalmológico mais próximo
 - Hospital com serviço de oftalmologia
 
-📞 **CONTATO DIRETO COM DR. PHILIPE:**
-- WhatsApp: (33) 99989-8026
-- Disponível 24h para emergências
+📞 **CONTATO DIRETO COM SARAIVA VISION:**
+- WhatsApp: (33) 98606-1427
+- Telefone: (33) 98606-1427
+- Disponível para emergências
 
 📍 **CLÍNICA SARAIVA VISION:**
 - Caratinga/MG
+- Rua Catarina Maria Passos, 97 - Santa Zita
 
 Sua visão é prioridade absoluta. Não adie o atendimento médico!`
 
@@ -623,6 +627,9 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     const quickReplyMap = {
       subscription_pause: ['Pausar 30 dias', 'Pausar 60 dias', 'Cancelar pausa'],
       subscription_cancel: ['Cancelar assinatura', 'Falar com atendente', 'Reconsiderar'],
+      subscription_view: ['Ver detalhes', 'Próxima entrega', 'Alterar endereço'],
+      subscription_reactivate: ['Reativar agora', 'Falar com atendente'],
+      subscription_modify: ['Alterar endereço', 'Mudar plano', 'Falar com atendente'],
       payment_failed: ['Atualizar cartão', 'Pagar com PIX', 'Falar com atendente'],
       delivery_tracking: ['Rastrear pedido', 'Problemas na entrega', 'Falar com atendente'],
       product_exchange: ['Solicitar troca', 'Informações sobre produto', 'Falar com atendente'],
