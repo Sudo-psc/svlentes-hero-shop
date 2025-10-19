@@ -114,6 +114,11 @@ export function validateCustomUsageDays(value: string): number | null {
   const trimmed = value.trim()
   if (!trimmed) return null
 
+  // Rejeitar se tiver ponto decimal
+  if (trimmed.includes('.') || trimmed.includes(',')) {
+    return null
+  }
+
   const num = parseInt(trimmed, 10)
 
   if (isNaN(num) || num < 1 || num > 31) {

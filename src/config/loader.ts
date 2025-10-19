@@ -76,10 +76,16 @@ class ConfigService {
 
   /**
    * Get current configuration
+   * During build/SSG, try to load config automatically
    */
   get(): AppConfig {
     if (!this.config) {
-      throw new Error('Configuration not loaded. Call load() first.')
+      // Try to load config automatically (SSG-safe)
+      try {
+        return this.load()
+      } catch (error) {
+        throw new Error('Configuration not loaded. Call load() first.')
+      }
     }
     return this.config
   }
