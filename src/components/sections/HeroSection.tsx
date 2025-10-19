@@ -73,6 +73,11 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
                                 <span className="block">{copy.title.line1}</span>
                                 <span className="block text-gradient">{copy.title.line2}</span>
+                                {copy.title.line3 && (
+                                    <span className="block text-2xl md:text-3xl lg:text-4xl text-gray-700 mt-2">
+                                        {copy.title.line3}
+                                    </span>
+                                )}
                             </h1>
 
                             <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mb-4">

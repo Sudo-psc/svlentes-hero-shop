@@ -159,7 +159,7 @@ export class LangChainBotMemory extends BaseMemory {
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error loading session', {
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
 
       // Return empty history on error
@@ -211,7 +211,7 @@ export class LangChainBotMemory extends BaseMemory {
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error saving interaction', {
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
     }
   }
@@ -248,14 +248,7 @@ export class LangChainBotMemory extends BaseMemory {
         escalationRequired: metadata.escalationRequired || false,
         ticketCreated: metadata.ticketCreated || false,
         llmModel: metadata.llmModel,
-        processingTime: metadata.responseTime,
-        metadata: {
-          confidence: metadata.confidence,
-          tokensUsed: metadata.tokensUsed,
-          cost: metadata.cost,
-          sessionId,
-          timestamp: new Date().toISOString()
-        }
+        processingTime: metadata.responseTime
       }
     })
   }
@@ -311,7 +304,7 @@ export class LangChainBotMemory extends BaseMemory {
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error logging to LangSmith', {
         sessionId,
-        error: error instanceof Error ? error.message : 'Unknown'
+        errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
     }
   }
