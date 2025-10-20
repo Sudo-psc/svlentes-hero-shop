@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
-import { useResilientSubscription } from '@/hooks/useResilientSubscription'
-import { ResilientDashboardWrapper } from '@/components/assinante/ResilientDashboardWrapper'
+// import { useResilientSubscription } from '@/hooks/useResilientSubscription'
+// import { ResilientDashboardWrapper } from '@/components/assinante/ResilientDashboardWrapper'
 import { AccessibleDashboard } from '@/components/assinante/AccessibleDashboard'
 import { ToastContainer } from '@/components/assinante/ToastFeedback'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
@@ -22,10 +22,11 @@ import { motion } from 'framer-motion'
 import { useToast } from '@/components/assinante/ToastFeedback'
 import { Button } from '@/components/ui/button'
 import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings } from 'lucide-react'
+import { Logo } from '@/components/ui/logo'
 function DashboardContent() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
-  const { subscription, user, loading: subLoading, error, refetch } = useResilientSubscription()
+  const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
   const { toasts, removeToast } = useToast()
   // Modal states
   const [showOrdersModal, setShowOrdersModal] = useState(false)
@@ -198,13 +199,20 @@ function DashboardContent() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Painel do Assinante
-              </h1>
-              <p className="text-sm text-gray-600">
-                Gerencie sua assinatura de lentes de contato
-              </p>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center">
+                <div className="h-10 w-10 relative">
+                  <Logo size="md" variant="header" />
+                </div>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Painel do Assinante
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Gerencie sua assinatura de lentes de contato
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -533,13 +541,9 @@ function DashboardContent() {
     </div>
   )
 }
-// Wrapper principal com sistema resiliente
+// Wrapper principal simplificado
 export default function DashboardPage() {
-  return (
-    <ResilientDashboardWrapper>
-      <DashboardContent />
-    </ResilientDashboardWrapper>
-  )
+  return <DashboardContent />
 }
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic'
