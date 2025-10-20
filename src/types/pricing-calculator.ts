@@ -22,6 +22,36 @@ export interface CustosOperacionais {
   operacional: number // despesas operacionais mensais
 }
 
+// Tipos de lentes com custos específicos
+export interface TipoLente {
+  id: string
+  nome: string
+  categoria: 'asferica' | 'torica' | 'multifocal'
+  custoUnitario: number // R$ por unidade
+  unidadesPorCaixa: number
+  descricao: string
+}
+
+// Acessórios e produtos
+export interface Acessorio {
+  id: string
+  nome: string
+  custo: number
+  tipo: 'solucao' | 'colirio' | 'estojo' | 'pegador' | 'aplicador' | 'abridor'
+  descricao?: string
+}
+
+// Configuração de custos para calculadora (extendida)
+export interface ConfigPainelCustos extends CustosOperacionais {
+  // Metadados para UI
+  dataAtualizacao: string
+  versao: string
+  atualizadoPor: string
+  // Custos específicos de lentes
+  tiposLente?: TipoLente[]
+  acessorios?: Acessorio[]
+}
+
 // Estrutura de benefícios por plano
 export interface BeneficioPlano {
   id: string
@@ -235,15 +265,15 @@ export interface ReportGeneratorProps {
   onGenerate: (relatorio: RelatorioAnalitico) => void
 }
 
-// Constantes para validação
+// Constantes para validação (atualizadas com custos reais SV Lentes)
 export const VALIDATION_CONSTANTS = {
   TAXA_PROCESSAMENTO: { min: 0, max: 10, default: 2.99 },
-  CUSTO_PARCELAMENTO: { min: 0, max: 15, default: 1.5 },
-  EMBALAGENS: { min: 0, max: 50, default: 8.50 },
-  EXAMES: { min: 0, max: 500, default: 50 },
-  ADMINISTRATIVO: { min: 0, max: 1000, default: 150 },
-  INSUMOS: { min: 0, max: 200, default: 35 },
-  OPERACIONAL: { min: 0, max: 500, default: 80 },
+  CUSTO_PARCELAMENTO: { min: 0, max: 18, default: 18 }, // Juros parcelamento 12x: 18%
+  EMBALAGENS: { min: 0, max: 50, default: 15 }, // Caixa + Kit boas-vindas + Calendário: ~15/mês
+  EXAMES: { min: 0, max: 500, default: 45 }, // Topografia + Retinografia gratuitos premium: ~45/mês
+  ADMINISTRATIVO: { min: 0, max: 1000, default: 200 }, // Software PEC + Marketing + Desenvolvimento: ~200/mês
+  INSUMOS: { min: 0, max: 200, default: 85.50 }, // Soluções + Colírio + Estojo + Pegador + Aplicador + Abridor: ~85.50/mês
+  OPERACIONAL: { min: 0, max: 500, default: 67.50 }, // Imposto 15% + Honorário médico (telemedicina:45/presencial:55): ~67.50/mês
   DESCONTO_BASICO: { min: 0, max: 30, default: 15 },
   DESCONTO_PADRAO: { min: 0, max: 30, default: 18 },
   DESCONTO_PREMIUM: { min: 0, max: 30, default: 20 }
