@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -10,23 +9,19 @@ import { NotificationPreferences } from '@/components/NotificationPreferences'
 import { type UserNotificationPreferences } from '@/types/user-preferences'
 import { User, Bell, ChevronLeft, Save, AlertCircle } from 'lucide-react'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
-
 export default function ConfiguracoesPage() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
-  
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
-  
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
     phone: '',
     whatsapp: ''
   })
-  
   const [notificationPreferences, setNotificationPreferences] = useState<UserNotificationPreferences>({
     channel: 'EMAIL',
     subscriptionReminders: true,
@@ -34,7 +29,6 @@ export default function ConfiguracoesPage() {
     appointmentReminders: true,
     marketingMessages: false
   })
-
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/area-assinante/login')
@@ -42,17 +36,14 @@ export default function ConfiguracoesPage() {
       fetchUserData()
     }
   }, [authUser, authLoading, router])
-
   const fetchUserData = async () => {
     try {
       setLoading(true)
-      
       const response = await fetch('/api/user/preferences', {
         headers: {
           'x-user-id': authUser?.uid || ''
         }
       })
-      
       if (response.ok) {
         const data = await response.json()
         setNotificationPreferences(data.preferences)
@@ -83,12 +74,10 @@ export default function ConfiguracoesPage() {
       setLoading(false)
     }
   }
-
   const handleProfileSave = async () => {
     try {
       setSaving(true)
       setMessage(null)
-
       const response = await fetch('/api/user/profile', {
         method: 'POST',
         headers: {
@@ -101,7 +90,6 @@ export default function ConfiguracoesPage() {
           whatsapp: profileData.whatsapp
         })
       })
-
       if (response.ok) {
         setMessage({ type: 'success', text: 'Perfil atualizado com sucesso!' })
         setTimeout(() => setMessage(null), 3000)
@@ -116,7 +104,6 @@ export default function ConfiguracoesPage() {
       setSaving(false)
     }
   }
-
   const handleNotificationsSave = async (preferences: UserNotificationPreferences) => {
     try {
       const response = await fetch('/api/user/preferences', {
@@ -127,12 +114,10 @@ export default function ConfiguracoesPage() {
         },
         body: JSON.stringify(preferences)
       })
-
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Erro ao salvar preferências')
       }
-
       setNotificationPreferences(preferences)
       setMessage({ type: 'success', text: 'Preferências salvas com sucesso!' })
       setTimeout(() => setMessage(null), 3000)
@@ -141,15 +126,12 @@ export default function ConfiguracoesPage() {
       throw error
     }
   }
-
   if (authLoading || loading) {
     return <DashboardLoading />
   }
-
   if (!authUser) {
     return null
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
       {/* Header */}
@@ -179,7 +161,6 @@ export default function ConfiguracoesPage() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
@@ -192,7 +173,6 @@ export default function ConfiguracoesPage() {
           <ChevronLeft className="h-4 w-4 mr-1" />
           Voltar ao Dashboard
         </Button>
-
         {/* Message Alert */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg border ${
@@ -206,7 +186,6 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
         )}
-
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow-sm border mb-6">
           <div className="border-b">
@@ -235,7 +214,6 @@ export default function ConfiguracoesPage() {
               </button>
             </div>
           </div>
-
           {/* Tab Content */}
           <div className="p-6">
             {activeTab === 'profile' && (
@@ -248,7 +226,6 @@ export default function ConfiguracoesPage() {
                     Atualize suas informações pessoais e de contato
                   </p>
                 </div>
-
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="name">Nome Completo</Label>
@@ -259,7 +236,6 @@ export default function ConfiguracoesPage() {
                       placeholder="Seu nome completo"
                     />
                   </div>
-
                   <div>
                     <Label htmlFor="email">E-mail</Label>
                     <Input
@@ -273,7 +249,6 @@ export default function ConfiguracoesPage() {
                       O e-mail não pode ser alterado
                     </p>
                   </div>
-
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="phone">Telefone</Label>
@@ -285,7 +260,6 @@ export default function ConfiguracoesPage() {
                         placeholder="(33) 99999-9999"
                       />
                     </div>
-
                     <div>
                       <Label htmlFor="whatsapp">WhatsApp</Label>
                       <Input
@@ -301,7 +275,6 @@ export default function ConfiguracoesPage() {
                     </div>
                   </div>
                 </div>
-
                 <div className="pt-6 border-t">
                   <Button
                     onClick={handleProfileSave}
@@ -314,7 +287,6 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
             )}
-
             {activeTab === 'notifications' && (
               <div>
                 <div className="mb-6">
@@ -325,7 +297,6 @@ export default function ConfiguracoesPage() {
                     Escolha como deseja receber lembretes e atualizações
                   </p>
                 </div>
-
                 <NotificationPreferences
                   preferences={notificationPreferences}
                   phone={profileData.whatsapp || profileData.phone}
@@ -339,5 +310,4 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
-
 export const dynamic = 'force-dynamic'

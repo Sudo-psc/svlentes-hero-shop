@@ -1,19 +1,15 @@
 "use client"
-
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-
 interface TimelineStep {
   label: string
   index: number
   isActive: boolean
 }
-
 interface ProcessTimelineProps {
   steps: string[]
   activeStep?: number
 }
-
 export function ProcessTimeline({ steps, activeStep = 0 }: ProcessTimelineProps) {
   return (
     <div className="relative py-8">
@@ -21,7 +17,6 @@ export function ProcessTimeline({ steps, activeStep = 0 }: ProcessTimelineProps)
       <div className="flex items-center justify-between relative">
         {/* Background line */}
         <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0" />
-
         {/* Progress line */}
         <motion.div
           initial={{ width: 0 }}
@@ -30,11 +25,9 @@ export function ProcessTimeline({ steps, activeStep = 0 }: ProcessTimelineProps)
           transition={{ duration: 1, delay: 0.3 }}
           className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-primary-500 to-primary-600 -translate-y-1/2 z-10"
         />
-
         {/* Timeline steps */}
         {steps.map((step, index) => {
           const isActive = index <= activeStep
-
           return (
             <motion.div
               key={index}
@@ -73,7 +66,6 @@ export function ProcessTimeline({ steps, activeStep = 0 }: ProcessTimelineProps)
                   </span>
                 )}
               </div>
-
               {/* Step label */}
               <span
                 className={cn(

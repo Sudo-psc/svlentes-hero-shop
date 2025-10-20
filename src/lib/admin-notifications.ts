@@ -4,11 +4,9 @@
  * Handles sending notifications to users when admins perform actions
  * on their subscriptions, orders, or support tickets.
  */
-
 import { prisma } from '@/lib/prisma'
 import { sendEmailNotification } from '@/lib/notifications'
 import { sendPushNotification } from '@/lib/firebase-push'
-
 export interface AdminNotificationData {
   userId: string
   type: 'SUBSCRIPTION' | 'ORDER' | 'SUPPORT_TICKET'
@@ -22,7 +20,6 @@ export interface AdminNotificationData {
     timestamp?: Date
   }
 }
-
 /**
  * Send notification when admin updates subscription status
  */
@@ -42,9 +39,7 @@ export async function sendSubscriptionStatusNotification(
       'PAUSED': 'Sua assinatura foi pausada temporariamente.',
       'RESUMED': 'Sua assinatura foi reativada.'
     }
-
     const message = statusMessages[newStatus] || `O status da sua assinatura foi atualizado para ${newStatus}.`
-
     // Send email notification
     await sendEmailNotification({
       userId,
@@ -59,13 +54,11 @@ export async function sendSubscriptionStatusNotification(
         actionDate: new Date().toISOString()
       }
     })
-
     // Send push notification
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { notificationTokens: true }
     })
-
     const tokens = (user?.notificationTokens as string[]) || []
     if (tokens.length > 0) {
       for (const token of tokens) {
@@ -85,13 +78,10 @@ export async function sendSubscriptionStatusNotification(
         })
       }
     }
-
-    console.log(`[Admin Notifications] Sent subscription status update to user ${userId}: ${oldStatus} → ${newStatus}`)
   } catch (error) {
     console.error('[Admin Notifications] Failed to send subscription notification:', error)
   }
 }
-
 /**
  * Send notification when admin assigns support ticket
  */
@@ -115,13 +105,11 @@ export async function sendSupportTicketAssignmentNotification(
         assignedAt: new Date().toISOString()
       }
     })
-
     // Send push notification
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { notificationTokens: true }
     })
-
     const tokens = (user?.notificationTokens as string[]) || []
     if (tokens.length > 0) {
       for (const token of tokens) {
@@ -141,13 +129,10 @@ export async function sendSupportTicketAssignmentNotification(
         })
       }
     }
-
-    console.log(`[Admin Notifications] Sent support ticket assignment to user ${userId}: ${ticketNumber} → ${agentName}`)
   } catch (error) {
     console.error('[Admin Notifications] Failed to send support ticket notification:', error)
   }
 }
-
 /**
  * Send notification when admin resolves support ticket
  */
@@ -171,13 +156,11 @@ export async function sendSupportTicketResolutionNotification(
         resolvedAt: new Date().toISOString()
       }
     })
-
     // Send push notification
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { notificationTokens: true }
     })
-
     const tokens = (user?.notificationTokens as string[]) || []
     if (tokens.length > 0) {
       for (const token of tokens) {
@@ -197,13 +180,10 @@ export async function sendSupportTicketResolutionNotification(
         })
       }
     }
-
-    console.log(`[Admin Notifications] Sent support ticket resolution to user ${userId}: ${ticketNumber}`)
   } catch (error) {
     console.error('[Admin Notifications] Failed to send support ticket resolution notification:', error)
   }
 }
-
 /**
  * Send notification when admin creates or updates order
  */
@@ -222,9 +202,7 @@ export async function sendOrderNotification(
       'SHIPPED': 'Seu pedido foi enviado! Acompanhe a entrega.',
       'DELIVERED': 'Seu pedido foi entregue com sucesso!'
     }
-
     const message = actionMessages[action] || `Seu pedido ${orderNumber} foi atualizado.`
-
     // Send email notification
     await sendEmailNotification({
       userId,
@@ -240,13 +218,11 @@ export async function sendOrderNotification(
         actionDate: new Date().toISOString()
       }
     })
-
     // Send push notification
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { notificationTokens: true }
     })
-
     const tokens = (user?.notificationTokens as string[]) || []
     if (tokens.length > 0) {
       for (const token of tokens) {
@@ -267,13 +243,10 @@ export async function sendOrderNotification(
         })
       }
     }
-
-    console.log(`[Admin Notifications] Sent order notification to user ${userId}: ${orderNumber} - ${action}`)
   } catch (error) {
     console.error('[Admin Notifications] Failed to send order notification:', error)
   }
 }
-
 /**
  * Send bulk notification to multiple users (for system-wide updates)
  */
@@ -286,7 +259,6 @@ export async function sendBulkNotification(
 ): Promise<{ success: number; failed: number }> {
   let success = 0
   let failed = 0
-
   for (const userId of userIds) {
     try {
       await sendEmailNotification({
@@ -306,7 +278,5 @@ export async function sendBulkNotification(
       failed++
     }
   }
-
-  console.log(`[Admin Notifications] Bulk notification sent: ${success} success, ${failed} failed`)
   return { success, failed }
 }

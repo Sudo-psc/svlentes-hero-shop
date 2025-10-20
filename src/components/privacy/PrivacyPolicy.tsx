@@ -1,17 +1,13 @@
 'use client';
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-
 interface PrivacyPolicyProps {
     isOpen: boolean;
     onClose: () => void;
 }
-
 export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
     if (!isOpen) return null;
-
     return (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-hidden">
@@ -26,13 +22,11 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
-
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
                     <div className="prose max-w-none">
                         <p className="text-sm text-gray-600 mb-6">
                             Última atualização: {new Date().toLocaleDateString('pt-BR')}
                         </p>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">1. Informações Gerais</h3>
                             <p className="mb-4">
@@ -41,7 +35,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 de nossos usuários, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018).
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">2. Dados Coletados</h3>
                             <p className="mb-4">Coletamos os seguintes tipos de dados:</p>
@@ -53,7 +46,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 <li><strong>Dados de Pagamento:</strong> Informações processadas pelo Stripe (não armazenamos dados de cartão)</li>
                             </ul>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">3. Finalidades do Tratamento</h3>
                             <p className="mb-4">Utilizamos seus dados para:</p>
@@ -66,7 +58,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 <li>Cumprimento de obrigações legais e regulatórias</li>
                             </ul>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">4. Base Legal</h3>
                             <p className="mb-4">O tratamento dos seus dados é baseado em:</p>
@@ -77,7 +68,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 <li><strong>Cumprimento legal:</strong> Para atender obrigações médicas e fiscais</li>
                             </ul>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">5. Compartilhamento de Dados</h3>
                             <p className="mb-4">Seus dados podem ser compartilhados com:</p>
@@ -88,7 +78,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                             </ul>
                             <p>Não vendemos ou alugamos seus dados pessoais para terceiros.</p>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">6. Seus Direitos</h3>
                             <p className="mb-4">Você tem direito a:</p>
@@ -102,7 +91,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 <li>Revogação do consentimento</li>
                             </ul>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">7. Cookies</h3>
                             <p className="mb-4">
@@ -110,7 +98,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 preferências através do banner de cookies ou nas configurações do seu navegador.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">8. Segurança</h3>
                             <p className="mb-4">
@@ -118,7 +105,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 seus dados contra acesso não autorizado, alteração, divulgação ou destruição.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">9. Retenção de Dados</h3>
                             <p className="mb-4">
@@ -127,7 +113,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 do Conselho Federal de Medicina.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">10. Contato</h3>
                             <p className="mb-4">
@@ -139,7 +124,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                                 <li><strong>Responsável:</strong> Dr. Philipe Saraiva Cruz (CRM 69.870)</li>
                             </ul>
                         </section>
-
                         <section className="mb-8">
                             <h3 className="text-lg font-semibold mb-4">11. Alterações</h3>
                             <p className="mb-4">
@@ -149,7 +133,6 @@ export function PrivacyPolicy({ isOpen, onClose }: PrivacyPolicyProps) {
                         </section>
                     </div>
                 </div>
-
                 <div className="p-6 border-t bg-gray-50">
                     <Button onClick={onClose} className="w-full">
                         Entendi

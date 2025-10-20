@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import { StripeScript } from '@/components/payment/StripeScript'
-
 export const metadata: Metadata = {
   title: 'Planos Online de Lentes de Contato | SV Lentes',
   description: 'Assine lentes de contato online com entrega em todo o Brasil. Planos para lentes asféricas, diárias, tóricas e multifocais com entrega regular e economia garantida.',
@@ -20,7 +19,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 }
-
 export default function PlanosLayout({
   children,
 }: {

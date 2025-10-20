@@ -4,10 +4,8 @@
  *
  * Invalida a sessão atual do usuário
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { extractToken } from '@/lib/admin-auth'
-
 /**
  * @swagger
  * /api/admin/auth/logout:
@@ -40,7 +38,6 @@ export async function POST(request: NextRequest) {
   try {
     // Extrair token do header
     const token = extractToken(request)
-
     if (!token) {
       return NextResponse.json(
         {
@@ -50,15 +47,12 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
-
     // Em uma implementação mais robusta, poderíamos:
     // 1. Adicionar o token a uma blacklist no Redis
     // 2. Invalidar o refresh token associado
     // 3. Log do logout para auditoria
-
     // Log de segurança
-    console.log(`Admin logout request for token: ${token.substring(0, 10)}... from ${request.ip}`)
-
+    console.log(`Admin logout from ${request.ip}`)
     // Por ora, apenas retornamos sucesso
     // O cliente deve descartar os tokens do lado dele
     return NextResponse.json(
@@ -69,7 +63,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     )
-
   } catch (error) {
     console.error('Admin logout error:', error)
     return NextResponse.json(

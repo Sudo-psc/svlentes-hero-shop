@@ -1,9 +1,7 @@
 'use client'
-
 import Image from 'next/image'
 import { useState } from 'react'
 import { getOptimizedImageProps } from '@/lib/performance'
-
 interface OptimizedImageProps {
     src: string
     alt: string
@@ -16,7 +14,6 @@ interface OptimizedImageProps {
     sizes?: string
     onLoad?: () => void
 }
-
 export function OptimizedImage({
     src,
     alt,
@@ -31,19 +28,15 @@ export function OptimizedImage({
 }: OptimizedImageProps) {
     const [isLoading, setIsLoading] = useState(true)
     const [hasError, setHasError] = useState(false)
-
     const imageProps = getOptimizedImageProps(src, width, height, quality)
-
     const handleLoad = () => {
         setIsLoading(false)
         onLoad?.()
     }
-
     const handleError = () => {
         setIsLoading(false)
         setHasError(true)
     }
-
     if (hasError) {
         return (
             <div
@@ -66,7 +59,6 @@ export function OptimizedImage({
             </div>
         )
     }
-
     return (
         <div className={`relative ${className}`}>
             {isLoading && (

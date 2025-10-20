@@ -3,11 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { createVerificationToken } from '@/lib/tokens'
 import { sendVerificationEmail } from '@/lib/email'
 import { z } from 'zod'
-
 const resendSchema = z.object({
   email: z.string().email('Email inválido').toLowerCase().trim(),
 })
-
 /**
  * POST /api/auth/resend-verification
  * Reenvia email de verificação
@@ -15,24 +13,19 @@ const resendSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
     // Validar email
     const validationResult = resendSchema.safeParse(body)
-
     if (!validationResult.success) {
       return NextResponse.json(
         { error: 'VALIDATION_ERROR', message: 'Email inválido' },
         { status: 400 }
       )
     }
-
     const { email } = validationResult.data
-
     // Verificar se usuário existe
     const user = await prisma.user.findUnique({
       where: { email },
     })
-
     if (!user) {
       // Não revela se email existe ou não (segurança)
       return NextResponse.json(
@@ -42,7 +35,6 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       )
     }
-
     // Verificar se email já foi verificado
     if (user.emailVerified) {
       return NextResponse.json(
@@ -50,13 +42,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Criar token e enviar email
     const verificationToken = await createVerificationToken(email)
     await sendVerificationEmail(email, verificationToken)
-
-    console.log(`[RESEND-VERIFICATION] Verification email resent to ${email}`)
-
     return NextResponse.json(
       {
         message: 'Email de verificação enviado com sucesso',
@@ -71,5 +59,4 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 export const dynamic = 'force-dynamic'

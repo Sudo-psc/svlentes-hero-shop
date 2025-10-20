@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -7,10 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { trackEvent, trackSubscriptionEvent } from '@/lib/analytics'
 import { trackPaymentCompleted } from '@/lib/conversion-tracking'
-
 // Force dynamic rendering to avoid Suspense boundary issue with useSearchParams
 export const dynamic = 'force-dynamic'
-
 interface SessionData {
     customer_email: string
     customer_details: {
@@ -25,14 +22,12 @@ interface SessionData {
     amount_total: number
     currency: string
 }
-
 export default function SuccessPage() {
     const searchParams = useSearchParams()
     const sessionId = searchParams.get('session_id')
     const [sessionData, setSessionData] = useState<SessionData | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-
     useEffect(() => {
         if (sessionId) {
             fetchSessionData(sessionId)
@@ -41,15 +36,12 @@ export default function SuccessPage() {
             setLoading(false)
         }
     }, [sessionId])
-
     const fetchSessionData = async (sessionId: string) => {
         try {
             const response = await fetch(`/api/checkout-session?session_id=${sessionId}`)
             const data = await response.json()
-
             if (data.success) {
                 setSessionData(data.session)
-
                 // Track successful conversion
                 trackPaymentCompleted({
                     transactionId: sessionId,
@@ -67,7 +59,6 @@ export default function SuccessPage() {
             setLoading(false)
         }
     }
-
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-primary-50 flex items-center justify-center">
@@ -78,7 +69,6 @@ export default function SuccessPage() {
             </div>
         )
     }
-
     if (error) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
@@ -97,7 +87,6 @@ export default function SuccessPage() {
             </div>
         )
     }
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-primary-50">
             <div className="max-w-4xl mx-auto px-4 py-16">
@@ -108,25 +97,20 @@ export default function SuccessPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-
                     <Badge variant="default" className="mb-4">
                         Assinatura Confirmada
                     </Badge>
-
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                         Bem-vindo à SVlentes! 🎉
                     </h1>
-
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                         Sua assinatura foi processada com sucesso. Você nunca mais ficará sem lentes!
                     </p>
                 </div>
-
                 {/* Subscription Details */}
                 {sessionData && (
                     <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Detalhes da Sua Assinatura</h2>
-
                         <div className="grid md:grid-cols-2 gap-6">
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Informações Pessoais</h3>
@@ -138,7 +122,6 @@ export default function SuccessPage() {
                                     )}
                                 </div>
                             </div>
-
                             <div>
                                 <h3 className="font-semibold text-gray-900 mb-2">Assinatura</h3>
                                 <div className="space-y-2 text-gray-600">
@@ -154,11 +137,9 @@ export default function SuccessPage() {
                         </div>
                     </div>
                 )}
-
                 {/* Next Steps */}
                 <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">Próximos Passos</h2>
-
                     <div className="space-y-6">
                         <div className="flex items-start">
                             <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
@@ -172,7 +153,6 @@ export default function SuccessPage() {
                                 <p className="text-sm text-green-600 mt-1">✓ Concluído</p>
                             </div>
                         </div>
-
                         <div className="flex items-start">
                             <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                                 <span className="text-blue-600 font-bold text-sm">1</span>
@@ -183,7 +163,6 @@ export default function SuccessPage() {
                                 <p className="text-sm text-blue-600 mt-1">Em até 15 minutos</p>
                             </div>
                         </div>
-
                         <div className="flex items-start">
                             <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                                 <span className="text-blue-600 font-bold text-sm">2</span>
@@ -194,7 +173,6 @@ export default function SuccessPage() {
                                 <p className="text-sm text-blue-600 mt-1">Em até 24 horas</p>
                             </div>
                         </div>
-
                         <div className="flex items-start">
                             <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                                 <span className="text-blue-600 font-bold text-sm">3</span>
@@ -205,7 +183,6 @@ export default function SuccessPage() {
                                 <p className="text-sm text-blue-600 mt-1">Conforme agendamento</p>
                             </div>
                         </div>
-
                         <div className="flex items-start">
                             <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                                 <span className="text-blue-600 font-bold text-sm">4</span>
@@ -216,7 +193,6 @@ export default function SuccessPage() {
                                 <p className="text-sm text-blue-600 mt-1">3-5 dias úteis após consulta</p>
                             </div>
                         </div>
-
                         <div className="flex items-start">
                             <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                                 <span className="text-blue-600 font-bold text-sm">5</span>
@@ -229,7 +205,6 @@ export default function SuccessPage() {
                         </div>
                     </div>
                 </div>
-
                 {/* Important Information */}
                 <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 mb-8">
                     <h2 className="text-xl font-bold text-yellow-900 mb-4">Informações Importantes</h2>
@@ -260,14 +235,12 @@ export default function SuccessPage() {
                         </div>
                     </div>
                 </div>
-
                 {/* Contact Information */}
                 <div className="bg-primary-50 rounded-2xl p-8 text-center">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Precisa de Ajuda?</h2>
                     <p className="text-gray-600 mb-6">
                         Nossa equipe está pronta para te atender e esclarecer qualquer dúvida.
                     </p>
-
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <a
                             href="https://wa.me/+5533999898026?text=Olá! Acabei de assinar a SVlentes e gostaria de tirar algumas dúvidas."
@@ -281,7 +254,6 @@ export default function SuccessPage() {
                                 Falar no WhatsApp
                             </Button>
                         </a>
-
                         <Link href="/">
                             <Button variant="outline">
                                 Voltar ao Início

@@ -2,13 +2,10 @@
  * Performance metrics endpoint for monitoring
  * Collects and stores performance data
  */
-
 import { NextRequest, NextResponse } from 'next/server'
-
 export async function POST(request: NextRequest) {
     try {
         const performanceMetric = await request.json()
-
         // Add server-side metadata
         const enrichedMetric = {
             ...performanceMetric,
@@ -22,15 +19,11 @@ export async function POST(request: NextRequest) {
                 origin: request.headers.get('origin')
             }
         }
-
         // Log performance metrics (in production, this would go to analytics service)
-        console.log('Performance Metric:', JSON.stringify(enrichedMetric, null, 2))
-
         // In production, you would:
         // 1. Store in time-series database (InfluxDB, TimescaleDB)
         // 2. Send to analytics service (Google Analytics, Mixpanel)
         // 3. Create dashboards and alerts
-
         // Example: Store in time-series database
         // await influxDB.writePoint(
         //   Point.measurement('performance')
@@ -39,7 +32,6 @@ export async function POST(request: NextRequest) {
         //     .floatField('value', performanceMetric.value)
         //     .timestamp(new Date(performanceMetric.timestamp))
         // )
-
         // Example: Send to Google Analytics
         // if (performanceMetric.name === 'LCP' || performanceMetric.name === 'FID' || performanceMetric.name === 'CLS') {
         //   // Send Core Web Vitals to GA4
@@ -49,30 +41,24 @@ export async function POST(request: NextRequest) {
         //     metric_id: generateUniqueId()
         //   })
         // }
-
         return NextResponse.json({
             success: true,
             id: `metric_${Date.now()}`
         })
-
     } catch (error) {
         console.error('Failed to process performance metric:', error)
-
         return NextResponse.json(
             { error: 'Failed to process performance metric' },
             { status: 500 }
         )
     }
 }
-
 export async function GET(request: NextRequest) {
     try {
         // Return aggregated performance metrics
         // In production, this would query your analytics database
-
         // Calculate real-time server metrics
         const startTime = process.hrtime.bigint()
-
         // Memory usage
         const memUsage = process.memoryUsage()
         const memoryMB = {
@@ -81,14 +67,11 @@ export async function GET(request: NextRequest) {
             heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
             external: Math.round(memUsage.external / 1024 / 1024)
         }
-
         // Uptime
         const uptimeSeconds = Math.floor(process.uptime())
         const uptimeHours = Math.floor(uptimeSeconds / 3600)
-
         const endTime = process.hrtime.bigint()
         const responseTime = Number(endTime - startTime) / 1000000 // Convert to milliseconds
-
         const metrics = {
             timestamp: new Date().toISOString(),
             responseTime: Math.round(responseTime),
@@ -120,19 +103,15 @@ export async function GET(request: NextRequest) {
                 uptimeStatus: uptimeSeconds < 60 ? 'starting' : 'stable'
             }
         }
-
         return NextResponse.json(metrics)
-
     } catch (error) {
         console.error('Failed to fetch performance metrics:', error)
-
         return NextResponse.json(
             { error: 'Failed to fetch performance metrics' },
             { status: 500 }
         )
     }
 }
-
 export async function OPTIONS() {
     return new NextResponse(null, {
         status: 200,

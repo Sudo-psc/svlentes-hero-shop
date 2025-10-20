@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -40,7 +39,6 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react'
-
 // Types for analytics data
 interface SupportMetrics {
   totalTickets: number
@@ -58,32 +56,27 @@ interface SupportMetrics {
   sentimentAnalysis: SentimentData[]
   escalationReasons: EscalationReasonData[]
 }
-
 interface TicketPriorityData {
   priority: string
   count: number
   avgResolutionTime: string
 }
-
 interface CategoryData {
   category: string
   count: number
   avgResolutionTime: string
   satisfaction: number
 }
-
 interface ResponseTimeData {
   date: string
   avgResponseTime: number
   targetTime: number
 }
-
 interface SatisfactionData {
   date: string
   satisfaction: number
   tickets: number
 }
-
 interface AgentPerformanceData {
   agentId: string
   agentName: string
@@ -93,21 +86,18 @@ interface AgentPerformanceData {
   escalationRate: number
   specializations: string[]
 }
-
 interface SentimentData {
   sentiment: string
   count: number
   percentage: number
   color: string
 }
-
 interface EscalationReasonData {
   reason: string
   count: number
   percentage: number
   trend: 'up' | 'down' | 'stable'
 }
-
 const COLORS = {
   primary: '#06b6d4',
   success: '#22c55e',
@@ -119,23 +109,19 @@ const COLORS = {
   negative: '#ef4444',
   neutral: '#6b7280'
 }
-
 const SENTIMENT_COLORS = {
   positive: '#22c55e',
   negative: '#ef4444',
   neutral: '#6b7280'
 }
-
 export function SupportAnalyticsDashboard() {
   const [metrics, setMetrics] = useState<SupportMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d')
   const [refreshing, setRefreshing] = useState(false)
-
   useEffect(() => {
     fetchMetrics()
   }, [selectedTimeRange])
-
   const fetchMetrics = async () => {
     try {
       setLoading(true)
@@ -150,13 +136,11 @@ export function SupportAnalyticsDashboard() {
       setLoading(false)
     }
   }
-
   const handleRefresh = async () => {
     setRefreshing(true)
     await fetchMetrics()
     setRefreshing(false)
   }
-
   const exportData = async () => {
     try {
       const response = await fetch('/api/analytics/support', {
@@ -169,7 +153,6 @@ export function SupportAnalyticsDashboard() {
           data: { timeRange: selectedTimeRange }
         })
       })
-
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -185,7 +168,6 @@ export function SupportAnalyticsDashboard() {
       console.error('Error exporting data:', error)
     }
   }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -193,7 +175,6 @@ export function SupportAnalyticsDashboard() {
       </div>
     )
   }
-
   if (!metrics) {
     return (
       <div className="text-center py-12">
@@ -201,7 +182,6 @@ export function SupportAnalyticsDashboard() {
       </div>
     )
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -238,7 +218,6 @@ export function SupportAnalyticsDashboard() {
           </Button>
         </div>
       </div>
-
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <motion.div
@@ -259,7 +238,6 @@ export function SupportAnalyticsDashboard() {
             </CardContent>
           </Card>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -282,7 +260,6 @@ export function SupportAnalyticsDashboard() {
             </CardContent>
           </Card>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -301,7 +278,6 @@ export function SupportAnalyticsDashboard() {
             </CardContent>
           </Card>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -321,7 +297,6 @@ export function SupportAnalyticsDashboard() {
           </Card>
         </motion.div>
       </div>
-
       {/* Charts */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -330,7 +305,6 @@ export function SupportAnalyticsDashboard() {
           <TabsTrigger value="agents">Agentes</TabsTrigger>
           <TabsTrigger value="sentiment">Sentimento</TabsTrigger>
         </TabsList>
-
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Tickets by Priority */}
@@ -367,7 +341,6 @@ export function SupportAnalyticsDashboard() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
             {/* Tickets by Category */}
             <Card>
               <CardHeader>
@@ -387,7 +360,6 @@ export function SupportAnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
-
           {/* Response Time Trend */}
           <Card>
             <CardHeader>
@@ -421,7 +393,6 @@ export function SupportAnalyticsDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="performance" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Satisfaction Trend */}
@@ -449,7 +420,6 @@ export function SupportAnalyticsDashboard() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
             {/* First Contact Resolution */}
             <Card>
               <CardHeader>
@@ -478,7 +448,6 @@ export function SupportAnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
-
           {/* Escalation Reasons */}
           <Card>
             <CardHeader>
@@ -507,7 +476,6 @@ export function SupportAnalyticsDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="agents" className="space-y-4">
           <Card>
             <CardHeader>
@@ -534,7 +502,6 @@ export function SupportAnalyticsDashboard() {
                         <div className="font-semibold">{agent.ticketsHandled}</div>
                       </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <div className="text-sm text-muted-foreground">Tempo Médio de Resposta</div>
@@ -558,7 +525,6 @@ export function SupportAnalyticsDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="sentiment" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sentiment Distribution */}
@@ -589,7 +555,6 @@ export function SupportAnalyticsDashboard() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
             {/* Sentiment Details */}
             <Card>
               <CardHeader>

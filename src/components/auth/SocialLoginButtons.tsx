@@ -1,13 +1,10 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-
 interface SocialLoginButtonsProps {
   onError?: (error: string) => void
 }
-
 export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
   const router = useRouter()
   const { signInWithGoogle, signInWithFacebook, signInWithGitHub } = useAuth()
@@ -15,13 +12,11 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
   const [loadingFacebook, setLoadingFacebook] = useState(false)
   const [loadingGitHub, setLoadingGitHub] = useState(false)
   const [isGitHubEnabled, setIsGitHubEnabled] = useState(false)
-
   // Check if GitHub auth is enabled via feature flag
   useEffect(() => {
     const enabled = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === 'true'
     setIsGitHubEnabled(enabled)
   }, [])
-
   const handleGoogleLogin = async () => {
     setLoadingGoogle(true)
     try {
@@ -35,7 +30,6 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
       setLoadingGoogle(false)
     }
   }
-
   const handleFacebookLogin = async () => {
     setLoadingFacebook(true)
     try {
@@ -49,7 +43,6 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
       setLoadingFacebook(false)
     }
   }
-
   const handleGitHubLogin = async () => {
     setLoadingGitHub(true)
     try {
@@ -63,7 +56,6 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
       setLoadingGitHub(false)
     }
   }
-
   return (
     <div className="space-y-3">
       {/* Divider */}
@@ -75,7 +67,6 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
           <span className="px-2 bg-white text-gray-500">Ou continue com</span>
         </div>
       </div>
-
       {/* Social Login Buttons */}
       <div className="grid grid-cols-1 gap-3">
         {/* Google Login Button */}
@@ -111,7 +102,6 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
             </>
           )}
         </button>
-
         {/* Facebook Login Button */}
         <button
           type="button"
@@ -130,7 +120,6 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
             </>
           )}
         </button>
-
         {/* GitHub Login Button - Only shown when enabled via feature flag */}
         {isGitHubEnabled && (
           <button

@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { asaas } from '@/lib/asaas'
 import { pricingPlans } from '@/data/pricing-plans'
-
 // Prevent this route from being evaluated at build time
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 const paymentRequestSchema = z.object({
     planId: z.enum(['basic', 'premium', 'vip'], {
         errorMap: () => ({ message: 'Plano inválido' })
@@ -25,14 +23,11 @@ const paymentRequestSchema = z.object({
     }),
     metadata: z.record(z.string()).optional(),
 })
-
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
         const validatedData = paymentRequestSchema.parse(body)
-
         const { planId, billingInterval, billingType, customerData, metadata = {} } = validatedData
-
         const selectedPlan = pricingPlans.find(plan => plan.id === planId)
         if (!selectedPlan) {
             return NextResponse.json(
@@ -40,7 +35,6 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             )
         }
-
         let customer
         try {
             customer = await asaas.createCustomer({
@@ -62,18 +56,14 @@ export async function POST(request: NextRequest) {
                 { status: 500 }
             )
         }
-
         const amount = billingInterval === 'monthly' 
             ? selectedPlan.priceMonthly 
             : selectedPlan.priceAnnual / 12
-
         const dueDate = new Date()
         dueDate.setDate(dueDate.getDate() + 7)
         const dueDateStr = dueDate.toISOString().split('T')[0]
-
         let payment
         let subscription
-
         if (billingInterval === 'monthly') {
             try {
                 subscription = await asaas.createSubscription({
@@ -85,7 +75,6 @@ export async function POST(request: NextRequest) {
                     description: `Assinatura ${selectedPlan.name} - SV Lentes`,
                     externalReference: `subscription_${planId}_${Date.now()}`,
                 })
-
                 return NextResponse.json({
                     success: true,
                     subscriptionId: subscription.id,
@@ -115,7 +104,6 @@ export async function POST(request: NextRequest) {
                     description: `Assinatura Anual ${selectedPlan.name} - SV Lentes`,
                     externalReference: `payment_${planId}_annual_${Date.now()}`,
                 })
-
                 let pixQrCode
                 if (billingType === 'PIX') {
                     try {
@@ -124,7 +112,6 @@ export async function POST(request: NextRequest) {
                         console.error('Error getting PIX QR code:', error)
                     }
                 }
-
                 return NextResponse.json({
                     success: true,
                     paymentId: payment.id,
@@ -157,7 +144,6 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             )
         }
-
         console.error('Unexpected error in create-payment route:', error)
         return NextResponse.json(
             { 

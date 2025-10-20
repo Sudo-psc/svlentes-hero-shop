@@ -4,9 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { decryptPrescription } from '@/lib/encryption';
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 import { csrfProtection } from '@/lib/csrf';
-
 const prisma = new PrismaClient();
-
 // Schema de validação para exportação de dados
 const dataExportSchema = z.object({
     email: z.string().email('Email inválido'),
@@ -16,14 +14,12 @@ const dataExportSchema = z.object({
     includeConsents: z.boolean().optional().default(true),
     includeMedicalData: z.boolean().optional().default(true)
 });
-
 export async function POST(request: NextRequest) {
     // CSRF Protection
     const csrfResult = await csrfProtection(request);
     if (csrfResult) {
         return csrfResult;
     }
-
     // Rate limiting: 3 requisições em 1 hora (exportação sensível de dados)
     const rateLimitResult = await rateLimit(request, {
         windowMs: 60 * 60 * 1000, // 1 hora
@@ -33,11 +29,9 @@ export async function POST(request: NextRequest) {
     if (rateLimitResult) {
         return rateLimitResult;
     }
-
     try {
         const body = await request.json();
         const validatedData = dataExportSchema.parse(body);
-
         // Buscar usuário pelo email
         const user = await prisma.user.findUnique({
             where: { email: validatedData.email },
@@ -52,20 +46,17 @@ export async function POST(request: NextRequest) {
                 consentLogs: validatedData.includeConsents
             }
         });
-
         if (!user) {
             return NextResponse.json({
                 success: false,
                 message: 'Usuário não encontrado'
             }, { status: 404 });
         }
-
         // Construir objeto de exportação conforme LGPD
         const exportData: any = {
             exportedAt: new Date().toISOString(),
             email: user.email
         };
-
         // Dados pessoais
         if (validatedData.includePersonalData) {
             exportData.personalData = {
@@ -80,7 +71,6 @@ export async function POST(request: NextRequest) {
                 preferences: user.preferences
             };
         }
-
         // Assinaturas
         if (validatedData.includeSubscriptions && user.subscriptions) {
             exportData.subscriptions = user.subscriptions.map(sub => ({
@@ -103,7 +93,6 @@ export async function POST(request: NextRequest) {
                 }))
             }));
         }
-
         // Pedidos
         if (validatedData.includeOrders && user.subscriptions) {
             const allOrders = user.subscriptions.flatMap(sub => sub.orders || []);
@@ -120,7 +109,6 @@ export async function POST(request: NextRequest) {
                 deliveredAt: order.deliveredAt
             }));
         }
-
         // Logs de consentimento
         if (validatedData.includeConsents && user.consentLogs) {
             exportData.consents = user.consentLogs.map(consent => ({
@@ -132,18 +120,15 @@ export async function POST(request: NextRequest) {
                 metadata: consent.metadata
             }));
         }
-
         // Dados médicos (prescrições) - armazenados em metadata criptografados
         if (validatedData.includeMedicalData && user.subscriptions) {
             const medicalData: any[] = [];
-
             user.subscriptions.forEach(sub => {
                 if (sub.metadata && typeof sub.metadata === 'object') {
                     const metadata = sub.metadata as any;
                     if (metadata.lensData) {
                         try {
                             let lensData;
-
                             // Tentar descriptografar primeiro (dados novos)
                             if (typeof metadata.lensData === 'string') {
                                 try {
@@ -167,7 +152,6 @@ export async function POST(request: NextRequest) {
                                 // Dados já em objeto (não criptografados - legado)
                                 lensData = metadata.lensData;
                             }
-
                             medicalData.push({
                                 subscriptionId: sub.id,
                                 lensType: lensData.type,
@@ -183,14 +167,12 @@ export async function POST(request: NextRequest) {
                     }
                 }
             });
-
             if (medicalData.length > 0) {
                 exportData.medicalData = {
                     prescriptions: medicalData
                 };
             }
         }
-
         // Registrar a exportação de dados como um log de consentimento
         await prisma.consentLog.create({
             data: {
@@ -208,16 +190,13 @@ export async function POST(request: NextRequest) {
                 }
             }
         });
-
         return NextResponse.json({
             success: true,
             message: 'Dados exportados com sucesso',
             data: exportData
         });
-
     } catch (error) {
         console.error('Erro ao exportar dados:', error);
-
         if (error instanceof z.ZodError) {
             return NextResponse.json({
                 success: false,
@@ -225,7 +204,6 @@ export async function POST(request: NextRequest) {
                 errors: error.errors
             }, { status: 400 });
         }
-
         return NextResponse.json({
             success: false,
             message: 'Erro ao exportar dados'
@@ -234,7 +212,6 @@ export async function POST(request: NextRequest) {
         await prisma.$disconnect();
     }
 }
-
 export async function GET(request: NextRequest) {
     // Rate limiting: 20 requisições em 15 minutos (verificação de usuário)
     const rateLimitResult = await rateLimit(request, {
@@ -245,18 +222,15 @@ export async function GET(request: NextRequest) {
     if (rateLimitResult) {
         return rateLimitResult;
     }
-
     try {
         const searchParams = request.nextUrl.searchParams;
         const email = searchParams.get('email');
-
         if (!email) {
             return NextResponse.json({
                 success: false,
                 message: 'Email é obrigatório'
             }, { status: 400 });
         }
-
         // Buscar usuário
         const user = await prisma.user.findUnique({
             where: { email },
@@ -267,14 +241,12 @@ export async function GET(request: NextRequest) {
                 createdAt: true
             }
         });
-
         if (!user) {
             return NextResponse.json({
                 success: false,
                 message: 'Usuário não encontrado'
             }, { status: 404 });
         }
-
         // Retornar informações básicas para confirmação antes da exportação
         return NextResponse.json({
             success: true,
@@ -285,10 +257,8 @@ export async function GET(request: NextRequest) {
                 registeredSince: user.createdAt
             }
         });
-
     } catch (error) {
         console.error('Erro ao verificar usuário:', error);
-
         return NextResponse.json({
             success: false,
             message: 'Erro ao verificar usuário'

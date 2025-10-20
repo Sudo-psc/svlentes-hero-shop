@@ -4,12 +4,10 @@
  *
  * Atribui um ticket de suporte a um agente específico
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { supportTicketAssignSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/support/tickets/{id}/assign:
@@ -97,13 +95,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:assign')(request)
-
     if (error) {
       return error
     }
-
     const ticketId = params.id
-
     if (!ticketId) {
       return NextResponse.json(
         {
@@ -113,11 +108,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: assignData, error: validationError } = validateBody(supportTicketAssignSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -127,7 +120,6 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se ticket existe
     const existingTicket = await prisma.supportTicket.findUnique({
       where: { id: ticketId },
@@ -139,7 +131,6 @@ export async function PUT(
         escalationId: true
       }
     })
-
     if (!existingTicket) {
       return NextResponse.json(
         {
@@ -149,7 +140,6 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     // Verificar se ticket pode ser atribuído
     if (existingTicket.status === 'CLOSED' || existingTicket.status === 'RESOLVED') {
       return NextResponse.json(
@@ -160,7 +150,6 @@ export async function PUT(
         { status: 409 }
       )
     }
-
     // Verificar se agente existe
     const agent = await prisma.agent.findUnique({
       where: { id: assignData.assignedAgentId },
@@ -173,7 +162,6 @@ export async function PUT(
         currentTicketCount: true
       }
     })
-
     if (!agent) {
       return NextResponse.json(
         {
@@ -183,7 +171,6 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     if (!agent.isActive) {
       return NextResponse.json(
         {
@@ -193,7 +180,6 @@ export async function PUT(
         { status: 409 }
       )
     }
-
     // Verificar capacidade do agente
     if (agent.currentTicketCount >= agent.maxConcurrentTickets) {
       return NextResponse.json(
@@ -204,7 +190,6 @@ export async function PUT(
         { status: 409 }
       )
     }
-
     // Verificar se já está atribuído ao mesmo agente
     if (existingTicket.assignedAgentId === assignData.assignedAgentId) {
       return NextResponse.json(
@@ -215,7 +200,6 @@ export async function PUT(
         { status: 409 }
       )
     }
-
     // Iniciar transação para atualizar ticket e contador do agente
     const result = await prisma.$transaction(async (tx) => {
       // Atualizar ticket
@@ -246,7 +230,6 @@ export async function PUT(
           }
         }
       })
-
       // Incrementar contador de tickets do agente
       await tx.agent.update({
         where: { id: assignData.assignedAgentId },
@@ -255,16 +238,12 @@ export async function PUT(
           lastActive: new Date()
         }
       })
-
       // Criar registro de atribuição no histórico (se houver tabela de histórico)
       // TODO: Implementar quando houver tabela de histórico de tickets
-
       return { ticket: updatedTicket, agent }
     })
-
     // Disparar notificações
     await triggerAssignmentNotifications(result.ticket, agent, user, assignData.notes)
-
     // Enviar notificação ao cliente sobre atribuição
     const { sendSupportTicketAssignmentNotification } = await import('@/lib/admin-notifications')
     await sendSupportTicketAssignmentNotification(
@@ -273,7 +252,6 @@ export async function PUT(
       result.ticket.ticketNumber,
       agent.name
     )
-
     return createSuccessResponse(
       {
         ticket: result.ticket,
@@ -292,7 +270,6 @@ export async function PUT(
       },
       'Ticket atribuído com sucesso'
     )
-
   } catch (error) {
     console.error('Support ticket assign error:', error)
     return NextResponse.json(
@@ -305,7 +282,6 @@ export async function PUT(
     )
   }
 }
-
 /**
  * DELETE /api/admin/support/tickets/[id]/assign
  * Remover atribuição do ticket
@@ -319,13 +295,10 @@ export async function DELETE(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:assign')(request)
-
     if (error) {
       return error
     }
-
     const ticketId = params.id
-
     if (!ticketId) {
       return NextResponse.json(
         {
@@ -335,7 +308,6 @@ export async function DELETE(
         { status: 400 }
       )
     }
-
     // Verificar se ticket existe
     const existingTicket = await prisma.supportTicket.findUnique({
       where: { id: ticketId },
@@ -346,7 +318,6 @@ export async function DELETE(
         escalationId: true
       }
     })
-
     if (!existingTicket) {
       return NextResponse.json(
         {
@@ -356,7 +327,6 @@ export async function DELETE(
         { status: 404 }
       )
     }
-
     if (!existingTicket.assignedAgentId) {
       return NextResponse.json(
         {
@@ -366,7 +336,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     // Buscar informações do agente atual
     const currentAgent = await prisma.agent.findUnique({
       where: { id: existingTicket.assignedAgentId },
@@ -376,7 +345,6 @@ export async function DELETE(
         currentTicketCount: true
       }
     })
-
     if (!currentAgent) {
       return NextResponse.json(
         {
@@ -386,7 +354,6 @@ export async function DELETE(
         { status: 404 }
       )
     }
-
     // Verificar se ticket pode ser desatribuído
     if (existingTicket.status === 'CLOSED' || existingTicket.status === 'RESOLVED') {
       return NextResponse.json(
@@ -397,7 +364,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     // Iniciar transação para atualizar ticket e contador do agente
     const result = await prisma.$transaction(async (tx) => {
       // Atualizar ticket
@@ -419,7 +385,6 @@ export async function DELETE(
           }
         }
       })
-
       // Decrementar contador de tickets do agente
       await tx.agent.update({
         where: { id: existingTicket.assignedAgentId },
@@ -427,10 +392,8 @@ export async function DELETE(
           currentTicketCount: Math.max(0, currentAgent.currentTicketCount - 1)
         }
       })
-
       return { ticket: updatedTicket, previousAgent: currentAgent }
     })
-
     return createSuccessResponse(
       {
         ticket: result.ticket,
@@ -444,7 +407,6 @@ export async function DELETE(
       },
       'Atribuição do ticket removida com sucesso'
     )
-
   } catch (error) {
     console.error('Support ticket unassign error:', error)
     return NextResponse.json(
@@ -457,7 +419,6 @@ export async function DELETE(
     )
   }
 }
-
 // Funções auxiliares
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
@@ -486,7 +447,6 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 async function triggerAssignmentNotifications(
   ticket: any,
   agent: any,
@@ -495,17 +455,12 @@ async function triggerAssignmentNotifications(
 ): Promise<void> {
   try {
     // Notificar agente sobre nova atribuição
-    console.log(`Ticket ${ticket.ticketNumber} atribuído ao agente ${agent.name} por ${assignedBy.email}`)
-
     // Notificar cliente sobre a atribuição (se aplicável)
-    console.log(`Notificar cliente ${ticket.user.email} sobre atribuição do ticket ${ticket.ticketNumber}`)
-
     // TODO: Implementar notificações reais:
     // - Email para o agente com detalhes do ticket
     // - Notificação no painel do agente
     // - Email/SMS para o cliente informando que o ticket está sendo tratado
     // - Atualizar status em sistemas externos se aplicável
-
   } catch (error) {
     console.error('Error triggering assignment notifications:', error)
     // Não falhar a atribuição se as notificações falharem

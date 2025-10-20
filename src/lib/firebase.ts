@@ -1,6 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
 import { getAuth, Auth } from 'firebase/auth'
-
 // Firebase configuration from environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,14 +9,11 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
-
 // OAuth Client ID for Google Sign-In (explicit configuration)
 const OAUTH_CLIENT_ID = "541878793409-a4v5619865slilel2ssi4r7qhfd4255q.apps.googleusercontent.com"
-
 // Initialize Firebase (singleton pattern)
 let app: FirebaseApp
 let auth: Auth
-
 if (typeof window !== 'undefined') {
   // Client-side only initialization
   if (!getApps().length) {
@@ -27,5 +23,4 @@ if (typeof window !== 'undefined') {
   }
   auth = getAuth(app)
 }
-
 export { app, auth, OAUTH_CLIENT_ID }

@@ -9,14 +9,12 @@ import {
   TicketPriority,
   PaymentMethod
 } from './enums'
-
 // Base interfaces
 export interface BaseEntity {
   id: string
   createdAt: Date
   updatedAt: Date
 }
-
 export interface PaginationMeta {
   page: number
   limit: number
@@ -25,19 +23,16 @@ export interface PaginationMeta {
   hasNext: boolean
   hasPrev: boolean
 }
-
 export interface PaginatedResponse<T> {
   data: T[]
   meta: PaginationMeta
 }
-
 export interface ApiResponse<T = any> {
   success: boolean
   data?: T
   error?: string
   message?: string
 }
-
 // Admin User interfaces
 export interface AdminUser extends BaseEntity {
   name: string
@@ -50,7 +45,6 @@ export interface AdminUser extends BaseEntity {
   phone?: string
   department?: string
 }
-
 export interface CreateAdminUser {
   name: string
   email: string
@@ -59,7 +53,6 @@ export interface CreateAdminUser {
   phone?: string
   department?: string
 }
-
 export interface UpdateAdminUser {
   name?: string
   email?: string
@@ -68,7 +61,6 @@ export interface UpdateAdminUser {
   phone?: string
   department?: string
 }
-
 // Customer User interfaces
 export interface CustomerUser extends BaseEntity {
   name: string
@@ -86,7 +78,6 @@ export interface CustomerUser extends BaseEntity {
   orders: Order[]
   supportTickets: SupportTicket[]
 }
-
 export interface Address {
   street: string
   number: string
@@ -97,20 +88,17 @@ export interface Address {
   zipCode: string
   country?: string
 }
-
 export interface EmergencyContact {
   name: string
   phone: string
   relationship: string
 }
-
 export interface MedicalInfo {
   doctorName: string
   doctorCRM: string
   clinicPhone: string
   observations?: string
 }
-
 // Subscription interfaces
 export interface Subscription extends BaseEntity {
   customerId: string
@@ -131,7 +119,6 @@ export interface Subscription extends BaseEntity {
   deliveryFrequency: 'MONTHLY' | 'BIMONTHLY' | 'QUARTERLY'
   customInstructions?: string
 }
-
 export interface SubscriptionPlan {
   id: string
   name: string
@@ -142,7 +129,6 @@ export interface SubscriptionPlan {
   features: string[]
   lensType: 'DAILY' | 'MONTHLY' | 'BIFOCAL' | 'MULTIFOCAL'
 }
-
 export interface CreateSubscription {
   customerId: string
   planId: string
@@ -153,7 +139,6 @@ export interface CreateSubscription {
   customInstructions?: string
   startDate: Date
 }
-
 // Order interfaces
 export interface Order extends BaseEntity {
   subscriptionId: string
@@ -171,7 +156,6 @@ export interface Order extends BaseEntity {
   totalAmount: number
   notes?: string
 }
-
 export interface OrderItem {
   id: string
   productType: 'LENSES_DAILY' | 'LENSES_MONTHLY' | 'SOLUTION' | 'ACCESSORIES'
@@ -181,7 +165,6 @@ export interface OrderItem {
   totalPrice: number
   prescription?: LensPrescription
 }
-
 export interface LensPrescription {
   eye: 'LEFT' | 'RIGHT' | 'BOTH'
   sphere: number
@@ -192,7 +175,6 @@ export interface LensPrescription {
   diameter?: number
   brand?: string
 }
-
 // Payment interfaces
 export interface Payment extends BaseEntity {
   subscriptionId?: string
@@ -215,7 +197,6 @@ export interface Payment extends BaseEntity {
   failureReason?: string
   metadata?: Record<string, any>
 }
-
 // Support Ticket interfaces
 export interface SupportTicket extends BaseEntity {
   customerId: string
@@ -233,7 +214,6 @@ export interface SupportTicket extends BaseEntity {
   satisfactionRating?: number
   satisfactionComment?: string
 }
-
 export interface TicketInteraction extends BaseEntity {
   ticketId: string
   senderType: 'CUSTOMER' | 'ADMIN'
@@ -243,13 +223,11 @@ export interface TicketInteraction extends BaseEntity {
   attachments?: string[]
   isInternal?: boolean
 }
-
 export interface CreateTicketInteraction {
   message: string
   attachments?: string[]
   isInternal?: boolean
 }
-
 // Analytics interfaces
 export interface DashboardMetrics {
   totalCustomers: number
@@ -263,21 +241,18 @@ export interface DashboardMetrics {
   averageOrderValue: number
   customerLifetimeValue: number
 }
-
 export interface RevenueData {
   date: string
   revenue: number
   subscriptions: number
   orders: number
 }
-
 export interface CustomerGrowthData {
   date: string
   newCustomers: number
   totalCustomers: number
   churnedCustomers: number
 }
-
 export interface SubscriptionMetrics {
   active: number
   paused: number
@@ -285,13 +260,11 @@ export interface SubscriptionMetrics {
   expired: number
   pendingPayment: number
 }
-
 export interface TopProduct {
   productName: string
   quantity: number
   revenue: number
 }
-
 // Filter and Search interfaces
 export interface FilterOptions {
   search?: string
@@ -308,7 +281,6 @@ export interface FilterOptions {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
 }
-
 export interface TableColumn<T = any> {
   key: keyof T
   label: string
@@ -316,7 +288,6 @@ export interface TableColumn<T = any> {
   render?: (value: any, item: T) => React.ReactNode
   width?: string
 }
-
 // Settings interfaces
 export interface SystemSettings {
   siteName: string
@@ -351,7 +322,6 @@ export interface SystemSettings {
     requireTwoFactor: boolean
   }
 }
-
 // Activity Log interfaces
 export interface ActivityLog extends BaseEntity {
   userId?: string
@@ -363,6 +333,5 @@ export interface ActivityLog extends BaseEntity {
   ipAddress?: string
   userAgent?: string
 }
-
 // Export all types
 export * from './enums'

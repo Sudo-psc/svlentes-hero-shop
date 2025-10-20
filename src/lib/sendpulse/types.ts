@@ -2,27 +2,22 @@
  * SendPulse WhatsApp API Type Definitions
  * Comprehensive TypeScript interfaces for type-safe API interactions
  */
-
 // ============================================================================
 // Authentication Types
 // ============================================================================
-
 export interface SendPulseOAuthTokenResponse {
   access_token: string
   token_type: string
   expires_in: number
 }
-
 export interface SendPulseTokenInfo {
   hasToken: boolean
   isValid: boolean
   expiresIn: number
 }
-
 // ============================================================================
 // Bot Types
 // ============================================================================
-
 export interface SendPulseBot {
   id: string
   name: string
@@ -62,16 +57,13 @@ export interface SendPulseBot {
   version: string
   created_at: string
 }
-
 export interface SendPulseBotsResponse {
   success: boolean
   data: SendPulseBot[]
 }
-
 // ============================================================================
 // Contact Types
 // ============================================================================
-
 export interface SendPulseContact {
   id: string
   status: number // 0 = new, 1 = active, 2 = inactive
@@ -96,12 +88,10 @@ export interface SendPulseContact {
   is_banned: boolean
   created_at: string
 }
-
 export interface SendPulseContactsResponse {
   success: boolean
   data: SendPulseContact[]
 }
-
 export interface CreateContactRequest {
   bot_id: string
   phone: string | number
@@ -109,13 +99,10 @@ export interface CreateContactRequest {
   variables?: Record<string, any>
   tags?: string[]
 }
-
 // ============================================================================
 // Message Types
 // ============================================================================
-
 export type MessageType = 'text' | 'image' | 'document' | 'interactive'
-
 export interface TextMessage {
   type: 'text'
   text: {
@@ -123,7 +110,6 @@ export interface TextMessage {
     preview_url?: boolean
   }
 }
-
 export interface ImageMessage {
   type: 'image'
   image: {
@@ -131,7 +117,6 @@ export interface ImageMessage {
     caption?: string
   }
 }
-
 export interface DocumentMessage {
   type: 'document'
   document: {
@@ -140,7 +125,6 @@ export interface DocumentMessage {
     caption?: string
   }
 }
-
 export interface InteractiveButtonsMessage {
   type: 'interactive'
   interactive: {
@@ -159,7 +143,6 @@ export interface InteractiveButtonsMessage {
     }
   }
 }
-
 export interface InteractiveListMessage {
   type: 'interactive'
   interactive: {
@@ -180,19 +163,16 @@ export interface InteractiveListMessage {
     }
   }
 }
-
 export type WhatsAppMessage =
   | TextMessage
   | ImageMessage
   | DocumentMessage
   | InteractiveButtonsMessage
   | InteractiveListMessage
-
 export interface SendMessageRequest {
   contact_id: string
   message: WhatsAppMessage
 }
-
 export interface SendMessageResponse {
   success: boolean
   data: {
@@ -225,11 +205,9 @@ export interface SendMessageResponse {
     }
   }
 }
-
 // ============================================================================
 // Webhook Types
 // ============================================================================
-
 export interface SendPulseWebhookData {
   event: string
   message?: {
@@ -267,11 +245,9 @@ export interface SendPulseWebhookData {
   }
   timestamp?: string
 }
-
 // ============================================================================
 // Account Types
 // ============================================================================
-
 export interface SendPulseAccountInfo {
   success: boolean
   data: {
@@ -297,37 +273,30 @@ export interface SendPulseAccountInfo {
     }
   }
 }
-
 export interface SendPulseBalance {
   currency: string
   balance_currency: number
 }
-
 // ============================================================================
 // Error Types
 // ============================================================================
-
 export interface SendPulseAPIError {
   message: string
   errors?: Record<string, string[]>
   error_code?: number
 }
-
 // ============================================================================
 // Client Configuration Types
 // ============================================================================
-
 export interface SendPulseClientConfig {
   botId?: string // Optional default bot ID
   webhookToken?: string
   cacheContacts?: boolean // Enable contact caching (default: true)
   cacheTTL?: number // Cache TTL in milliseconds (default: 3600000 - 1 hour)
 }
-
 // ============================================================================
 // Convenience Types for Backward Compatibility
 // ============================================================================
-
 export interface LegacySendMessageParams {
   phone: string
   message: string
@@ -342,11 +311,9 @@ export interface LegacySendMessageParams {
   document?: string
   isChatOpened?: boolean // Override window check with webhook status
 }
-
 // ============================================================================
 // Template Message Types (Phase 3)
 // ============================================================================
-
 export interface SendPulseTemplate {
   id: string
   name: string
@@ -357,7 +324,6 @@ export interface SendPulseTemplate {
   created_at?: string
   updated_at?: string
 }
-
 export interface TemplateComponent {
   type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS'
   format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT'
@@ -373,7 +339,6 @@ export interface TemplateComponent {
     phone_number?: string
   }>
 }
-
 export interface TemplateMessage {
   type: 'template'
   template: {
@@ -395,16 +360,13 @@ export interface TemplateMessage {
     }>
   }
 }
-
 export interface SendPulseTemplatesResponse {
   success: boolean
   data: SendPulseTemplate[]
 }
-
 // ============================================================================
 // Webhook Event Types (Phase 3)
 // ============================================================================
-
 export type WebhookEventType =
   | 'message.new'
   | 'message.status'
@@ -412,7 +374,6 @@ export type WebhookEventType =
   | 'contact.updated'
   | 'conversation.opened'
   | 'conversation.closed'
-
 export interface WebhookEvent {
   event: WebhookEventType
   bot_id: string
@@ -420,7 +381,6 @@ export interface WebhookEvent {
   timestamp: string
   data: MessageEvent | StatusEvent | ContactEvent | ConversationEvent
 }
-
 export interface MessageEvent {
   message_id: string
   type: MessageType | 'template'
@@ -435,7 +395,6 @@ export interface MessageEvent {
   from: string
   to: string
 }
-
 export interface StatusEvent {
   message_id: string
   status: 'sent' | 'delivered' | 'read' | 'failed'
@@ -445,7 +404,6 @@ export interface StatusEvent {
     message: string
   }
 }
-
 export interface ContactEvent {
   contact_id: string
   action: 'created' | 'updated'
@@ -456,36 +414,30 @@ export interface ContactEvent {
   }[]
   timestamp: string
 }
-
 export interface ConversationEvent {
   contact_id: string
   action: 'opened' | 'closed'
   timestamp: string
   duration?: number // seconds, for closed events
 }
-
 // ============================================================================
 // Rate Limiting Types (Phase 3)
 // ============================================================================
-
 export interface RateLimitConfig {
   maxRequests: number
   windowMs: number
   strategy: 'token-bucket' | 'sliding-window' | 'fixed-window'
   burstSize?: number // For token bucket
 }
-
 export interface RateLimitState {
   tokens: number
   lastRefill: number
   requestCount: number
   windowStart: number
 }
-
 // ============================================================================
 // Retry Types (Phase 3)
 // ============================================================================
-
 export interface RetryConfig {
   maxRetries: number
   initialDelay: number // milliseconds
@@ -494,18 +446,15 @@ export interface RetryConfig {
   retryableStatusCodes: number[]
   retryableErrors: string[]
 }
-
 export interface RetryAttempt {
   attempt: number
   delay: number
   error?: Error
   timestamp: number
 }
-
 // ============================================================================
 // Analytics Types (Phase 3)
 // ============================================================================
-
 export interface ConversationMetrics {
   contact_id: string
   bot_id: string
@@ -520,7 +469,6 @@ export interface ConversationMetrics {
   readRate: number // percentage
   failureRate: number // percentage
 }
-
 export interface MessageMetrics {
   total: number
   sent: number
@@ -531,13 +479,11 @@ export interface MessageMetrics {
   byHour: Record<string, number> // ISO hour -> count
   byDay: Record<string, number> // ISO date -> count
 }
-
 export interface AnalyticsTimeframe {
   start: string // ISO datetime
   end: string // ISO datetime
   granularity: 'hour' | 'day' | 'week' | 'month'
 }
-
 export interface AnalyticsSummary {
   timeframe: AnalyticsTimeframe
   conversations: {

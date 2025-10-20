@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,13 +8,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-
 // Icon components (simplified)
 const CheckIcon = () => <span className="text-green-500">✓</span>
 const XIcon = () => <span className="text-red-500">✗</span>
 const RefreshIcon = () => <span>↻</span>
 const SearchIcon = () => <span>🔍</span>
-
 interface LangSmithDiagnostics {
   configuration: {
     isConfigured: boolean
@@ -42,7 +39,6 @@ interface LangSmithDiagnostics {
   }
   recommendations: string[]
 }
-
 interface LogEntry {
   id: string
   timestamp: string
@@ -53,7 +49,6 @@ interface LogEntry {
   source: string
   traceId?: string
 }
-
 export default function LangSmithAdminPage() {
   const [diagnostics, setDiagnostics] = useState<LangSmithDiagnostics | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -62,17 +57,14 @@ export default function LangSmithAdminPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLevel, setSelectedLevel] = useState('all')
   const [selectedCategory, setSelectedCategory] = useState('all')
-
   useEffect(() => {
     loadDiagnostics()
     loadLogs()
   }, [])
-
   const loadDiagnostics = async () => {
     try {
       const response = await fetch('/api/admin/langsmith/diagnostics')
       const data = await response.json()
-
       if (data.success) {
         setDiagnostics(data.data)
       } else {
@@ -82,12 +74,10 @@ export default function LangSmithAdminPage() {
       setError('Failed to load diagnostics')
     }
   }
-
   const loadLogs = async () => {
     try {
       const response = await fetch('/api/admin/langsmith/logs')
       const data = await response.json()
-
       if (data.success) {
         setLogs(data.data.logs)
       } else {
@@ -99,7 +89,6 @@ export default function LangSmithAdminPage() {
       setLoading(false)
     }
   }
-
   const testConnection = async () => {
     try {
       const response = await fetch('/api/admin/langsmith/diagnostics', {
@@ -107,7 +96,6 @@ export default function LangSmithAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ operation: 'test-connection' })
       })
-
       const data = await response.json()
       if (data.success) {
         loadDiagnostics() // Refresh diagnostics
@@ -116,7 +104,6 @@ export default function LangSmithAdminPage() {
       setError('Failed to test connection')
     }
   }
-
   const searchLogs = async () => {
     try {
       const response = await fetch('/api/admin/langsmith/logs', {
@@ -131,7 +118,6 @@ export default function LangSmithAdminPage() {
           }
         })
       })
-
       const data = await response.json()
       if (data.success) {
         setLogs(data.data.logs)
@@ -140,7 +126,6 @@ export default function LangSmithAdminPage() {
       setError('Failed to search logs')
     }
   }
-
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'ERROR': return 'destructive'
@@ -150,7 +135,6 @@ export default function LangSmithAdminPage() {
       default: return 'default'
     }
   }
-
   const getConnectionStatusColor = (status: string) => {
     switch (status) {
       case 'connected': return 'text-green-600'
@@ -159,7 +143,6 @@ export default function LangSmithAdminPage() {
       default: return 'text-gray-600'
     }
   }
-
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -170,7 +153,6 @@ export default function LangSmithAdminPage() {
       </div>
     )
   }
-
   if (error) {
     return (
       <div className="container mx-auto p-6">
@@ -180,7 +162,6 @@ export default function LangSmithAdminPage() {
       </div>
     )
   }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -190,7 +171,6 @@ export default function LangSmithAdminPage() {
           Atualizar
         </Button>
       </div>
-
       {diagnostics && (
         <>
           {/* Status Cards */}
@@ -223,7 +203,6 @@ export default function LangSmithAdminPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -250,7 +229,6 @@ export default function LangSmithAdminPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Estatísticas</CardTitle>
@@ -273,7 +251,6 @@ export default function LangSmithAdminPage() {
               </CardContent>
             </Card>
           </div>
-
           {/* Recommendations */}
           {diagnostics.recommendations.length > 0 && (
             <Card>
@@ -291,7 +268,6 @@ export default function LangSmithAdminPage() {
               </CardContent>
             </Card>
           )}
-
           {/* Logs Section */}
           <Card>
             <CardHeader>
@@ -303,7 +279,6 @@ export default function LangSmithAdminPage() {
                   <TabsTrigger value="logs">Logs</TabsTrigger>
                   <TabsTrigger value="search">Busca</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="logs">
                   <div className="space-y-4">
                     <div className="flex items-center space-x-2">
@@ -317,7 +292,6 @@ export default function LangSmithAdminPage() {
                         <SearchIcon />
                       </Button>
                     </div>
-
                     <ScrollArea className="h-[500px]">
                       <div className="space-y-3">
                         {logs.map((log) => (
@@ -362,7 +336,6 @@ export default function LangSmithAdminPage() {
                     </ScrollArea>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="search">
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -382,7 +355,6 @@ export default function LangSmithAdminPage() {
                           <option value="debug">Debug</option>
                         </select>
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium mb-2">
                           Categoria
@@ -400,7 +372,6 @@ export default function LangSmithAdminPage() {
                           <option value="application">Aplicação</option>
                         </select>
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium mb-2">
                           Busca
@@ -418,9 +389,7 @@ export default function LangSmithAdminPage() {
                         </div>
                       </div>
                     </div>
-
                     <Separator />
-
                     <div className="text-sm text-gray-600">
                       <p>Use a busca acima para filtrar os logs por texto, nível e categoria.</p>
                       <p>Os resultados aparecerão na aba "Logs" acima.</p>

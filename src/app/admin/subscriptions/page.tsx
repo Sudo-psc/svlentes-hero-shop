@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -33,7 +32,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useAdminAuth } from '@/components/admin/providers/AdminAuthProvider'
 import { cn } from '@/lib/utils'
-
 // Interfaces específicas para ASAAS
 interface AsaasSubscription {
   id: string
@@ -97,7 +95,6 @@ interface AsaasSubscription {
     data: any
   }[]
 }
-
 const mockAsaasSubscriptions: AsaasSubscription[] = [
   {
     id: '1',
@@ -310,7 +307,6 @@ const mockAsaasSubscriptions: AsaasSubscription[] = [
     ]
   }
 ]
-
 export default function SubscriptionsManager() {
   const { hasPermission } = useAdminAuth()
   const [subscriptions, setSubscriptions] = useState<AsaasSubscription[]>(mockAsaasSubscriptions)
@@ -321,7 +317,6 @@ export default function SubscriptionsManager() {
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
-
   // Verificação de permissão
   if (!hasPermission('VIEW_SUBSCRIPTIONS')) {
     return (
@@ -336,22 +331,18 @@ export default function SubscriptionsManager() {
       </div>
     )
   }
-
   const filteredSubscriptions = subscriptions.filter(sub => {
     const matchesSearch =
       sub.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sub.customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sub.customer.cpf.includes(searchQuery) ||
       sub.plan.name.toLowerCase().includes(searchQuery.toLowerCase())
-
     const matchesStatus = selectedStatus === 'all' || sub.plan.status === selectedStatus
     const matchesPlan = selectedPlan === 'all' || sub.plan.id === selectedPlan
     const matchesPaymentStatus = selectedPaymentStatus === 'all' ||
       sub.payments.some(p => p.status === selectedPaymentStatus)
-
     return matchesSearch && matchesStatus && matchesPlan && matchesPaymentStatus
   })
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
@@ -372,7 +363,6 @@ export default function SubscriptionsManager() {
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'ACTIVE': return 'Ativa'
@@ -387,7 +377,6 @@ export default function SubscriptionsManager() {
       default: return status
     }
   }
-
   const getPaymentMethodIcon = (method: string) => {
     switch (method) {
       case 'BOLETO': return <FileText className="h-4 w-4" />
@@ -397,18 +386,15 @@ export default function SubscriptionsManager() {
       default: return <CreditCardIcon className="h-4 w-4" />
     }
   }
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
   }
-
   const getDaysUntilDue = (dueDate: string) => {
     const today = new Date()
     const due = new Date(dueDate)
@@ -416,7 +402,6 @@ export default function SubscriptionsManager() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return diffDays
   }
-
   const getBillingCycleText = (cycle: string) => {
     switch (cycle) {
       case 'MONTHLY': return 'Mensal'
@@ -426,7 +411,6 @@ export default function SubscriptionsManager() {
       default: return cycle
     }
   }
-
   const refreshData = useCallback(() => {
     setIsLoading(true)
     setTimeout(() => {
@@ -434,30 +418,21 @@ export default function SubscriptionsManager() {
       setIsLoading(false)
     }, 1000)
   }, [])
-
   const handleViewInAsaas = (asaasId: string) => {
     window.open(`https://asaas.com.br/assinaturas/${asaasId}`, '_blank')
   }
-
   const handleViewInvoice = (invoiceUrl: string) => {
     window.open(invoiceUrl, '_blank')
   }
-
   const handlePauseSubscription = (subscriptionId: string) => {
-    console.log('Pause subscription:', subscriptionId)
     // Implementar lógica de pausa via API ASAAS
   }
-
   const handleResumeSubscription = (subscriptionId: string) => {
-    console.log('Resume subscription:', subscriptionId)
     // Implementar lógica de retomada via API ASAAS
   }
-
   const handleCancelSubscription = (subscriptionId: string) => {
-    console.log('Cancel subscription:', subscriptionId)
     // Implementar lógica de cancelamento via API ASAAS
   }
-
   // Estatísticas calculadas
   const stats = {
     total: subscriptions.length,
@@ -472,9 +447,7 @@ export default function SubscriptionsManager() {
       acc + sub.payments.filter(p => p.status === 'PENDING').length, 0
     )
   }
-
   const lastRefresh = new Date()
-
   return (
     <motion.div
       className="space-y-6"
@@ -490,7 +463,6 @@ export default function SubscriptionsManager() {
             Gerencie assinaturas ASAAS e pagamentos recorrentes
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -500,7 +472,6 @@ export default function SubscriptionsManager() {
             <Filter className="h-4 w-4 mr-2" />
             Filtros
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -510,7 +481,6 @@ export default function SubscriptionsManager() {
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Atualizar
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -519,14 +489,12 @@ export default function SubscriptionsManager() {
             <ExternalLink className="h-4 w-4 mr-2" />
             ASAAS Dashboard
           </Button>
-
           <Button size="sm">
             <ShoppingCart className="h-4 w-4 mr-2" />
             Nova Assinatura
           </Button>
         </div>
       </div>
-
       {/* Estatísticas */}
       <div className="grid gap-4 md:grid-cols-6">
         <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4">
@@ -537,7 +505,6 @@ export default function SubscriptionsManager() {
           <div className="text-2xl font-bold text-blue-900">{stats.total}</div>
           <div className="text-xs text-blue-700">Assinaturas</div>
         </div>
-
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
@@ -548,7 +515,6 @@ export default function SubscriptionsManager() {
             {stats.total > 0 ? `${((stats.active / stats.total) * 100).toFixed(1)}%` : '0%'} do total
           </div>
         </div>
-
         <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <Pause className="h-5 w-5 text-orange-600" />
@@ -557,7 +523,6 @@ export default function SubscriptionsManager() {
           <div className="text-2xl font-bold text-orange-900">{stats.suspended}</div>
           <div className="text-xs text-orange-700">Em pausa</div>
         </div>
-
         <div className="bg-gradient-to-br from-red-50 to-pink-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <XCircle className="h-5 w-5 text-red-600" />
@@ -566,7 +531,6 @@ export default function SubscriptionsManager() {
           <div className="text-2xl font-bold text-red-900">{stats.cancelled}</div>
           <div className="text-xs text-red-700">Encerradas</div>
         </div>
-
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <AlertTriangle className="h-5 w-5 text-purple-600" />
@@ -575,7 +539,6 @@ export default function SubscriptionsManager() {
           <div className="text-2xl font-bold text-purple-900">{stats.overdue}</div>
           <div className="text-xs text-purple-700">Pagamento pendente</div>
         </div>
-
         <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <DollarSign className="h-5 w-5 text-cyan-600" />
@@ -585,7 +548,6 @@ export default function SubscriptionsManager() {
           <div className="text-xs text-cyan-700">Mensal recorrente</div>
         </div>
       </div>
-
       {/* Indicadores de Pagamentos */}
       <div className="bg-card border rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
@@ -600,7 +562,6 @@ export default function SubscriptionsManager() {
             </Button>
           </div>
         </div>
-
         <div className="grid gap-3 md:grid-cols-3">
           {subscriptions
             .filter(sub => sub.payments.some(p => p.status === 'PENDING'))
@@ -618,7 +579,6 @@ export default function SubscriptionsManager() {
                       Pendente
                     </Badge>
                   </div>
-
                   <div className="space-y-2">
                     {pendingPayments.slice(0, 2).map((payment, pIndex) => (
                       <div key={payment.id} className="flex items-center justify-between text-xs">
@@ -641,7 +601,6 @@ export default function SubscriptionsManager() {
             })}
         </div>
       </div>
-
       {/* Filtros */}
       {showFilters && (
         <motion.div
@@ -663,7 +622,6 @@ export default function SubscriptionsManager() {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Status da Assinatura</label>
               <select
@@ -678,7 +636,6 @@ export default function SubscriptionsManager() {
                 <option value="OVERDUE">Vencidas</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Plano</label>
               <select
@@ -691,7 +648,6 @@ export default function SubscriptionsManager() {
                 <option value="pln_trimestral_basic">Trimestral Básico</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Status Pagamento</label>
               <select
@@ -709,7 +665,6 @@ export default function SubscriptionsManager() {
           </div>
         </motion.div>
       )}
-
       {/* Lista de Assinaturas */}
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b">
@@ -722,7 +677,6 @@ export default function SubscriptionsManager() {
             </div>
           </div>
         </div>
-
         <div className="divide-y">
           {filteredSubscriptions.map((subscription, index) => (
             <motion.div
@@ -740,7 +694,6 @@ export default function SubscriptionsManager() {
                       {subscription.customer.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </span>
                   </div>
-
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{subscription.customer.name}</h4>
                     <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -748,7 +701,6 @@ export default function SubscriptionsManager() {
                       <span>•</span>
                       <span>{subscription.customer.cpf}</span>
                     </div>
-
                     <div className="flex items-center gap-2 mt-1">
                       <Badge className={cn("text-xs", getStatusColor(subscription.plan.status))}>
                         {getStatusText(subscription.plan.status)}
@@ -759,7 +711,6 @@ export default function SubscriptionsManager() {
                     </div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -771,7 +722,6 @@ export default function SubscriptionsManager() {
                   >
                     <ExternalLink className="h-4 w-4" />
                   </Button>
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -782,7 +732,6 @@ export default function SubscriptionsManager() {
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -795,14 +744,12 @@ export default function SubscriptionsManager() {
                   </Button>
                 </div>
               </div>
-
               <div className="grid gap-4 md:grid-cols-4 text-sm">
                 <div>
                   <p className="text-gray-600 text-xs">Plano</p>
                   <p className="font-medium">{subscription.plan.name}</p>
                   <p className="text-xs text-gray-500">{formatCurrency(subscription.plan.value)}</p>
                 </div>
-
                 <div>
                   <p className="text-gray-600 text-xs">Próximo Vencimento</p>
                   <p className="font-medium">{formatDate(subscription.plan.nextDueDate)}</p>
@@ -815,7 +762,6 @@ export default function SubscriptionsManager() {
                     {getDaysUntilDue(subscription.plan.nextDueDate)} dias
                   </p>
                 </div>
-
                 <div>
                   <p className="text-gray-600 text-xs">Pagamentos</p>
                   <div className="flex items-center gap-1">
@@ -826,7 +772,6 @@ export default function SubscriptionsManager() {
                     <span className="text-xs text-gray-500">confirmados</span>
                   </div>
                 </div>
-
                 <div>
                   <p className="text-gray-600 text-xs">Ciclo</p>
                   <div className="flex items-center gap-1">
@@ -840,7 +785,6 @@ export default function SubscriptionsManager() {
                   </div>
                 </div>
               </div>
-
               {/* Informações Médicas */}
               {subscription.metadata.doctorName && (
                 <div className="mt-3 p-3 bg-blue-50 rounded-lg">
@@ -861,7 +805,6 @@ export default function SubscriptionsManager() {
                   </div>
                 </div>
               )}
-
               {/* Últimos Webhooks */}
               {subscription.webhookEvents.slice(0, 2).length > 0 && (
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg">
@@ -884,7 +827,6 @@ export default function SubscriptionsManager() {
             </motion.div>
           ))}
         </div>
-
         {filteredSubscriptions.length === 0 && (
           <div className="p-8 text-center">
             <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -893,7 +835,6 @@ export default function SubscriptionsManager() {
           </div>
         )}
       </div>
-
       {/* Modal de Detalhes */}
       {selectedSubscription && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -906,7 +847,6 @@ export default function SubscriptionsManager() {
                     #{selectedSubscription.subscription.code} • {selectedSubscription.plan.name}
                   </p>
                 </div>
-
                 <Button
                   variant="ghost"
                   size="sm"
@@ -915,7 +855,6 @@ export default function SubscriptionsManager() {
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Informações do Cliente */}
                 <div className="space-y-4">
@@ -938,7 +877,6 @@ export default function SubscriptionsManager() {
                     </div>
                   </div>
                 </div>
-
                 {/* Informações do Plano */}
                 <div className="space-y-4">
                   <h4 className="font-medium">Plano</h4>
@@ -966,7 +904,6 @@ export default function SubscriptionsManager() {
                     </div>
                   </div>
                 </div>
-
                 {/* Pagamentos */}
                 <div className="space-y-4 lg:col-span-2">
                   <h4 className="font-medium">Histórico de Pagamentos</h4>
@@ -981,7 +918,6 @@ export default function SubscriptionsManager() {
                               {getStatusText(payment.status)}
                             </Badge>
                           </div>
-
                           <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
@@ -990,7 +926,6 @@ export default function SubscriptionsManager() {
                             >
                               <Eye className="h-3 w-3" />
                             </Button>
-
                             {payment.status === 'OVERDUE' && (
                               <Button
                                 size="sm"
@@ -1004,7 +939,6 @@ export default function SubscriptionsManager() {
                               </Button>
                             )}
                           </div>
-
                           <div className="text-xs text-gray-600">
                             <div>Vencimento: {formatDate(payment.dueDate)}</div>
                             {payment.paymentDate && (
@@ -1017,7 +951,6 @@ export default function SubscriptionsManager() {
                     ))}
                   </div>
                 </div>
-
                 {/* Informações Médicas */}
                 {selectedSubscription.metadata.doctorName && (
                   <div className="space-y-4">
@@ -1034,21 +967,18 @@ export default function SubscriptionsManager() {
                           <p>{formatDate(selectedSubscription.metadata.prescriptionExpiry || '')}</p>
                         </div>
                       </div>
-
                       {selectedSubscription.metadata.lastAppointment && (
                         <div>
                           <strong>Última Consulta:</strong>
                           <p>{formatDate(selectedSubscription.metadata.lastAppointment)}</p>
                         </div>
                       )}
-
                       {selectedSubscription.metadata.nextAppointment && (
                         <div>
                           <strong>Próxima Consulta:</strong>
                           <p>{formatDate(selectedSubscription.metadata.nextAppointment)}</p>
                         </div>
                       )}
-
                       {selectedSubscription.metadata.notes && (
                         <div>
                           <strong>Observações:</strong>
@@ -1058,7 +988,6 @@ export default function SubscriptionsManager() {
                     </div>
                   </div>
                 )}
-
                 {/* Eventos de Webhook */}
                 <div className="space-y-4">
                   <h4 className="font-medium">Eventos de Sistema</h4>
@@ -1080,13 +1009,11 @@ export default function SubscriptionsManager() {
                     </div>
                   </div>
                 </div>
-
                 {/* Ações */}
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setSelectedSubscription(null)}>
                     Fechar
                   </Button>
-
                   {selectedSubscription.plan.status === 'ACTIVE' && (
                     <Button
                       onClick={() => handlePauseSubscription(selectedSubscription.id)}
@@ -1096,7 +1023,6 @@ export default function SubscriptionsManager() {
                       Pausar
                     </Button>
                   )}
-
                   {selectedSubscription.plan.status === 'SUSPENDED' && (
                     <Button
                       onClick={() => handleResumeSubscription(selectedSubscription.id)}
@@ -1106,7 +1032,6 @@ export default function SubscriptionsManager() {
                       Reativar
                     </Button>
                   )}
-
                   <Button
                     onClick={() => handleCancelSubscription(selectedSubscription.id)}
                     className="bg-red-600 hover:bg-red-700 text-white"
@@ -1114,7 +1039,6 @@ export default function SubscriptionsManager() {
                     <Trash2 className="h-4 w-4 mr-2" />
                     Cancelar
                   </Button>
-
                   <Button
                     variant="outline"
                     onClick={() => handleViewInAsaas(selectedSubscription.asaasId)}

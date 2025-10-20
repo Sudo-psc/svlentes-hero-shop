@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { withAdminAuth } from '@/lib/admin/auth'
 import { Permission } from '@/types/admin'
-
 export const GET = withAdminAuth(
   async (req: NextRequest, { user }) => {
     // Check system health
@@ -11,9 +10,7 @@ export const GET = withAdminAuth(
       cache: await checkCacheHealth(),
       external_services: await checkExternalServicesHealth(),
     }
-
     const isHealthy = Object.values(healthChecks).every(check => check.status === 'healthy')
-
     return Response.json({
       success: true,
       data: {
@@ -26,7 +23,6 @@ export const GET = withAdminAuth(
   },
   Permission.VIEW_DASHBOARD
 )
-
 async function checkDatabaseHealth() {
   try {
     // In production, check actual database connection
@@ -43,7 +39,6 @@ async function checkDatabaseHealth() {
     }
   }
 }
-
 async function checkApiHealth() {
   try {
     // Check if main API is responding
@@ -51,7 +46,6 @@ async function checkApiHealth() {
       method: 'GET',
       cache: 'no-store',
     })
-
     return {
       status: response.ok ? 'healthy' : 'unhealthy',
       status_code: response.status,
@@ -64,7 +58,6 @@ async function checkApiHealth() {
     }
   }
 }
-
 async function checkCacheHealth() {
   try {
     // In production, check Redis/Cache service
@@ -80,21 +73,17 @@ async function checkCacheHealth() {
     }
   }
 }
-
 async function checkExternalServicesHealth() {
   const services = {
     asaas: await checkAsaasHealth(),
     sendpulse: await checkSendpulseHealth(),
   }
-
   const allHealthy = Object.values(services).every(service => service.status === 'healthy')
-
   return {
     status: allHealthy ? 'healthy' : 'degraded',
     services,
   }
 }
-
 async function checkAsaasHealth() {
   try {
     if (!process.env.ASAAS_API_KEY_PROD) {
@@ -103,7 +92,6 @@ async function checkAsaasHealth() {
         message: 'API key not configured',
       }
     }
-
     // In production, make actual API call to Asaas
     return {
       status: 'healthy',
@@ -116,7 +104,6 @@ async function checkAsaasHealth() {
     }
   }
 }
-
 async function checkSendpulseHealth() {
   try {
     if (!process.env.SENDPULSE_ACCESS_TOKEN) {
@@ -125,7 +112,6 @@ async function checkSendpulseHealth() {
         message: 'SendPulse credentials not configured',
       }
     }
-
     // In production, make actual API call to SendPulse
     return {
       status: 'healthy',

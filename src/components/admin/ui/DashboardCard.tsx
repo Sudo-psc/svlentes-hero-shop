@@ -1,10 +1,8 @@
 'use client'
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
 import { ReactNode } from 'react'
-
 interface DashboardCardProps {
   title: string
   value: string | number
@@ -19,7 +17,6 @@ interface DashboardCardProps {
   children?: ReactNode
   footer?: ReactNode
 }
-
 export function DashboardCard({
   title,
   value,
@@ -77,9 +74,7 @@ export function DashboardCard({
         }
     }
   }
-
   const colorClasses = getColorClasses()
-
   return (
     <Card className={cn(
       'relative overflow-hidden transition-all duration-200 hover:shadow-lg',
@@ -130,7 +125,6 @@ export function DashboardCard({
     </Card>
   )
 }
-
 // Smaller version for compact layouts
 export function DashboardCardCompact({
   title,
@@ -178,9 +172,7 @@ export function DashboardCardCompact({
         }
     }
   }
-
   const colorClasses = getColorClasses()
-
   return (
     <Card className={cn(
       'p-4 transition-all duration-200 hover:shadow-md',

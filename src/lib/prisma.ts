@@ -1,9 +1,7 @@
 import { PrismaClient } from '@prisma/client'
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
-
 // P3: Database connection pooling configuration
 export const prisma =
   globalForPrisma.prisma ??
@@ -16,7 +14,6 @@ export const prisma =
       },
     },
   })
-
 // P3: Graceful shutdown - disconnect on process termination
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma

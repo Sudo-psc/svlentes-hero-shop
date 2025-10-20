@@ -7,20 +7,17 @@
  * - Health monitoring and metrics tracking
  * - Graceful degradation strategies
  */
-
 export interface CircuitBreakerConfig {
   failureThreshold: number // Number of failures before opening circuit
   resetTimeout: number     // Time (ms) before attempting reset
   monitorWindow: number    // Time window (ms) for failure tracking
 }
-
 export interface RetryConfig {
   maxAttempts: number
   initialDelay: number    // Initial delay in ms
   maxDelay: number        // Maximum delay in ms
   backoffMultiplier: number // Exponential backoff factor
 }
-
 export interface HealthMetrics {
   totalAttempts: number
   successCount: number
@@ -30,13 +27,11 @@ export interface HealthMetrics {
   currentState: 'healthy' | 'degraded' | 'failed'
   circuitState: CircuitState
 }
-
 export enum CircuitState {
   CLOSED = 'CLOSED',   // Normal operation
   OPEN = 'OPEN',       // Failing fast, not attempting calls
   HALF_OPEN = 'HALF_OPEN' // Testing if service recovered
 }
-
 /**
  * Circuit Breaker Implementation
  *
@@ -48,20 +43,16 @@ export class CircuitBreaker {
   private failureCount = 0
   private nextAttemptTime = 0
   private failures: Date[] = []
-
   constructor(private config: CircuitBreakerConfig) {}
-
   /**
    * Check if circuit allows operation
    */
   canAttempt(): boolean {
     const now = Date.now()
-
     // Clean old failures outside monitor window
     this.failures = this.failures.filter(
       failure => now - failure.getTime() < this.config.monitorWindow
     )
-
     if (this.state === CircuitState.OPEN) {
       // Check if enough time has passed to try again
       if (now >= this.nextAttemptTime) {
@@ -70,10 +61,8 @@ export class CircuitBreaker {
       }
       return false
     }
-
     return true
   }
-
   /**
    * Record successful operation
    */
@@ -82,7 +71,6 @@ export class CircuitBreaker {
     this.failures = []
     this.state = CircuitState.CLOSED
   }
-
   /**
    * Record failed operation
    */
@@ -90,7 +78,6 @@ export class CircuitBreaker {
     const now = new Date()
     this.failures.push(now)
     this.failureCount++
-
     if (this.state === CircuitState.HALF_OPEN) {
       // Failed while testing - go back to OPEN
       this.openCircuit()
@@ -99,7 +86,6 @@ export class CircuitBreaker {
       this.openCircuit()
     }
   }
-
   /**
    * Open circuit and set reset timer
    */
@@ -107,14 +93,12 @@ export class CircuitBreaker {
     this.state = CircuitState.OPEN
     this.nextAttemptTime = Date.now() + this.config.resetTimeout
   }
-
   /**
    * Get current circuit state
    */
   getState(): CircuitState {
     return this.state
   }
-
   /**
    * Reset circuit breaker (for testing/admin purposes)
    */
@@ -125,7 +109,6 @@ export class CircuitBreaker {
     this.nextAttemptTime = 0
   }
 }
-
 /**
  * Retry Logic with Exponential Backoff
  *
@@ -134,7 +117,6 @@ export class CircuitBreaker {
  */
 export class RetryStrategy {
   constructor(private config: RetryConfig) {}
-
   /**
    * Execute operation with retry logic
    */
@@ -144,36 +126,30 @@ export class RetryStrategy {
   ): Promise<T> {
     let lastError: Error | undefined
     let attempt = 0
-
     while (attempt < this.config.maxAttempts) {
       try {
         return await operation()
       } catch (error) {
         lastError = error as Error
         attempt++
-
         if (attempt >= this.config.maxAttempts) {
           // Max attempts reached, throw error
           break
         }
-
         // Calculate delay with exponential backoff and jitter
         const delay = this.calculateDelay(attempt)
         console.warn(
           `[RetryStrategy] ${context} failed (attempt ${attempt}/${this.config.maxAttempts}). ` +
           `Retrying in ${delay}ms... Error: ${lastError.message}`
         )
-
         await this.sleep(delay)
       }
     }
-
     throw new Error(
       `${context} failed after ${this.config.maxAttempts} attempts. ` +
       `Last error: ${lastError?.message}`
     )
   }
-
   /**
    * Calculate delay with exponential backoff and jitter
    */
@@ -183,13 +159,10 @@ export class RetryStrategy {
       this.config.initialDelay * Math.pow(this.config.backoffMultiplier, attempt - 1),
       this.config.maxDelay
     )
-
     // Add jitter (random variation ±25%) to prevent thundering herd
     const jitter = exponentialDelay * (0.75 + Math.random() * 0.5)
-
     return Math.floor(jitter)
   }
-
   /**
    * Sleep utility
    */
@@ -197,7 +170,6 @@ export class RetryStrategy {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 }
-
 /**
  * Health Monitor
  *
@@ -213,7 +185,6 @@ export class HealthMonitor {
     currentState: 'healthy',
     circuitState: CircuitState.CLOSED
   }
-
   /**
    * Record successful operation
    */
@@ -223,7 +194,6 @@ export class HealthMonitor {
     this.metrics.lastSuccess = new Date()
     this.updateHealthState()
   }
-
   /**
    * Record failed operation
    */
@@ -233,7 +203,6 @@ export class HealthMonitor {
     this.metrics.lastFailure = new Date()
     this.updateHealthState()
   }
-
   /**
    * Update circuit state in metrics
    */
@@ -241,7 +210,6 @@ export class HealthMonitor {
     this.metrics.circuitState = state
     this.updateHealthState()
   }
-
   /**
    * Update overall health state based on metrics
    */
@@ -250,15 +218,12 @@ export class HealthMonitor {
       this.metrics.currentState = 'failed'
       return
     }
-
     const totalAttempts = this.metrics.totalAttempts
     if (totalAttempts === 0) {
       this.metrics.currentState = 'healthy'
       return
     }
-
     const successRate = this.metrics.successCount / totalAttempts
-
     if (successRate >= 0.95) {
       this.metrics.currentState = 'healthy'
     } else if (successRate >= 0.7) {
@@ -267,28 +232,24 @@ export class HealthMonitor {
       this.metrics.currentState = 'failed'
     }
   }
-
   /**
    * Get current health metrics
    */
   getMetrics(): HealthMetrics {
     return { ...this.metrics }
   }
-
   /**
    * Get simple health status
    */
   getHealthStatus(): 'healthy' | 'degraded' | 'failed' {
     return this.metrics.currentState
   }
-
   /**
    * Check if system is operational
    */
   isOperational(): boolean {
     return this.metrics.currentState !== 'failed'
   }
-
   /**
    * Reset metrics (for testing/admin purposes)
    */
@@ -304,7 +265,6 @@ export class HealthMonitor {
     }
   }
 }
-
 /**
  * Error Recovery Manager
  *
@@ -314,7 +274,6 @@ export class ErrorRecoveryManager {
   private circuitBreaker: CircuitBreaker
   private retryStrategy: RetryStrategy
   private healthMonitor: HealthMonitor
-
   constructor(
     circuitConfig: CircuitBreakerConfig = {
       failureThreshold: 3,
@@ -332,7 +291,6 @@ export class ErrorRecoveryManager {
     this.retryStrategy = new RetryStrategy(retryConfig)
     this.healthMonitor = new HealthMonitor()
   }
-
   /**
    * Execute operation with full error recovery
    */
@@ -347,48 +305,40 @@ export class ErrorRecoveryManager {
         `Circuit breaker is OPEN for ${context}. System is failing, not attempting operation.`
       )
     }
-
     try {
       // Execute with retry logic
       const result = await this.retryStrategy.execute(operation, context)
-
       // Record success
       this.circuitBreaker.recordSuccess()
       this.healthMonitor.recordSuccess()
       this.healthMonitor.updateCircuitState(this.circuitBreaker.getState())
-
       return result
     } catch (error) {
       // Record failure
       this.circuitBreaker.recordFailure()
       this.healthMonitor.recordFailure()
       this.healthMonitor.updateCircuitState(this.circuitBreaker.getState())
-
       throw error
     }
   }
-
   /**
    * Get health metrics
    */
   getHealthMetrics(): HealthMetrics {
     return this.healthMonitor.getMetrics()
   }
-
   /**
    * Get health status
    */
   getHealthStatus(): 'healthy' | 'degraded' | 'failed' {
     return this.healthMonitor.getHealthStatus()
   }
-
   /**
    * Check if system is operational
    */
   isOperational(): boolean {
     return this.healthMonitor.isOperational()
   }
-
   /**
    * Reset error recovery (for testing/admin purposes)
    */
@@ -397,6 +347,5 @@ export class ErrorRecoveryManager {
     this.healthMonitor.reset()
   }
 }
-
 // Singleton instance for global use
 export const errorRecovery = new ErrorRecoveryManager()

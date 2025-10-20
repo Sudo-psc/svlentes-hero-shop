@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
 import { TrustStrip } from '@/components/trust/TrustStrip'
 import { HomeLazySections } from '@/components/sections/HomeLazySections'
-
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
     description: 'Assinatura de lentes de contato em Caratinga, Minas Gerais, com acompanhamento médico do Dr. Philipe Saraiva Cruz - CRM 69.870. Lentes diárias, mensais, tóricas e multifocais. Economia de até 40% com entrega grátis.',
@@ -24,7 +23,6 @@ export const metadata: Metadata = {
         canonical: 'https://svlentes.com.br',
     },
 }
-
 export default function HomePage() {
     return (
         <div className="min-h-screen">
@@ -32,14 +30,12 @@ export default function HomePage() {
             <section id="hero">
                 <VideoHeroSection />
             </section>
-
             {/* Trust Strip - Logo após o Hero */}
             <section className="bg-white py-6 border-y border-gray-100">
                 <div className="container-custom">
                     <TrustStrip />
                 </div>
             </section>
-
             {/* Seção com opções de calculadora e assinatura direta */}
             <HomeLazySections />
         </div>

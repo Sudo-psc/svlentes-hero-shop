@@ -1,8 +1,6 @@
 'use client'
-
 import { trackEvent, trackSubscriptionEvent } from './analytics'
 import { trackPlanSelection as trackPlanSelectionConversion, trackCheckoutStarted, trackConsultationBooked } from './conversion-tracking'
-
 // Tipos para as ações de pricing
 export interface SubscriptionData {
     planId: string
@@ -19,7 +17,6 @@ export interface SubscriptionData {
         lgpdConsent: boolean
     }
 }
-
 export interface ScheduleData {
     planId: string
     customerData?: {
@@ -28,17 +25,14 @@ export interface ScheduleData {
         phone?: string
     }
 }
-
 // Função para iniciar processo de assinatura
 export async function handleSubscription(data: SubscriptionData) {
     try {
         // Obter o valor do plano baseado no plano e intervalo
         const planValue = getPriceId(data.planId, data.billingInterval)
-
         if (!planValue) {
             throw new Error('Plano não encontrado')
         }
-
         // Preparar dados para a API de checkout (Asaas)
         const checkoutData = {
             planId: data.planId,
@@ -54,7 +48,6 @@ export async function handleSubscription(data: SubscriptionData) {
             leadData: data.leadData,
             source: 'pricing-section',
         }
-
         // Chamar API de checkout
         const response = await fetch('/api/create-checkout', {
             method: 'POST',
@@ -63,24 +56,18 @@ export async function handleSubscription(data: SubscriptionData) {
             },
             body: JSON.stringify(checkoutData),
         })
-
         const result = await response.json()
-
         if (!result.success) {
             throw new Error(result.error || 'Erro ao criar checkout')
         }
-
         // Registrar evento de analytics e conversão
         const planPrice = getPlanPrice(data.planId, data.billingInterval)
         const planTier = data.planId.includes('premium') ? 'premium' : data.planId.includes('vip') ? 'vip' : 'basic'
-
         trackPlanSelection(data.planId, data.billingInterval)
-
         trackCheckoutStarted({
             planId: data.planId,
             value: planPrice,
         })
-
         // Track subscription event for enhanced ecommerce
         trackSubscriptionEvent('begin_checkout', {
             item_id: data.planId,
@@ -90,14 +77,11 @@ export async function handleSubscription(data: SubscriptionData) {
             currency: 'BRL',
             billing_interval: data.billingInterval,
         })
-
         // Para Asaas, retornar os dados da assinatura para processamento no frontend
         // O frontend pode mostrar opções de pagamento (PIX, Boleto, Cartão)
         return result
-
     } catch (error) {
         console.error('Erro ao processar assinatura:', error)
-
         // Registrar erro no analytics
         trackEvent('subscription_error', {
             error_type: 'checkout_error',
@@ -105,11 +89,9 @@ export async function handleSubscription(data: SubscriptionData) {
             plan_name: data.planId,
             step: 'payment',
         })
-
         throw error
     }
 }
-
 // Função para agendar consulta
 export async function handleScheduleConsultation(data: ScheduleData) {
     try {
@@ -123,22 +105,17 @@ export async function handleScheduleConsultation(data: ScheduleData) {
             },
             prefilledMessage: `Olá! Gostaria de agendar uma consulta para conhecer melhor o ${getPlanName(data.planId)}. Pode me ajudar com os próximos passos?`,
         }
-
         // Registrar evento de analytics e conversão
         trackConsultationBooked({
             planInterest: data.planId,
             source: 'pricing-section',
         })
-
         // Redirecionar para WhatsApp
         const whatsappUrl = generateWhatsAppUrl(whatsappData)
         window.open(whatsappUrl, '_blank')
-
         return { success: true }
-
     } catch (error) {
         console.error('Erro ao agendar consulta:', error)
-
         // Registrar erro no analytics
         trackEvent('subscription_error', {
             error_type: 'schedule_error',
@@ -146,11 +123,9 @@ export async function handleScheduleConsultation(data: ScheduleData) {
             plan_name: data.planId,
             step: 'form',
         })
-
         throw error
     }
 }
-
 // Função auxiliar para obter price ID (Asaas uses plan value directly)
 // Atualizado com novo sistema de precificação (+15%)
 function getPriceId(planId: string, billingInterval: 'monthly' | 'annual'): number | null {
@@ -162,13 +137,10 @@ function getPriceId(planId: string, billingInterval: 'monthly' | 'annual'): numb
         basic: { monthly: 128.00, annual: 1091.00 },
         vip: { monthly: 91.00, annual: 1091.00 },
     }
-
     const plan = prices[planId as keyof typeof prices]
     if (!plan) return null
-
     return plan[billingInterval] || null
 }
-
 // Função auxiliar para obter preço do plano
 // Atualizado com novo sistema de precificação (+15%)
 function getPlanPrice(planId: string, billingInterval: 'monthly' | 'annual'): number {
@@ -180,13 +152,10 @@ function getPlanPrice(planId: string, billingInterval: 'monthly' | 'annual'): nu
         basic: { monthly: 128.00, annual: 1091.00 },
         vip: { monthly: 91.00, annual: 1091.00 },
     }
-
     const plan = prices[planId as keyof typeof prices]
     if (!plan) return 0
-
     return plan[billingInterval]
 }
-
 // Função auxiliar para obter nome do plano
 // Atualizado com novo sistema de nomenclatura
 function getPlanName(planId: string): string {
@@ -198,10 +167,8 @@ function getPlanName(planId: string): string {
         basic: 'Plano Express Mensal',
         vip: 'Plano VIP Anual',
     }
-
     return names[planId as keyof typeof names] || planId
 }
-
 // Função auxiliar para gerar URL do WhatsApp
 function generateWhatsAppUrl(data: {
     type: 'consultation'
@@ -218,10 +185,8 @@ function generateWhatsAppUrl(data: {
 }): string {
     const phoneNumber = '5565999887766' // Número do WhatsApp Business
     const message = encodeURIComponent(data.prefilledMessage)
-
     return `https://wa.me/${phoneNumber}?text=${message}`
 }
-
 // Função para registrar seleção de plano (analytics)
 export function trackPlanSelection(planId: string, billingInterval: 'monthly' | 'annual') {
     const planPrice = getPlanPrice(planId, billingInterval)
@@ -234,12 +199,9 @@ export function trackPlanSelection(planId: string, billingInterval: 'monthly' | 
         billing_interval: billingInterval,
     })
 }
-
 // Função para registrar mudança de aba (analytics)
 export function trackTabChange(tabId: string) {
     // This function is kept for backward compatibility
     // The actual tracking is now done in the component using trackEvent
-    console.log('Tab changed to:', tabId)
 }
-
 // Tipos do gtag já declarados em analytics.ts

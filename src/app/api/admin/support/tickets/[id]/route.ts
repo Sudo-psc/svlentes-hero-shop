@@ -4,12 +4,10 @@
  *
  * Retorna informações completas de um ticket incluindo histórico e interações
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { supportTicketUpdateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/support/tickets/{id}:
@@ -77,13 +75,10 @@ export async function GET(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:view')(request)
-
     if (error) {
       return error
     }
-
     const ticketId = params.id
-
     if (!ticketId) {
       return NextResponse.json(
         {
@@ -93,7 +88,6 @@ export async function GET(
         { status: 400 }
       )
     }
-
     // Buscar ticket com dados relacionados
     const ticket = await prisma.supportTicket.findUnique({
       where: { id: ticketId },
@@ -124,7 +118,6 @@ export async function GET(
         }
       }
     })
-
     if (!ticket) {
       return NextResponse.json(
         {
@@ -134,7 +127,6 @@ export async function GET(
         { status: 404 }
       )
     }
-
     // Buscar interações associadas
     const interactions = await prisma.whatsappInteraction.findMany({
       where: { ticketId },
@@ -158,7 +150,6 @@ export async function GET(
         processingTime: true
       }
     })
-
     // Calcular métricas adicionais
     const resolutionTime = ticket.resolvedAt
       ? Math.ceil(
@@ -166,16 +157,13 @@ export async function GET(
           (1000 * 60 * 60 * 24)
         )
       : null
-
     const daysSinceCreation = Math.ceil(
       (new Date().getTime() - new Date(ticket.createdAt).getTime()) /
       (1000 * 60 * 60 * 24)
     )
-
     const averageResponseTime = interactions.length > 0
       ? interactions.reduce((sum, interaction) => sum + (interaction.processingTime || 0), 0) / interactions.length
       : 0
-
     // Status detalhado
     const statusInfo = {
       current: ticket.status,
@@ -186,10 +174,8 @@ export async function GET(
       needsAttention: ['OPEN', 'ESCALATED'].includes(ticket.status),
       isOverdue: !ticket.resolvedAt && daysSinceCreation > getSLADays(ticket.priority)
     }
-
     // Criar timeline do ticket
     const timeline = createTicketTimeline(ticket, interactions)
-
     // Montar resposta completa
     const ticketDetail = {
       ticket: {
@@ -229,9 +215,7 @@ export async function GET(
         priority: ticket.priority
       }
     }
-
     return createSuccessResponse(ticketDetail, 'Detalhes do ticket obtidos com sucesso')
-
   } catch (error) {
     console.error('Support ticket detail error:', error)
     return NextResponse.json(
@@ -244,7 +228,6 @@ export async function GET(
     )
   }
 }
-
 /**
  * PUT /api/admin/support/tickets/[id]
  * Atualizar ticket de suporte
@@ -258,13 +241,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:update')(request)
-
     if (error) {
       return error
     }
-
     const ticketId = params.id
-
     if (!ticketId) {
       return NextResponse.json(
         {
@@ -274,11 +254,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: updateData, error: validationError } = validateBody(supportTicketUpdateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -288,7 +266,6 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se ticket existe
     const existingTicket = await prisma.supportTicket.findUnique({
       where: { id: ticketId },
@@ -299,7 +276,6 @@ export async function PUT(
         category: true
       }
     })
-
     if (!existingTicket) {
       return NextResponse.json(
         {
@@ -309,13 +285,11 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     // Preparar dados de atualização
     const updateDataWithTimestamps = {
       ...updateData,
       updatedAt: new Date()
     }
-
     // Adicionar campos específicos baseado no status
     if (updateData.status) {
       switch (updateData.status) {
@@ -327,7 +301,6 @@ export async function PUT(
           break
       }
     }
-
     // Atualizar ticket
     const updatedTicket = await prisma.supportTicket.update({
       where: { id: ticketId },
@@ -350,9 +323,7 @@ export async function PUT(
         }
       }
     })
-
     return createSuccessResponse(updatedTicket, 'Ticket atualizado com sucesso')
-
   } catch (error) {
     console.error('Support ticket update error:', error)
     return NextResponse.json(
@@ -365,7 +336,6 @@ export async function PUT(
     )
   }
 }
-
 /**
  * DELETE /api/admin/support/tickets/[id]
  * Excluir ticket de suporte
@@ -379,13 +349,10 @@ export async function DELETE(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:delete')(request)
-
     if (error) {
       return error
     }
-
     const ticketId = params.id
-
     if (!ticketId) {
       return NextResponse.json(
         {
@@ -395,7 +362,6 @@ export async function DELETE(
         { status: 400 }
       )
     }
-
     // Verificar se ticket existe
     const ticket = await prisma.supportTicket.findUnique({
       where: { id: ticketId },
@@ -405,7 +371,6 @@ export async function DELETE(
         escalationId: true
       }
     })
-
     if (!ticket) {
       return NextResponse.json(
         {
@@ -415,7 +380,6 @@ export async function DELETE(
         { status: 404 }
       )
     }
-
     // Verificar se ticket pode ser excluído
     if (ticket.escalationId) {
       return NextResponse.json(
@@ -426,7 +390,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     if (ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS') {
       return NextResponse.json(
         {
@@ -436,12 +399,10 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     // Excluir interações associadas primeiro
     await prisma.whatsappInteraction.deleteMany({
       where: { ticketId }
     })
-
     // Excluir ticket
     const deletedTicket = await prisma.supportTicket.delete({
       where: { id: ticketId },
@@ -451,9 +412,7 @@ export async function DELETE(
         deletedAt: new Date()
       }
     })
-
     return createSuccessResponse(deletedTicket, 'Ticket excluído com sucesso')
-
   } catch (error) {
     console.error('Support ticket delete error:', error)
     return NextResponse.json(
@@ -466,7 +425,6 @@ export async function DELETE(
     )
   }
 }
-
 // Funções auxiliares
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
@@ -495,10 +453,8 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 function createTicketTimeline(ticket: any, interactions: any[]): any[] {
   const timeline = []
-
   // Data de criação
   timeline.push({
     date: ticket.createdAt,
@@ -507,7 +463,6 @@ function createTicketTimeline(ticket: any, interactions: any[]): any[] {
     author: 'System',
     type: 'info'
   })
-
   // Atribuição
   if (ticket.assignedAt) {
     timeline.push({
@@ -518,7 +473,6 @@ function createTicketTimeline(ticket: any, interactions: any[]): any[] {
       type: 'success'
     })
   }
-
   // Interações
   interactions.forEach(interaction => {
     timeline.push({
@@ -530,7 +484,6 @@ function createTicketTimeline(ticket: any, interactions: any[]): any[] {
       messageId: interaction.messageId
     })
   })
-
   // Resolução
   if (ticket.resolvedAt) {
     timeline.push({
@@ -541,7 +494,6 @@ function createTicketTimeline(ticket: any, interactions: any[]): any[] {
       type: 'success'
     })
   }
-
   // Última atualização
   if (ticket.updatedAt && ticket.updatedAt !== ticket.createdAt) {
     timeline.push({
@@ -552,10 +504,8 @@ function createTicketTimeline(ticket: any, interactions: any[]): any[] {
       type: 'info'
     })
   }
-
   return timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
-
 function getSLADays(priority: string): number {
   const slaDays: Record<string, number> = {
     'LOW': 7,
@@ -564,6 +514,5 @@ function getSLADays(priority: string): number {
     'URGENT': 0.5, // 12 horas
     'CRITICAL': 0.25 // 6 horas
   }
-
   return slaDays[priority] || 3
 }

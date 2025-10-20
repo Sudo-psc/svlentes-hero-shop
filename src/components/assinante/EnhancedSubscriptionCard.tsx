@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -21,7 +20,6 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateLong, formatRelativeTime } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel, type SubscriptionStatus } from '@/lib/subscription-helpers'
 import { cn } from '@/lib/utils'
-
 interface EnhancedSubscriptionCardProps {
   status: SubscriptionStatus
   planName: string
@@ -39,7 +37,6 @@ interface EnhancedSubscriptionCardProps {
   onReactivate?: () => void
   isLoading?: boolean
 }
-
 export function EnhancedSubscriptionCard({
   status,
   planName,
@@ -59,14 +56,12 @@ export function EnhancedSubscriptionCard({
 }: EnhancedSubscriptionCardProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const [timeUntilBilling, setTimeUntilBilling] = useState<string>('')
-
   useEffect(() => {
     if (nextBillingDate && status === 'active') {
       const updateTime = () => {
         const now = new Date()
         const billing = new Date(nextBillingDate)
         const diff = billing.getTime() - now.getTime()
-
         if (diff > 0) {
           const days = Math.floor(diff / (1000 * 60 * 60 * 24))
           if (days > 0) {
@@ -79,16 +74,13 @@ export function EnhancedSubscriptionCard({
           setTimeUntilBilling('Hoje')
         }
       }
-
       updateTime()
       const interval = setInterval(updateTime, 60000) // Update every minute
       return () => clearInterval(interval)
     }
   }, [nextBillingDate, status])
-
   const billingCycleLabel = billingCycle === 'monthly' ? 'mês' : 'ano'
   const isActive = status === 'active'
-
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -100,21 +92,18 @@ export function EnhancedSubscriptionCard({
       }
     }
   }
-
   const statusIcon = {
     active: <CheckCircle className="h-5 w-5 text-green-600" />,
     pending: <Clock className="h-5 w-5 text-yellow-600" />,
     cancelled: <AlertCircle className="h-5 w-5 text-red-600" />,
     paused: <AlertCircle className="h-5 w-5 text-yellow-600" />
   }
-
   const planFeatures = [
     { icon: <Zap className="h-4 w-4" />, label: 'Entrega Rápida', available: true },
     { icon: <Shield className="h-4 w-4" />, label: 'Garantia Estendida', available: true },
     { icon: <Star className="h-4 w-4" />, label: 'Suporte Prioritário', available: isActive },
     { icon: <TrendingUp className="h-4 w-4" />, label: 'Economia Mensal', available: true }
   ]
-
   return (
     <motion.div
       variants={cardVariants}
@@ -150,7 +139,6 @@ export function EnhancedSubscriptionCard({
             {getSubscriptionStatusLabel(status)}
           </motion.div>
         </div>
-
         {/* Price Display */}
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-bold text-cyan-600">
@@ -168,7 +156,6 @@ export function EnhancedSubscriptionCard({
           )}
         </div>
       </div>
-
       {/* Status Messages */}
       <AnimatePresence>
         {status === 'pending' && (
@@ -189,7 +176,6 @@ export function EnhancedSubscriptionCard({
             </div>
           </motion.div>
         )}
-
         {status === 'cancelled' && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
@@ -208,7 +194,6 @@ export function EnhancedSubscriptionCard({
             </div>
           </motion.div>
         )}
-
         {status === 'paused' && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
@@ -228,7 +213,6 @@ export function EnhancedSubscriptionCard({
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Main Content */}
       <div className="p-6 space-y-6">
         {/* Next Billing Date */}
@@ -247,7 +231,6 @@ export function EnhancedSubscriptionCard({
             </div>
           </div>
         )}
-
         {/* Payment Method */}
         {paymentMethod && (
           <div>
@@ -267,7 +250,6 @@ export function EnhancedSubscriptionCard({
               </div>
               <Edit className="h-4 w-4 text-gray-400" />
             </button>
-
             <AnimatePresence>
               {expandedSection === 'payment' && (
                 <motion.div
@@ -290,7 +272,6 @@ export function EnhancedSubscriptionCard({
             </AnimatePresence>
           </div>
         )}
-
         {/* Shipping Address */}
         {shippingAddress && (
           <div>
@@ -309,7 +290,6 @@ export function EnhancedSubscriptionCard({
               </div>
               <Edit className="h-4 w-4 text-gray-400" />
             </button>
-
             <AnimatePresence>
               {expandedSection === 'address' && (
                 <motion.div
@@ -336,7 +316,6 @@ export function EnhancedSubscriptionCard({
             </AnimatePresence>
           </div>
         )}
-
         {/* Plan Features */}
         <div>
           <h4 className="text-sm font-medium text-gray-900 mb-3">Benefícios do Plano</h4>
@@ -360,7 +339,6 @@ export function EnhancedSubscriptionCard({
             ))}
           </div>
         </div>
-
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4 border-t">
           {isActive && (
@@ -386,7 +364,6 @@ export function EnhancedSubscriptionCard({
               </Button>
             </>
           )}
-
           {(status === 'cancelled' || status === 'paused') && onReactivate && (
             <Button
               size="sm"

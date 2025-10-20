@@ -1,9 +1,7 @@
 'use client';
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-
 interface Benefit {
   id: string;
   title: string;
@@ -11,13 +9,11 @@ interface Benefit {
   icon: string;
   highlight?: boolean;
 }
-
 interface BenefitsGridProps {
   benefits: Benefit[];
   title?: string;
   subtitle?: string;
 }
-
 export const BenefitsGrid: React.FC<BenefitsGridProps> = ({
   benefits,
   title = 'Por que escolher nossos planos?',
@@ -36,7 +32,6 @@ export const BenefitsGrid: React.FC<BenefitsGridProps> = ({
             </p>
           )}
         </div>
-
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {benefits.map((benefit) => (
             <Card
@@ -59,7 +54,6 @@ export const BenefitsGrid: React.FC<BenefitsGridProps> = ({
                   >
                     {benefit.icon}
                   </div>
-
                   {/* Content */}
                   <div className="flex-1">
                     <h3
@@ -75,7 +69,6 @@ export const BenefitsGrid: React.FC<BenefitsGridProps> = ({
                     </p>
                   </div>
                 </div>
-
                 {/* Decorative element for highlighted items */}
                 {benefit.highlight && (
                   <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-200 opacity-20 rounded-full -mr-10 -mt-10" />
@@ -88,5 +81,4 @@ export const BenefitsGrid: React.FC<BenefitsGridProps> = ({
     </section>
   );
 };
-
 export default BenefitsGrid;

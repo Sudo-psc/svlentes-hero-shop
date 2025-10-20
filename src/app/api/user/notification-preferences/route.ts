@@ -5,7 +5,6 @@ import {
   NotificationPreferences,
   DEFAULT_NOTIFICATION_PREFERENCES
 } from '@/types/notification-preferences'
-
 // Validation schema
 const notificationPreferencesSchema = z.object({
   channels: z.object({
@@ -26,69 +25,58 @@ const notificationPreferencesSchema = z.object({
       events: z.record(z.boolean()).optional()
     }).optional()
   }).optional(),
-
   quietHours: z.object({
     enabled: z.boolean(),
     start: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/),
     end: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/),
     timezone: z.string()
   }).optional(),
-
   frequency: z.object({
     maxPerDay: z.number().min(1).max(100),
     maxPerWeek: z.number().min(1).max(500),
     respectQuietHours: z.boolean()
   }).optional(),
-
   fallback: z.object({
     enabled: z.boolean(),
     primaryChannel: z.enum(['email', 'whatsapp', 'sms', 'push']),
     fallbackChannel: z.enum(['email', 'whatsapp', 'sms', 'push']),
     fallbackDelayMinutes: z.number().min(5).max(1440)
   }).optional(),
-
   language: z.enum(['pt-BR', 'en-US']).optional(),
   format: z.enum(['html', 'plain']).optional()
 })
-
 /**
  * GET - Retrieve user notification preferences
  */
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     // Try to find user by database ID or Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, preferences: true }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
         select: { id: true, preferences: true }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     // Get notification preferences
     const userPrefs = user.preferences as any
     const notificationPrefs = userPrefs?.notifications as NotificationPreferences
-
     // Merge with defaults
     const preferences: NotificationPreferences = {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
@@ -100,7 +88,6 @@ export async function GET(req: NextRequest) {
         push: { ...DEFAULT_NOTIFICATION_PREFERENCES.channels.push, ...notificationPrefs?.channels?.push }
       }
     }
-
     return NextResponse.json({
       success: true,
       preferences
@@ -113,48 +100,40 @@ export async function GET(req: NextRequest) {
     )
   }
 }
-
 /**
  * PUT - Update user notification preferences
  */
 export async function PUT(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     const body = await req.json()
     const updates = notificationPreferencesSchema.parse(body)
-
     // Find user by database ID or Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, preferences: true }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
         select: { id: true, preferences: true }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     // Get current preferences
     const currentPrefs = (user.preferences as any) || {}
     const currentNotificationPrefs = currentPrefs.notifications || {}
-
     // Deep merge updates with current preferences
     const updatedNotificationPrefs: NotificationPreferences = {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
@@ -184,7 +163,6 @@ export async function PUT(req: NextRequest) {
       },
       updatedAt: new Date()
     }
-
     // Update user preferences in database
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
@@ -196,7 +174,6 @@ export async function PUT(req: NextRequest) {
       },
       select: { id: true, preferences: true }
     })
-
     // Log the preference change
     await prisma.consentLog.create({
       data: {
@@ -212,9 +189,7 @@ export async function PUT(req: NextRequest) {
         }
       }
     }).catch(err => console.error('Error logging consent:', err))
-
     const finalPreferences = (updatedUser.preferences as any).notifications
-
     return NextResponse.json({
       success: true,
       preferences: finalPreferences,
@@ -227,7 +202,6 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       )
     }
-
     console.error('Error updating notification preferences:', error)
     return NextResponse.json(
       { error: 'Erro ao atualizar preferências. Tente novamente mais tarde.' },
@@ -235,41 +209,35 @@ export async function PUT(req: NextRequest) {
     )
   }
 }
-
 /**
  * POST - Reset notification preferences to defaults
  */
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     // Find user by database ID or Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, preferences: true, email: true }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
         select: { id: true, preferences: true, email: true }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     // Reset to default preferences
     const currentPrefs = (user.preferences as any) || {}
     const updatedUser = await prisma.user.update({
@@ -282,7 +250,6 @@ export async function POST(req: NextRequest) {
       },
       select: { id: true, preferences: true }
     })
-
     // Log the reset action
     await prisma.consentLog.create({
       data: {
@@ -297,7 +264,6 @@ export async function POST(req: NextRequest) {
         }
       }
     }).catch(err => console.error('Error logging consent:', err))
-
     return NextResponse.json({
       success: true,
       preferences: DEFAULT_NOTIFICATION_PREFERENCES,

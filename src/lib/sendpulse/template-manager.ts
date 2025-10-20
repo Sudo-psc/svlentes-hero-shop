@@ -3,7 +3,6 @@
  * Manages WhatsApp message templates for expired conversation windows
  * Templates must be pre-approved by WhatsApp/Facebook Business
  */
-
 import { sendPulseAuth } from '../sendpulse-auth'
 import type {
   SendPulseTemplate,
@@ -14,13 +13,11 @@ import {
   SendPulseMessageError,
   createSendPulseError
 } from './errors'
-
 export class TemplateManager {
   private baseUrl = 'https://api.sendpulse.com/whatsapp'
   private cachedTemplates: Map<string, SendPulseTemplate[]> = new Map()
   private cacheExpiry: Map<string, number> = new Map()
   private cacheTTL = 24 * 60 * 60 * 1000 // 24 hours
-
   /**
    * Get all templates for a bot
    */
@@ -29,10 +26,8 @@ export class TemplateManager {
     if (!forceRefresh && this.isCacheValid(botId)) {
       return this.cachedTemplates.get(botId) || []
     }
-
     try {
       const apiToken = await sendPulseAuth.getAccessToken()
-
       const response = await fetch(
         `${this.baseUrl}/templates?bot_id=${botId}`,
         {
@@ -42,26 +37,20 @@ export class TemplateManager {
           }
         }
       )
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       const data: SendPulseTemplatesResponse = await response.json()
-
       // Cache templates
       this.cachedTemplates.set(botId, data.data)
       this.cacheExpiry.set(botId, Date.now() + this.cacheTTL)
-
       return data.data
-
     } catch (error) {
       console.error('Error fetching templates:', error)
       throw error
     }
   }
-
   /**
    * Get approved templates only
    */
@@ -69,7 +58,6 @@ export class TemplateManager {
     const templates = await this.getTemplates(botId)
     return templates.filter(t => t.status === 'APPROVED')
   }
-
   /**
    * Get template by name
    */
@@ -77,7 +65,6 @@ export class TemplateManager {
     const templates = await this.getTemplates(botId)
     return templates.find(t => t.name === templateName) || null
   }
-
   /**
    * Check if template exists and is approved
    */
@@ -85,7 +72,6 @@ export class TemplateManager {
     const template = await this.getTemplate(botId, templateName)
     return template?.status === 'APPROVED'
   }
-
   /**
    * Build template message for sending
    */
@@ -99,7 +85,6 @@ export class TemplateManager {
     }
   ): TemplateMessage {
     const components: TemplateMessage['template']['components'] = []
-
     // Add header parameters if provided
     if (parameters?.header && parameters.header.length > 0) {
       components.push({
@@ -110,7 +95,6 @@ export class TemplateManager {
         }))
       })
     }
-
     // Add body parameters if provided
     if (parameters?.body && parameters.body.length > 0) {
       components.push({
@@ -121,7 +105,6 @@ export class TemplateManager {
         }))
       })
     }
-
     // Add button parameters if provided
     if (parameters?.buttons && parameters.buttons.length > 0) {
       parameters.buttons.forEach(button => {
@@ -136,7 +119,6 @@ export class TemplateManager {
         })
       })
     }
-
     return {
       type: 'template',
       template: {
@@ -148,7 +130,6 @@ export class TemplateManager {
       }
     }
   }
-
   /**
    * Validate template parameters
    */
@@ -160,51 +141,43 @@ export class TemplateManager {
     }
   ): { valid: boolean; errors: string[] } {
     const errors: string[] = []
-
     // Check if template is approved
     if (template.status !== 'APPROVED') {
       errors.push(`Template "${template.name}" is not approved (status: ${template.status})`)
       return { valid: false, errors }
     }
-
     // Validate header parameters
     const headerComponent = template.components.find(c => c.type === 'HEADER')
     if (headerComponent?.format === 'TEXT' && headerComponent.example?.header_text) {
       const expectedCount = headerComponent.example.header_text.length
       const providedCount = parameters?.header?.length || 0
-
       if (providedCount !== expectedCount) {
         errors.push(
           `Header expects ${expectedCount} parameters, but ${providedCount} provided`
         )
       }
     }
-
     // Validate body parameters
     const bodyComponent = template.components.find(c => c.type === 'BODY')
     if (bodyComponent?.example?.body_text && bodyComponent.example.body_text[0]) {
       const expectedCount = bodyComponent.example.body_text[0].length
       const providedCount = parameters?.body?.length || 0
-
       if (providedCount !== expectedCount) {
         errors.push(
           `Body expects ${expectedCount} parameters, but ${providedCount} provided`
         )
       }
     }
-
     return {
       valid: errors.length === 0,
       errors
     }
   }
-
   /**
    * Get default template for reengagement
    */
   async getDefaultReengagementTemplate(botId: string): Promise<SendPulseTemplate | null> {
     const templates = await this.getApprovedTemplates(botId)
-
     // Look for common reengagement template names
     const reengagementNames = [
       'reengagement',
@@ -213,7 +186,6 @@ export class TemplateManager {
       'hello',
       'ola'
     ]
-
     for (const name of reengagementNames) {
       const template = templates.find(t =>
         t.name.toLowerCase().includes(name) &&
@@ -221,11 +193,9 @@ export class TemplateManager {
       )
       if (template) return template
     }
-
     // Return first utility template as fallback
     return templates.find(t => t.category === 'UTILITY') || templates[0] || null
   }
-
   /**
    * Check if cache is valid
    */
@@ -234,7 +204,6 @@ export class TemplateManager {
     if (!expiry) return false
     return Date.now() < expiry
   }
-
   /**
    * Clear cached templates
    */
@@ -247,7 +216,6 @@ export class TemplateManager {
       this.cacheExpiry.clear()
     }
   }
-
   /**
    * Get cache statistics
    */
@@ -259,15 +227,12 @@ export class TemplateManager {
   } {
     const cachedBots = this.cachedTemplates.size
     let totalTemplates = 0
-
     Array.from(this.cachedTemplates.values()).forEach(templates => {
       totalTemplates += templates.length
     })
-
     const expiryTimes = Array.from(this.cacheExpiry.values())
     const oldestCache = expiryTimes.length > 0 ? Math.min(...expiryTimes) : null
     const newestCache = expiryTimes.length > 0 ? Math.max(...expiryTimes) : null
-
     return {
       cachedBots,
       totalTemplates,
@@ -276,6 +241,5 @@ export class TemplateManager {
     }
   }
 }
-
 // Singleton instance
 export const templateManager = new TemplateManager()

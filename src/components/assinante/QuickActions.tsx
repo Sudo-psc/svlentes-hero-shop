@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-
 interface QuickAction {
   id: string
   label: string
@@ -29,15 +27,12 @@ interface QuickAction {
   badge?: string
   color?: string
 }
-
 interface QuickActionsProps {
   actions: QuickAction[]
   className?: string
 }
-
 export function QuickActions({ actions, className }: QuickActionsProps) {
   const [hoveredAction, setHoveredAction] = useState<string | null>(null)
-
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -49,7 +44,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
       }
     }
   }
-
   const itemVariants = {
     hidden: { opacity: 0, scale: 0.9 },
     visible: {
@@ -61,7 +55,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
       }
     }
   }
-
   return (
     <motion.div
       className={cn('space-y-4', className)}
@@ -73,7 +66,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
         <div className="h-1 w-8 bg-cyan-600 rounded-full" />
         <h3 className="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {actions.map((action) => (
           <motion.div
@@ -100,7 +92,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
             >
               {/* Background gradient on hover */}
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/0 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center gap-3 text-center">
                 {/* Icon with animation */}
@@ -117,7 +108,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
                 >
                   {action.icon}
                 </motion.div>
-
                 {/* Badge */}
                 {action.badge && (
                   <motion.span
@@ -129,7 +119,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
                     {action.badge}
                   </motion.span>
                 )}
-
                 {/* Text */}
                 <div className="flex-1">
                   <p className="font-medium text-sm leading-tight mb-1">
@@ -142,7 +131,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
                   )}
                 </div>
               </div>
-
               {/* Disabled overlay */}
               {action.isDisabled && (
                 <div className="absolute inset-0 bg-gray-100/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -153,7 +141,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
           </motion.div>
         ))}
       </div>
-
       {/* Floating action buttons for mobile */}
       <div className="lg:hidden fixed bottom-6 right-6 z-40 flex flex-col gap-3">
         <motion.div
@@ -168,7 +155,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
             <MessageCircle className="h-6 w-6" />
           </Button>
         </motion.div>
-
         <motion.div
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -186,7 +172,6 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
     </motion.div>
   )
 }
-
 // Helper function to create common actions
 export function createQuickActions({
   onOrdersClick,

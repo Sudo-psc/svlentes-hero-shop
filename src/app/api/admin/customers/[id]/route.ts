@@ -4,12 +4,10 @@
  *
  * Retorna informações completas de um cliente incluindo assinaturas, pedidos e histórico
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { customerUpdateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/customers/{id}:
@@ -75,13 +73,10 @@ export async function GET(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:view')(request)
-
     if (error) {
       return error
     }
-
     const customerId = params.id
-
     if (!customerId) {
       return NextResponse.json(
         {
@@ -91,7 +86,6 @@ export async function GET(
         { status: 400 }
       )
     }
-
     // Buscar cliente com dados relacionados
     const customer = await prisma.user.findUnique({
       where: { id: customerId },
@@ -110,7 +104,6 @@ export async function GET(
         metadata: true
       }
     })
-
     if (!customer) {
       return NextResponse.json(
         {
@@ -120,7 +113,6 @@ export async function GET(
         { status: 404 }
       )
     }
-
     // Buscar dados relacionados em paralelo
     const [
       subscriptions,
@@ -145,7 +137,6 @@ export async function GET(
           createdAt: 'desc'
         }
       }),
-
       // Pedidos do cliente
       prisma.order.findMany({
         where: {
@@ -165,7 +156,6 @@ export async function GET(
           createdAt: 'desc'
         }
       }),
-
       // Pagamentos do cliente
       prisma.payment.findMany({
         where: { userId: customerId },
@@ -182,7 +172,6 @@ export async function GET(
         },
         take: 50 // Limitar para performance
       }),
-
       // Tickets de suporte
       prisma.supportTicket.findMany({
         where: { userId: customerId },
@@ -199,7 +188,6 @@ export async function GET(
           createdAt: 'desc'
         }
       }),
-
       // Logs de consentimento LGPD
       prisma.consentLog.findMany({
         where: { userId: customerId },
@@ -208,23 +196,19 @@ export async function GET(
         }
       })
     ])
-
     // Processar dados e calcular métricas
     const activeSubscription = subscriptions.find(s => s.status === 'ACTIVE')
     const customerStatus = activeSubscription ? 'active' :
                          subscriptions.some(s => ['OVERDUE', 'SUSPENDED'].includes(s.status)) ? 'overdue' :
                          'inactive'
-
     // Calcular métricas financeiras
     const totalPayments = payments
       .filter(p => p.status === 'RECEIVED')
       .reduce((sum, p) => sum + Number(p.amount), 0)
-
     const lastPayment = payments.find(p => p.status === 'RECEIVED')
     const averagePaymentValue = payments.length > 0
       ? payments.reduce((sum, p) => sum + Number(p.amount), 0) / payments.length
       : 0
-
     // Montar resposta completa
     const customerDetail = {
       customer: {
@@ -298,9 +282,7 @@ export async function GET(
         expiresAt: log.expiresAt
       }))
     }
-
     return createSuccessResponse(customerDetail, 'Detalhes do cliente obtidos com sucesso')
-
   } catch (error) {
     console.error('Customer detail error:', error)
     return NextResponse.json(
@@ -313,7 +295,6 @@ export async function GET(
     )
   }
 }
-
 /**
  * PUT /api/admin/customers/[id]
  * Atualizar dados do cliente
@@ -327,13 +308,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:update')(request)
-
     if (error) {
       return error
     }
-
     const customerId = params.id
-
     if (!customerId) {
       return NextResponse.json(
         {
@@ -343,11 +321,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: updateData, error: validationError } = validateBody(customerUpdateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -357,12 +333,10 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se cliente existe
     const existingCustomer = await prisma.user.findUnique({
       where: { id: customerId }
     })
-
     if (!existingCustomer) {
       return NextResponse.json(
         {
@@ -372,13 +346,11 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     // Verificar se email já existe (se estiver sendo atualizado)
     if (updateData.email && updateData.email !== existingCustomer.email) {
       const emailExists = await prisma.user.findUnique({
         where: { email: updateData.email.toLowerCase() }
       })
-
       if (emailExists) {
         return NextResponse.json(
           {
@@ -389,7 +361,6 @@ export async function PUT(
         )
       }
     }
-
     // Atualizar cliente
     const updatedCustomer = await prisma.user.update({
       where: { id: customerId },
@@ -413,9 +384,7 @@ export async function PUT(
         lastLoginAt: true
       }
     })
-
     return createSuccessResponse(updatedCustomer, 'Cliente atualizado com sucesso')
-
   } catch (error) {
     console.error('Customer update error:', error)
     return NextResponse.json(
@@ -428,7 +397,6 @@ export async function PUT(
     )
   }
 }
-
 /**
  * DELETE /api/admin/customers/[id]
  * Excluir cliente (soft delete)
@@ -442,13 +410,10 @@ export async function DELETE(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:delete')(request)
-
     if (error) {
       return error
     }
-
     const customerId = params.id
-
     if (!customerId) {
       return NextResponse.json(
         {
@@ -458,7 +423,6 @@ export async function DELETE(
         { status: 400 }
       )
     }
-
     // Verificar se cliente existe
     const customer = await prisma.user.findUnique({
       where: { id: customerId },
@@ -468,7 +432,6 @@ export async function DELETE(
         }
       }
     })
-
     if (!customer) {
       return NextResponse.json(
         {
@@ -478,7 +441,6 @@ export async function DELETE(
         { status: 404 }
       )
     }
-
     // Verificar se cliente tem assinaturas ativas
     if (customer.subscriptions.length > 0) {
       return NextResponse.json(
@@ -489,7 +451,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     // Soft delete - mudar role para 'inactive'
     const deletedCustomer = await prisma.user.update({
       where: { id: customerId },
@@ -505,9 +466,7 @@ export async function DELETE(
         updatedAt: true
       }
     })
-
     return createSuccessResponse(deletedCustomer, 'Cliente excluído com sucesso')
-
   } catch (error) {
     console.error('Customer delete error:', error)
     return NextResponse.json(
@@ -520,7 +479,6 @@ export async function DELETE(
     )
   }
 }
-
 // Função auxiliar de validação
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null

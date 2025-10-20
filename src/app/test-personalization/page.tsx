@@ -1,12 +1,10 @@
 import { Metadata } from 'next'
 import PersonalizationTest from '@/components/personalization/PersonalizationTest'
-
 export const metadata: Metadata = {
     title: 'Teste de Personalização | SV Lentes',
     description: 'Página de teste do sistema de personalização dinâmica',
     robots: 'noindex, nofollow'
 }
-
 export default function TestPersonalizationPage() {
     return (
         <div className="min-h-screen bg-gray-50 py-8">
@@ -19,9 +17,7 @@ export default function TestPersonalizationPage() {
                         Demonstração do sistema de personalização dinâmica com 8 personas
                     </p>
                 </div>
-
                 <PersonalizationTest />
-
                 <div className="mt-8 text-center text-sm text-gray-500">
                     <p>
                         Esta página é apenas para testes e desenvolvimento do sistema de personalização.

@@ -1,18 +1,15 @@
 // Tipos para formulários e interações
-
 export interface LeadFormData {
     nome: string;
     whatsapp: string;
     email: string;
     lgpdConsent: boolean;
 }
-
 export interface CalculatorData extends LeadFormData {
     currentSpending: number;
     lensType: 'daily' | 'weekly' | 'monthly';
     usage: 'occasional' | 'regular' | 'daily';
 }
-
 export interface SubscriptionFormData {
     leadInfo: LeadFormData; // Dados já capturados
     personalInfo: {
@@ -53,7 +50,6 @@ export interface SubscriptionFormData {
     };
     selectedPlan: string;
 }
-
 export interface WhatsAppMessage {
     type: 'lead' | 'consultation' | 'support';
     userData: Partial<LeadFormData>;

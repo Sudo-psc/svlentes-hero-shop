@@ -1,10 +1,8 @@
 'use client'
-
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import PaymentTestModal from '@/components/payment/PaymentTestModal'
 import { CreditCard, TestTube } from 'lucide-react'
-
 export default function TestPaymentPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState({
@@ -12,7 +10,6 @@ export default function TestPaymentPage() {
     name: 'Plano Premium (Teste)',
     price: 104.00
   })
-
   const testPlans = [
     {
       id: 'express',
@@ -35,7 +32,6 @@ export default function TestPaymentPage() {
       price: 91.00
     }
   ]
-
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -44,7 +40,6 @@ export default function TestPaymentPage() {
       maximumFractionDigits: 2,
     }).format(value)
   }
-
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4">
@@ -61,7 +56,6 @@ export default function TestPaymentPage() {
               Interface de teste para validação do fallback de pagamento Stripe como alternativa ao Asaas.
             </p>
           </div>
-
           {/* Environment Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <h2 className="text-lg font-semibold text-blue-900 mb-4">Informações do Ambiente</h2>
@@ -88,11 +82,9 @@ export default function TestPaymentPage() {
               </div>
             </div>
           </div>
-
           {/* Plan Selection */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Selecione o Plano para Testar</h2>
-
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               {testPlans.map((plan) => (
                 <button
@@ -116,7 +108,6 @@ export default function TestPaymentPage() {
                 </button>
               ))}
             </div>
-
             <div className="text-center">
               <Button
                 onClick={() => setIsModalOpen(true)}
@@ -128,7 +119,6 @@ export default function TestPaymentPage() {
               </Button>
             </div>
           </div>
-
           {/* Instructions */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-amber-900 mb-4">Instruções de Teste</h2>
@@ -165,7 +155,6 @@ export default function TestPaymentPage() {
           </div>
         </div>
       </div>
-
       {/* Payment Test Modal */}
       <PaymentTestModal
         isOpen={isModalOpen}

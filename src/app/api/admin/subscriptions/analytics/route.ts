@@ -4,11 +4,9 @@
  *
  * Retorna dados analíticos detalhados sobre assinaturas
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
-
 /**
  * @swagger
  * /api/admin/subscriptions/analytics:
@@ -77,20 +75,16 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('subscriptions:analytics')(request)
-
     if (error) {
       return error
     }
-
     // Extrair parâmetros
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '30d'
     const metric = searchParams.get('metric') || 'overview'
     const groupBy = searchParams.get('groupBy')
-
     // Calcular período de datas
     const { startDate, endDate } = getDateRange(period)
-
     // Buscar dados baseado na métrica solicitada
     let analyticsData: any
     switch (metric) {
@@ -121,9 +115,7 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         )
     }
-
     return createSuccessResponse(analyticsData, 'Analytics obtidos com sucesso')
-
   } catch (error) {
     console.error('Subscriptions analytics error:', error)
     return NextResponse.json(
@@ -136,7 +128,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 // Funções de analytics específicas
 async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: string) {
   const [
@@ -155,7 +146,6 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
         createdAt: { lte: endDate }
       }
     }),
-
     // Novas assinaturas no período
     prisma.subscription.count({
       where: {
@@ -165,7 +155,6 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
         }
       }
     }),
-
     // Canceladas no período
     prisma.subscription.count({
       where: {
@@ -176,21 +165,18 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
         }
       }
     }),
-
     // Assinaturas ativas
     prisma.subscription.count({
       where: {
         status: 'ACTIVE'
       }
     }),
-
     // Assinaturas em atraso
     prisma.subscription.count({
       where: {
         status: 'OVERDUE'
       }
     }),
-
     // MRR (Monthly Recurring Revenue)
     prisma.subscription.aggregate({
       where: {
@@ -203,7 +189,6 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
         monthlyValue: true
       }
     }),
-
     // Distribuição por plano
     prisma.subscription.groupBy({
       by: ['planType'],
@@ -220,7 +205,6 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
         monthlyValue: true
       }
     }),
-
     // Distribuição por método de pagamento
     prisma.subscription.groupBy({
       by: ['paymentMethod'],
@@ -235,16 +219,13 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
       }
     })
   ])
-
   const mrr = Number(mrrData._sum.monthlyValue || 0)
   const averageMRR = Number(mrrData._avg.monthlyValue || 0)
   const arr = mrr * 12
-
   // Calcular churn rate
   const churnRate = totalSubscriptions > 0
     ? ((cancelledSubscriptions / (totalSubscriptions + cancelledSubscriptions)) * 100)
     : 0
-
   return {
     metric: 'overview',
     period: getPeriodString(startDate, endDate),
@@ -277,7 +258,6 @@ async function getOverviewAnalytics(startDate: Date, endDate: Date, groupBy?: st
     }
   }
 }
-
 async function getChurnAnalytics(startDate: Date, endDate: Date) {
   const [
     cancelledByMonth,
@@ -298,7 +278,6 @@ async function getChurnAnalytics(startDate: Date, endDate: Date) {
       GROUP BY DATE_TRUNC('month', "updatedAt")
       ORDER BY month
     `,
-
     // Cancelamentos por motivo (se disponível)
     prisma.subscriptionHistory.findMany({
       where: {
@@ -313,7 +292,6 @@ async function getChurnAnalytics(startDate: Date, endDate: Date) {
         createdAt: true
       }
     }),
-
     // Cancelamentos por plano
     prisma.subscription.groupBy({
       by: ['planType'],
@@ -328,7 +306,6 @@ async function getChurnAnalytics(startDate: Date, endDate: Date) {
         id: true
       }
     }),
-
     // Duração média das assinaturas canceladas
     prisma.subscription.aggregate({
       where: {
@@ -342,7 +319,6 @@ async function getChurnAnalytics(startDate: Date, endDate: Date) {
         monthlyValue: true
       }
     }),
-
     // Perda de receita
     prisma.subscription.aggregate({
       where: {
@@ -357,10 +333,8 @@ async function getChurnAnalytics(startDate: Date, endDate: Date) {
       }
     })
   ])
-
   const totalRevenueLoss = Number(revenueLoss._sum.monthlyValue || 0)
   const averageCancelledValue = Number(subscriptionDuration._avg.monthlyValue || 0)
-
   return {
     metric: 'churn',
     period: getPeriodString(startDate, endDate),
@@ -380,7 +354,6 @@ async function getChurnAnalytics(startDate: Date, endDate: Date) {
     }
   }
 }
-
 async function getRevenueAnalytics(startDate: Date, endDate: Date, groupBy?: string) {
   const [
     mrrByPeriod,
@@ -406,7 +379,6 @@ async function getRevenueAnalytics(startDate: Date, endDate: Date, groupBy?: str
         createdAt: 'asc'
       }
     }),
-
     // Receita por plano
     prisma.subscription.groupBy({
       by: ['planType'],
@@ -420,7 +392,6 @@ async function getRevenueAnalytics(startDate: Date, endDate: Date, groupBy?: str
         id: true
       }
     }),
-
     // Receita por método de pagamento
     prisma.subscription.groupBy({
       by: ['paymentMethod'],
@@ -434,7 +405,6 @@ async function getRevenueAnalytics(startDate: Date, endDate: Date, groupBy?: str
         id: true
       }
     }),
-
     // Crescimento de receita
     prisma.payment.findMany({
       where: {
@@ -453,10 +423,8 @@ async function getRevenueAnalytics(startDate: Date, endDate: Date, groupBy?: str
       }
     })
   ])
-
   const currentMRR = revenueByPlan.reduce((sum, item) => sum + Number(item._sum.monthlyValue || 0), 0)
   const totalRevenue = revenueGrowth.reduce((sum, item) => sum + Number(item.amount), 0)
-
   return {
     metric: 'revenue',
     period: getPeriodString(startDate, endDate),
@@ -486,7 +454,6 @@ async function getRevenueAnalytics(startDate: Date, endDate: Date, groupBy?: str
     }
   }
 }
-
 async function getLTVAnalytics(startDate: Date, endDate: Date) {
   // LTV (Lifetime Value) analytics
   const [
@@ -514,7 +481,6 @@ async function getLTVAnalytics(startDate: Date, endDate: Date) {
       ORDER BY total_revenue DESC
       LIMIT 100
     `,
-
     // Duração média das assinaturas
     prisma.subscription.aggregate({
       where: {
@@ -524,7 +490,6 @@ async function getLTVAnalytics(startDate: Date, endDate: Date) {
         monthlyValue: true
       }
     }),
-
     // Métricas adicionais
     prisma.subscription.findMany({
       where: {
@@ -551,15 +516,12 @@ async function getLTVAnalytics(startDate: Date, endDate: Date) {
       }
     })
   ])
-
   const totalRevenue = Array.isArray(customerRevenue)
     ? customerRevenue.reduce((sum, customer: any) => sum + Number(customer.total_revenue || 0), 0)
     : 0
-
   const totalCustomers = Array.isArray(customerRevenue) ? customerRevenue.length : 0
   const averageLTV = totalCustomers > 0 ? totalRevenue / totalCustomers : 0
   const averageMonthlyValue = Number(customerMetrics._avg.monthlyValue || 0)
-
   return {
     metric: 'ltv',
     period: getPeriodString(startDate, endDate),
@@ -588,7 +550,6 @@ async function getLTVAnalytics(startDate: Date, endDate: Date) {
     }
   }
 }
-
 async function getRetentionAnalytics(startDate: Date, endDate: Date) {
   // Retention analytics
   return {
@@ -605,7 +566,6 @@ async function getRetentionAnalytics(startDate: Date, endDate: Date) {
     }
   }
 }
-
 async function getCohortAnalytics(startDate: Date, endDate: Date) {
   // Cohort analysis
   return {
@@ -618,12 +578,10 @@ async function getCohortAnalytics(startDate: Date, endDate: Date) {
     cohorts: []
   }
 }
-
 // Funções utilitárias
 function getDateRange(period: string): { startDate: Date; endDate: Date } {
   const endDate = new Date()
   const startDate = new Date()
-
   switch (period) {
     case '7d':
       startDate.setDate(endDate.getDate() - 7)
@@ -640,71 +598,53 @@ function getDateRange(period: string): { startDate: Date; endDate: Date } {
     default:
       startDate.setDate(endDate.getDate() - 30)
   }
-
   return { startDate, endDate }
 }
-
 function getPeriodString(startDate: Date, endDate: Date): string {
   const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-
   if (days <= 7) return '7d'
   if (days <= 30) return '30d'
   if (days <= 90) return '90d'
   return '1y'
 }
-
 function calculateHealthScore(active: number, overdue: number, churnRate: number): number {
   const total = active + overdue
   if (total === 0) return 0
-
   const activityScore = (active / total) * 50
   const churnScore = Math.max(0, (100 - churnRate)) * 0.5
-
   return Math.min(100, activityScore + churnScore)
 }
-
 function calculateGrowthRate(newSubscriptions: number, cancelledSubscriptions: number): number {
   if (newSubscriptions === 0) return 0
   return ((newSubscriptions - cancelledSubscriptions) / newSubscriptions) * 100
 }
-
 function calculateRevenueGrowth(payments: any[]): number {
   if (payments.length < 2) return 0
-
   const firstHalf = payments.slice(0, Math.floor(payments.length / 2))
   const secondHalf = payments.slice(Math.floor(payments.length / 2))
-
   const firstHalfTotal = firstHalf.reduce((sum, p) => sum + Number(p.amount), 0)
   const secondHalfTotal = secondHalf.reduce((sum, p) => sum + Number(p.amount), 0)
-
   if (firstHalfTotal === 0) return 0
-
   return ((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100
 }
-
 function analyzeCancellationReasons(history: any[]): any[] {
   // Análise de motivos de cancelamento
   const reasons: Record<string, number> = {}
-
   history.forEach(record => {
     const reason = record.description || 'Não especificado'
     reasons[reason] = (reasons[reason] || 0) + 1
   })
-
   return Object.entries(reasons)
     .map(([reason, count]) => ({ reason, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
 }
-
 function calculateLTVDistribution(customers: any[]): any {
   if (!Array.isArray(customers) || customers.length === 0) {
     return { segments: [] }
   }
-
   const revenues = customers.map(c => Number(c.total_revenue || 0)).sort((a, b) => a - b)
   const total = revenues.length
-
   return {
     percentiles: {
       p25: revenues[Math.floor(total * 0.25)] || 0,
@@ -720,41 +660,31 @@ function calculateLTVDistribution(customers: any[]): any {
     ]
   }
 }
-
 function calculateRevenueConcentration(customers: any[]): any {
   if (!Array.isArray(customers) || customers.length === 0) {
     return { top10Percent: 0, top1Percent: 0, giniCoefficient: 0 }
   }
-
   const revenues = customers.map(c => Number(c.total_revenue || 0)).sort((a, b) => b - a)
   const totalRevenue = revenues.reduce((sum, rev) => sum + rev, 0)
-
   const top10Count = Math.max(1, Math.floor(customers.length * 0.1))
   const top1Count = Math.max(1, Math.floor(customers.length * 0.01))
-
   const top10PercentRevenue = revenues.slice(0, top10Count).reduce((sum, rev) => sum + rev, 0)
   const top1PercentRevenue = revenues.slice(0, top1Count).reduce((sum, rev) => sum + rev, 0)
-
   return {
     top10Percent: totalRevenue > 0 ? (top10PercentRevenue / totalRevenue) * 100 : 0,
     top1Percent: totalRevenue > 0 ? (top1PercentRevenue / totalRevenue) * 100 : 0,
     giniCoefficient: calculateGiniCoefficient(revenues)
   }
 }
-
 function calculateGiniCoefficient(values: number[]): number {
   if (values.length === 0) return 0
-
   const sortedValues = [...values].sort((a, b) => a - b)
   const n = sortedValues.length
   const total = sortedValues.reduce((sum, val) => sum + val, 0)
-
   if (total === 0) return 0
-
   let sum = 0
   for (let i = 0; i < n; i++) {
     sum += (2 * (i + 1) - n - 1) * sortedValues[i]
   }
-
   return sum / (n * total)
 }

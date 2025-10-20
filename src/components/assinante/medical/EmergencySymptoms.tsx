@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -23,7 +22,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
 interface Symptom {
   id: string
   title: string
@@ -38,7 +36,6 @@ interface Symptom {
   whenToSeekHelp: string[]
   relatedConditions: string[]
 }
-
 const mockSymptoms: Symptom[] = [
   {
     id: '1',
@@ -249,7 +246,6 @@ const mockSymptoms: Symptom[] = [
     relatedConditions: ['Síndrome do olho seco', 'Ceratoconjuntivite sicca', 'Blefarite']
   }
 ]
-
 const emergencyContacts = {
   doctor: {
     name: 'Dr. Philipe Saraiva Cruz',
@@ -270,7 +266,6 @@ const emergencyContacts = {
     address: 'Av. Getúlio Vargas, 123 - Centro, Caratinga - MG'
   }
 }
-
 export function EmergencySymptoms() {
   const [symptoms] = useState<Symptom[]>(mockSymptoms)
   const [selectedSymptom, setSelectedSymptom] = useState<Symptom | null>(null)
@@ -278,7 +273,6 @@ export function EmergencySymptoms() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showEmergencyModal, setShowEmergencyModal] = useState(false)
-
   const severities = [
     { value: 'all', label: 'Todos', color: 'bg-gray-100 text-gray-800' },
     { value: 'critical', label: 'Crítico', color: 'bg-red-100 text-red-800' },
@@ -286,7 +280,6 @@ export function EmergencySymptoms() {
     { value: 'medium', label: 'Médio', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'low', label: 'Baixo', color: 'bg-blue-100 text-blue-800' }
   ]
-
   const categories = [
     { value: 'all', label: 'Todos' },
     { value: 'pain', label: 'Dor' },
@@ -295,17 +288,14 @@ export function EmergencySymptoms() {
     { value: 'infection', label: 'Infecção' },
     { value: 'other', label: 'Outros' }
   ]
-
   const filteredSymptoms = symptoms.filter(symptom => {
     const matchesSeverity = selectedSeverity === 'all' || symptom.severity === selectedSeverity
     const matchesCategory = selectedCategory === 'all' || symptom.category === selectedCategory
     const matchesSearch = symptom.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          symptom.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          symptom.symptoms.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
-
     return matchesSeverity && matchesCategory && matchesSearch
   })
-
   const getSeverityColor = (severity: Symptom['severity']) => {
     switch (severity) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200'
@@ -314,7 +304,6 @@ export function EmergencySymptoms() {
       case 'low': return 'bg-blue-100 text-blue-800 border-blue-200'
     }
   }
-
   const getUrgencyColor = (urgency: Symptom['urgency']) => {
     switch (urgency) {
       case 'immediate': return 'text-red-600 bg-red-50'
@@ -323,7 +312,6 @@ export function EmergencySymptoms() {
       case 'observe': return 'text-blue-600 bg-blue-50'
     }
   }
-
   const getUrgencyText = (urgency: Symptom['urgency']) => {
     switch (urgency) {
       case 'immediate': return 'Procurar emergência IMEDIATAMENTE'
@@ -332,24 +320,18 @@ export function EmergencySymptoms() {
       case 'observe': return 'Observar e buscar ajuda se piorar'
     }
   }
-
   const handleCallDoctor = () => {
     window.open(`tel:${emergencyContacts.doctor.phone.replace(/\D/g, '')}`)
   }
-
   const handleWhatsAppDoctor = () => {
     window.open(`https://wa.me/${emergencyContacts.doctor.whatsapp.replace(/\D/g, '')}`, '_blank')
   }
-
   const handleEmergencyCall = () => {
     window.open(`tel:${emergencyContacts.emergency.phone}`)
   }
-
   const handleVideoCall = () => {
     // Implementar telemedicina
-    console.log('Iniciar teleconsulta')
   }
-
   return (
     <div className="space-y-6">
       {/* Alerta de Emergência */}
@@ -394,7 +376,6 @@ export function EmergencySymptoms() {
           </div>
         </div>
       </div>
-
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold tracking-tight">Guia de Sintomas de Emergência</h2>
@@ -402,7 +383,6 @@ export function EmergencySymptoms() {
           Identifique quando procurar ajuda médica imediatamente ao usar lentes de contato
         </p>
       </div>
-
       {/* Informações do Médico */}
       <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border rounded-lg p-6">
         <div className="flex items-start gap-4">
@@ -444,7 +424,6 @@ export function EmergencySymptoms() {
           </div>
         </div>
       </div>
-
       {/* Filtros */}
       <div className="bg-card border rounded-lg p-4">
         <div className="grid gap-4 md:grid-cols-3">
@@ -462,7 +441,6 @@ export function EmergencySymptoms() {
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium mb-2">Categoria</label>
             <select
@@ -477,7 +455,6 @@ export function EmergencySymptoms() {
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium mb-2">Buscar sintomas</label>
             <input
@@ -490,7 +467,6 @@ export function EmergencySymptoms() {
           </div>
         </div>
       </div>
-
       {/* Lista de Sintomas */}
       <div className="grid gap-4 md:grid-cols-2">
         {filteredSymptoms.map((symptom, index) => (
@@ -521,9 +497,7 @@ export function EmergencySymptoms() {
                   </div>
                 </div>
               </div>
-
               <p className="text-gray-600 text-sm mb-3">{symptom.description}</p>
-
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium text-gray-700">Sintomas principais:</span>
@@ -541,13 +515,11 @@ export function EmergencySymptoms() {
                   </div>
                 </div>
               </div>
-
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <ChevronRight className="h-3 w-3" />
                   <span>Clique para ver detalhes completos</span>
                 </div>
-
                 {symptom.urgency === 'immediate' && (
                   <Button
                     size="sm"
@@ -566,7 +538,6 @@ export function EmergencySymptoms() {
           </motion.div>
         ))}
       </div>
-
       {/* Modal de Detalhes do Sintoma */}
       <AnimatePresence>
         {selectedSymptom && (
@@ -591,7 +562,6 @@ export function EmergencySymptoms() {
                     <h2 className="text-2xl font-bold mb-2">{selectedSymptom.title}</h2>
                     <p className="text-gray-600">{selectedSymptom.description}</p>
                   </div>
-
                   <div className="flex flex-col items-end gap-2">
                     <Badge className={cn("text-sm", getSeverityColor(selectedSymptom.severity))}>
                       {selectedSymptom.severity === 'critical' && 'Crítico'}
@@ -599,7 +569,6 @@ export function EmergencySymptoms() {
                       {selectedSymptom.severity === 'medium' && 'Médio'}
                       {selectedSymptom.severity === 'low' && 'Baixo'}
                     </Badge>
-
                     <Button
                       variant="ghost"
                       size="sm"
@@ -609,7 +578,6 @@ export function EmergencySymptoms() {
                     </Button>
                   </div>
                 </div>
-
                 {/* Alerta de Urgência */}
                 <div className={cn(
                   "border-l-4 p-4 rounded-lg mb-6",
@@ -627,7 +595,6 @@ export function EmergencySymptoms() {
                       {getUrgencyText(selectedSymptom.urgency)}
                     </span>
                   </div>
-
                   {selectedSymptom.urgency === 'immediate' && (
                     <div className="flex flex-wrap gap-3">
                       <Button
@@ -655,7 +622,6 @@ export function EmergencySymptoms() {
                     </div>
                   )}
                 </div>
-
                 {/* Conteúdo Detalhado */}
                 <div className="grid gap-6 lg:grid-cols-2">
                   {/* Sintomas */}
@@ -673,7 +639,6 @@ export function EmergencySymptoms() {
                       ))}
                     </ul>
                   </div>
-
                   {/* Possíveis Causas */}
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
@@ -689,7 +654,6 @@ export function EmergencySymptoms() {
                       ))}
                     </ul>
                   </div>
-
                   {/* O Que Fazer */}
                   <div className="space-y-4 lg:col-span-2">
                     <h3 className="font-semibold flex items-center gap-2 text-green-600">
@@ -707,7 +671,6 @@ export function EmergencySymptoms() {
                       </ul>
                     </div>
                   </div>
-
                   {/* O Que Não Fazer */}
                   <div className="space-y-4 lg:col-span-2">
                     <h3 className="font-semibold flex items-center gap-2 text-red-600">
@@ -725,7 +688,6 @@ export function EmergencySymptoms() {
                       </ul>
                     </div>
                   </div>
-
                   {/* Quando Procurar Ajuda */}
                   <div className="space-y-4 lg:col-span-2">
                     <h3 className="font-semibold flex items-center gap-2">
@@ -743,7 +705,6 @@ export function EmergencySymptoms() {
                       </ul>
                     </div>
                   </div>
-
                   {/* Condições Relacionadas */}
                   {selectedSymptom.relatedConditions.length > 0 && (
                     <div className="space-y-4 lg:col-span-2">
@@ -761,7 +722,6 @@ export function EmergencySymptoms() {
                     </div>
                   )}
                 </div>
-
                 {/* Ações */}
                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
                   <Button variant="outline" onClick={() => setSelectedSymptom(null)}>

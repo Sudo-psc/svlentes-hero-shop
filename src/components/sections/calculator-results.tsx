@@ -1,17 +1,13 @@
 'use client';
-
 import { CalculatorResult } from '@/types';
 import { formatCurrency, formatPercentage } from '@/lib/calculator';
 import { pricingPlans } from '@/data/pricing-plans';
-
 interface CalculatorResultsProps {
   result: CalculatorResult;
   onReset: () => void;
 }
-
 export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
   const recommendedPlan = pricingPlans.find(plan => plan.id === result.recommendedPlan);
-
   return (
     <div className="space-y-6">
       {/* Resumo da Economia */}
@@ -28,7 +24,6 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
           </div>
         </div>
       </div>
-
       {/* Comparação Detalhada */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Compra Avulsa */}
@@ -49,7 +44,6 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
             </div>
           </div>
         </div>
-
         {/* Assinatura SVlentes */}
         <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
           <h3 className="font-semibold text-cyan-800 mb-3">Assinatura SVlentes</h3>
@@ -69,7 +63,6 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
           </div>
         </div>
       </div>
-
       {/* Economia Anual */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
         <div className="text-lg font-semibold text-yellow-800 mb-1">
@@ -79,7 +72,6 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
           {formatCurrency(result.yearlySavings)}
         </div>
       </div>
-
       {/* Plano Recomendado */}
       {recommendedPlan && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -97,7 +89,6 @@ export function CalculatorResults({ result, onReset }: CalculatorResultsProps) {
           </div>
         </div>
       )}
-
       {/* Ações */}
       <div className="flex flex-col sm:flex-row gap-3">
         <button

@@ -1,22 +1,18 @@
 'use client'
-
 import { Eye, Info, Calendar, UserCheck, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLensPrescriptionForm } from '@/hooks/useLensPrescriptionForm'
 import type { LensData as SubscriptionLensData } from '@/types/subscription'
-
 interface LensSelectorProps {
     onContinue: (data: SubscriptionLensData) => void
     onBack: () => void
 }
-
 const lensTypes = [
     { id: 'daily', name: 'Diárias', description: 'Uso único, máximo conforto' },
     { id: 'weekly', name: 'Semanais', description: 'Troca semanal' },
     { id: 'monthly', name: 'Mensais', description: 'Troca mensal, econômicas' }
 ]
-
 const popularBrands = [
     'Acuvue',
     'Biofinity',
@@ -25,7 +21,6 @@ const popularBrands = [
     'CooperVision',
     'Outra marca'
 ]
-
 export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
     const {
         lensData,
@@ -40,7 +35,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
         toggleSameForBothEyes,
         isValid,
     } = useLensPrescriptionForm()
-
     return (
         <div className="space-y-8">
             {/* Lens Type Selection */}
@@ -68,7 +62,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                     ))}
                 </div>
             </div>
-
             {/* Brand Selection */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -89,7 +82,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                     ))}
                 </div>
             </div>
-
             {/* Prescription */}
             <div>
                 <div className="flex items-center justify-between mb-4">
@@ -103,7 +95,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                         {sameForBothEyes ? 'Graus diferentes' : 'Mesmo grau para ambos'}
                     </button>
                 </div>
-
                 <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6 flex items-start space-x-3">
                     <Info className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-primary-900">
@@ -114,7 +105,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                         </p>
                     </div>
                 </div>
-
                 {/* Right Eye */}
                 <div className="mb-6">
                     <div className="flex items-center space-x-2 mb-3">
@@ -151,7 +141,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                         />
                     </div>
                 </div>
-
                 {/* Left Eye */}
                 {!sameForBothEyes && (
                     <div className="mb-6">
@@ -191,13 +180,11 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                     </div>
                 )}
             </div>
-
             {/* Prescription Information */}
             <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Informações da Prescrição (opcional)
                 </h3>
-
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex items-start space-x-3">
                     <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div className="text-sm text-amber-900">
@@ -208,7 +195,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                         </p>
                     </div>
                 </div>
-
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
                         <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
@@ -225,7 +211,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             max={new Date().toISOString().split('T')[0]}
                         />
                     </div>
-
                     <div>
                         <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
                             <UserCheck className="w-4 h-4" />
@@ -240,7 +225,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                             helperText="Formato: 123456-UF"
                         />
                     </div>
-
                     <div className="md:col-span-2">
                         <Input
                             id="doctor-name"
@@ -253,7 +237,6 @@ export function LensSelector({ onContinue, onBack }: LensSelectorProps) {
                     </div>
                 </div>
             </div>
-
             {/* Actions */}
             <div className="flex space-x-4">
                 <Button

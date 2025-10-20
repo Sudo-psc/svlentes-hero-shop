@@ -10,16 +10,13 @@
  * - Rotate key periodically (recommended: annually)
  * - Never commit key to version control
  */
-
 import CryptoJS from 'crypto-js';
-
 /**
  * Get encryption key from environment
  * Falls back to default key in development ONLY
  */
 function getEncryptionKey(): string {
     const key = process.env.ENCRYPTION_KEY;
-
     if (!key) {
         if (process.env.NODE_ENV === 'production') {
             throw new Error(
@@ -27,12 +24,10 @@ function getEncryptionKey(): string {
                 'Generate a secure key: openssl rand -base64 32'
             );
         }
-
         // Development fallback - NOT FOR PRODUCTION
         console.warn('⚠️ Using default encryption key in development. Set ENCRYPTION_KEY in production!');
         return 'dev-key-DO-NOT-USE-IN-PRODUCTION-32chars-minimum';
     }
-
     // Validate key length
     if (key.length < 32) {
         throw new Error(
@@ -40,10 +35,8 @@ function getEncryptionKey(): string {
             'Current length: ' + key.length
         );
     }
-
     return key;
 }
-
 /**
  * Encrypt sensitive data using AES-256
  *
@@ -65,20 +58,17 @@ export function encrypt(data: any): string {
     try {
         // Convert data to JSON string
         const jsonString = JSON.stringify(data);
-
         // Encrypt using AES with key
         const encrypted = CryptoJS.AES.encrypt(
             jsonString,
             getEncryptionKey()
         ).toString();
-
         return encrypted;
     } catch (error) {
         console.error('Encryption error:', error);
         throw new Error('Failed to encrypt data. Check encryption key configuration.');
     }
 }
-
 /**
  * Decrypt encrypted data
  *
@@ -99,24 +89,19 @@ export function decrypt(encryptedData: string): any {
             encryptedData,
             getEncryptionKey()
         );
-
         // Convert bytes to string
         const decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
-
         if (!decryptedString) {
             throw new Error('Decryption resulted in empty string. Wrong key or corrupted data.');
         }
-
         // Parse JSON
         const data = JSON.parse(decryptedString);
-
         return data;
     } catch (error) {
         console.error('Decryption error:', error);
         throw new Error('Failed to decrypt data. Data may be corrupted or key is incorrect.');
     }
 }
-
 /**
  * Encrypt medical prescription data specifically
  *
@@ -144,10 +129,8 @@ export function encryptPrescription(prescriptionData: {
         ...(prescriptionData.doctorCRM && { doctorCRM: prescriptionData.doctorCRM }),
         ...(prescriptionData.doctorName && { doctorName: prescriptionData.doctorName })
     };
-
     return encrypt(sanitized);
 }
-
 /**
  * Decrypt medical prescription data
  *
@@ -157,7 +140,6 @@ export function encryptPrescription(prescriptionData: {
 export function decryptPrescription(encryptedPrescription: string): any {
     return decrypt(encryptedPrescription);
 }
-
 /**
  * Hash sensitive data for comparison without revealing original value
  * Useful for validating CPF/CNPJ without storing plain text
@@ -168,7 +150,6 @@ export function decryptPrescription(encryptedPrescription: string): any {
 export function hashData(data: string): string {
     return CryptoJS.SHA256(data).toString();
 }
-
 /**
  * Verify hashed data matches original
  *
@@ -179,7 +160,6 @@ export function hashData(data: string): string {
 export function verifyHash(data: string, hash: string): boolean {
     return hashData(data) === hash;
 }
-
 /**
  * Generate a secure random encryption key
  * For use in generating ENCRYPTION_KEY value
@@ -189,14 +169,13 @@ export function verifyHash(data: string, hash: string): boolean {
  * @example
  * ```typescript
  * // Run this once to generate a key for your .env file
- * console.log('ENCRYPTION_KEY=' + generateKey());
+ * );
  * ```
  */
 export function generateKey(): string {
     const randomBytes = CryptoJS.lib.WordArray.random(32); // 256 bits
     return CryptoJS.enc.Base64.stringify(randomBytes);
 }
-
 /**
  * Utility: Check if encryption is properly configured
  *
@@ -210,21 +189,17 @@ export function checkEncryptionConfig(): {
 } {
     const warnings: string[] = [];
     let keyLength = 0;
-
     try {
         const key = process.env.ENCRYPTION_KEY;
         keyLength = key?.length || 0;
-
         if (!key) {
             warnings.push('ENCRYPTION_KEY not set');
         } else if (keyLength < 32) {
             warnings.push(`Key too short (${keyLength} chars, need 32+)`);
         }
-
         if (process.env.NODE_ENV === 'production' && !key) {
             warnings.push('⚠️ CRITICAL: No encryption key in production!');
         }
-
         return {
             configured: warnings.length === 0,
             keyLength,
@@ -241,7 +216,6 @@ export function checkEncryptionConfig(): {
         };
     }
 }
-
 /**
  * Test encryption/decryption roundtrip
  * Used for validation during setup
@@ -255,10 +229,8 @@ export function testEncryption(): boolean {
             sensitive: true,
             timestamp: new Date().toISOString()
         };
-
         const encrypted = encrypt(testData);
         const decrypted = decrypt(encrypted);
-
         return JSON.stringify(testData) === JSON.stringify(decrypted);
     } catch (error) {
         console.error('Encryption test failed:', error);

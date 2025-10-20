@@ -2,9 +2,7 @@
  * Schema.org Structured Data for SEO
  * Medical Business, Physician, Organization, FAQPage, LocalBusiness
  */
-
 import { doctorInfo, clinicInfo } from '@/data/doctor-info'
-
 /**
  * Organization Schema
  */
@@ -39,7 +37,6 @@ export const organizationSchema = {
     areaServed: 'BR'
   }
 }
-
 /**
  * Medical Business Schema
  */
@@ -117,7 +114,6 @@ export const medicalBusinessSchema = {
     ]
   }
 }
-
 /**
  * Physician Schema - Dr. Philipe Saraiva Cruz
  */
@@ -156,7 +152,6 @@ export const physicianSchema = {
     }
   }
 }
-
 /**
  * FAQ Page Schema
  */
@@ -222,7 +217,6 @@ export const faqPageSchema = {
     }
   ]
 }
-
 /**
  * Local Business Schema
  */
@@ -286,7 +280,6 @@ export const localBusinessSchema = {
     }
   ]
 }
-
 /**
  * Combined schema for all types
  */

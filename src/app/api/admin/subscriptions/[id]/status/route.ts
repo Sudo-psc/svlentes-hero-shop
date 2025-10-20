@@ -4,12 +4,10 @@
  *
  * Atualiza o status de uma assinatura com motivo e histórico
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { subscriptionStatusUpdateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/subscriptions/{id}/status:
@@ -82,13 +80,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('subscriptions:status_update')(request)
-
     if (error) {
       return error
     }
-
     const subscriptionId = params.id
-
     if (!subscriptionId) {
       return NextResponse.json(
         {
@@ -98,11 +93,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: statusData, error: validationError } = validateBody(subscriptionStatusUpdateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -112,7 +105,6 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se assinatura existe
     const existingSubscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -129,7 +121,6 @@ export async function PUT(
         suspendedDate: true
       }
     })
-
     if (!existingSubscription) {
       return NextResponse.json(
         {
@@ -139,10 +130,8 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     const oldStatus = existingSubscription.status
     const newStatus = statusData.status
-
     // Verificar se mudança é válida
     if (!isValidStatusTransition(oldStatus, newStatus)) {
       return NextResponse.json(
@@ -154,35 +143,29 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Preparar dados de atualização baseado no novo status
     const updateData: any = {
       status: newStatus,
       updatedAt: new Date()
     }
-
     // Adicionar campos específicos baseado no status
     switch (newStatus) {
       case 'OVERDUE':
         updateData.overdueDate = new Date()
         updateData.daysOverdue = calculateDaysOverdue(existingSubscription.lastPaymentDate)
         break
-
       case 'SUSPENDED':
         updateData.suspendedDate = new Date()
         updateData.suspendedReason = statusData.reason || 'Suspensão administrativa'
         break
-
       case 'PAUSED':
         updateData.pausedAt = new Date() // Note: este campo pode não existir no schema
         break
-
       case 'CANCELLED':
         updateData.cancelledDate = new Date() // Note: este campo pode não existir no schema
         updateData.cancelReason = statusData.reason || 'Cancelamento administrativo'
         updateData.endDate = new Date()
         break
-
       case 'ACTIVE':
         // Limpar campos de problemas se reativando
         updateData.overdueDate = null
@@ -194,7 +177,6 @@ export async function PUT(
         }
         break
     }
-
     // Iniciar transação para atualizar status e criar histórico
     const result = await prisma.$transaction(async (tx) => {
       // Atualizar assinatura
@@ -211,7 +193,6 @@ export async function PUT(
           }
         }
       })
-
       // Criar registro no histórico
       const historyRecord = await tx.subscriptionHistory.create({
         data: {
@@ -239,13 +220,10 @@ export async function PUT(
           }
         }
       })
-
       return { subscription: updatedSubscription, history: historyRecord }
     })
-
     // Disparar ações baseadas no novo status
     await triggerStatusActions(newStatus, result.subscription, user)
-
     return createSuccessResponse(
       {
         subscription: result.subscription,
@@ -260,7 +238,6 @@ export async function PUT(
       },
       'Status da assinatura atualizado com sucesso'
     )
-
   } catch (error) {
     console.error('Subscription status update error:', error)
     return NextResponse.json(
@@ -273,7 +250,6 @@ export async function PUT(
     )
   }
 }
-
 // Funções auxiliares
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
@@ -302,7 +278,6 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 function isValidStatusTransition(from: string, to: string): boolean {
   const validTransitions: Record<string, string[]> = {
     'PENDING_ACTIVATION': ['ACTIVE', 'CANCELLED', 'PENDING'],
@@ -315,10 +290,8 @@ function isValidStatusTransition(from: string, to: string): boolean {
     'REFUNDED': [], // Status final
     'PENDING': ['PENDING_ACTIVATION', 'ACTIVE', 'CANCELLED']
   }
-
   return validTransitions[from]?.includes(to) || false
 }
-
 function getValidTransitions(from: string): string[] {
   const validTransitions: Record<string, string[]> = {
     'PENDING_ACTIVATION': ['ACTIVE', 'CANCELLED', 'PENDING'],
@@ -331,23 +304,17 @@ function getValidTransitions(from: string): string[] {
     'REFUNDED': [],
     'PENDING': ['PENDING_ACTIVATION', 'ACTIVE', 'CANCELLED']
   }
-
   return validTransitions[from] || []
 }
-
 function calculateDaysOverdue(lastPaymentDate: Date | null): number {
   if (!lastPaymentDate) return 0
-
   const now = new Date()
   const dueDate = new Date(lastPaymentDate)
   dueDate.setDate(dueDate.getDate() + 30) // Assumindo ciclo de 30 dias
-
   const diffTime = now.getTime() - dueDate.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
   return Math.max(0, diffDays)
 }
-
 async function triggerStatusActions(
   status: string,
   subscription: any,
@@ -356,7 +323,6 @@ async function triggerStatusActions(
   try {
     // Send notification to user about status change
     const { sendSubscriptionStatusNotification } = await import('@/lib/admin-notifications')
-
     await sendSubscriptionStatusNotification(
       subscription.userId,
       subscription.id,
@@ -364,8 +330,6 @@ async function triggerStatusActions(
       status,
       user.name
     )
-
-    console.log(`[Admin] Status update completed for subscription ${subscription.id}: ${status} by ${user.email}`)
   } catch (error) {
     console.error('[Admin] Error sending status notification:', error)
     // Não falhar a atualização se as notificações falharem

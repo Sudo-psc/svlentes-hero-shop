@@ -1,7 +1,5 @@
 'use client'
-
 import { EnhancedEconomyCalculator } from './EnhancedEconomyCalculator'
-
 export default function ExampleUsage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -9,16 +7,12 @@ export default function ExampleUsage() {
         <h1 className="text-3xl font-bold text-center mb-8">
           Calculadora de Economia - Demo
         </h1>
-        
         <EnhancedEconomyCalculator 
           onContinueAction={() => {
-            console.log('Usuário clicou em continuar')
           }}
         />
-
         <div className="mt-12 bg-white rounded-lg p-6 shadow">
           <h2 className="text-xl font-semibold mb-4">Recursos Implementados ✨</h2>
-          
           <div className="space-y-4">
             <div>
               <h3 className="font-medium text-gray-900 mb-2">✅ Customização Avançada</h3>
@@ -28,7 +22,6 @@ export default function ExampleUsage() {
                 <li>• Opção de customizar dias de uso por mês</li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-medium text-gray-900 mb-2">📊 Gráfico Visual</h3>
               <ul className="text-sm text-gray-600 space-y-1 ml-4">
@@ -37,7 +30,6 @@ export default function ExampleUsage() {
                 <li>• Tooltips formatados em reais</li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-medium text-gray-900 mb-2">🎬 Animações</h3>
               <ul className="text-sm text-gray-600 space-y-1 ml-4">
@@ -46,7 +38,6 @@ export default function ExampleUsage() {
                 <li>• Feedback visual interativo</li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-medium text-gray-900 mb-2">🔗 Compartilhamento</h3>
               <ul className="text-sm text-gray-600 space-y-1 ml-4">
@@ -55,7 +46,6 @@ export default function ExampleUsage() {
                 <li>• Mensagem personalizada com economia</li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-medium text-gray-900 mb-2">💾 Cálculos Salvos</h3>
               <ul className="text-sm text-gray-600 space-y-1 ml-4">
@@ -65,7 +55,6 @@ export default function ExampleUsage() {
                 <li>• Deletar cálculos individualmente</li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-medium text-gray-900 mb-2">💡 Tooltips Explicativos</h3>
               <ul className="text-sm text-gray-600 space-y-1 ml-4">
@@ -76,7 +65,6 @@ export default function ExampleUsage() {
             </div>
           </div>
         </div>
-
         <div className="mt-8 bg-cyan-50 border border-cyan-200 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-3 text-cyan-900">Como Usar</h2>
           <ol className="text-sm text-cyan-800 space-y-2 list-decimal list-inside">

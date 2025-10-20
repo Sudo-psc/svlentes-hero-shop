@@ -4,12 +4,10 @@
  *
  * Retorna informações completas de um pedido incluindo histórico
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { orderUpdateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/orders/{id}:
@@ -75,13 +73,10 @@ export async function GET(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('orders:view')(request)
-
     if (error) {
       return error
     }
-
     const orderId = params.id
-
     if (!orderId) {
       return NextResponse.json(
         {
@@ -91,7 +86,6 @@ export async function GET(
         { status: 400 }
       )
     }
-
     // Buscar pedido com dados relacionados
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -135,7 +129,6 @@ export async function GET(
         }
       }
     })
-
     if (!order) {
       return NextResponse.json(
         {
@@ -145,7 +138,6 @@ export async function GET(
         { status: 404 }
       )
     }
-
     // Calcular métricas adicionais
     const deliveryTime = order.shippingDate && order.deliveredAt
       ? Math.ceil(
@@ -153,16 +145,13 @@ export async function GET(
           (1000 * 60 * 60 * 24)
         )
       : null
-
     const daysSinceCreation = Math.ceil(
       (new Date().getTime() - new Date(order.createdAt).getTime()) /
       (1000 * 60 * 60 * 24)
     )
-
     const isOverdue = order.estimatedDelivery &&
       new Date(order.estimatedDelivery) < new Date() &&
       order.deliveryStatus !== 'DELIVERED'
-
     // Status detalhado
     const statusInfo = {
       current: order.deliveryStatus,
@@ -176,10 +165,8 @@ export async function GET(
       isOverdue,
       daysSinceCreation
     }
-
     // Criar timeline do pedido
     const timeline = createOrderTimeline(order)
-
     // Montar resposta completa
     const orderDetail = {
       order: {
@@ -220,9 +207,7 @@ export async function GET(
         shippingDate: order.shippingDate
       }
     }
-
     return createSuccessResponse(orderDetail, 'Detalhes do pedido obtidos com sucesso')
-
   } catch (error) {
     console.error('Order detail error:', error)
     return NextResponse.json(
@@ -235,7 +220,6 @@ export async function GET(
     )
   }
 }
-
 /**
  * PUT /api/admin/orders/[id]
  * Atualizar pedido
@@ -249,13 +233,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('orders:update')(request)
-
     if (error) {
       return error
     }
-
     const orderId = params.id
-
     if (!orderId) {
       return NextResponse.json(
         {
@@ -265,11 +246,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: updateData, error: validationError } = validateBody(orderUpdateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -279,7 +258,6 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se pedido existe
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -290,7 +268,6 @@ export async function PUT(
         deliveredAt: true
       }
     })
-
     if (!existingOrder) {
       return NextResponse.json(
         {
@@ -300,13 +277,11 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     // Preparar dados de atualização
     const updateDataWithTimestamps = {
       ...updateData,
       updatedAt: new Date()
     }
-
     // Atualizar pedido
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
@@ -333,9 +308,7 @@ export async function PUT(
         }
       }
     })
-
     return createSuccessResponse(updatedOrder, 'Pedido atualizado com sucesso')
-
   } catch (error) {
     console.error('Order update error:', error)
     return NextResponse.json(
@@ -348,7 +321,6 @@ export async function PUT(
     )
   }
 }
-
 /**
  * DELETE /api/admin/orders/[id]
  * Cancelar pedido
@@ -362,13 +334,10 @@ export async function DELETE(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('orders:delete')(request)
-
     if (error) {
       return error
     }
-
     const orderId = params.id
-
     if (!orderId) {
       return NextResponse.json(
         {
@@ -378,7 +347,6 @@ export async function DELETE(
         { status: 400 }
       )
     }
-
     // Verificar se pedido existe
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -388,7 +356,6 @@ export async function DELETE(
         shippingDate: true
       }
     })
-
     if (!order) {
       return NextResponse.json(
         {
@@ -398,7 +365,6 @@ export async function DELETE(
         { status: 404 }
       )
     }
-
     // Verificar se pedido pode ser cancelado
     if (order.deliveryStatus === 'DELIVERED') {
       return NextResponse.json(
@@ -409,7 +375,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     if (order.deliveryStatus === 'CANCELLED') {
       return NextResponse.json(
         {
@@ -419,7 +384,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     // Cancelar pedido
     const cancelledOrder = await prisma.order.update({
       where: { id: orderId },
@@ -433,7 +397,6 @@ export async function DELETE(
         updatedAt: true
       }
     })
-
     // Cancelar faturas associadas
     await prisma.invoice.updateMany({
       where: { orderId },
@@ -442,9 +405,7 @@ export async function DELETE(
         updatedAt: new Date()
       }
     })
-
     return createSuccessResponse(cancelledOrder, 'Pedido cancelado com sucesso')
-
   } catch (error) {
     console.error('Order delete error:', error)
     return NextResponse.json(
@@ -457,7 +418,6 @@ export async function DELETE(
     )
   }
 }
-
 // Funções auxiliares
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
@@ -486,10 +446,8 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 function createOrderTimeline(order: any): any[] {
   const timeline = []
-
   // Data de criação
   timeline.push({
     date: order.createdAt,
@@ -497,7 +455,6 @@ function createOrderTimeline(order: any): any[] {
     description: 'Pedido criado',
     type: 'info'
   })
-
   // Data de envio
   if (order.shippingDate) {
     timeline.push({
@@ -507,7 +464,6 @@ function createOrderTimeline(order: any): any[] {
       type: 'success'
     })
   }
-
   // Data de entrega estimada
   if (order.estimatedDelivery) {
     timeline.push({
@@ -517,7 +473,6 @@ function createOrderTimeline(order: any): any[] {
       type: 'warning'
     })
   }
-
   // Data de entrega real
   if (order.deliveredAt) {
     timeline.push({
@@ -527,7 +482,6 @@ function createOrderTimeline(order: any): any[] {
       type: 'success'
     })
   }
-
   // Última atualização
   if (order.updatedAt && order.updatedAt !== order.createdAt) {
     timeline.push({
@@ -537,13 +491,10 @@ function createOrderTimeline(order: any): any[] {
       type: 'info'
     })
   }
-
   return timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
-
 function extractCarrierFromTrackingCode(trackingCode: string | null): string | null {
   if (!trackingCode) return null
-
   // Lógica simples para extrair transportadora baseada no código
   if (trackingCode.startsWith('BR') || trackingCode.startsWith('PX')) {
     return 'Correios'
@@ -554,6 +505,5 @@ function extractCarrierFromTrackingCode(trackingCode: string | null): string | n
   if (trackingCode.match(/^\d{10}$/)) {
     return 'Transportadora'
   }
-
   return 'Desconhecida'
 }

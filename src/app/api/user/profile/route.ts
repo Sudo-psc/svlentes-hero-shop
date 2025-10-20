@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-
 const profileSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
   phone: z.string().regex(/^\+?[\d\s()-]+$/, 'Telefone inválido').optional().or(z.literal('')),
   whatsapp: z.string().regex(/^\+?[\d\s()-]+$/, 'WhatsApp inválido').optional().or(z.literal(''))
 })
-
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     // Try to find user by database ID first, then by Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
@@ -29,7 +25,6 @@ export async function GET(req: NextRequest) {
         whatsapp: true
       }
     })
-
     // If not found by ID, try Firebase UID
     if (!user) {
       user = await prisma.user.findUnique({
@@ -42,14 +37,12 @@ export async function GET(req: NextRequest) {
         }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     return NextResponse.json(user)
   } catch (error) {
     console.error('Error fetching profile:', error)
@@ -59,41 +52,34 @@ export async function GET(req: NextRequest) {
     )
   }
 }
-
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     const body = await req.json()
     const validatedData = profileSchema.parse(body)
-
     // Try to find user by database ID first, then by Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
         select: { id: true }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -108,7 +94,6 @@ export async function POST(req: NextRequest) {
         whatsapp: true
       }
     })
-
     return NextResponse.json({
       success: true,
       user: updatedUser
@@ -120,7 +105,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-
     console.error('Error updating profile:', error)
     return NextResponse.json(
       { error: 'Erro ao atualizar perfil' },

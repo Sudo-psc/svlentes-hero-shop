@@ -39,9 +39,6 @@ menus:
       - label: "Como Funciona"
         href: "/como-funciona"
         isAnchor: false
-      - label: "Blog"
-        href: "/blog"
-        isAnchor: false
       - label: "FAQ"
         href: "#perguntas-frequentes"
         isAnchor: true

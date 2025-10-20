@@ -1,14 +1,11 @@
 'use client'
-
 import { Shield, Award, Clock, Truck, CheckCircle } from 'lucide-react'
 import { doctorInfo } from '@/data/doctor-info'
-
 interface TrustBadgeProps {
   icon: React.ReactNode
   text: string
   className?: string
 }
-
 function TrustBadge({ icon, text, className = '' }: TrustBadgeProps) {
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
@@ -21,12 +18,10 @@ function TrustBadge({ icon, text, className = '' }: TrustBadgeProps) {
     </div>
   )
 }
-
 interface TrustStripProps {
   variant?: 'compact' | 'full'
   className?: string
 }
-
 export function TrustStrip({ variant = 'full', className = '' }: TrustStripProps) {
   const badges = [
     {
@@ -55,10 +50,8 @@ export function TrustStrip({ variant = 'full', className = '' }: TrustStripProps
       key: 'shipping',
     },
   ]
-
   // Compact variant shows only first 3 badges
   const displayBadges = variant === 'compact' ? badges.slice(0, 3) : badges
-
   return (
     <div
       className={`flex items-center justify-center flex-wrap gap-4 md:gap-6 ${className}`}

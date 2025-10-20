@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,14 +19,12 @@ import { CalendarIcon, Download, Filter, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-
 export interface PeriodFilterOptions {
   preset?: '7d' | '30d' | '90d' | '6m' | '1y' | 'custom'
   startDate?: Date
   endDate?: Date
   compareWith?: 'previous' | 'same_last_month' | 'same_last_year'
 }
-
 interface PeriodFilterProps {
   value?: PeriodFilterOptions
   onChange: (value: PeriodFilterOptions) => void
@@ -38,7 +35,6 @@ interface PeriodFilterProps {
   showComparison?: boolean
   className?: string
 }
-
 const presetOptions = [
   { value: '7d', label: 'Últimos 7 dias', days: 7 },
   { value: '30d', label: 'Últimos 30 dias', days: 30 },
@@ -47,13 +43,11 @@ const presetOptions = [
   { value: '1y', label: 'Último ano', days: 365 },
   { value: 'custom', label: 'Período personalizado', days: 0 }
 ]
-
 const comparisonOptions = [
   { value: 'previous', label: 'Período anterior' },
   { value: 'same_last_month', label: 'Mês anterior' },
   { value: 'same_last_year', label: 'Ano anterior' }
 ]
-
 export function PeriodFilter({
   value = { preset: '30d' },
   onChange,
@@ -67,21 +61,17 @@ export function PeriodFilter({
   const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false)
   const [customStartDate, setCustomStartDate] = useState<Date>()
   const [customEndDate, setCustomEndDate] = useState<Date>()
-
   const handlePresetChange = useCallback((preset: string) => {
     if (preset === 'custom') {
       setIsCustomRangeOpen(true)
       return
     }
-
     const endDate = new Date()
     const startDate = new Date()
     const presetConfig = presetOptions.find(p => p.value === preset)
-
     if (presetConfig && presetConfig.days > 0) {
       startDate.setDate(endDate.getDate() - presetConfig.days)
     }
-
     onChange({
       ...value,
       preset: preset as PeriodFilterOptions['preset'],
@@ -89,7 +79,6 @@ export function PeriodFilter({
       endDate
     })
   }, [onChange, value])
-
   const handleCustomRangeApply = useCallback(() => {
     if (customStartDate && customEndDate) {
       onChange({
@@ -101,37 +90,30 @@ export function PeriodFilter({
       setIsCustomRangeOpen(false)
     }
   }, [onChange, value, customStartDate, customEndDate])
-
   const handleComparisonChange = useCallback((compareWith: string) => {
     onChange({
       ...value,
       compareWith: compareWith as PeriodFilterOptions['compareWith']
     })
   }, [onChange, value])
-
   const handleReset = useCallback(() => {
     onChange({ preset: '30d' })
     setCustomStartDate(undefined)
     setCustomEndDate(undefined)
   }, [onChange])
-
   const getPeriodLabel = () => {
     if (!value.startDate || !value.endDate) {
       const preset = presetOptions.find(p => p.value === value.preset)
       return preset?.label || 'Selecione um período'
     }
-
     if (value.preset === 'custom') {
       return `${format(value.startDate, 'dd/MM/yyyy', { locale: ptBR })} - ${format(value.endDate, 'dd/MM/yyyy', { locale: ptBR })}`
     }
-
     const preset = presetOptions.find(p => p.value === value.preset)
     return preset?.label || 'Período personalizado'
   }
-
   const isCustomRange = value.preset === 'custom'
   const hasActiveFilters = value.preset !== '30d' || value.compareWith
-
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       {/* Filtro de Período */}
@@ -152,7 +134,6 @@ export function PeriodFilter({
             ))}
           </SelectContent>
         </Select>
-
         {/* Range personalizado */}
         {isCustomRange && (
           <Popover open={isCustomRangeOpen} onOpenChange={setIsCustomRangeOpen}>
@@ -204,7 +185,6 @@ export function PeriodFilter({
           </Popover>
         )}
       </div>
-
       {/* Comparação */}
       {showComparison && (
         <Select
@@ -224,7 +204,6 @@ export function PeriodFilter({
           </SelectContent>
         </Select>
       )}
-
       {/* Ações */}
       <div className="flex items-center gap-1">
         {/* Indicador de filtros ativos */}
@@ -233,7 +212,6 @@ export function PeriodFilter({
             Filtros ativos
           </Badge>
         )}
-
         {/* Reset */}
         {hasActiveFilters && (
           <Button
@@ -246,7 +224,6 @@ export function PeriodFilter({
             <span className="sr-only">Resetar filtros</span>
           </Button>
         )}
-
         {/* Refresh */}
         {onRefresh && (
           <Button
@@ -260,7 +237,6 @@ export function PeriodFilter({
             <span className="sr-only">Atualizar</span>
           </Button>
         )}
-
         {/* Export */}
         {showExport && onExport && (
           <div className="flex items-center">
@@ -303,7 +279,6 @@ export function PeriodFilter({
           </div>
         )}
       </div>
-
       {/* Resumo do período */}
       <div className="text-sm text-muted-foreground ml-auto">
         {getPeriodLabel()}
@@ -311,50 +286,38 @@ export function PeriodFilter({
     </div>
   )
 }
-
 // Hook para gerenciar filtros de período
 export function usePeriodFilter(initialValue?: PeriodFilterOptions) {
   const [filters, setFilters] = useState<PeriodFilterOptions>(initialValue || { preset: '30d' })
-
   const updateFilters = useCallback((newFilters: Partial<PeriodFilterOptions>) => {
     setFilters(prev => ({ ...prev, ...newFilters }))
   }, [])
-
   const resetFilters = useCallback(() => {
     setFilters({ preset: '30d' })
   }, [])
-
   const getPresetDates = useCallback((preset: string) => {
     const endDate = new Date()
     const startDate = new Date()
     const presetConfig = presetOptions.find(p => p.value === preset)
-
     if (presetConfig && presetConfig.days > 0) {
       startDate.setDate(endDate.getDate() - presetConfig.days)
     }
-
     return { startDate, endDate }
   }, [])
-
   const getApiParams = useCallback(() => {
     const params: Record<string, string> = {}
-
     if (filters.preset) {
       params.period = filters.preset
     }
-
     if (filters.startDate && filters.endDate) {
       params.startDate = filters.startDate.toISOString()
       params.endDate = filters.endDate.toISOString()
     }
-
     if (filters.compareWith) {
       params.compareWith = filters.compareWith
     }
-
     return params
   }, [filters])
-
   return {
     filters,
     updateFilters,
@@ -364,7 +327,6 @@ export function usePeriodFilter(initialValue?: PeriodFilterOptions) {
     setFilters
   }
 }
-
 // Componente de resumo do período
 export function PeriodSummary({
   filters,
@@ -376,11 +338,9 @@ export function PeriodSummary({
   if (!filters.startDate || !filters.endDate) {
     return null
   }
-
   const daysDiff = Math.ceil((filters.endDate.getTime() - filters.startDate.getTime()) / (1000 * 60 * 60 * 24))
   const weeksDiff = Math.ceil(daysDiff / 7)
   const monthsDiff = Math.ceil(daysDiff / 30)
-
   return (
     <div className={cn("flex items-center gap-4 text-sm text-muted-foreground", className)}>
       <span>

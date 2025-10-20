@@ -1,5 +1,4 @@
 'use client'
-
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -19,7 +18,6 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import * as React from 'react'
-
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -38,7 +36,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
@@ -50,7 +47,6 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: string
   className?: string
 }
-
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -66,7 +62,6 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-
   const table = useReactTable({
     data,
     columns,
@@ -85,7 +80,6 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
   })
-
   // Handle row selection change
   React.useEffect(() => {
     if (enableRowSelection && onRowSelectionChange) {
@@ -93,7 +87,6 @@ export function DataTable<TData, TValue>({
       onRowSelectionChange(selectedRows)
     }
   }, [rowSelection, enableRowSelection, onRowSelectionChange, table])
-
   return (
     <div className={cn('space-y-4', className)}>
       {/* Filters and Search */}
@@ -147,7 +140,6 @@ export function DataTable<TData, TValue>({
           </DropdownMenu>
         </div>
       </div>
-
       {/* Table */}
       <div className="rounded-md border">
         <Table>
@@ -200,7 +192,6 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-
       {/* Pagination */}
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
@@ -275,7 +266,6 @@ export function DataTable<TData, TValue>({
     </div>
   )
 }
-
 // Column helpers for common use cases
 export const createBooleanColumn = <TData, TValue>(
   accessorKey: string,
@@ -300,7 +290,6 @@ export const createBooleanColumn = <TData, TValue>(
     )
   },
 })
-
 export const createDateColumn = <TData, TValue>(
   accessorKey: string,
   header: string,
@@ -311,9 +300,7 @@ export const createDateColumn = <TData, TValue>(
   cell: ({ row }) => {
     const value = row.getValue(accessorKey) as string | Date
     if (!value) return '-'
-
     const date = typeof value === 'string' ? new Date(value) : value
-
     switch (format) {
       case 'short':
         return date.toLocaleDateString('pt-BR')
@@ -329,7 +316,6 @@ export const createDateColumn = <TData, TValue>(
         const now = new Date()
         const diff = now.getTime() - date.getTime()
         const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
         if (days === 0) return 'Hoje'
         if (days === 1) return 'Ontem'
         if (days < 7) return `${days} dias atrás`
@@ -341,7 +327,6 @@ export const createDateColumn = <TData, TValue>(
     }
   },
 })
-
 export const createCurrencyColumn = <TData, TValue>(
   accessorKey: string,
   header: string,
@@ -352,14 +337,12 @@ export const createCurrencyColumn = <TData, TValue>(
   cell: ({ row }) => {
     const value = row.getValue(accessorKey) as number
     if (!value && value !== 0) return '-'
-
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency,
     }).format(value)
   },
 })
-
 export const createStatusColumn = <TData, TValue>(
   accessorKey: string,
   header: string,
@@ -370,9 +353,7 @@ export const createStatusColumn = <TData, TValue>(
   cell: ({ row }) => {
     const value = row.getValue(accessorKey) as string
     const config = statusConfig[value]
-
     if (!config) return value
-
     return (
       <span
         className={cn(

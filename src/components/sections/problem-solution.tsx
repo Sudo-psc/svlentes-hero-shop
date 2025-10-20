@@ -1,8 +1,6 @@
 'use client';
-
 import { customerProblems, svlentesSolutions } from '@/data/problems-solutions';
 import { openWhatsAppWithContext } from '@/lib/whatsapp';
-
 export function ProblemSolution() {
   const handleSpecialistContact = () => {
     openWhatsAppWithContext('consultation', {
@@ -13,7 +11,6 @@ export function ProblemSolution() {
       }
     });
   };
-
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,7 +22,6 @@ export function ProblemSolution() {
             Transformamos as principais dores de quem usa lentes de contato em soluções práticas e econômicas
           </p>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Problemas */}
           <div>
@@ -35,7 +31,6 @@ export function ProblemSolution() {
                 Problemas Comuns
               </h3>
             </div>
-
             <div className="space-y-4">
               {customerProblems.map((problem) => (
                 <div
@@ -48,7 +43,6 @@ export function ProblemSolution() {
               ))}
             </div>
           </div>
-
           {/* Soluções */}
           <div>
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
@@ -57,7 +51,6 @@ export function ProblemSolution() {
                 Soluções SV Lentes
               </h3>
             </div>
-
             <div className="space-y-4">
               {svlentesSolutions.map((solution) => (
                 <div
@@ -74,7 +67,6 @@ export function ProblemSolution() {
             </div>
           </div>
         </div>
-
         {/* CTA Contextual */}
         <div className="mt-12 text-center">
           <div className="bg-primary-50 border border-primary-200 rounded-lg p-8 max-w-2xl mx-auto">

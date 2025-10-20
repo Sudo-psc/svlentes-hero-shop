@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -21,7 +20,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-
 interface Prescription {
   id: string
   customerId: string
@@ -42,7 +40,6 @@ interface Prescription {
     patientMatch: boolean
   }
 }
-
 const mockPrescriptions: Prescription[] = [
   {
     id: '1',
@@ -104,30 +101,25 @@ const mockPrescriptions: Prescription[] = [
     }
   }
 ]
-
 interface PrescriptionValidatorProps {
   customerId?: string
   customerName?: string
   onValidationComplete?: (prescription: Prescription) => void
 }
-
 export function PrescriptionValidator({ customerId, customerName, onValidationComplete }: PrescriptionValidatorProps) {
   const [prescriptions] = useState<Prescription[]>(mockPrescriptions)
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
-
   const filteredPrescriptions = prescriptions.filter(prescription => {
     const matchesCustomer = !customerId || prescription.customerId === customerId
     const matchesSearch = prescription.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          prescription.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          prescription.doctorCRM.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = filterStatus === 'all' || prescription.status === filterStatus
-
     return matchesCustomer && matchesSearch && matchesStatus
   })
-
   const getStatusColor = (status: Prescription['status']) => {
     switch (status) {
       case 'valid': return 'bg-green-100 text-green-800 border-green-200'
@@ -136,7 +128,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
       case 'rejected': return 'bg-red-100 text-red-800 border-red-200'
     }
   }
-
   const getStatusIcon = (status: Prescription['status']) => {
     switch (status) {
       case 'valid': return <CheckCircle className="h-4 w-4" />
@@ -145,39 +136,31 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
       case 'rejected': return <AlertTriangle className="h-4 w-4" />
     }
   }
-
   const getValidationColor = (isValid: boolean) => {
     return isValid ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
   }
-
   const handleViewPrescription = (prescription: Prescription) => {
     setSelectedPrescription(prescription)
   }
-
   const handleValidatePrescription = (prescription: Prescription) => {
-    console.log('Validate prescription:', prescription.id)
     // Aqui iria a lógica de validação
   }
-
   const handleDownloadPrescription = (prescription: Prescription) => {
     if (prescription.prescriptionUrl) {
       window.open(prescription.prescriptionUrl, '_blank')
     }
   }
-
   const isExpiringSoon = (expiryDate: Date) => {
     const thirtyDaysFromNow = new Date()
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
     return expiryDate <= thirtyDaysFromNow && expiryDate > new Date()
   }
-
   const getDaysUntilExpiry = (expiryDate: Date) => {
     const today = new Date()
     const diffTime = expiryDate.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     return diffDays
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -188,7 +171,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
             Gerencie e valide prescrições médicas de lentes de contato
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <div className="relative">
             <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -199,7 +181,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
               className="pl-10"
             />
           </div>
-
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -211,14 +192,12 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
             <option value="pending">Pendentes</option>
             <option value="rejected">Rejeitadas</option>
           </select>
-
           <Button onClick={() => setShowUploadModal(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Nova Prescrição
           </Button>
         </div>
       </div>
-
       {/* Alertas de Prescrições Expirando */}
       <div className="space-y-3">
         {filteredPrescriptions
@@ -259,13 +238,11 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
             </motion.div>
           ))}
       </div>
-
       {/* Lista de Prescrições */}
       <div className="bg-card border rounded-lg">
         <div className="p-4 border-b">
           <h3 className="font-medium">Prescrições ({filteredPrescriptions.length})</h3>
         </div>
-
         <div className="divide-y">
           {filteredPrescriptions.map((prescription, index) => (
             <motion.div
@@ -295,7 +272,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                       </Badge>
                     )}
                   </div>
-
                   <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 text-sm">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
@@ -305,7 +281,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                         <p className="text-xs text-gray-500">{prescription.doctorCRM}</p>
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-400" />
                       <div>
@@ -316,7 +291,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                         </p>
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-gray-400" />
                       <div>
@@ -333,7 +307,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                         </div>
                       </div>
                     </div>
-
                     {prescription.notes && (
                       <div className="col-span-1 lg:col-span-1">
                         <p className="text-gray-600">Observações</p>
@@ -342,7 +315,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                     )}
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2 ml-4">
                   {prescription.prescriptionUrl && (
                     <Button
@@ -353,7 +325,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                       <Download className="h-4 w-4" />
                     </Button>
                   )}
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -361,7 +332,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-
                   {prescription.status === 'pending' && (
                     <Button
                       size="sm"
@@ -375,7 +345,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
             </motion.div>
           ))}
         </div>
-
         {filteredPrescriptions.length === 0 && (
           <div className="p-8 text-center">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -383,7 +352,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
           </div>
         )}
       </div>
-
       {/* Modal de Detalhes da Prescrição */}
       {selectedPrescription && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -398,7 +366,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                 <X className="h-5 w-5" />
               </Button>
             </div>
-
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Informações do Paciente */}
               <div className="space-y-4">
@@ -412,7 +379,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                   <div><strong>ID:</strong> {selectedPrescription.customerId}</div>
                 </div>
               </div>
-
               {/* Informações Médicas */}
               <div className="space-y-4">
                 <h4 className="font-medium flex items-center gap-2">
@@ -426,7 +392,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                   <div><strong>Data de validade:</strong> {selectedPrescription.expiryDate.toLocaleDateString('pt-BR')}</div>
                 </div>
               </div>
-
               {/* Status e Validações */}
               <div className="space-y-4">
                 <h4 className="font-medium flex items-center gap-2">
@@ -446,7 +411,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                       </div>
                     </Badge>
                   </div>
-
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Validações realizadas:</p>
                     <div className="grid gap-2">
@@ -467,7 +431,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                   </div>
                 </div>
               </div>
-
               {/* Documento */}
               <div className="space-y-4">
                 <h4 className="font-medium">Documento</h4>
@@ -496,7 +459,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                 )}
               </div>
             </div>
-
             {selectedPrescription.notes && (
               <div className="mt-6">
                 <h4 className="font-medium mb-2">Observações</h4>
@@ -505,7 +467,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                 </div>
               </div>
             )}
-
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setSelectedPrescription(null)}>
                 Fechar
@@ -519,13 +480,11 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
           </div>
         </div>
       )}
-
       {/* Modal de Upload de Prescrição */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Nova Prescrição</h3>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Selecione o paciente</label>
@@ -538,7 +497,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium mb-2">Arquivo da prescrição</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -547,7 +505,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                   <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (max. 10MB)</p>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium mb-2">Observações (opcional)</label>
                 <textarea
@@ -557,7 +514,6 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                 />
               </div>
             </div>
-
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setShowUploadModal(false)}>
                 Cancelar

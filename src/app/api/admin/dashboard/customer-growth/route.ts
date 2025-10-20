@@ -4,12 +4,10 @@
  *
  * Retorna dados sobre aquisição e perda de clientes ao longo do tempo
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { CustomerGrowthData } from '@/types/admin'
-
 /**
  * @swagger
  * /api/admin/dashboard/customer-growth:
@@ -87,22 +85,18 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('dashboard:view')(request)
-
     if (error) {
       return error
     }
-
     // Obter parâmetros da query
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '30d'
     const groupBy = searchParams.get('groupBy') || 'day'
     const startDateParam = searchParams.get('startDate')
     const endDateParam = searchParams.get('endDate')
-
     // Calcular período
     let startDate: Date
     let endDate: Date
-
     if (startDateParam && endDateParam) {
       startDate = new Date(startDateParam)
       endDate = new Date(endDateParam)
@@ -111,7 +105,6 @@ export async function GET(request: NextRequest) {
       startDate = dateRange.startDate
       endDate = dateRange.endDate
     }
-
     // Buscar dados de clientes
     const [newCustomers, cancelledSubscriptions, totalCustomersByDate] = await Promise.all([
       // Novos clientes por período
@@ -131,7 +124,6 @@ export async function GET(request: NextRequest) {
           createdAt: 'asc'
         }
       }),
-
       // Assinaturas canceladas por período
       prisma.subscription.groupBy({
         by: ['cancelledAt'],
@@ -149,7 +141,6 @@ export async function GET(request: NextRequest) {
           cancelledAt: 'asc'
         }
       }),
-
       // Total de clientes acumulado por data
       prisma.user.findMany({
         where: {
@@ -164,20 +155,16 @@ export async function GET(request: NextRequest) {
         }
       })
     ])
-
     // Processar dados para o formato esperado
     const growthData: CustomerGrowthData[] = []
-
     // Criar array de datas para o período
     const dates = generateDateRange(startDate, endDate, groupBy)
-
     // Mapear contagens por data
     const newCustomersByDate = new Map()
     newCustomers.forEach(item => {
       const dateKey = formatDateKey(new Date(item.createdAt), groupBy)
       newCustomersByDate.set(dateKey, (newCustomersByDate.get(dateKey) || 0) + item._count.id)
     })
-
     const churnedByDate = new Map()
     cancelledSubscriptions.forEach(item => {
       if (item.cancelledAt) {
@@ -185,22 +172,16 @@ export async function GET(request: NextRequest) {
         churnedByDate.set(dateKey, (churnedByDate.get(dateKey) || 0) + item._count.id)
       }
     })
-
     // Calcular total acumulado de clientes
     let cumulativeTotal = 0
-
     dates.forEach(date => {
       const dateKey = formatDateKey(date, groupBy)
-
       // Novos clientes neste período
       const newCustomersCount = newCustomersByDate.get(dateKey) || 0
-
       // Clientes cancelados neste período
       const churnedCount = churnedByDate.get(dateKey) || 0
-
       // Calcular total acumulado
       cumulativeTotal += newCustomersCount
-
       growthData.push({
         date: date.toISOString().split('T')[0],
         newCustomers: newCustomersCount,
@@ -208,31 +189,24 @@ export async function GET(request: NextRequest) {
         churnedCustomers: churnedCount
       })
     })
-
     // Se não houver dados reais, retornar dados mock
     if (growthData.length === 0) {
       const mockData = generateMockGrowthData(startDate, endDate, groupBy)
       return createSuccessResponse(mockData, 'Dados de crescimento obtidos com sucesso (mock)')
     }
-
     return createSuccessResponse(growthData, 'Dados de crescimento obtidos com sucesso')
-
   } catch (error) {
     console.error('Customer growth data error:', error)
-
     // Retornar dados mock em caso de erro
     const dateRange = getDateRange(searchParams.get('period') || '30d')
     const mockData = generateMockGrowthData(dateRange.startDate, dateRange.endDate, 'day')
-
     return createSuccessResponse(mockData, 'Dados de crescimento obtidos com sucesso (mock)')
   }
 }
-
 // Funções auxiliares
 function getDateRange(period: string): { startDate: Date; endDate: Date } {
   const endDate = new Date()
   const startDate = new Date()
-
   switch (period) {
     case '7d':
       startDate.setDate(endDate.getDate() - 7)
@@ -249,17 +223,13 @@ function getDateRange(period: string): { startDate: Date; endDate: Date } {
     default:
       startDate.setDate(endDate.getDate() - 30)
   }
-
   return { startDate, endDate }
 }
-
 function generateDateRange(startDate: Date, endDate: Date, groupBy: string): Date[] {
   const dates: Date[] = []
   const current = new Date(startDate)
-
   while (current <= endDate) {
     dates.push(new Date(current))
-
     switch (groupBy) {
       case 'day':
         current.setDate(current.getDate() + 1)
@@ -274,10 +244,8 @@ function generateDateRange(startDate: Date, endDate: Date, groupBy: string): Dat
         current.setDate(current.getDate() + 1)
     }
   }
-
   return dates
 }
-
 function formatDateKey(date: Date, groupBy: string): string {
   switch (groupBy) {
     case 'day':
@@ -292,18 +260,14 @@ function formatDateKey(date: Date, groupBy: string): string {
       return date.toISOString().split('T')[0]
   }
 }
-
 function generateMockGrowthData(startDate: Date, endDate: Date, groupBy: string): CustomerGrowthData[] {
   const data: CustomerGrowthData[] = []
   const dates = generateDateRange(startDate, endDate, groupBy)
   let totalCustomers = 850
-
   dates.forEach((date, index) => {
     const newCustomers = Math.floor(Math.random() * 8) + 2
     const churnedCustomers = Math.floor(Math.random() * 3)
-
     totalCustomers += newCustomers
-
     data.push({
       date: date.toISOString().split('T')[0],
       newCustomers,
@@ -311,6 +275,5 @@ function generateMockGrowthData(startDate: Date, endDate: Date, groupBy: string)
       churnedCustomers
     })
   })
-
   return data
 }

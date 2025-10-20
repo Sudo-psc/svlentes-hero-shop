@@ -1,5 +1,4 @@
 import { FAQItem } from '@/types'
-
 // Perguntas frequentes organizadas por categoria
 export const faqData: FAQItem[] = [
     {
@@ -63,7 +62,6 @@ export const faqData: FAQItem[] = [
         category: 'entrega'
     }
 ]
-
 // FAQ organizado por categorias para melhor UX
 export const faqByCategory = {
     geral: faqData.filter(item => item.category === 'geral'),
@@ -74,7 +72,6 @@ export const faqByCategory = {
     suporte: faqData.filter(item => item.category === 'suporte'),
     preco: faqData.filter(item => item.category === 'preco')
 }
-
 // FAQ destacado para a landing page (6 principais)
 export const featuredFAQ: FAQItem[] = [
     faqData.find(item => item.id === 'how-it-works')!,

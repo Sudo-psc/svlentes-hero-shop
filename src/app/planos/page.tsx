@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StripePricingTable } from '@/components/payment/StripePricingTable';
@@ -7,13 +6,11 @@ import { CoverageSection } from '@/components/pricing/CoverageSection';
 import { BenefitsGrid } from '@/components/pricing/BenefitsGrid';
 import { PricingFAQ } from '@/components/pricing/PricingFAQ';
 import { serviceBenefits, coverageInfo, pricingFAQ } from '@/data/pricing-plans';
-
 export default function PlanosPage() {
   // Set page metadata dynamically using Head or next/head for client components
   React.useEffect(() => {
     document.title = 'Planos de Assinatura de Lentes de Contato | SV Lentes';
   }, []);
-  
   return (
     <div className="min-h-screen">
       {/* Compact Hero Section */}
@@ -23,7 +20,6 @@ export default function PlanosPage() {
           <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full filter blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-64 h-64 bg-cyan-300/20 rounded-full filter blur-3xl animate-pulse delay-700"></div>
         </div>
-
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <div className="mb-4">
@@ -31,18 +27,15 @@ export default function PlanosPage() {
                 ✨ Entrega Gratis para Todo o Brasil
               </Badge>
             </div>
-
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
               <span className="block">Planos de Assinatura de Lentes</span>
               <span className="block text-cyan-50 text-lg md:text-xl lg:text-2xl mt-1 font-medium">Presenciais em MG + Online para todo Brasil</span>
             </h1>
-
             <p className="text-base md:text-lg text-cyan-50 leading-relaxed">
               Atendimento médico presencial em Caratinga/MG ou entrega em todo o Brasil. Planos para asféricas, diárias, tóricas e multifocais.
             </p>
           </div>
         </div>
-
         {/* Compact Wave decoration */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg
@@ -58,7 +51,6 @@ export default function PlanosPage() {
           </svg>
         </div>
       </section>
-
       {/* Pricing Cards Section - MOVED UP */}
       <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
@@ -70,7 +62,6 @@ export default function PlanosPage() {
               Planos mensais com entrega em todo o Brasil e acompanhamento médico
             </p>
           </div>
-
           {/* Stripe Pricing Table */}
           <div id="pricing-table" className="max-w-7xl mx-auto">
             <StripePricingTable
@@ -81,7 +72,6 @@ export default function PlanosPage() {
           </div>
         </div>
       </section>
-
       {/* Compact Location Toggle Section - MOVED DOWN */}
       <section className="py-12 bg-gradient-to-b from-slate-50 to-white">
         <div className="container mx-auto px-4">
@@ -94,7 +84,6 @@ export default function PlanosPage() {
                 Atendimento médico personalizado em Caratinga/MG com Dr. Philipe Saraiva
               </p>
             </div>
-
             <div className="grid md:grid-cols-2 gap-6">
               {/* Planos Presenciais Card - Compact */}
               <div className="group relative">
@@ -105,21 +94,17 @@ export default function PlanosPage() {
                       ✨ Você está aqui
                     </div>
                   </div>
-
                   <div className="flex items-center justify-center w-12 h-12 bg-cyan-100 rounded-full mb-4 mx-auto">
                     <svg className="w-6 h-6 text-cyan-600" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                   </div>
-
                   <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
                     Planos Presenciais em Minas Gerais
                   </h3>
-
                   <p className="text-gray-600 mb-4 text-center text-sm leading-relaxed">
                     Atendimento presencial em Caratinga/MG com consulta Dr. Philipe Saraiva e retirada na clínica.
                   </p>
-
                   <ul className="space-y-3">
                     <li className="flex items-center gap-2">
                       <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -142,7 +127,6 @@ export default function PlanosPage() {
                   </ul>
                 </div>
               </div>
-
               {/* Planos Online Card - Compact */}
               <div className="group bg-white rounded-xl p-6 shadow-lg border-2 border-gray-200 hover:border-cyan-300 transition-all duration-300 hover:shadow-xl">
                 <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-4 mx-auto">
@@ -150,15 +134,12 @@ export default function PlanosPage() {
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                   </svg>
                 </div>
-
                 <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">
                   Outras Regiões do Brasil
                 </h3>
-
                 <p className="text-gray-600 mb-4 text-center text-sm leading-relaxed">
                     Assine pela internet e receba suas lentes em casa com entrega para todo o Brasil.
                 </p>
-
                 <ul className="space-y-3 mb-4">
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -179,7 +160,6 @@ export default function PlanosPage() {
                     <span className="text-gray-700 text-sm">Entrega mensal programada</span>
                   </li>
                 </ul>
-
                 <a
                   href="https://saraivavision.com.br/planos"
                   target="_blank"
@@ -196,7 +176,6 @@ export default function PlanosPage() {
           </div>
         </div>
       </section>
-
       {/* Other Lens Types Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -208,7 +187,6 @@ export default function PlanosPage() {
               Oferecemos uma variedade de lentes para atender todas as necessidades de visão e estilo
             </p>
           </div>
-
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Lentes Gelatinosas de Descarte Diário */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
@@ -253,7 +231,6 @@ export default function PlanosPage() {
                 Consultar via WhatsApp
               </a>
             </div>
-
             {/* Lentes Gelatinosas Anuais */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -297,7 +274,6 @@ export default function PlanosPage() {
                 Consultar via WhatsApp
               </a>
             </div>
-
             {/* Lentes Coloridas */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mb-4">
@@ -341,7 +317,6 @@ export default function PlanosPage() {
                 Consultar via WhatsApp
               </a>
             </div>
-
             {/* Lentes Rígidas Anuais */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
@@ -386,7 +361,6 @@ export default function PlanosPage() {
               </a>
             </div>
           </div>
-
           <div className="mt-8 p-6 bg-blue-50 rounded-lg max-w-3xl mx-auto">
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -402,18 +376,14 @@ export default function PlanosPage() {
           </div>
         </div>
       </section>
-
       {/* Coverage Section */}
       <CoverageSection items={coverageInfo} />
-
       {/* Benefits Grid */}
       <BenefitsGrid benefits={serviceBenefits} />
-
       {/* FAQ Section */}
       <div id="faq">
         <PricingFAQ items={pricingFAQ} />
       </div>
-
       {/* Final CTA Section */}
       <section className="py-16 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white">
         <div className="container mx-auto px-4 text-center">

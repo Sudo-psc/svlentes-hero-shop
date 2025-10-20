@@ -1,12 +1,10 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { X, FileText, Calendar, Download, CreditCard } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getInvoiceStatusColor, getInvoiceStatusLabel } from '@/lib/subscription-helpers'
-
 interface Invoice {
   id: string
   subscriptionId: string
@@ -21,12 +19,10 @@ interface Invoice {
   pixQrCode: string | null
   createdAt: string
 }
-
 interface InvoicesModalProps {
   isOpen: boolean
   onClose: () => void
 }
-
 export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
   const { user } = useAuth()
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -34,33 +30,26 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-
   useEffect(() => {
     if (isOpen && user) {
       fetchInvoices()
     }
   }, [isOpen, user, page])
-
   const fetchInvoices = async () => {
     if (!user) return
-
     try {
       setLoading(true)
       setError(null)
-
       const token = await user.getIdToken()
-
       const response = await fetch(`/api/assinante/invoices?page=${page}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       })
-
       if (!response.ok) {
         throw new Error('Erro ao carregar faturas')
       }
-
       const data = await response.json()
       setInvoices(data.invoices)
       setTotalPages(data.pagination.totalPages)
@@ -70,9 +59,7 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
       setLoading(false)
     }
   }
-
   if (!isOpen) return null
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen p-4">
@@ -81,7 +68,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
-
         {/* Modal */}
         <div className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
@@ -97,7 +83,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
               <X className="h-5 w-5" />
             </button>
           </div>
-
           {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
             {loading && (
@@ -105,7 +90,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
               </div>
             )}
-
             {error && (
               <div className="text-center py-12">
                 <p className="text-red-600 mb-4">{error}</p>
@@ -114,14 +98,12 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                 </Button>
               </div>
             )}
-
             {!loading && !error && invoices.length === 0 && (
               <div className="text-center py-12">
                 <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">Nenhuma fatura encontrada</p>
               </div>
             )}
-
             {!loading && !error && invoices.length > 0 && (
               <div className="space-y-4">
                 {invoices.map((invoice) => (
@@ -142,7 +124,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                         {getInvoiceStatusLabel(invoice.status)}
                       </span>
                     </div>
-
                     <div className="grid md:grid-cols-2 gap-4 text-sm mb-3">
                       <div>
                         <p className="text-gray-600 flex items-center gap-1">
@@ -151,7 +132,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                         </p>
                         <p className="font-medium">{formatDate(invoice.dueDate)}</p>
                       </div>
-
                       {invoice.paidAt && (
                         <div>
                           <p className="text-gray-600 flex items-center gap-1">
@@ -161,13 +141,11 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                           <p className="font-medium">{formatDate(invoice.paidAt)}</p>
                         </div>
                       )}
-
                       <div>
                         <p className="text-gray-600">Valor:</p>
                         <p className="font-bold text-cyan-600">{formatCurrency(invoice.amount)}</p>
                       </div>
                     </div>
-
                     {/* Download Actions */}
                     {(invoice.invoiceUrl || invoice.boletoUrl) && (
                       <div className="flex flex-wrap gap-2 pt-3 border-t">
@@ -193,7 +171,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
                         )}
                       </div>
                     )}
-
                     {/* PIX Information */}
                     {invoice.pixCode && (
                       <div className="mt-3 pt-3 border-t">
@@ -217,7 +194,6 @@ export function InvoicesModal({ isOpen, onClose }: InvoicesModalProps) {
               </div>
             )}
           </div>
-
           {/* Pagination */}
           {!loading && !error && totalPages > 1 && (
             <div className="flex items-center justify-between p-6 border-t">

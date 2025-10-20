@@ -12,7 +12,6 @@ export const APP_CONFIG = {
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://svlentes.com.br',
   },
 } as const
-
 export const BUSINESS_CONSTANTS = {
   addOnPrices: {
     solution: 25,

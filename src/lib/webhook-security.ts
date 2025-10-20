@@ -2,10 +2,8 @@
  * Webhook Security Utilities
  * Enhanced security for SendPulse webhook handling
  */
-
 import crypto from 'crypto'
 import { logger, LogCategory } from '@/lib/logger'
-
 export interface WebhookSecurityConfig {
   allowedIPs?: string[]
   maxPayloadSize: number
@@ -13,7 +11,6 @@ export interface WebhookSecurityConfig {
   requireUserAgent: boolean
   suspiciousPatterns: RegExp[]
 }
-
 export class WebhookSecurity {
   private static readonly DEFAULT_CONFIG: WebhookSecurityConfig = {
     maxPayloadSize: 500 * 1024, // 500KB
@@ -27,7 +24,6 @@ export class WebhookSecurity {
       /drop\s+table/gi, // SQL injection patterns
     ]
   }
-
   /**
    * Validate webhook request security
    */
@@ -38,7 +34,6 @@ export class WebhookSecurity {
   ): { valid: boolean; reason?: string; riskScore: number } {
     const finalConfig = { ...this.DEFAULT_CONFIG, ...config }
     let riskScore = 0
-
     // 1. Check payload size
     if (rawBody.length > finalConfig.maxPayloadSize) {
       return {
@@ -47,7 +42,6 @@ export class WebhookSecurity {
         riskScore: 100
       }
     }
-
     // 2. Check User-Agent
     if (finalConfig.requireUserAgent) {
       const userAgent = request.headers.get('user-agent') || ''
@@ -59,7 +53,6 @@ export class WebhookSecurity {
         })
       }
     }
-
     // 3. Check for suspicious patterns in payload
     for (const pattern of finalConfig.suspiciousPatterns) {
       if (pattern.test(rawBody)) {
@@ -70,13 +63,11 @@ export class WebhookSecurity {
         }
       }
     }
-
     // 4. Check Content-Type
     const contentType = request.headers.get('content-type') || ''
     if (!contentType.includes('application/json')) {
       riskScore += 15
     }
-
     // 5. Check for JSON structure attempts
     try {
       JSON.parse(rawBody)
@@ -87,7 +78,6 @@ export class WebhookSecurity {
         riskScore: 80
       }
     }
-
     // 6. Rate limiting by IP (additional check)
     const clientIP = this.getClientIP(request)
     if (this.isIPBlocked(clientIP)) {
@@ -97,13 +87,11 @@ export class WebhookSecurity {
         riskScore: 100
       }
     }
-
     return {
       valid: true,
       riskScore
     }
   }
-
   /**
    * Generate webhook signature verification (for future use)
    */
@@ -113,7 +101,6 @@ export class WebhookSecurity {
       .update(payload, 'utf8')
       .digest('hex')
   }
-
   /**
    * Verify webhook signature (for future implementation)
    */
@@ -128,7 +115,6 @@ export class WebhookSecurity {
       Buffer.from(expectedSignature, 'hex')
     )
   }
-
   /**
    * Extract client IP from request
    */
@@ -140,7 +126,6 @@ export class WebhookSecurity {
       'unknown'
     )
   }
-
   /**
    * Check if IP is blocked
    */
@@ -149,7 +134,6 @@ export class WebhookSecurity {
     const blockedIPs = process.env.BLOCKED_IPS?.split(',') || []
     return blockedIPs.includes(ip)
   }
-
   /**
    * Analyze request patterns for anomalies
    */
@@ -161,18 +145,14 @@ export class WebhookSecurity {
   ): { suspicious: boolean; reasons: string[] } {
     const reasons: string[] = []
     let suspicious = false
-
     // Store request patterns in memory (could be enhanced with Redis)
     const requestKey = `${clientIP}:${Math.floor(timestamp / 60000)}` // per minute
-
     // This is a simplified version - in production, you'd want persistent storage
     const recentRequests = this.getRecentRequests(clientIP)
-
     if (recentRequests > 100) { // More than 100 requests per minute
       reasons.push('High frequency requests from IP')
       suspicious = true
     }
-
     // Check for headless browsers/bots
     if (userAgent.includes('bot') ||
         userAgent.includes('crawler') ||
@@ -180,10 +160,8 @@ export class WebhookSecurity {
       reasons.push('Bot-like User-Agent detected')
       suspicious = true
     }
-
     return { suspicious, reasons }
   }
-
   /**
    * Get recent request count for IP (simplified implementation)
    */
@@ -191,7 +169,6 @@ export class WebhookSecurity {
     // In production, this would use a proper rate limiting store
     return Math.floor(Math.random() * 10) // Placeholder
   }
-
   /**
    * Log security events
    */

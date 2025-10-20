@@ -7,10 +7,8 @@
  * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
-
 import type { PricingPlan, PricingPlanGroup } from '@/types'
 import { config } from '@/config/loader'
-
 /**
  * Get pricing plans from centralized config (new aspheric and toric system)
  * Falls back to hardcoded data if feature flag is disabled
@@ -21,26 +19,21 @@ function getPricingPlans(): PricingPlan[] {
     const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
     const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
     const allPlans: PricingPlan[] = []
-
     // Load aspheric plans
     if (usePricingAsfericos && appConfig.pricing_asfericos) {
       const asphericPlans = Object.values(appConfig.pricing_asfericos) as any[]
       allPlans.push(...asphericPlans.map(convertYamlPlanToPricingPlan))
     }
-
     // Load toric plans
     if (usePricingToricos && appConfig.pricing_toricos) {
       const toricPlans = Object.values(appConfig.pricing_toricos) as any[]
       allPlans.push(...toricPlans.map(convertYamlPlanToPricingPlan))
     }
-
     // Return combined plans if any are loaded
     if (allPlans.length > 0) {
       return allPlans.sort((a, b) => a.sortOrder - b.sortOrder)
     }
-
     // Legacy system: Use old pricing structure
     if (useCentralizedPricing && appConfig.pricing?.plans) {
       return appConfig.pricing.plans as PricingPlan[]
@@ -48,11 +41,9 @@ function getPricingPlans(): PricingPlan[] {
   } catch (error) {
     console.warn('[Pricing] Error loading centralized config, using fallback data:', error)
   }
-
   // Fallback to hardcoded data
   return hardcodedPlans
 }
-
 /**
  * Convert YAML plan structure to PricingPlan interface
  */
@@ -60,7 +51,6 @@ function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
   // Calculate annual price from monthly price for different billing cycles
   let priceAnnual = 0;
   const monthlyPrice = yamlPlan.pricing.priceMonthly || 0;
-
   switch (yamlPlan.billingCycle) {
     case 'monthly':
       priceAnnual = monthlyPrice * 12;
@@ -77,64 +67,51 @@ function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
     default:
       priceAnnual = monthlyPrice * 12;
   }
-
   return {
     // Identificação
     id: yamlPlan.id,
     name: yamlPlan.name,
     description: yamlPlan.description,
-
     // Categorização
     lensType: yamlPlan.lensType,
     billingCycle: yamlPlan.billingCycle,
     consultationType: yamlPlan.consultationType,
     serviceLevel: yamlPlan.serviceLevel,
-
     // Preços
     priceMonthly: yamlPlan.pricing.priceMonthly,
     priceAnnual: priceAnnual,
     priceTotal: yamlPlan.pricing.priceTotal,
     pricePerLens: yamlPlan.pricing.pricePerLens,
     installments: yamlPlan.pricing.installments,
-
     // Economia
     economy: yamlPlan.economy,
-
     // Visual
     badge: yamlPlan.badge,
     popularBadge: yamlPlan.popularBadge,
     recommended: yamlPlan.recommended,
     highlight: yamlPlan.highlight,
-
     // Conteúdo
     features: yamlPlan.features,
     benefits: yamlPlan.benefits,
-
     // Entrega e Logística
     deliveryInfo: yamlPlan.deliveryInfo,
-
     // Consultas
     consultationInfo: yamlPlan.consultationInfo,
-
     // Suporte
     supportInfo: yamlPlan.supportInfo,
-
     // Integrações (placeholder para implementação futura)
     stripeProductId: `prod_${yamlPlan.id}`,
     stripePriceId: `price_${yamlPlan.id}_${yamlPlan.billingCycle}`,
     asaasProductId: `prod_${yamlPlan.id}`,
-
     // Marketing
     ctaText: yamlPlan.ctaText,
     tags: yamlPlan.tags,
     targetAudience: yamlPlan.targetAudience,
-
     // Metadados
     isActive: yamlPlan.isActive,
     sortOrder: yamlPlan.sortOrder
   }
 }
-
 /**
  * Get pricing plans grouped by lens type (new system)
  */
@@ -143,12 +120,10 @@ function getPricingPlanGroups(): PricingPlanGroup[] {
     const appConfig = config.load()
     const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
     const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
-
     if (usePricingAsfericos || usePricingToricos) {
       // Group plans by lens type
       const plans = getPricingPlans()
       const groups: PricingPlanGroup[] = []
-
       // Aspheric lenses group
       const asphericPlans = plans.filter(plan => plan.lensType === 'asferica')
       if (asphericPlans.length > 0) {
@@ -162,7 +137,6 @@ function getPricingPlanGroups(): PricingPlanGroup[] {
           order: 1
         })
       }
-
       // Toric lenses group
       const toricPlans = plans.filter(plan => plan.lensType === 'torica')
       if (toricPlans.length > 0) {
@@ -176,17 +150,14 @@ function getPricingPlanGroups(): PricingPlanGroup[] {
           order: 2
         })
       }
-
       // Future groups for other lens types can be added here
       return groups.sort((a, b) => a.order - b.order)
     }
   } catch (error) {
     console.warn('[Pricing] Error loading plan groups, using fallback:', error)
   }
-
   return []
 }
-
 // Hardcoded fallback data (sincronizado com base.yaml) - Novo formato asférico
 const hardcodedPlans: PricingPlan[] = [
     {
@@ -194,13 +165,11 @@ const hardcodedPlans: PricingPlan[] = [
         id: 'express-mensal',
         name: 'Plano Express',
         description: 'Plano essencial para uso regular de lentes asféricas',
-
         // Categorização
         lensType: 'asferica',
         billingCycle: 'monthly',
         consultationType: 'none',
         serviceLevel: 'express',
-
         // Preços
         priceMonthly: 128.00,
         priceTotal: 128.00,
@@ -210,7 +179,6 @@ const hardcodedPlans: PricingPlan[] = [
             value: 128.00,
             show: false
         },
-
         // Economia
         economy: {
             percentage: 0,
@@ -218,13 +186,11 @@ const hardcodedPlans: PricingPlan[] = [
             previousPrice: 0,
             accessoriesValue: 0
         },
-
         // Visual
         badge: null,
         popularBadge: null,
         recommended: false,
         highlight: false,
-
         // Conteúdo
         features: [
             'Lentes asféricas mensais',
@@ -252,14 +218,12 @@ const hardcodedPlans: PricingPlan[] = [
                 value: 0
             }
         ],
-
         // Entrega e Logística
         deliveryInfo: {
             frequency: 'mensal',
             freightFree: false,
             locations: ['Brasil']
         },
-
         // Consultas
         consultationInfo: {
             included: false,
@@ -267,24 +231,20 @@ const hardcodedPlans: PricingPlan[] = [
             count: 0,
             location: []
         },
-
         // Suporte
         supportInfo: {
             type: 'WhatsApp',
             availability: 'Seg-Sex 9h-18h',
             priority: 'standard'
         },
-
         // Integrações
         stripeProductId: 'prod_express_mensal',
         stripePriceId: 'price_express_mensal_monthly',
         asaasProductId: 'prod_express_mensal',
-
         // Marketing
         ctaText: 'Assinar Agora',
         tags: ['essencial', 'flexível'],
         targetAudience: ['primeira-compra', 'orçamento-limitado'],
-
         // Metadados
         isActive: true,
         sortOrder: 1
@@ -294,13 +254,11 @@ const hardcodedPlans: PricingPlan[] = [
         id: 'vip-anual',
         name: 'Plano VIP',
         description: 'A experiência mais completa e exclusiva para sua saúde ocular',
-
         // Categorização
         lensType: 'asferica',
         billingCycle: 'annual',
         consultationType: 'hybrid',
         serviceLevel: 'vip',
-
         // Preços
         priceMonthly: 91.00,
         priceTotal: 1091.00,
@@ -310,7 +268,6 @@ const hardcodedPlans: PricingPlan[] = [
             value: 91.00,
             show: true
         },
-
         // Economia
         economy: {
             percentage: 29,
@@ -318,13 +275,11 @@ const hardcodedPlans: PricingPlan[] = [
             previousPrice: 1536.00,
             accessoriesValue: 120.00
         },
-
         // Visual
         badge: 'Exclusivo VIP',
         popularBadge: null,
         recommended: true,
         highlight: true,
-
         // Conteúdo
         features: [
             'Lentes asféricas anuais premium',
@@ -364,14 +319,12 @@ const hardcodedPlans: PricingPlan[] = [
                 value: 240.00
             }
         ],
-
         // Entrega e Logística
         deliveryInfo: {
             frequency: 'mensal',
             freightFree: true,
             locations: ['Todo Brasil (prioridade em capitais)']
         },
-
         // Consultas
         consultationInfo: {
             included: true,
@@ -380,113 +333,91 @@ const hardcodedPlans: PricingPlan[] = [
             location: ['Clínica Saraiva Vision', 'Online'],
             value: 1200.00
         },
-
         // Suporte
         supportInfo: {
             type: 'Assistente Pessoal + WhatsApp VIP',
             availability: '24/7',
             priority: 'vip'
         },
-
         // Integrações
         stripeProductId: 'prod_vip_anual',
         stripePriceId: 'price_vip_anual_annual',
         asaasProductId: 'prod_vip_anual',
-
         // Marketing
         ctaText: 'Assinar VIP',
         tags: ['vip', 'exclusivo', 'completo', 'economia-maxima'],
         targetAudience: ['luxo', 'saude-ocular', 'conveniencia-total'],
-
         // Metadados
         isActive: true,
         sortOrder: 4
     }
 ]
-
 // ============================================================================
 // HELPER FUNCTIONS - Must be defined BEFORE exports to avoid TDZ
 // ============================================================================
-
 function getFeatureComparison() {
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
     if (useCentralizedPricing) {
       return appConfig.pricing.featureComparison
     }
   } catch (error) {
     console.warn('[Pricing] Error loading feature comparison, using fallback:', error)
   }
-
   return hardcodedFeatureComparison
 }
-
 function getServiceBenefits() {
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
     if (useCentralizedPricing) {
       return appConfig.pricing.serviceBenefits
     }
   } catch (error) {
     console.warn('[Pricing] Error loading service benefits, using fallback:', error)
   }
-
   return hardcodedServiceBenefits
 }
-
 function getCoverageInfo() {
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
     if (useCentralizedPricing) {
       return appConfig.pricing.coverageInfo
     }
   } catch (error) {
     console.warn('[Pricing] Error loading coverage info, using fallback:', error)
   }
-
   return hardcodedCoverageInfo
 }
-
 function getPricingFAQ() {
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
     if (useCentralizedPricing) {
       return appConfig.pricing.faq
     }
   } catch (error) {
     console.warn('[Pricing] Error loading FAQ, using fallback:', error)
   }
-
   return hardcodedPricingFAQ
 }
-
 function getEconomyCalculatorData() {
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-
     if (useCentralizedPricing && appConfig.pricing?.economyCalculator) {
       return appConfig.pricing.economyCalculator
     }
   } catch (error) {
     console.warn('[Pricing] Error loading calculator data, using fallback:', error)
   }
-
   return hardcodedEconomyCalculatorData
 }
-
 // ============================================================================
 // HARDCODED FALLBACK DATA
 // ============================================================================
-
 const hardcodedFeatureComparison = {
     features: [
         'Lentes de contato',
@@ -563,7 +494,6 @@ const hardcodedFeatureComparison = {
         }
     ]
 }
-
 const hardcodedServiceBenefits = [
     {
         id: 'economy',
@@ -608,7 +538,6 @@ const hardcodedServiceBenefits = [
         highlight: false
     }
 ]
-
 const hardcodedCoverageInfo = [
     {
         id: 'presencial',
@@ -633,7 +562,6 @@ const hardcodedCoverageInfo = [
         nationwide: true
     }
 ]
-
 const hardcodedPricingFAQ = [
     {
         id: 'entrega',
@@ -676,7 +604,6 @@ const hardcodedPricingFAQ = [
         answer: 'Você terá acesso a consultas de acompanhamento com oftalmologista, tanto presenciais em nossas clínicas quanto por telemedicina. Além disso, oferecemos suporte via WhatsApp para dúvidas sobre uso e cuidados com as lentes.'
     }
 ]
-
 const hardcodedEconomyCalculatorData = {
     averagePrices: {
         daily: {
@@ -698,28 +625,20 @@ const hardcodedEconomyCalculatorData = {
         daily: { daysPerMonth: 30, multiplier: 1.0 }
     }
 }
-
 // ============================================================================
 // EXPORTS - All functions and data are defined above
 // ============================================================================
-
 // Export via função para suportar centralização
 export const pricingPlans: PricingPlan[] = getPricingPlans()
-
 // Novo sistema: Grupos de planos por tipo de lente  
 export const pricingPlanGroups: PricingPlanGroup[] = getPricingPlanGroups()
-
 // Comparação de features entre planos
 export const featureComparison = hardcodedFeatureComparison
-
 // Benefícios gerais do serviço
 export const serviceBenefits = hardcodedServiceBenefits
-
 // Informações de cobertura geográfica
 export const coverageInfo = hardcodedCoverageInfo
-
 // FAQ específica de planos
 export const pricingFAQ = hardcodedPricingFAQ
-
 // Dados para calculadora de economia
 export const economyCalculatorData = hardcodedEconomyCalculatorData

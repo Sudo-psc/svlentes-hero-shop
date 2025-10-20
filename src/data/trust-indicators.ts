@@ -7,9 +7,7 @@
  * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
-
 import { config } from '@/config/loader'
-
 /**
  * Get trust badges from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -18,7 +16,6 @@ function getTrustBadges() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       // Add color property for backward compatibility (not in YAML schema)
       return appConfig.medical.trust.badges.map((badge: any) => ({
@@ -31,10 +28,8 @@ function getTrustBadges() {
   } catch (error) {
     console.warn('[Trust] Error loading trust badges, using fallback:', error)
   }
-
   return hardcodedTrustBadges
 }
-
 // Hardcoded fallback data
 const hardcodedTrustBadges = [
     {
@@ -62,10 +57,8 @@ const hardcodedTrustBadges = [
         verified: true
     }
 ]
-
 // Export via função para suportar centralização
 export const trustBadges = getTrustBadges()
-
 /**
  * Get social proof stats from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -74,7 +67,6 @@ function getSocialProofStats() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       // Add color property for backward compatibility (not in YAML schema)
       return appConfig.medical.trust.socialProofStats.map((stat: any) => ({
@@ -87,10 +79,8 @@ function getSocialProofStats() {
   } catch (error) {
     console.warn('[Trust] Error loading social proof stats, using fallback:', error)
   }
-
   return hardcodedSocialProofStats
 }
-
 // Hardcoded fallback data
 const hardcodedSocialProofStats = [
     {
@@ -115,10 +105,8 @@ const hardcodedSocialProofStats = [
         color: 'text-blue-600'
     }
 ]
-
 // Export via função para suportar centralização
 export const socialProofStats = getSocialProofStats()
-
 /**
  * Get certifications from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -127,17 +115,14 @@ function getCertifications() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       return appConfig.medical.trust.certifications
     }
   } catch (error) {
     console.warn('[Trust] Error loading certifications, using fallback:', error)
   }
-
   return hardcodedCertifications
 }
-
 // Hardcoded fallback data
 const hardcodedCertifications = [
     {
@@ -169,7 +154,6 @@ const hardcodedCertifications = [
         verified: true
     }
 ]
-
 /**
  * Get testimonial highlights from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -178,17 +162,14 @@ function getTestimonialHighlights() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       return appConfig.medical.trust.highlights
     }
   } catch (error) {
     console.warn('[Trust] Error loading highlights, using fallback:', error)
   }
-
   return hardcodedTestimonialHighlights
 }
-
 // Hardcoded fallback data
 const hardcodedTestimonialHighlights = [
     {
@@ -213,7 +194,6 @@ const hardcodedTestimonialHighlights = [
         featured: true
     }
 ]
-
 // Export via função para suportar centralização
 export const certifications = getCertifications()
 export const testimonialHighlights = getTestimonialHighlights()
