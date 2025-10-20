@@ -1,10 +1,8 @@
 'use client'
-
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import StripeFallback from '@/components/ui/stripe-fallback'
 import { CreditCard, Smartphone, QrCode, AlertCircle } from 'lucide-react'
-
 interface PaymentMethodSelectorProps {
   planId: string
   planName: string
@@ -13,9 +11,7 @@ interface PaymentMethodSelectorProps {
   onAsaasPayment?: () => void
   className?: string
 }
-
 type PaymentMethod = 'asaas' | 'stripe'
-
 export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   planId,
   planName,
@@ -26,7 +22,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('asaas')
   const [showStripeFallback, setShowStripeFallback] = useState(false)
-
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -35,24 +30,20 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       maximumFractionDigits: 2,
     }).format(value)
   }
-
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setSelectedMethod(method)
     setShowStripeFallback(method === 'stripe')
   }
-
   const handleAsaasPayment = () => {
     if (onAsaasPayment) {
       onAsaasPayment()
     }
   }
-
   return (
     <div className={className}>
       {/* Payment Method Selection */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-3">Escolha a forma de pagamento</h3>
-
         <div className="space-y-3">
           {/* Asaas - Primary Option */}
           <button
@@ -86,7 +77,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               )}
             </div>
           </button>
-
           {/* Stripe - Fallback Option */}
           <button
             onClick={() => handlePaymentMethodChange('stripe')}
@@ -121,7 +111,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </button>
         </div>
       </div>
-
       {/* Payment Details */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <div className="flex justify-between items-center mb-2">
@@ -133,7 +122,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           <span className="text-lg font-bold text-cyan-600">{formatPrice(amount)}</span>
         </div>
       </div>
-
       {/* Payment Method Content */}
       {selectedMethod === 'asaas' && (
         <div className="space-y-4">
@@ -149,7 +137,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               </div>
             </div>
           </div>
-
           <Button
             onClick={handleAsaasPayment}
             size="lg"
@@ -159,7 +146,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </Button>
         </div>
       )}
-
       {selectedMethod === 'stripe' && (
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -174,7 +160,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               </div>
             </div>
           </div>
-
           <StripeFallback
             planId={planId}
             customerEmail={customerEmail}
@@ -182,7 +167,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           />
         </div>
       )}
-
       {/* Trust Badges */}
       <div className="mt-6 pt-6 border-t border-gray-200">
         <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
@@ -210,5 +194,4 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     </div>
   )
 }
-
 export default PaymentMethodSelector

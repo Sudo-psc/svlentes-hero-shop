@@ -1,21 +1,17 @@
 'use client';
-
 /**
  * Feature Flag Usage Examples
  *
  * Este arquivo demonstra diferentes padrões de uso do sistema de feature flags
  */
-
 import { useState, useEffect } from 'react';
 import { isFeatureEnabled, evaluateFeatureFlag } from '@/lib/feature-flags';
-
 // ========================================
 // Exemplo 1: Toggle Simples
 // ========================================
 export function SimpleToggleExample({ userId }: { userId?: string }) {
   const [showNewUI, setShowNewUI] = useState(false);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     async function checkFlag() {
       const enabled = await isFeatureEnabled('new_checkout_flow', userId);
@@ -24,11 +20,9 @@ export function SimpleToggleExample({ userId }: { userId?: string }) {
     }
     checkFlag();
   }, [userId]);
-
   if (loading) {
     return <div>Carregando...</div>;
   }
-
   return (
     <div>
       {showNewUI ? (
@@ -45,7 +39,6 @@ export function SimpleToggleExample({ userId }: { userId?: string }) {
     </div>
   );
 }
-
 // ========================================
 // Exemplo 2: Múltiplas Flags
 // ========================================
@@ -55,7 +48,6 @@ export function MultipleFlagsExample({ userId }: { userId?: string }) {
     smartReminders: false,
     betaFeatures: false,
   });
-
   useEffect(() => {
     async function loadFlags() {
       const [pix, reminders, beta] = await Promise.all([
@@ -63,7 +55,6 @@ export function MultipleFlagsExample({ userId }: { userId?: string }) {
         isFeatureEnabled('smart_reminders', userId),
         isFeatureEnabled('beta_features', userId),
       ]);
-
       setFlags({
         pixPayment: pix,
         smartReminders: reminders,
@@ -72,11 +63,9 @@ export function MultipleFlagsExample({ userId }: { userId?: string }) {
     }
     loadFlags();
   }, [userId]);
-
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-bold">Suas Features Ativas</h3>
-
       <div className="grid gap-2">
         <FeatureCard
           title="Pagamento via PIX"
@@ -97,7 +86,6 @@ export function MultipleFlagsExample({ userId }: { userId?: string }) {
     </div>
   );
 }
-
 function FeatureCard({
   title,
   enabled,
@@ -123,7 +111,6 @@ function FeatureCard({
     </div>
   );
 }
-
 // ========================================
 // Exemplo 3: Avaliação Detalhada
 // ========================================
@@ -133,7 +120,6 @@ export function DetailedEvaluationExample({ userId }: { userId?: string }) {
     reason: string;
     metadata?: any;
   } | null>(null);
-
   useEffect(() => {
     async function evaluate() {
       const result = await evaluateFeatureFlag('smart_reminders', userId);
@@ -141,15 +127,12 @@ export function DetailedEvaluationExample({ userId }: { userId?: string }) {
     }
     evaluate();
   }, [userId]);
-
   if (!evaluation) {
     return <div>Avaliando feature...</div>;
   }
-
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <h3 className="text-xl font-bold mb-4">Resultado da Avaliação</h3>
-
       <div className="space-y-3">
         <div>
           <span className="font-semibold">Status: </span>
@@ -161,12 +144,10 @@ export function DetailedEvaluationExample({ userId }: { userId?: string }) {
             {evaluation.enabled ? 'Ativada' : 'Desativada'}
           </span>
         </div>
-
         <div>
           <span className="font-semibold">Motivo: </span>
           <code className="bg-gray-100 px-2 py-1 rounded">{evaluation.reason}</code>
         </div>
-
         {evaluation.metadata && (
           <div>
             <span className="font-semibold">Metadata: </span>
@@ -179,20 +160,16 @@ export function DetailedEvaluationExample({ userId }: { userId?: string }) {
     </div>
   );
 }
-
 // ========================================
 // Exemplo 4: A/B Testing com Analytics
 // ========================================
 export function ABTestExample({ userId }: { userId?: string }) {
   const [variant, setVariant] = useState<'A' | 'B' | null>(null);
-
   useEffect(() => {
     async function determineVariant() {
       // Flag configurada com 50% rollout para teste A/B
       const showVariantB = await isFeatureEnabled('ab_test_calculator', userId);
-
       setVariant(showVariantB ? 'B' : 'A');
-
       // Registrar evento de exposição ao teste
       if (userId) {
         await fetch('/api/analytics/ab-test-exposure', {
@@ -206,20 +183,16 @@ export function ABTestExample({ userId }: { userId?: string }) {
         });
       }
     }
-
     determineVariant();
   }, [userId]);
-
   if (!variant) {
     return <div>Carregando...</div>;
   }
-
   return (
     <div className="p-6 rounded-lg border-2">
       <div className="text-xs text-gray-500 mb-2">
         Teste A/B: Variante {variant}
       </div>
-
       {variant === 'A' ? (
         <div className="bg-blue-50 p-4 rounded">
           <h3 className="text-lg font-bold text-blue-900">Layout Original</h3>
@@ -234,7 +207,6 @@ export function ABTestExample({ userId }: { userId?: string }) {
     </div>
   );
 }
-
 // ========================================
 // Exemplo 5: Gradual Rollout Indicator
 // ========================================
@@ -243,12 +215,10 @@ export function RolloutIndicator({ flagKey }: { flagKey: string }) {
     percentage: number;
     status: string;
   } | null>(null);
-
   useEffect(() => {
     async function fetchRollout() {
       const response = await fetch(`/api/admin/feature-flags?flagKey=${flagKey}`);
       const data = await response.json();
-
       if (data.success && data.data.length > 0) {
         const flag = data.data[0];
         setRolloutInfo({
@@ -257,14 +227,11 @@ export function RolloutIndicator({ flagKey }: { flagKey: string }) {
         });
       }
     }
-
     fetchRollout();
   }, [flagKey]);
-
   if (!rolloutInfo) {
     return null;
   }
-
   return (
     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
       <div className="flex items-center">
@@ -289,18 +256,15 @@ export function RolloutIndicator({ flagKey }: { flagKey: string }) {
     </div>
   );
 }
-
 // ========================================
 // Exemplo 6: Feature com Fallback
 // ========================================
 export function FeatureWithFallback({ userId }: { userId?: string }) {
   const [content, setContent] = useState<React.ReactNode>(null);
-
   useEffect(() => {
     async function loadContent() {
       try {
         const enabled = await isFeatureEnabled('enhanced_analytics', userId);
-
         if (enabled) {
           // Carregar componente avançado dinamicamente
           const { EnhancedAnalytics } = await import('@/components/analytics/Enhanced');
@@ -317,20 +281,16 @@ export function FeatureWithFallback({ userId }: { userId?: string }) {
         setContent(<BasicAnalytics />);
       }
     }
-
     loadContent();
   }, [userId]);
-
   return <div>{content || <div>Carregando analytics...</div>}</div>;
 }
-
 // ========================================
 // Exemplo 7: Admin Quick Actions
 // ========================================
 export function AdminQuickActions({ flagKey }: { flagKey: string }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-
   async function toggleFlag(action: 'activate' | 'deactivate') {
     setLoading(true);
     try {
@@ -344,7 +304,6 @@ export function AdminQuickActions({ flagKey }: { flagKey: string }) {
           reason: `Quick ${action} from admin UI`,
         }),
       });
-
       const result = await response.json();
       setMessage(result.success ? `✅ ${action} bem-sucedido` : `❌ Erro: ${result.error}`);
     } catch (error) {
@@ -353,7 +312,6 @@ export function AdminQuickActions({ flagKey }: { flagKey: string }) {
       setLoading(false);
     }
   }
-
   async function updateRollout(percentage: number) {
     setLoading(true);
     try {
@@ -368,7 +326,6 @@ export function AdminQuickActions({ flagKey }: { flagKey: string }) {
           reason: `Rollout ajustado para ${percentage}%`,
         }),
       });
-
       const result = await response.json();
       setMessage(result.success ? `✅ Rollout: ${percentage}%` : `❌ Erro: ${result.error}`);
     } catch (error) {
@@ -377,11 +334,9 @@ export function AdminQuickActions({ flagKey }: { flagKey: string }) {
       setLoading(false);
     }
   }
-
   return (
     <div className="bg-white p-4 rounded-lg shadow space-y-3">
       <h4 className="font-semibold">Ações Rápidas: {flagKey}</h4>
-
       <div className="flex gap-2">
         <button
           onClick={() => toggleFlag('activate')}
@@ -398,7 +353,6 @@ export function AdminQuickActions({ flagKey }: { flagKey: string }) {
           Desativar
         </button>
       </div>
-
       <div className="space-y-1">
         <label className="text-sm font-medium">Rollout Rápido:</label>
         <div className="grid grid-cols-4 gap-2">
@@ -414,7 +368,6 @@ export function AdminQuickActions({ flagKey }: { flagKey: string }) {
           ))}
         </div>
       </div>
-
       {message && (
         <div className="text-sm p-2 bg-gray-100 rounded">
           {message}

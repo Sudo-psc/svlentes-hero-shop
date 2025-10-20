@@ -4,12 +4,10 @@
  *
  * Retorna indicadores chave de performance (KPIs) do negócio
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { dashboardMetricsSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/dashboard/metrics:
@@ -134,17 +132,14 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('dashboard:view')(request)
-
     if (error) {
       return error
     }
-
     // Validar parâmetros
     const { data: params, error: validationError } = validateQuery(
       dashboardMetricsSchema,
       new URL(request.url).searchParams
     )
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -154,10 +149,8 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Calcular datas baseado no período
     const { startDate, endDate } = getDateRange(params.period)
-
     // Buscar métricas em paralelo
     const [
       totalCustomers,
@@ -179,7 +172,6 @@ export async function GET(request: NextRequest) {
           createdAt: { lte: endDate }
         }
       }),
-
       // Assinaturas ativas
       prisma.subscription.count({
         where: {
@@ -187,7 +179,6 @@ export async function GET(request: NextRequest) {
           createdAt: { lte: endDate }
         }
       }),
-
       // Novos clientes no período
       prisma.user.count({
         where: {
@@ -198,7 +189,6 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-
       // Assinaturas canceladas no período
       prisma.subscription.count({
         where: {
@@ -209,7 +199,6 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-
       // Pedidos pendentes
       prisma.order.count({
         where: {
@@ -217,7 +206,6 @@ export async function GET(request: NextRequest) {
           createdAt: { lte: endDate }
         }
       }),
-
       // Pedidos enviados no período
       prisma.order.count({
         where: {
@@ -228,7 +216,6 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-
       // Pedidos entregues no período
       prisma.order.count({
         where: {
@@ -239,14 +226,12 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-
       // Tickets abertos
       prisma.supportTicket.count({
         where: {
           status: { in: ['OPEN', 'IN_PROGRESS', 'PENDING_CUSTOMER', 'PENDING_AGENT'] }
         }
       }),
-
       // Tickets resolvidos no período
       prisma.supportTicket.count({
         where: {
@@ -257,7 +242,6 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-
       // Dados de receita (MRR)
       prisma.subscription.aggregate({
         where: {
@@ -270,7 +254,6 @@ export async function GET(request: NextRequest) {
           monthlyValue: true
         }
       }),
-
       // Dados de pagamentos do período
       prisma.payment.aggregate({
         where: {
@@ -288,7 +271,6 @@ export async function GET(request: NextRequest) {
         }
       })
     ])
-
     // Calcular métricas derivadas
     const mrr = revenueData._sum.monthlyValue || 0
     const arr = mrr * 12
@@ -298,10 +280,8 @@ export async function GET(request: NextRequest) {
     const churnRate = activeSubscriptionsCount > 0
       ? ((cancelledSubscriptions || 0) / (activeSubscriptionsCount + cancelledSubscriptions)) * 100
       : 0
-
     // Calcular crescimento (comparação com período anterior)
     const growthData = await calculateGrowth(startDate, endDate, params.compareWith)
-
     // Montar resposta
     const metrics = {
       overview: {
@@ -348,9 +328,7 @@ export async function GET(request: NextRequest) {
         comparison: params.compareWith || null
       }
     }
-
     return createSuccessResponse(metrics, 'Métricas obtidas com sucesso')
-
   } catch (error) {
     console.error('Dashboard metrics error:', error)
     return NextResponse.json(
@@ -363,7 +341,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 // Funções auxiliares
 function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
   data: T | null
@@ -374,7 +351,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
     searchParams.forEach((value, key) => {
       params[key] = value
     })
-
     const data = schema.parse(params)
     return { data, error: null }
   } catch (error: any) {
@@ -397,11 +373,9 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
     }
   }
 }
-
 function getDateRange(period: string): { startDate: Date; endDate: Date } {
   const endDate = new Date()
   const startDate = new Date()
-
   switch (period) {
     case '7d':
       startDate.setDate(endDate.getDate() - 7)
@@ -418,10 +392,8 @@ function getDateRange(period: string): { startDate: Date; endDate: Date } {
     default:
       startDate.setDate(endDate.getDate() - 30)
   }
-
   return { startDate, endDate }
 }
-
 async function calculateGrowth(
   currentStart: Date,
   currentEnd: Date,
@@ -430,13 +402,11 @@ async function calculateGrowth(
   if (!compareWith) {
     return { revenueGrowth: 0 }
   }
-
   // Calcular período anterior para comparação
   const daysDiff = Math.ceil((currentEnd.getTime() - currentStart.getTime()) / (1000 * 60 * 60 * 24))
   const previousEnd = new Date(currentStart)
   const previousStart = new Date(previousEnd)
   previousStart.setDate(previousStart.getDate() - daysDiff)
-
   try {
     // Receita do período anterior
     const previousRevenue = await prisma.payment.aggregate({
@@ -451,7 +421,6 @@ async function calculateGrowth(
         amount: true
       }
     })
-
     // Receita do período atual
     const currentRevenue = await prisma.payment.aggregate({
       where: {
@@ -465,14 +434,11 @@ async function calculateGrowth(
         amount: true
       }
     })
-
     const prevAmount = previousRevenue._sum.amount || 0
     const currAmount = currentRevenue._sum.amount || 0
-
     const growth = prevAmount > 0
       ? ((currAmount - prevAmount) / prevAmount) * 100
       : 0
-
     return { revenueGrowth: parseFloat(growth.toFixed(2)) }
   } catch (error) {
     console.error('Error calculating growth:', error)

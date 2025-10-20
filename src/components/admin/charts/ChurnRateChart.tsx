@@ -1,5 +1,4 @@
 'use client'
-
 import {
   LineChart,
   Line,
@@ -16,7 +15,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, TrendingDown, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
 interface ChurnData {
   date: string
   churnRate: number
@@ -24,7 +22,6 @@ interface ChurnData {
   activeCount: number
   reason?: string
 }
-
 interface ChurnRateChartProps {
   data: ChurnData[]
   title?: string
@@ -35,7 +32,6 @@ interface ChurnRateChartProps {
   benchmarkRate?: number
   className?: string
 }
-
 export function ChurnRateChart({
   data,
   title = "Taxa de Churn",
@@ -68,14 +64,12 @@ export function ChurnRateChart({
       </Card>
     )
   }
-
   // Calcular estatísticas
   const avgChurnRate = data.reduce((sum, item) => sum + item.churnRate, 0) / data.length
   const maxChurnRate = Math.max(...data.map(item => item.churnRate))
   const minChurnRate = Math.min(...data.map(item => item.churnRate))
   const totalCancelled = data.reduce((sum, item) => sum + item.cancelledCount, 0)
   const currentRate = data[data.length - 1]?.churnRate || 0
-
   // Classificar taxa de churn
   const getChurnLevel = (rate: number) => {
     if (rate < 2) return { level: 'Excelente', color: 'text-green-600', bgColor: 'bg-green-100' }
@@ -84,10 +78,8 @@ export function ChurnRateChart({
     if (rate < 8) return { level: 'Ruim', color: 'text-orange-600', bgColor: 'bg-orange-100' }
     return { level: 'Crítico', color: 'text-red-600', bgColor: 'bg-red-100' }
   }
-
   const churnLevel = getChurnLevel(currentRate)
   const isImproving = data.length >= 2 && currentRate < data[data.length - 2].churnRate
-
   // Formatar dados para exibição
   const formatData = data.map(item => ({
     ...item,
@@ -100,14 +92,12 @@ export function ChurnRateChart({
     activeCount: Number(item.activeCount),
     benchmark: benchmarkRate
   }))
-
   // Componente do gráfico baseado no tipo
   const renderChart = () => {
     const commonProps = {
       data: formatData,
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     }
-
     switch (chartType) {
       case 'bar':
         return (
@@ -164,7 +154,6 @@ export function ChurnRateChart({
             )}
           </BarChart>
         )
-
       case 'area':
         return (
           <AreaChart {...commonProps}>
@@ -223,7 +212,6 @@ export function ChurnRateChart({
             )}
           </AreaChart>
         )
-
       case 'line':
       default:
         return (
@@ -271,7 +259,6 @@ export function ChurnRateChart({
         )
     }
   }
-
   return (
     <Card className={className}>
       <CardHeader>
@@ -306,7 +293,6 @@ export function ChurnRateChart({
             {renderChart()}
           </ResponsiveContainer>
         </div>
-
         {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
           <div className="text-center">
@@ -331,7 +317,6 @@ export function ChurnRateChart({
             <p className="text-sm font-semibold text-muted-foreground">{benchmarkRate}%</p>
           </div>
         </div>
-
         {/* Alertas */}
         {currentRate > benchmarkRate && (
           <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -353,13 +338,10 @@ export function ChurnRateChart({
     </Card>
   )
 }
-
 // Tooltip personalizado
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
-
   const data = payload[0]?.payload
-
   return (
     <div className="rounded-lg border bg-background p-3 shadow-lg">
       <p className="text-sm font-medium mb-2">{label}</p>
@@ -385,7 +367,6 @@ function CustomTooltip({ active, payload, label }: any) {
     </div>
   )
 }
-
 // Versão compacta
 export function ChurnRateChartCompact({
   data,
@@ -403,7 +384,6 @@ export function ChurnRateChartCompact({
       </Card>
     )
   }
-
   const formatData = data.slice(-6).map(item => ({
     ...item,
     date: new Date(item.date).toLocaleDateString('pt-BR', {
@@ -411,9 +391,7 @@ export function ChurnRateChartCompact({
     }),
     churnRate: Number(item.churnRate.toFixed(2))
   }))
-
   const currentRate = formatData[formatData.length - 1]?.churnRate || 0
-
   return (
     <Card className={className}>
       <CardContent className="p-4">

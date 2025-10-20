@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -28,7 +27,6 @@ import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/admin/tables/DataTable'
 import { useAdminAuth } from '@/components/admin/providers/AdminAuthProvider'
 import { cn } from '@/lib/utils'
-
 interface Customer {
   id: string
   name: string
@@ -63,7 +61,6 @@ interface Customer {
     dataRequests: number
   }
 }
-
 const mockCustomers: Customer[] = [
   {
     id: '1',
@@ -168,7 +165,6 @@ const mockCustomers: Customer[] = [
     }
   }
 ]
-
 export default function CustomersPage() {
   const { hasPermission } = useAdminAuth()
   const [customers] = useState<Customer[]>(mockCustomers)
@@ -178,7 +174,6 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
   // Verificação de permissão
   if (!hasPermission('VIEW_CUSTOMERS')) {
     return (
@@ -193,21 +188,17 @@ export default function CustomersPage() {
       </div>
     )
   }
-
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch =
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.cpf.includes(searchQuery) ||
       customer.phone.includes(searchQuery)
-
     const matchesStatus = selectedStatus === 'all' || customer.status === selectedStatus
     const matchesSubscription = selectedSubscription === 'all' ||
       customer.subscription.status === selectedSubscription
-
     return matchesSearch && matchesStatus && matchesSubscription
   })
-
   const getStatusColor = (status: Customer['status']) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800 border-green-200'
@@ -216,7 +207,6 @@ export default function CustomersPage() {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
     }
   }
-
   const getSubscriptionColor = (status: Customer['subscription']['status']) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800 border-green-200'
@@ -225,7 +215,6 @@ export default function CustomersPage() {
       case 'expired': return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
-
   const getLGPDColor = (status: Customer['lgpd']['consentStatus']) => {
     switch (status) {
       case 'granted': return 'bg-green-100 text-green-800 border-green-200'
@@ -233,24 +222,17 @@ export default function CustomersPage() {
       case 'revoked': return 'bg-red-100 text-red-800 border-red-200'
     }
   }
-
   const handleViewCustomer = useCallback((customer: Customer) => {
     setSelectedCustomer(customer)
   }, [])
-
   const handleEditCustomer = useCallback((customer: Customer) => {
-    console.log('Edit customer:', customer.id)
   }, [])
-
   const handleExportData = useCallback(() => {
-    console.log('Export customer data')
   }, [])
-
   const handleRefresh = useCallback(() => {
     setIsLoading(true)
     setTimeout(() => setIsLoading(false), 1000)
   }, [])
-
   const columns = [
     {
       key: 'name',
@@ -399,7 +381,6 @@ export default function CustomersPage() {
       )
     }
   ]
-
   return (
     <motion.div
       className="space-y-6"
@@ -415,7 +396,6 @@ export default function CustomersPage() {
             Gerencie clientes, assinaturas e informações médicas
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -425,7 +405,6 @@ export default function CustomersPage() {
             <Filter className="h-4 w-4 mr-2" />
             Filtros
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -434,7 +413,6 @@ export default function CustomersPage() {
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -444,14 +422,12 @@ export default function CustomersPage() {
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Atualizar
           </Button>
-
           <Button size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Novo Cliente
           </Button>
         </div>
       </div>
-
       {/* Filtros */}
       {showFilters && (
         <motion.div
@@ -473,7 +449,6 @@ export default function CustomersPage() {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Status do Cliente</label>
               <select
@@ -488,7 +463,6 @@ export default function CustomersPage() {
                 <option value="pending">Pendente</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Status da Assinatura</label>
               <select
@@ -503,7 +477,6 @@ export default function CustomersPage() {
                 <option value="expired">Expirada</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Compliance LGPD</label>
               <select className="w-full p-2 border rounded-md">
@@ -516,7 +489,6 @@ export default function CustomersPage() {
           </div>
         </motion.div>
       )}
-
       {/* Métricas */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="bg-card border rounded-lg p-4">
@@ -528,7 +500,6 @@ export default function CustomersPage() {
             <Users className="h-8 w-8 text-blue-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -540,7 +511,6 @@ export default function CustomersPage() {
             <CreditCard className="h-8 w-8 text-green-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -552,7 +522,6 @@ export default function CustomersPage() {
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -565,7 +534,6 @@ export default function CustomersPage() {
           </div>
         </div>
       </div>
-
       {/* Tabela de Clientes */}
       <DataTable
         data={filteredCustomers}
@@ -573,7 +541,6 @@ export default function CustomersPage() {
         keyField="id"
         className="bg-card border rounded-lg"
       />
-
       {/* Modal de Detalhes do Cliente (simples) */}
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -588,7 +555,6 @@ export default function CustomersPage() {
                 <XCircle className="h-5 w-5" />
               </Button>
             </div>
-
             <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <h3 className="font-medium mb-2">Informações Pessoais</h3>
@@ -601,7 +567,6 @@ export default function CustomersPage() {
                   <div><strong>CEP:</strong> {selectedCustomer.address.cep}</div>
                 </div>
               </div>
-
               <div>
                 <h3 className="font-medium mb-2">Assinatura</h3>
                 <div className="space-y-2 text-sm">
@@ -611,7 +576,6 @@ export default function CustomersPage() {
                   <div><strong>Próxima cobrança:</strong> {selectedCustomer.subscription.nextBilling.toLocaleDateString('pt-BR')}</div>
                 </div>
               </div>
-
               <div>
                 <h3 className="font-medium mb-2">Informações Médicas</h3>
                 <div className="space-y-2 text-sm">
@@ -626,7 +590,6 @@ export default function CustomersPage() {
                   )}
                 </div>
               </div>
-
               <div>
                 <h3 className="font-medium mb-2">LGPD</h3>
                 <div className="space-y-2 text-sm">
@@ -636,7 +599,6 @@ export default function CustomersPage() {
                 </div>
               </div>
             </div>
-
             <div className="flex justify-end gap-3 mt-6">
               <Button variant="outline" onClick={() => setSelectedCustomer(null)}>
                 Fechar

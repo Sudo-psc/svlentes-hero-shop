@@ -4,11 +4,9 @@
  *
  * Realiza busca detalhada nos dados dos clientes com múltiplos critérios
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
-
 /**
  * @swagger
  * /api/admin/customers/search:
@@ -101,21 +99,17 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:search')(request)
-
     if (error) {
       return error
     }
-
     const startTime = Date.now()
     const { searchParams } = new URL(request.url)
-
     // Extrair e validar parâmetros
     const query = searchParams.get('q')
     const fields = searchParams.get('fields') || 'all'
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
     const includeInactive = searchParams.get('includeInactive') === 'true'
     const subscriptionStatus = searchParams.get('subscriptionStatus')
-
     if (!query || query.length < 2) {
       return NextResponse.json(
         {
@@ -125,48 +119,39 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Construir filtros where
     const where: any = {
       role: includeInactive ? 'subscriber' : 'subscriber'
     }
-
     // Se não for para incluir inativos, filtrar apenas subscribers ativos
     if (!includeInactive) {
       where.role = 'subscriber'
     }
-
     // Construir condição de busca baseado nos campos
     const searchConditions: any[] = []
-
     if (fields === 'all' || fields.includes('name')) {
       searchConditions.push({
         name: { contains: query, mode: 'insensitive' }
       })
     }
-
     if (fields === 'all' || fields.includes('email')) {
       searchConditions.push({
         email: { contains: query, mode: 'insensitive' }
       })
     }
-
     if (fields === 'all' || fields.includes('phone')) {
       searchConditions.push({
         phone: { contains: query }
       })
     }
-
     if (fields === 'all' || fields.includes('whatsapp')) {
       searchConditions.push({
         whatsapp: { contains: query }
       })
     }
-
     if (searchConditions.length > 0) {
       where.OR = searchConditions
     }
-
     // Buscar clientes
     const customers = await prisma.user.findMany({
       where,
@@ -200,7 +185,6 @@ export async function GET(request: NextRequest) {
       ],
       take: limit
     })
-
     // Filtrar por status da assinatura se especificado
     let filteredCustomers = customers
     if (subscriptionStatus) {
@@ -208,11 +192,9 @@ export async function GET(request: NextRequest) {
         return customer.subscriptions.some(sub => sub.status === subscriptionStatus)
       })
     }
-
     // Processar e enriquecer dados
     const processedCustomers = filteredCustomers.map(customer => {
       const subscription = customer.subscriptions[0]
-
       // Determinar status do cliente
       let customerStatus = 'inactive'
       if (subscription) {
@@ -224,14 +206,12 @@ export async function GET(request: NextRequest) {
           customerStatus = 'paused'
         }
       }
-
       // Destacar partes do texto que correspondem à busca
       const highlightMatch = (text: string | null) => {
         if (!text) return null
         const regex = new RegExp(`(${query})`, 'gi')
         return text.replace(regex, '<mark>$1</mark>')
       }
-
       return {
         id: customer.id,
         email: customer.email,
@@ -257,33 +237,25 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-
     const endTime = Date.now()
     const searchTime = endTime - startTime
-
     // Calcular scores de relevância
     const scoredCustomers = processedCustomers.map(customer => {
       let score = 0
-
       // Pontuar por matches exatos
       if (customer.name?.toLowerCase() === query.toLowerCase()) score += 100
       if (customer.email?.toLowerCase() === query.toLowerCase()) score += 90
       if (customer.phone === query) score += 80
       if (customer.whatsapp === query) score += 80
-
       // Pontuar por matches parciais
       if (customer.name?.toLowerCase().includes(query.toLowerCase())) score += 50
       if (customer.email?.toLowerCase().includes(query.toLowerCase())) score += 40
-
       // Bônus para clientes ativos
       if (customer.status === 'active') score += 10
-
       return { ...customer, score }
     })
-
     // Ordenar por relevância
     scoredCustomers.sort((a, b) => b.score - a.score)
-
     return createSuccessResponse({
       customers: scoredCustomers,
       total: scoredCustomers.length,
@@ -297,7 +269,6 @@ export async function GET(request: NextRequest) {
         hasMore: filteredCustomers.length >= limit
       }
     }, 'Busca realizada com sucesso')
-
   } catch (error) {
     console.error('Customer search error:', error)
     return NextResponse.json(
@@ -310,7 +281,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 /**
  * POST /api/admin/customers/search
  * Busca avançada com filtros complexos
@@ -321,17 +291,13 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:search')(request)
-
     if (error) {
       return error
     }
-
     const startTime = Date.now()
     const body = await request.json()
-
     // Validar body da requisição
     const { error: validationError, data: searchData } = validateAdvancedSearchBody(body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -341,17 +307,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Construir filtros complexos
     const where: any = {
       role: 'subscriber'
     }
-
     // Filtros de texto
     if (searchData.text?.query) {
       const textConditions: any[] = []
       const fields = searchData.text.fields || ['name', 'email']
-
       if (fields.includes('name')) {
         textConditions.push({
           name: { contains: searchData.text.query, mode: 'insensitive' }
@@ -372,12 +335,10 @@ export async function POST(request: NextRequest) {
           whatsapp: { contains: searchData.text.query }
         })
       }
-
       if (textConditions.length > 0) {
         where.OR = textConditions
       }
     }
-
     // Filtros de data
     if (searchData.dateRange) {
       const dateFilter: any = {}
@@ -391,13 +352,11 @@ export async function POST(request: NextRequest) {
         where.createdAt = dateFilter
       }
     }
-
     // Filtros de assinatura
     if (searchData.subscription) {
       // Adicionar lógica para filtrar por status da assinatura
       // Isso pode requerer uma query mais complexa com include
     }
-
     // Executar busca
     const customers = await prisma.user.findMany({
       where,
@@ -431,12 +390,10 @@ export async function POST(request: NextRequest) {
       ],
       take: Math.min(100, searchData.limit || 20)
     })
-
     // Processar resultados
     const processedCustomers = customers.map(customer => {
       const subscription = customer.subscriptions[0]
       let customerStatus = 'inactive'
-
       if (subscription) {
         if (subscription.status === 'ACTIVE') {
           customerStatus = 'active'
@@ -446,7 +403,6 @@ export async function POST(request: NextRequest) {
           customerStatus = 'paused'
         }
       }
-
       return {
         id: customer.id,
         email: customer.email,
@@ -466,9 +422,7 @@ export async function POST(request: NextRequest) {
         } : null
       }
     })
-
     const endTime = Date.now()
-
     return createSuccessResponse({
       customers: processedCustomers,
       total: processedCustomers.length,
@@ -477,7 +431,6 @@ export async function POST(request: NextRequest) {
         took: endTime - startTime
       }
     }, 'Busca avançada realizada com sucesso')
-
   } catch (error) {
     console.error('Advanced customer search error:', error)
     return NextResponse.json(
@@ -490,7 +443,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 // Funções auxiliares
 function validateAdvancedSearchBody(body: any): {
   data?: any
@@ -517,20 +469,16 @@ function validateAdvancedSearchBody(body: any): {
       sortBy: { type: 'string' },
       limit: { type: 'number', minimum: 1, maximum: 100 }
     }
-
     // Validação básica
     if (!body || typeof body !== 'object') {
       return { error: { message: 'Corpo da requisição inválido' } }
     }
-
     if (body.text && !body.text.query) {
       return { error: { message: 'Query de texto é obrigatória quando filtro de texto é usado' } }
     }
-
     if (body.text && body.text.query && body.text.query.length < 2) {
       return { error: { message: 'Query de texto deve ter pelo menos 2 caracteres' } }
     }
-
     return { data: body }
   } catch (error) {
     return { error: { message: 'Erro na validação dos dados de busca' } }

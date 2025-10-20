@@ -4,7 +4,6 @@ import {
     formatCPF as formatCPFBase,
     formatPhone as formatPhoneBase,
 } from './validators'
-
 // Schema para dados de lead (formulário do hero)
 export const leadFormSchema = z.object({
     nome: z.string()
@@ -20,7 +19,6 @@ export const leadFormSchema = z.object({
     lgpdConsent: z.boolean()
         .refine(val => val === true, 'Você deve aceitar os termos de privacidade')
 })
-
 // Schema para dados da calculadora de economia
 export const calculatorSchema = leadFormSchema.extend({
     currentSpending: z.number()
@@ -33,7 +31,6 @@ export const calculatorSchema = leadFormSchema.extend({
         errorMap: () => ({ message: 'Padrão de uso inválido' })
     })
 })
-
 // Schema para dados pessoais completos
 export const personalInfoSchema = z.object({
     fullName: z.string()
@@ -65,7 +62,6 @@ export const personalInfoSchema = z.object({
             .regex(/^[A-Z]{2}$/, 'Estado deve ser uma sigla válida (ex: SP)')
     })
 })
-
 // Schema para dados de prescrição médica
 export const prescriptionSchema = z.object({
     hasValidPrescription: z.boolean(),
@@ -99,7 +95,6 @@ export const prescriptionSchema = z.object({
         .max(200, 'Nome do médico deve ter no máximo 200 caracteres'),
     needsConsultation: z.boolean()
 })
-
 // Schema para preferências do cliente
 export const preferencesSchema = z.object({
     lensType: z.enum(['daily', 'weekly', 'monthly'], {
@@ -114,7 +109,6 @@ export const preferencesSchema = z.object({
     addOns: z.array(z.string())
         .max(10, 'Máximo de 10 add-ons permitidos')
 })
-
 // Schema completo para formulário de assinatura
 export const subscriptionFormSchema = z.object({
     leadInfo: leadFormSchema,
@@ -125,7 +119,6 @@ export const subscriptionFormSchema = z.object({
         errorMap: () => ({ message: 'Plano selecionado inválido' })
     })
 })
-
 // Schema para contato via WhatsApp
 export const whatsappContactSchema = z.object({
     type: z.enum(['lead', 'consultation', 'support'], {
@@ -141,23 +134,19 @@ export const whatsappContactSchema = z.object({
         .min(10, 'Mensagem deve ter pelo menos 10 caracteres')
         .max(1000, 'Mensagem deve ter no máximo 1000 caracteres')
 })
-
 // Função para validar CEP
 export function validateCEP(cep: string): boolean {
     const cleanCEP = cep.replace(/\D/g, '')
     return /^\d{8}$/.test(cleanCEP)
 }
-
 // Função para formatar CEP
 export function formatCEP(cep: string): string {
     const cleanCEP = cep.replace(/\D/g, '')
     return cleanCEP.replace(/(\d{5})(\d{3})/, '$1-$2')
 }
-
 export const validateCPF = validateCPFBase
 export const formatCPF = formatCPFBase
 export const formatPhone = formatPhoneBase
-
 // Tipos derivados dos schemas
 export type LeadFormData = z.infer<typeof leadFormSchema>
 export type CalculatorData = z.infer<typeof calculatorSchema>

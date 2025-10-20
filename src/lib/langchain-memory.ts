@@ -4,7 +4,6 @@
  * Provides persistent conversation memory and context management
  * with LangSmith integration for observability and learning
  */
-
 import { BaseMemory, InputValues, OutputValues } from '@langchain/core/memory'
 import { BaseSimpleMessageHistory } from '@langchain/core/chat_history'
 import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages'
@@ -12,7 +11,6 @@ import { getLangSmithConfig, getLangSmithRunConfig } from './langsmith-config'
 import { logger, LogCategory } from './logger'
 import { prisma } from './prisma'
 import { WhatsAppInteraction } from '@prisma/client'
-
 export interface BotMemoryEntry {
   id: string
   sessionId: string
@@ -37,7 +35,6 @@ export interface BotMemoryEntry {
   summary?: string
   tags: string[]
 }
-
 export interface ConversationSummary {
   sessionId: string
   userId?: string
@@ -52,7 +49,6 @@ export interface ConversationSummary {
   totalInteractions: number
   satisfactionRating?: number
 }
-
 export interface PersistentMemoryConfig {
   maxMessages: number
   maxSessions: number
@@ -61,36 +57,29 @@ export interface PersistentMemoryConfig {
   enableSummarization: boolean
   compressionThreshold: number
 }
-
 /**
  * Advanced persistent memory system for WhatsApp bot
  */
 // Simple message history class to avoid LangChain compatibility issues
 class SimpleMessageHistory {
   private messages: (HumanMessage | AIMessage | SystemMessage)[] = []
-
   async addMessage(message: HumanMessage | AIMessage | SystemMessage): Promise<void> {
     this.messages.push(message)
   }
-
   async getMessageHistory(): Promise<(HumanMessage | AIMessage | SystemMessage)[]> {
     return [...this.messages]
   }
-
   clear(): void {
     this.messages = []
   }
 }
-
 export class LangChainBotMemory extends BaseMemory {
   private history: Map<string, SimpleMessageHistory> = new Map()
   private summaries: Map<string, ConversationSummary> = new Map()
   private config: PersistentMemoryConfig
   private langsmithConfig: any
-
   constructor(config: Partial<PersistentMemoryConfig> = {}) {
     super()
-
     this.config = {
       maxMessages: 50,
       maxSessions: 1000,
@@ -100,18 +89,14 @@ export class LangChainBotMemory extends BaseMemory {
       compressionThreshold: 20,
       ...config
     }
-
     this.langsmithConfig = getLangSmithConfig()
-
     logger.info(LogCategory.WHATSAPP, 'LangChain Bot Memory initialized', {
       config: this.config,
       langsmithEnabled: this.langsmithConfig.tracingEnabled
     })
   }
-
   // Required by BaseMemory
   memoryKeys = ['chat_history', 'conversation_summary', 'key_topics', 'sentiment']
-
   /**
    * Load conversation history for a session
    */
@@ -120,9 +105,7 @@ export class LangChainBotMemory extends BaseMemory {
       if (this.history.has(sessionId)) {
         return this.history.get(sessionId)!
       }
-
       const history = new SimpleMessageHistory()
-
       // Load from database
       const session = await prisma.chatbotSession.findUnique({
         where: { sessionToken: sessionId },
@@ -137,7 +120,6 @@ export class LangChainBotMemory extends BaseMemory {
           }
         }
       })
-
       if (session?.conversation?.messages) {
         for (const msg of session.conversation.messages) {
           if (msg.isFromCustomer) {
@@ -147,28 +129,23 @@ export class LangChainBotMemory extends BaseMemory {
           }
         }
       }
-
       this.history.set(sessionId, history)
-
       logger.debug(LogCategory.WHATSAPP, 'Session loaded', {
         sessionId,
         messageCount: session?.conversation?.messages?.length || 0
       })
-
       return history
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error loading session', {
         sessionId,
         errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
-
       // Return empty history on error
       const emptyHistory = new SimpleMessageHistory()
       this.history.set(sessionId, emptyHistory)
       return emptyHistory
     }
   }
-
   /**
    * Save conversation interaction with full metadata
    */
@@ -180,28 +157,22 @@ export class LangChainBotMemory extends BaseMemory {
   ): Promise<void> {
     try {
       const history = await this.loadSession(sessionId)
-
       // Add to memory
       await history.addMessage(new HumanMessage(userMessage))
       await history.addMessage(new AIMessage(aiResponse))
-
       // Check if we need to compress/summarize
       const messageCount = await history.getMessageHistory()
       if (messageCount.length >= this.config.compressionThreshold && this.config.enableSummarization) {
         await this.compressHistory(sessionId)
       }
-
       // Store in database with enhanced metadata
       await this.storeInteractionInDB(sessionId, userMessage, aiResponse, metadata)
-
       // Log to LangSmith
       if (this.langsmithConfig.tracingEnabled) {
         await this.logToLangSmith(sessionId, userMessage, aiResponse, metadata)
       }
-
       // Update session activity
       await this.updateSessionActivity(sessionId)
-
       logger.debug(LogCategory.WHATSAPP, 'Interaction saved', {
         sessionId,
         intent: metadata.intent,
@@ -215,7 +186,6 @@ export class LangChainBotMemory extends BaseMemory {
       })
     }
   }
-
   /**
    * Store interaction in database with full context
    */
@@ -229,9 +199,7 @@ export class LangChainBotMemory extends BaseMemory {
       where: { sessionToken: sessionId },
       include: { user: true }
     })
-
     if (!session) return
-
     // Store the interaction
     await prisma.whatsAppInteraction.create({
       data: {
@@ -252,7 +220,6 @@ export class LangChainBotMemory extends BaseMemory {
       }
     })
   }
-
   /**
    * Log detailed interaction to LangSmith
    */
@@ -272,7 +239,6 @@ export class LangChainBotMemory extends BaseMemory {
         confidence: metadata.confidence,
         tags: ['whatsapp-bot', 'memory-storage', metadata.intent || 'unknown']
       })
-
       // Create detailed log entry
       const logEntry = {
         sessionId,
@@ -292,10 +258,11 @@ export class LangChainBotMemory extends BaseMemory {
           estimatedCost: metadata.cost
         }
       }
-
       // Store in LangSmith via custom logging
-      console.log('🧠 LangSmith Memory Log:', JSON.stringify(logEntry, null, 2))
-
+      logger.info(LogCategory.WHATSAPP, 'LangSmith log entry created', {
+        sessionId,
+        logEntrySize: JSON.stringify(logEntry).length
+      });
       logger.info(LogCategory.WHATSAPP, 'Interaction logged to LangSmith', {
         sessionId,
         intent: metadata.intent,
@@ -308,7 +275,6 @@ export class LangChainBotMemory extends BaseMemory {
       })
     }
   }
-
   /**
    * Compress old conversation history into summary
    */
@@ -316,20 +282,15 @@ export class LangChainBotMemory extends BaseMemory {
     try {
       const history = this.history.get(sessionId)
       if (!history) return
-
       const messages = await history.getMessageHistory()
       if (messages.length < this.config.compressionThreshold) return
-
       // Keep only recent messages
       const recentMessages = messages.slice(-this.config.maxMessages / 2)
-
       // Create summary of older messages
       const oldMessages = messages.slice(0, messages.length - recentMessages.length)
       const summary = await this.createConversationSummary(oldMessages)
-
       // Store summary
       this.summaries.set(sessionId, summary)
-
       // Update history with recent messages only
       const newHistory = new SimpleMessageHistory()
       if (summary) {
@@ -337,13 +298,10 @@ export class LangChainBotMemory extends BaseMemory {
           `Resumo anterior: ${summary.summary}\nTópicos: ${summary.keyTopics.join(', ')}`
         ))
       }
-
       for (const msg of recentMessages) {
         await newHistory.addMessage(msg)
       }
-
       this.history.set(sessionId, newHistory)
-
       logger.info(LogCategory.WHATSAPP, 'History compressed', {
         sessionId,
         originalCount: messages.length,
@@ -357,7 +315,6 @@ export class LangChainBotMemory extends BaseMemory {
       })
     }
   }
-
   /**
    * Create conversation summary from messages
    */
@@ -365,14 +322,11 @@ export class LangChainBotMemory extends BaseMemory {
     try {
       const userMessages = messages.filter(m => m.getType() === 'human')
       const aiMessages = messages.filter(m => m.getType() === 'ai')
-
       if (userMessages.length === 0) return null
-
       // Extract key information
       const topics = this.extractTopics(userMessages)
       const sentiments = this.extractSentiments(messages)
       const actions = this.extractActionItems(messages)
-
       return {
         sessionId: '', // Will be set by caller
         phone: '',
@@ -392,7 +346,6 @@ export class LangChainBotMemory extends BaseMemory {
       return null
     }
   }
-
   /**
    * Extract key topics from messages
    */
@@ -402,7 +355,6 @@ export class LangChainBotMemory extends BaseMemory {
       'assinatura', 'pagamento', 'entrega', 'produto', 'consulta', 'pausar',
       'cancelar', 'reativar', 'endereço', 'troca', 'reembolso', 'suporte'
     ]
-
     for (const msg of messages) {
       const content = msg.content.toLowerCase()
       for (const keyword of keywords) {
@@ -411,16 +363,13 @@ export class LangChainBotMemory extends BaseMemory {
         }
       }
     }
-
     return topics
   }
-
   /**
    * Extract sentiment analysis from messages
    */
   private extractSentiments(messages: any[]): { dominant: string; distribution: Record<string, number> } {
     const distribution: Record<string, number> = { positive: 0, negative: 0, neutral: 0 }
-
     for (const msg of messages) {
       // Simple sentiment detection - in production, use proper NLP
       const content = msg.content.toLowerCase()
@@ -432,14 +381,11 @@ export class LangChainBotMemory extends BaseMemory {
         distribution.neutral++
       }
     }
-
     const dominant = Object.entries(distribution).reduce((a, b) =>
       distribution[a[0] as keyof typeof distribution] > distribution[b[0] as keyof typeof distribution] ? a : b
     )[0]
-
     return { dominant, distribution }
   }
-
   /**
    * Extract action items from messages
    */
@@ -453,7 +399,6 @@ export class LangChainBotMemory extends BaseMemory {
       /rastrear\s+pedido/i,
       /falar\s+com\s+atendente/i
     ]
-
     for (const msg of messages) {
       for (const pattern of actionPatterns) {
         const match = msg.content.match(pattern)
@@ -462,10 +407,8 @@ export class LangChainBotMemory extends BaseMemory {
         }
       }
     }
-
     return actions
   }
-
   /**
    * Update session activity timestamp
    */
@@ -485,7 +428,6 @@ export class LangChainBotMemory extends BaseMemory {
       })
     }
   }
-
   /**
    * Get conversation context for AI processing
    */
@@ -498,13 +440,11 @@ export class LangChainBotMemory extends BaseMemory {
       const history = await this.loadSession(sessionId)
       const messages = await history.getMessageHistory()
       const summary = this.summaries.get(sessionId)
-
       // Convert messages to string format
       const historyStrings = messages.map(msg => {
         const role = msg.getType() === 'human' ? 'User' : 'Assistant'
         return `${role}: ${msg.content}`
       })
-
       return {
         history: historyStrings,
         summary,
@@ -519,14 +459,12 @@ export class LangChainBotMemory extends BaseMemory {
         sessionId,
         errorMessage: error instanceof Error ? error.message : 'Unknown'
       })
-
       return {
         history: [],
         metadata: { sessionId, error: true }
       }
     }
   }
-
   /**
    * Clear old sessions and cleanup memory
    */
@@ -534,7 +472,6 @@ export class LangChainBotMemory extends BaseMemory {
     try {
       const cutoffDate = new Date()
       cutoffDate.setDate(cutoffDate.getDate() - this.config.retentionDays)
-
       // Clean old sessions from database
       const deletedSessions = await prisma.chatbotSession.deleteMany({
         where: {
@@ -542,19 +479,16 @@ export class LangChainBotMemory extends BaseMemory {
           status: 'EXPIRED'
         }
       })
-
       // Clear memory cache for old sessions
       for (const sessionId of Array.from(this.history.keys())) {
         const session = await prisma.chatbotSession.findUnique({
           where: { sessionToken: sessionId }
         })
-
         if (!session || session.lastActivityAt < cutoffDate) {
           this.history.delete(sessionId)
           this.summaries.delete(sessionId)
         }
       }
-
       logger.info(LogCategory.WHATSAPP, 'Memory cleanup completed', {
         deletedSessions: deletedSessions.count,
         cutoffDate: cutoffDate.toISOString()
@@ -565,7 +499,6 @@ export class LangChainBotMemory extends BaseMemory {
       })
     }
   }
-
   // Required BaseMemory methods
   async loadMemoryVariables(values: InputValues): Promise<OutputValues> {
     const sessionId = values.sessionId || 'default'
@@ -577,12 +510,10 @@ export class LangChainBotMemory extends BaseMemory {
       sentiment: context.summary?.sentiment
     }
   }
-
   async saveContext(values: InputValues, newValues: OutputValues): Promise<void> {
     // Implementation depends on specific use case
     // Typically called at the end of a conversation turn
   }
-
   /**
    * Get memory statistics for monitoring
    */
@@ -594,7 +525,6 @@ export class LangChainBotMemory extends BaseMemory {
       })
       const totalInteractions = await prisma.whatsAppInteraction.count()
       const cacheSize = this.history.size
-
       return {
         totalSessions,
         activeSessions,
@@ -611,7 +541,6 @@ export class LangChainBotMemory extends BaseMemory {
     }
   }
 }
-
 // Singleton instance
 export const botMemory = new LangChainBotMemory({
   maxMessages: 50,
@@ -620,5 +549,4 @@ export const botMemory = new LangChainBotMemory({
   enableSummarization: true,
   compressionThreshold: 15
 })
-
 // Export types are already declared above

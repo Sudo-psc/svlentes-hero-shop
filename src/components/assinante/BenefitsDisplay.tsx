@@ -1,7 +1,5 @@
 'use client'
-
 import { Check, X, Package, Truck, HeadphonesIcon, Sparkles } from 'lucide-react'
-
 export interface SubscriptionBenefit {
   id: string
   name: string
@@ -10,31 +8,26 @@ export interface SubscriptionBenefit {
   included: boolean
   icon?: string
 }
-
 interface BenefitsDisplayProps {
   benefits: SubscriptionBenefit[]
 }
-
 const categoryIcons = {
   product: Package,
   service: Truck,
   support: HeadphonesIcon,
   discount: Sparkles
 }
-
 const categoryLabels = {
   product: 'Produto',
   service: 'Serviço',
   support: 'Suporte',
   discount: 'Desconto'
 }
-
 export default function BenefitsDisplay({ benefits }: BenefitsDisplayProps) {
   const includedBenefits = benefits.filter(b => b.included)
   const excludedBenefits = benefits.filter(b => !b.included)
   const totalBenefits = benefits.length
   const includedCount = includedBenefits.length
-
   if (benefits.length === 0) {
     return (
       <div className="bg-white p-6 rounded-xl shadow-sm border">
@@ -46,7 +39,6 @@ export default function BenefitsDisplay({ benefits }: BenefitsDisplayProps) {
       </div>
     )
   }
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border">
       <div className="flex items-center justify-between mb-4">
@@ -57,7 +49,6 @@ export default function BenefitsDisplay({ benefits }: BenefitsDisplayProps) {
           </span>
         )}
       </div>
-
       {/* Benefits Summary */}
       {includedCount < totalBenefits && (
         <div className="mb-4 p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
@@ -69,7 +60,6 @@ export default function BenefitsDisplay({ benefits }: BenefitsDisplayProps) {
           </p>
         </div>
       )}
-
       {/* Included Benefits */}
       {includedBenefits.length > 0 && (
         <div className="space-y-3 mb-4">
@@ -111,7 +101,6 @@ export default function BenefitsDisplay({ benefits }: BenefitsDisplayProps) {
           })}
         </div>
       )}
-
       {/* Excluded Benefits */}
       {excludedBenefits.length > 0 && (
         <div className="space-y-3">

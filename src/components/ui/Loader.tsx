@@ -1,21 +1,17 @@
 'use client'
-
 import { Loader2 } from 'lucide-react'
-
 interface LoaderProps {
     size?: 'sm' | 'md' | 'lg' | 'xl'
     text?: string
     className?: string
     fullScreen?: boolean
 }
-
 const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-6 h-6',
     lg: 'w-8 h-8',
     xl: 'w-12 h-12'
 }
-
 export function Loader({ size = 'md', text, className = '', fullScreen = false }: LoaderProps) {
     const content = (
         <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
@@ -27,7 +23,6 @@ export function Loader({ size = 'md', text, className = '', fullScreen = false }
             )}
         </div>
     )
-
     if (fullScreen) {
         return (
             <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -35,10 +30,8 @@ export function Loader({ size = 'md', text, className = '', fullScreen = false }
             </div>
         )
     }
-
     return content
 }
-
 interface ButtonLoaderProps {
     loading?: boolean
     children: React.ReactNode
@@ -47,7 +40,6 @@ interface ButtonLoaderProps {
     disabled?: boolean
     [key: string]: any
 }
-
 export function ButtonWithLoader({
     loading = false,
     children,
@@ -73,14 +65,12 @@ export function ButtonWithLoader({
         </button>
     )
 }
-
 interface SkeletonProps {
     className?: string
     variant?: 'text' | 'circular' | 'rectangular'
     width?: string | number
     height?: string | number
 }
-
 export function Skeleton({
     className = '',
     variant = 'rectangular',
@@ -92,11 +82,9 @@ export function Skeleton({
         circular: 'rounded-full',
         rectangular: 'rounded-lg'
     }
-
     const style: React.CSSProperties = {}
     if (width) style.width = typeof width === 'number' ? `${width}px` : width
     if (height) style.height = typeof height === 'number' ? `${height}px` : height
-
     return (
         <div
             className={`bg-gray-200 animate-pulse ${variantClasses[variant]} ${className}`}
@@ -104,14 +92,12 @@ export function Skeleton({
         />
     )
 }
-
 interface ToastProps {
     message: string
     type?: 'success' | 'error' | 'info' | 'warning'
     duration?: number
     onClose?: () => void
 }
-
 export function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
     const typeStyles = {
         success: 'bg-green-50 text-green-800 border-green-200',
@@ -119,14 +105,12 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
         info: 'bg-blue-50 text-blue-800 border-blue-200',
         warning: 'bg-yellow-50 text-yellow-800 border-yellow-200'
     }
-
     const typeIcons = {
         success: '✓',
         error: '✕',
         info: 'ℹ',
         warning: '⚠'
     }
-
     return (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg border-2 shadow-lg animate-slide-in ${typeStyles[type]}`}>
             <span className="text-2xl">{typeIcons[type]}</span>

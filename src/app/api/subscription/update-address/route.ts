@@ -4,7 +4,6 @@ import { getAsaasClient } from '@/lib/asaas'
 import { NotificationService } from '@/lib/notifications-advanced'
 import { saveHistoryWithBackup } from '@/lib/history-redundancy'
 import { z } from 'zod'
-
 const addressSchema = z.object({
   zipCode: z.string().regex(/^\d{5}-?\d{3}$/, 'CEP inválido'),
   street: z.string().min(3, 'Rua é obrigatória'),
@@ -14,21 +13,17 @@ const addressSchema = z.object({
   city: z.string().min(2, 'Cidade é obrigatória'),
   state: z.string().length(2, 'Estado deve ter 2 letras')
 })
-
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     const body = await req.json()
     const addressData = addressSchema.parse(body)
-
     // Find user by database ID or Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
@@ -42,7 +37,6 @@ export async function POST(req: NextRequest) {
         }
       }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
@@ -57,23 +51,19 @@ export async function POST(req: NextRequest) {
         }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     if (user.subscriptions.length === 0) {
       return NextResponse.json(
         { error: 'Nenhuma assinatura ativa encontrada' },
         { status: 404 }
       )
     }
-
     const subscription = user.subscriptions[0]
-
     // Update customer address in Asaas if customer exists
     if (user.asaasCustomerId) {
       const asaas = getAsaasClient()
@@ -85,10 +75,8 @@ export async function POST(req: NextRequest) {
         province: addressData.neighborhood
       })
     }
-
     // Store old address for history
     const oldAddress = subscription.shippingAddress as any
-
     // Update subscription shipping address in database
     const updatedSubscription = await prisma.subscription.update({
       where: { id: subscription.id },
@@ -100,7 +88,6 @@ export async function POST(req: NextRequest) {
         shippingAddress: true
       }
     })
-
     // Register change in history with redundancy backup
     await saveHistoryWithBackup({
       subscriptionId: subscription.id,
@@ -114,7 +101,6 @@ export async function POST(req: NextRequest) {
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
       userAgent: req.headers.get('user-agent') || undefined
     })
-
     // Send notifications with advanced service (async, don't wait)
     NotificationService.send({
       userId: user.id,
@@ -127,7 +113,6 @@ export async function POST(req: NextRequest) {
         newAddress: addressData
       }
     }).catch(err => console.error('Error sending notifications:', err))
-
     return NextResponse.json({
       success: true,
       address: updatedSubscription.shippingAddress
@@ -139,7 +124,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-
     console.error('Error updating address:', error)
     return NextResponse.json(
       { error: 'Erro ao atualizar endereço. Tente novamente mais tarde.' },

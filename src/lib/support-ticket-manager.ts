@@ -2,11 +2,9 @@
  * Support Ticket Management System
  * Automated ticket creation, assignment, and tracking from WhatsApp conversations
  */
-
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { FAQCategory } from './support-knowledge-base'
-
 // Ticket Priority Levels
 export enum TicketPriority {
   LOW = 1,
@@ -15,7 +13,6 @@ export enum TicketPriority {
   URGENT = 4,
   CRITICAL = 5
 }
-
 // Ticket Status
 export enum TicketStatus {
   OPEN = 'OPEN',
@@ -26,7 +23,6 @@ export enum TicketStatus {
   CLOSED = 'CLOSED',
   ESCALATED = 'ESCALATED'
 }
-
 // Ticket Categories
 export enum TicketCategory {
   BILLING = 'billing',
@@ -39,7 +35,6 @@ export enum TicketCategory {
   EMERGENCY = 'emergency',
   GENERAL = 'general'
 }
-
 // Agent Specializations
 export enum AgentSpecialization {
   BILLING = 'billing',
@@ -50,7 +45,6 @@ export enum AgentSpecialization {
   EMERGENCY = 'emergency',
   GENERAL = 'general'
 }
-
 // Ticket Creation Schema
 export const createTicketSchema = z.object({
   userId: z.string(),
@@ -79,9 +73,7 @@ export const createTicketSchema = z.object({
   estimatedResolution: z.string().optional(),
   slaBreach: z.boolean().default(false)
 })
-
 export type CreateTicketRequest = z.infer<typeof createTicketSchema>
-
 // Agent Schema
 export const agentSchema = z.object({
   id: z.string(),
@@ -101,13 +93,10 @@ export const agentSchema = z.object({
   }).optional(),
   lastActive: z.date().optional()
 })
-
 export type Agent = z.infer<typeof agentSchema>
-
 export class SupportTicketManager {
   private activeTickets: Map<string, any> = new Map()
   private agentQueue: Map<string, string[]> = new Map()
-
   /**
    * Create a new support ticket from WhatsApp conversation
    */
@@ -115,23 +104,19 @@ export class SupportTicketManager {
     try {
       // Validate ticket data
       const validatedData = createTicketSchema.parse(ticketData)
-
       // Auto-categorize and prioritize based on content
       const { category, priority, escalationRequired } = await this.analyzeTicketContent(
         validatedData.description,
         validatedData.category,
         validatedData.priority
       )
-
       // Generate ticket number
       const ticketNumber = await this.generateTicketNumber(category)
-
       // Check if similar ticket exists
       const existingTicket = await this.findSimilarTicket(validatedData.userId, validatedData.description)
       if (existingTicket) {
         return { ticket: existingTicket, status: 'merged', message: 'Merged with existing ticket' }
       }
-
       // Create ticket in database
       const ticket = await prisma.supportTicket.create({
         data: {
@@ -154,21 +139,15 @@ export class SupportTicketManager {
           updatedAt: new Date()
         }
       })
-
       // Add to active tickets cache
       this.activeTickets.set(ticket.id, ticket)
-
       // Auto-assign to agent if not escalated
       if (!escalationRequired) {
         await this.autoAssignTicket(ticket.id, category, priority)
       }
-
       // Send confirmation to customer
       await this.sendTicketConfirmation(ticket)
-
       // Log ticket creation
-      console.log(`Support ticket created: ${ticketNumber} for user ${validatedData.userId}`)
-
       return {
         ticket,
         status: 'created',
@@ -179,7 +158,6 @@ export class SupportTicketManager {
       throw error
     }
   }
-
   /**
    * Analyze ticket content to determine category and priority
    */
@@ -189,7 +167,6 @@ export class SupportTicketManager {
     initialPriority: TicketPriority
   ): Promise<{ category: TicketCategory; priority: TicketPriority; escalationRequired: boolean }> {
     const lowerDescription = description.toLowerCase()
-
     // Emergency detection
     if (this.containsEmergencyKeywords(lowerDescription)) {
       return {
@@ -198,36 +175,29 @@ export class SupportTicketManager {
         escalationRequired: true
       }
     }
-
     // Priority analysis
     let priority = initialPriority
     let escalationRequired = false
-
     // High priority indicators
     if (this.containsHighPriorityKeywords(lowerDescription)) {
       priority = Math.max(priority, TicketPriority.HIGH)
     }
-
     // Urgent indicators
     if (this.containsUrgentKeywords(lowerDescription)) {
       priority = TicketPriority.URGENT
       escalationRequired = true
     }
-
     // Category refinement
     let category = initialCategory
     if (category === TicketCategory.GENERAL) {
       category = this.categorizeFromContent(lowerDescription)
     }
-
     // Escalation triggers
     if (this.containsEscalationTriggers(lowerDescription)) {
       escalationRequired = true
     }
-
     return { category, priority, escalationRequired }
   }
-
   /**
    * Check for emergency keywords
    */
@@ -237,10 +207,8 @@ export class SupportTicketManager {
       'acidente', 'lesão', 'sangue', 'dor forte', 'perda de visão',
       'emergency', 'urgent', 'eye pain', 'vision loss', 'accident'
     ]
-
     return emergencyKeywords.some(keyword => text.includes(keyword))
   }
-
   /**
    * Check for high priority keywords
    */
@@ -250,10 +218,8 @@ export class SupportTicketManager {
       'problema', 'erro', 'falha', 'não funciona', 'insatisfeito',
       'cancel', 'refund', 'return', 'complaint', 'broken', 'not working'
     ]
-
     return highPriorityKeywords.some(keyword => text.includes(keyword))
   }
-
   /**
    * Check for urgent keywords
    */
@@ -263,10 +229,8 @@ export class SupportTicketManager {
       'perigo', 'risco', 'sério', 'crítico',
       'immediately', 'now', 'today', 'worse', 'serious', 'critical'
     ]
-
     return urgentKeywords.some(keyword => text.includes(keyword))
   }
-
   /**
    * Check for escalation triggers
    */
@@ -276,10 +240,8 @@ export class SupportTicketManager {
       'falar com atendente', 'humano', 'pessoa',
       'manager', 'supervisor', 'speak to human', 'representative'
     ]
-
     return escalationTriggers.some(keyword => text.includes(keyword))
   }
-
   /**
    * Categorize ticket based on content
    */
@@ -305,10 +267,8 @@ export class SupportTicketManager {
     if (text.includes('reclamação') || text.includes('insatisfeito') || text.includes('problema')) {
       return TicketCategory.COMPLAINT
     }
-
     return TicketCategory.GENERAL
   }
-
   /**
    * Generate unique ticket number
    */
@@ -316,10 +276,8 @@ export class SupportTicketManager {
     const prefix = this.getCategoryPrefix(category)
     const year = new Date().getFullYear()
     const sequence = await this.getNextSequence(category)
-
     return `${prefix}-${year}-${sequence.toString().padStart(4, '0')}`
   }
-
   /**
    * Get category prefix for ticket number
    */
@@ -335,10 +293,8 @@ export class SupportTicketManager {
       [TicketCategory.EMERGENCY]: 'EMG',
       [TicketCategory.GENERAL]: 'GER'
     }
-
     return prefixes[category] || 'GER'
   }
-
   /**
    * Get next sequence number for category
    */
@@ -346,11 +302,9 @@ export class SupportTicketManager {
     // This would typically use a database sequence or counter
     const today = new Date().toISOString().split('T')[0]
     const key = `ticket_sequence_${category}_${today}`
-
     // For now, return a simple incrementing number
     return Math.floor(Math.random() * 9999) + 1
   }
-
   /**
    * Find similar existing ticket
    */
@@ -370,37 +324,30 @@ export class SupportTicketManager {
         orderBy: { createdAt: 'desc' },
         take: 1
       })
-
       // Simple similarity check - in production, use more sophisticated NLP
       if (similarTickets.length > 0) {
         const ticket = similarTickets[0]
         const similarity = this.calculateTextSimilarity(description, ticket.description)
-
         if (similarity > 0.7) {
           return ticket
         }
       }
-
       return null
     } catch (error) {
       console.error('Error finding similar ticket:', error)
       return null
     }
   }
-
   /**
    * Calculate text similarity (simple implementation)
    */
   private calculateTextSimilarity(text1: string, text2: string): number {
     const words1 = new Set(text1.toLowerCase().split(/\s+/))
     const words2 = new Set(text2.toLowerCase().split(/\s+/))
-
     const intersection = new Set([...words1].filter(word => words2.has(word)))
     const union = new Set([...words1, ...words2])
-
     return intersection.size / union.size
   }
-
   /**
    * Auto-assign ticket to suitable agent
    */
@@ -408,7 +355,6 @@ export class SupportTicketManager {
     try {
       // Find suitable agent
       const agent = await this.findBestAgent(category, priority)
-
       if (agent) {
         await prisma.supportTicket.update({
           where: { id: ticketId },
@@ -418,10 +364,8 @@ export class SupportTicketManager {
             assignedAt: new Date()
           }
         })
-
         // Update agent current ticket count
         await this.updateAgentTicketCount(agent.id, 1)
-
         // Notify agent
         await this.notifyAgentAssignment(agent.id, ticketId)
       }
@@ -429,14 +373,12 @@ export class SupportTicketManager {
       console.error('Error auto-assigning ticket:', error)
     }
   }
-
   /**
    * Find best available agent for ticket
    */
   private async findBestAgent(category: TicketCategory, priority: TicketPriority): Promise<Agent | null> {
     try {
       const specialization = this.mapCategoryToSpecialization(category)
-
       // Find agents with matching specialization
       const agents = await prisma.agent.findMany({
         where: {
@@ -451,14 +393,12 @@ export class SupportTicketManager {
         ],
         take: 1
       })
-
       return agents[0] as Agent || null
     } catch (error) {
       console.error('Error finding best agent:', error)
       return null
     }
   }
-
   /**
    * Map ticket category to agent specialization
    */
@@ -474,10 +414,8 @@ export class SupportTicketManager {
       [TicketCategory.COMPLIMENT]: AgentSpecialization.CUSTOMER_SERVICE,
       [TicketCategory.GENERAL]: AgentSpecialization.GENERAL
     }
-
     return mapping[category] || AgentSpecialization.GENERAL
   }
-
   /**
    * Update agent current ticket count
    */
@@ -490,7 +428,6 @@ export class SupportTicketManager {
       }
     })
   }
-
   /**
    * Calculate SLA based on category and priority
    */
@@ -502,26 +439,20 @@ export class SupportTicketManager {
       [TicketPriority.MEDIUM]: '24 horas',
       [TicketPriority.LOW]: '48 horas'
     }
-
     return slaMatrix[priority] || '24 horas'
   }
-
   /**
    * Send ticket confirmation to customer
    */
   private async sendTicketConfirmation(ticket: any): Promise<void> {
     // This would integrate with the WhatsApp service to send confirmation
-    console.log(`Ticket confirmation sent for ticket ${ticket.ticketNumber}`)
   }
-
   /**
    * Notify agent of new ticket assignment
    */
   private async notifyAgentAssignment(agentId: string, ticketId: string): Promise<void> {
     // This would send notification to agent dashboard or email
-    console.log(`Agent ${agentId} notified of ticket ${ticketId} assignment`)
   }
-
   /**
    * Update ticket status
    */
@@ -544,7 +475,6 @@ export class SupportTicketManager {
           })
         }
       })
-
       // Update cache
       const ticket = this.activeTickets.get(ticketId)
       if (ticket) {
@@ -556,7 +486,6 @@ export class SupportTicketManager {
       throw error
     }
   }
-
   /**
    * Get ticket by ID
    */
@@ -567,7 +496,6 @@ export class SupportTicketManager {
       if (cachedTicket) {
         return cachedTicket
       }
-
       // Fetch from database
       const ticket = await prisma.supportTicket.findUnique({
         where: { id: ticketId },
@@ -576,18 +504,15 @@ export class SupportTicketManager {
           agent: true
         }
       })
-
       if (ticket) {
         this.activeTickets.set(ticketId, ticket)
       }
-
       return ticket
     } catch (error) {
       console.error('Error getting ticket:', error)
       throw error
     }
   }
-
   /**
    * Get tickets for user
    */
@@ -597,7 +522,6 @@ export class SupportTicketManager {
       if (status) {
         whereClause.status = status
       }
-
       return await prisma.supportTicket.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
@@ -611,6 +535,5 @@ export class SupportTicketManager {
     }
   }
 }
-
 // Singleton instance
 export const supportTicketManager = new SupportTicketManager()

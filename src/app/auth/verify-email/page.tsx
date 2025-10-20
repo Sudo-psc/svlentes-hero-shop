@@ -1,33 +1,26 @@
 'use client'
-
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-
 type VerificationState = 'verifying' | 'success' | 'error' | 'missing-token'
-
 function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [state, setState] = useState<VerificationState>('verifying')
   const [errorMessage, setErrorMessage] = useState('')
-
   useEffect(() => {
     const token = searchParams.get('token')
-
     if (!token) {
       setState('missing-token')
       return
     }
-
     // Verificar email
     async function verifyEmail() {
       try {
         const response = await fetch(`/api/auth/verify-email?token=${token}`)
         const data = await response.json()
-
         if (response.ok) {
           setState('success')
           // Redirecionar para login após 3 segundos
@@ -43,10 +36,8 @@ function VerifyEmailContent() {
         setErrorMessage('Erro ao verificar email. Tente novamente.')
       }
     }
-
     verifyEmail()
   }, [searchParams, router])
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
@@ -54,7 +45,6 @@ function VerifyEmailContent() {
         <div className="flex justify-center mb-8">
           <Logo />
         </div>
-
         {/* Verificando */}
         {state === 'verifying' && (
           <div className="text-center">
@@ -65,7 +55,6 @@ function VerifyEmailContent() {
             <p className="text-gray-600">Aguarde um momento</p>
           </div>
         )}
-
         {/* Sucesso */}
         {state === 'success' && (
           <div className="text-center">
@@ -97,7 +86,6 @@ function VerifyEmailContent() {
             </Link>
           </div>
         )}
-
         {/* Erro */}
         {state === 'error' && (
           <div className="text-center">
@@ -120,7 +108,6 @@ function VerifyEmailContent() {
               Erro na Verificação
             </h2>
             <p className="text-gray-600 mb-6">{errorMessage}</p>
-
             <div className="space-y-3">
               <Link href="/area-assinante/login">
                 <Button variant="outline" className="w-full border-cyan-600 text-cyan-600">
@@ -139,7 +126,6 @@ function VerifyEmailContent() {
             </div>
           </div>
         )}
-
         {/* Token ausente */}
         {state === 'missing-token' && (
           <div className="text-center">
@@ -169,7 +155,6 @@ function VerifyEmailContent() {
             </Link>
           </div>
         )}
-
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600 mb-2">Precisa de ajuda?</p>
@@ -188,7 +173,6 @@ function VerifyEmailContent() {
     </div>
   )
 }
-
 export default function VerifyEmailPage() {
   return (
     <Suspense
@@ -213,6 +197,5 @@ export default function VerifyEmailPage() {
     </Suspense>
   )
 }
-
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'

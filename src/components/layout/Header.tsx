@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -7,29 +6,23 @@ import { LogoHeader } from '@/components/ui/logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
 import { useConfigValue } from '@/lib/use-config'
-
 interface HeaderProps {
     className?: string
 }
-
 export function Header({ className }: HeaderProps) {
     const { user, loading, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
-
     // Use centralized configuration for menu items
     const headerMenu = useConfigValue('menus.header', null)
-
     // Detectar scroll para adicionar sombra no header
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 10)
         }
-
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
-
     // Fechar menu mobile ao redimensionar
     useEffect(() => {
         const handleResize = () => {
@@ -37,11 +30,9 @@ export function Header({ className }: HeaderProps) {
                 setIsMenuOpen(false)
             }
         }
-
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [])
-
     const navigation = useMemo(() => {
         if (headerMenu && headerMenu.main) {
             return headerMenu.main.map((item: any) => ({
@@ -50,51 +41,40 @@ export function Header({ className }: HeaderProps) {
                 isAnchor: item.isAnchor || false,
             }))
         }
-
         // Fallback to hardcoded menu if config not available
         return [
             { name: 'Calculadora', href: '/calculadora', isAnchor: false },
             { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
             { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
-            { name: 'Blog', href: '/blog', isAnchor: false },
             { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
             { name: 'Contato', href: '#contato', isAnchor: true },
         ]
     }, [headerMenu])
-
     const ctaConfig = useMemo(
         () => (headerMenu ? headerMenu.cta : null),
         [headerMenu]
     )
-
     const handleNavClick = useCallback((href: string) => {
         const sectionId = href.replace('#', '')
         scrollToSection(sectionId)
         setIsMenuOpen(false)
     }, [])
-
     const handleAgendarConsulta = useCallback(() => {
         const whatsappMessage = `Olá! Gostaria de agendar uma consulta com o Dr. Philipe Saraiva Cruz para avaliar minha necessidade de lentes de contato.
-
 Vim através do site SV Lentes e tenho interesse no serviço de assinatura com acompanhamento médico.`
-
         const whatsappLink = generateWhatsAppLink(
             process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511947038078',
             whatsappMessage
         )
-
         window.open(whatsappLink, '_blank')
     }, [])
-
     const handleLogin = useCallback(() => {
         window.location.href = '/area-assinante/login'
     }, [])
-
     const handleLogout = useCallback(async () => {
         await signOut()
         window.location.href = '/'
     }, [signOut])
-
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
@@ -112,7 +92,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     >
                         <LogoHeader />
                     </a>
-
                     {/* Navigation Desktop */}
                     <nav className="hidden md:flex items-center space-x-8">
                         {navigation.map((item: any) => (
@@ -141,7 +120,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                             )
                         ))}
                     </nav>
-
                     {/* CTA Button Desktop */}
                     <div className="hidden md:flex items-center space-x-4">
                         {user ? (
@@ -187,7 +165,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                             </>
                         )}
                     </div>
-
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -201,7 +178,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                         )}
                     </button>
                 </div>
-
                 {/* Mobile Menu */}
                 {isMenuOpen && (
                     <div className="md:hidden border-t border-gray-200 bg-white">
@@ -229,7 +205,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     </a>
                                 )
                             ))}
-
                             {/* Mobile CTA */}
                             <div className="px-4 pt-4 border-t border-gray-200 space-y-3">
                                 {user ? (
@@ -279,7 +254,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     </div>
                 )}
             </div>
-
             </header>
     )
 }

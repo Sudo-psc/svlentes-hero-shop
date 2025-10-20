@@ -1,12 +1,10 @@
 // Types for Intelligent Reminder System
-
 export enum NotificationChannel {
   EMAIL = 'EMAIL',
   WHATSAPP = 'WHATSAPP',
   SMS = 'SMS',
   PUSH = 'PUSH',
 }
-
 export enum NotificationStatus {
   SCHEDULED = 'SCHEDULED',
   SENDING = 'SENDING',
@@ -17,14 +15,12 @@ export enum NotificationStatus {
   FAILED = 'FAILED',
   CANCELLED = 'CANCELLED',
 }
-
 export enum NotificationType {
   REMINDER = 'REMINDER',
   PROMOTION = 'PROMOTION',
   UPDATE = 'UPDATE',
   ALERT = 'ALERT',
 }
-
 export enum InteractionType {
   SENT = 'SENT',
   DELIVERED = 'DELIVERED',
@@ -34,7 +30,6 @@ export enum InteractionType {
   OPTED_OUT = 'OPTED_OUT',
   CONVERTED = 'CONVERTED',
 }
-
 // User preferences for notifications
 export interface UserPreferences {
   channels: {
@@ -66,7 +61,6 @@ export interface UserPreferences {
     [key in NotificationType]?: boolean
   }
 }
-
 // Notification payload
 export interface NotificationPayload {
   userId: string
@@ -77,7 +71,6 @@ export interface NotificationPayload {
   metadata?: Record<string, any>
   scheduledAt: Date
 }
-
 // ML prediction result
 export interface MLPredictionResult {
   channel: NotificationChannel
@@ -85,7 +78,6 @@ export interface MLPredictionResult {
   confidence: number
   features: Record<string, any>
 }
-
 // User behavior metrics
 export interface UserBehaviorMetrics {
   userId: string
@@ -103,7 +95,6 @@ export interface UserBehaviorMetrics {
   currentFatigueScore: number
   conversionRate: number
 }
-
 // Channel metrics
 export interface ChannelMetrics {
   channel: NotificationChannel
@@ -117,7 +108,6 @@ export interface ChannelMetrics {
   deliveryRate: number
   avgResponseTime?: number
 }
-
 // Engagement analytics
 export interface EngagementAnalytics {
   period: {
@@ -141,7 +131,6 @@ export interface EngagementAnalytics {
     converted: number
   }>
 }
-
 // Reminder creation input
 export interface CreateReminderInput {
   userId: string
@@ -152,7 +141,6 @@ export interface CreateReminderInput {
   scheduledAt?: Date
   preferredChannel?: NotificationChannel
 }
-
 // Reminder update input
 export interface UpdateReminderInput {
   content?: string
@@ -161,7 +149,6 @@ export interface UpdateReminderInput {
   scheduledAt?: Date
   status?: NotificationStatus
 }
-
 // ML model features
 export interface MLFeatures {
   hourOfDay: number
@@ -172,7 +159,6 @@ export interface MLFeatures {
   avgResponseTime: number
   preferredFrequency: number
 }
-
 // Analytics query parameters
 export interface AnalyticsQuery {
   userId?: string
@@ -181,7 +167,6 @@ export interface AnalyticsQuery {
   channels?: NotificationChannel[]
   types?: NotificationType[]
 }
-
 // Fatigue score calculation input
 export interface FatigueScoreInput {
   recentNotificationCount: number
@@ -189,7 +174,6 @@ export interface FatigueScoreInput {
   timeSinceLastNotification: number // minutes
   optOutHistory: boolean
 }
-
 // Channel selection result
 export interface ChannelSelectionResult {
   primary: NotificationChannel
@@ -197,7 +181,6 @@ export interface ChannelSelectionResult {
   score: number
   reason: string
 }
-
 // Notification send result
 export interface NotificationSendResult {
   success: boolean
@@ -207,7 +190,6 @@ export interface NotificationSendResult {
   sentAt?: Date
   error?: string
 }
-
 // Report generation options
 export interface ReportOptions {
   format: 'CSV' | 'JSON' | 'PDF'

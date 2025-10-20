@@ -2,10 +2,8 @@
  * Response Caching System for AI-powered WhatsApp responses
  * Intelligent caching with semantic similarity and TTL management
  */
-
 import * as crypto from 'crypto'
 import { logger, LogCategory } from '@/lib/logger'
-
 interface CachedResponse {
   id: string
   key: string
@@ -22,7 +20,6 @@ interface CachedResponse {
   userId?: string
   sessionId?: string
 }
-
 interface CacheConfig {
   maxSize: number
   defaultTTL: number
@@ -31,13 +28,11 @@ interface CacheConfig {
   enableSemanticCache: boolean
   enableExactCache: boolean
 }
-
 export class ResponseCache {
   private cache: Map<string, CachedResponse> = new Map()
   private semanticIndex: Map<string, string[]> = new Map() // intent -> cache keys
   private config: CacheConfig
   private cleanupTimer: NodeJS.Timeout
-
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = {
       maxSize: 1000,
@@ -48,13 +43,11 @@ export class ResponseCache {
       enableExactCache: true,
       ...config
     }
-
     // Start periodic cleanup
     this.cleanupTimer = setInterval(() => {
       this.cleanup()
     }, this.config.cleanupInterval)
   }
-
   /**
    * Generate cache key from message and context
    */
@@ -62,11 +55,9 @@ export class ResponseCache {
     const normalizedMessage = message.toLowerCase().trim()
     const contextHash = context ?
       crypto.createHash('md5').update(JSON.stringify(context)).digest('hex').substring(0, 8) : ''
-
     const combined = `${normalizedMessage}:${contextHash}`
     return crypto.createHash('sha256').update(combined).digest('hex').substring(0, 16)
   }
-
   /**
    * Generate semantic key for intent-based caching
    */
@@ -77,96 +68,76 @@ export class ResponseCache {
       .filter(word => word.length > 2) // Remove short words
       .slice(0, 5) // Keep first 5 meaningful words
       .join('-')
-
     return `${intent}:${normalizedMessage}`
   }
-
   /**
    * Check if message is suitable for caching
    */
   private isCacheable(message: string, intent: string, confidence: number): boolean {
     // Don't cache very low confidence responses
     if (confidence < 0.7) return false
-
     // Don't cache emergency or highly personalized messages
     const nonCacheableIntents = ['emergency', 'complaint', 'personal_query']
     if (nonCacheableIntents.includes(intent.toLowerCase())) return false
-
     // Don't cache very short or very long messages
     if (message.length < 10 || message.length > 500) return false
-
     // Don't cache messages with personal identifiers
     const personalPatterns = [
       /\b\d{11}\b/, // Phone numbers
       /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/, // CPF
       /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/ // Email
     ]
-
     return !personalPatterns.some(pattern => pattern.test(message))
   }
-
   /**
    * Get cached response
    */
   get(message: string, context?: any): CachedResponse | null {
     const key = this.generateCacheKey(message, context)
     const cached = this.cache.get(key)
-
     if (!cached) return null
-
     // Check if expired
     if (Date.now() > cached.expiresAt) {
       this.cache.delete(key)
       this.removeFromSemanticIndex(cached)
       return null
     }
-
     // Update access statistics
     cached.accessCount++
     cached.lastAccessed = Date.now()
-
     logger.debug(LogCategory.CACHE, 'Cache hit', {
       key,
       intent: cached.intent,
       accessCount: cached.accessCount
     })
-
     return cached
   }
-
   /**
    * Get semantically similar responses
    */
   getSemantic(message: string, intent: string, threshold: number = 0.85): CachedResponse | null {
     if (!this.config.enableSemanticCache) return null
-
     const semanticKey = this.generateSemanticKey(message, intent)
     const similarKeys = this.semanticIndex.get(intent) || []
-
     for (const cacheKey of similarKeys) {
       const cached = this.cache.get(cacheKey)
       if (!cached || Date.now() > cached.expiresAt) continue
-
       // Simple similarity check (can be enhanced with actual semantic similarity)
       const similarity = this.calculateSimilarity(message, cached.key)
       if (similarity >= threshold) {
         cached.accessCount++
         cached.lastAccessed = Date.now()
-
         logger.debug(LogCategory.CACHE, 'Semantic cache hit', {
           originalKey: cacheKey,
           semanticKey,
           similarity,
           intent: cached.intent
         })
-
         return cached
       }
     }
-
     return null
   }
-
   /**
    * Set cached response
    */
@@ -187,10 +158,8 @@ export class ResponseCache {
       })
       return
     }
-
     const key = this.generateCacheKey(message, context)
     const now = Date.now()
-
     const cachedResponse: CachedResponse = {
       id: crypto.randomUUID(),
       key: message,
@@ -207,15 +176,12 @@ export class ResponseCache {
       userId: context?.userProfile?.id,
       sessionId: context?.sessionId
     }
-
     // Check cache size limit
     if (this.cache.size >= this.config.maxSize) {
       this.evictLeastRecentlyUsed()
     }
-
     this.cache.set(key, cachedResponse)
     this.addToSemanticIndex(cachedResponse, intent)
-
     logger.debug(LogCategory.CACHE, 'Response cached', {
       key,
       intent,
@@ -223,20 +189,16 @@ export class ResponseCache {
       ttl: this.config.defaultTTL
     })
   }
-
   /**
    * Calculate simple text similarity (can be enhanced with embeddings)
    */
   private calculateSimilarity(text1: string, text2: string): number {
     const words1 = new Set(text1.toLowerCase().split(/\s+/))
     const words2 = new Set(text2.toLowerCase().split(/\s+/))
-
     const intersection = new Set([...words1].filter(x => words2.has(x)))
     const union = new Set([...words1, ...words2])
-
     return intersection.size / union.size
   }
-
   /**
    * Add to semantic index
    */
@@ -244,13 +206,11 @@ export class ResponseCache {
     if (!this.semanticIndex.has(intent)) {
       this.semanticIndex.set(intent, [])
     }
-
     const keys = this.semanticIndex.get(intent)!
     if (!keys.includes(cached.id)) {
       keys.push(cached.id)
     }
   }
-
   /**
    * Remove from semantic index
    */
@@ -263,40 +223,34 @@ export class ResponseCache {
       }
     }
   }
-
   /**
    * Evict least recently used entries
    */
   private evictLeastRecentlyUsed(): void {
     let oldestKey: string | null = null
     let oldestTime = Date.now()
-
     for (const [key, cached] of this.cache.entries()) {
       if (cached.lastAccessed < oldestTime) {
         oldestTime = cached.lastAccessed
         oldestKey = key
       }
     }
-
     if (oldestKey) {
       const evicted = this.cache.get(oldestKey)!
       this.cache.delete(oldestKey)
       this.removeFromSemanticIndex(evicted)
-
       logger.debug(LogCategory.CACHE, 'LRU eviction', {
         evictedKey: oldestKey,
         lastAccessed: new Date(evicted.lastAccessed).toISOString()
       })
     }
   }
-
   /**
    * Cleanup expired entries
    */
   private cleanup(): void {
     const now = Date.now()
     let cleanedCount = 0
-
     for (const [key, cached] of this.cache.entries()) {
       if (now > cached.expiresAt) {
         this.cache.delete(key)
@@ -304,7 +258,6 @@ export class ResponseCache {
         cleanedCount++
       }
     }
-
     if (cleanedCount > 0) {
       logger.debug(LogCategory.CACHE, 'Cleanup completed', {
         cleanedCount,
@@ -312,7 +265,6 @@ export class ResponseCache {
       })
     }
   }
-
   /**
    * Get cache statistics
    */
@@ -326,13 +278,11 @@ export class ResponseCache {
     const entriesByIntent: Record<string, number> = {}
     let totalAccessCount = 0
     let hitCount = 0
-
     for (const cached of this.cache.values()) {
       entriesByIntent[cached.intent] = (entriesByIntent[cached.intent] || 0) + 1
       totalAccessCount += cached.accessCount
       if (cached.accessCount > 1) hitCount++
     }
-
     return {
       totalEntries: this.cache.size,
       entriesByIntent,
@@ -341,7 +291,6 @@ export class ResponseCache {
       memoryUsage: JSON.stringify([...this.cache.entries()]).length
     }
   }
-
   /**
    * Clear cache
    */
@@ -350,7 +299,6 @@ export class ResponseCache {
     this.semanticIndex.clear()
     logger.info(LogCategory.CACHE, 'Cache cleared')
   }
-
   /**
    * Destroy cache and cleanup timer
    */
@@ -361,7 +309,6 @@ export class ResponseCache {
     this.clear()
   }
 }
-
 // Singleton instance
 export const responseCache = new ResponseCache({
   maxSize: 500,

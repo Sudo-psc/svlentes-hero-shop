@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth } from '@/lib/firebase-admin'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
-
 /**
  * GET /api/assinante/orders
  * Retorna histórico de pedidos do usuário autenticado
@@ -13,7 +12,6 @@ export async function GET(request: NextRequest) {
   if (rateLimitResult) {
     return rateLimitResult
   }
-
   try {
     // Verificar se Firebase Admin está inicializado
     if (!adminAuth) {
@@ -22,7 +20,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       )
     }
-
     // Verificar token Firebase do header Authorization
     const authHeader = request.headers.get('Authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -31,10 +28,8 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       )
     }
-
     const token = authHeader.split('Bearer ')[1]
     let firebaseUser
-
     try {
       firebaseUser = await adminAuth.verifyIdToken(token)
     } catch (error) {
@@ -43,54 +38,45 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       )
     }
-
     if (!firebaseUser || !firebaseUser.uid) {
       return NextResponse.json(
         { error: 'UNAUTHORIZED', message: 'Usuário não autenticado' },
         { status: 401 }
       )
     }
-
     // Buscar usuário
     const user = await prisma.user.findUnique({
       where: { firebaseUid: firebaseUser.uid }
     })
-
     if (!user) {
       return NextResponse.json(
         { error: 'NOT_FOUND', message: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     // Buscar todas as assinaturas do usuário
     const subscriptions = await prisma.subscription.findMany({
       where: { userId: user.id },
       select: { id: true }
     })
-
     if (subscriptions.length === 0) {
       return NextResponse.json({
         orders: [],
         total: 0
       }, { status: 200 })
     }
-
     const subscriptionIds = subscriptions.map(sub => sub.id)
-
     // Buscar pedidos com paginação
     const { searchParams } = request.nextUrl
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const skip = (page - 1) * limit
-
     // Buscar total de pedidos
     const totalOrders = await prisma.order.count({
       where: {
         subscriptionId: { in: subscriptionIds }
       }
     })
-
     // Buscar pedidos
     const orders = await prisma.order.findMany({
       where: {
@@ -108,7 +94,6 @@ export async function GET(request: NextRequest) {
       skip,
       take: limit
     })
-
     return NextResponse.json({
       orders: orders.map(order => ({
         id: order.id,
@@ -137,6 +122,5 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'

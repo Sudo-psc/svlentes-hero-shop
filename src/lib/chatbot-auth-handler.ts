@@ -2,21 +2,17 @@
  * Enhanced Chatbot Authentication Handlers
  * Autenticação robusta com verificação de cadastro e assinatura ativa
  */
-
 import { prisma } from '@/lib/prisma'
 import { sendPulseClient } from '@/lib/sendpulse-client'
 import { logger, LogCategory } from '@/lib/logger'
-
 /**
  * Normaliza número de telefone brasileiro para formato padrão
  * Remove caracteres especiais e garante formato com DDD + 9 dígitos
  */
 function normalizePhoneNumber(phone: string): string {
   if (!phone) return ''
-
   // Remove todos os caracteres não numéricos
   const cleaned = phone.replace(/\D/g, '')
-
   // Verificar se é número brasileiro válido (com DDD)
   if (cleaned.length === 10 || cleaned.length === 11) {
     // Se tiver 11 dígitos, remove o 9 inicial (números de celular)
@@ -25,11 +21,9 @@ function normalizePhoneNumber(phone: string): string {
     }
     return cleaned
   }
-
   // Retorna o número limpo se não seguir o padrão brasileiro
   return cleaned
 }
-
 /**
  * Valida se o formato do número é válido para Brasil
  */
@@ -38,7 +32,6 @@ function isValidBrazilianPhone(phone: string): boolean {
   // Números brasileiros devem ter 10 dígitos (fixo) ou 11 (celular sem o 9)
   return normalized.length === 10 || normalized.length === 11
 }
-
 /**
  * Verifica se a assinatura está realmente ativa e em bom status
  */
@@ -46,7 +39,6 @@ function isSubscriptionActiveAndValid(status: string): boolean {
   const validStatuses = ['ACTIVE']
   return validStatuses.includes(status)
 }
-
 /**
  * Gera mensagem informativa sobre status específico da assinatura
  */
@@ -83,17 +75,13 @@ function generateSubscriptionStatusMessage(status: string, userName: string, pla
       message: `Olá ${userName}! 👋\n\nNão encontramos uma assinatura ativa para este número.\n\nPara assinar novamente:\n👉 https://svlentes.shop\n\nDúvidas? Fale conosco:\n📞 WhatsApp: (33) 98606-1427`
     }
   }
-
   const config = statusConfig[status as keyof typeof statusConfig]
-
   if (config) {
     return config.message
   }
-
   // Status não reconhecido ou genérico
   return `Olá ${userName}! 👋\n\nNão conseguimos identificar sua assinatura atual.\n\nPara verificar seu status:\n👉 https://svlentes.shop/area-assinante\n\nOu fale conosco:\n📞 WhatsApp: (33) 98606-1427`
 }
-
 export interface AuthHandlerResult {
   success: boolean
   message: string
@@ -103,7 +91,6 @@ export interface AuthHandlerResult {
   userName?: string
   error?: string
 }
-
 /**
  * Autentica usuário robustamente pelo número de WhatsApp
  * Verifica cadastro, formato de número e status da assinatura
@@ -119,13 +106,11 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         error: 'invalid_phone_format'
       }
     }
-
     const normalizedPhone = normalizePhoneNumber(phone)
     logger.info(LogCategory.WHATSAPP, 'Processando autenticação por telefone', {
       originalPhone: phone,
       normalizedPhone
     })
-
     // Buscar usuário pelo telefone normalizado (busca em ambos os campos)
     const user = await prisma.user.findFirst({
       where: {
@@ -143,7 +128,6 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         }
       }
     })
-
     if (!user) {
       return {
         success: false,
@@ -152,10 +136,8 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         error: 'user_not_found'
       }
     }
-
     // Verificar se tem alguma assinatura (qualquer status)
     const hasSubscription = user.subscriptions && user.subscriptions.length > 0
-
     if (!hasSubscription) {
       return {
         success: false,
@@ -164,11 +146,9 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         error: 'no_subscription'
       }
     }
-
     // Verificar se a assinatura está realmente ativa
     const subscription = user.subscriptions[0]
     const isActiveSubscription = isSubscriptionActiveAndValid(subscription.status)
-
     if (!isActiveSubscription) {
       // Gerar mensagem específica baseada no status
       const statusMessage = generateSubscriptionStatusMessage(
@@ -176,7 +156,6 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         user.name || 'Cliente',
         subscription.planType
       )
-
       return {
         success: false,
         message: statusMessage,
@@ -184,17 +163,14 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         error: `subscription_${subscription.status.toLowerCase()}`
       }
     }
-
     // Criar ou atualizar sessão
     const sessionToken = generateSessionToken()
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24) // 24 horas
-
     // Verificar se já existe sessão ativa para este telefone
     const existingSession = await prisma.chatbotSession.findFirst({
       where: { phone }
     })
-
     if (existingSession) {
       // Atualizar sessão existente
       await prisma.chatbotSession.update({
@@ -219,24 +195,20 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         }
       })
     }
-
     logger.info(LogCategory.WHATSAPP, 'Autenticação automática por telefone bem-sucedida', {
       phone,
       userId: user.id,
       userName: user.name
     })
-
     logger.info(LogCategory.WHATSAPP, 'Usuário autenticado com sucesso', {
       normalizedPhone,
       userId: user.id,
       userName: user.name,
       subscriptionStatus: subscription.status
     })
-
     // Obter detalhes da assinatura para mensagem personalizada
     const statusEmoji = '✅'
     const statusLabel = 'Ativa'
-
     // Formatar datas de forma amigável
     const renewalDate = new Date(subscription.renewalDate)
     const renewalFormatted = renewalDate.toLocaleDateString('pt-BR', {
@@ -244,29 +216,22 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
       month: 'long',
       year: 'numeric'
     })
-
     // Calcular dias até a renovação
     const today = new Date()
     const daysUntilRenewal = Math.ceil((renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
     const renewalInfo = daysUntilRenewal > 0
       ? `em ${daysUntilRenewal} dia(s)`
       : daysUntilRenewal === 0
         ? 'hoje!'
         : `há ${Math.abs(daysUntilRenewal)} dia(s)`
-
     // Mensagem de boas-vindas melhorada e personalizada
     const welcomeMessage = `${statusEmoji} *Bem-vindo(a) à SV Lentes!*
-
 Olá ${user.name || 'Cliente'}! 👋
-
 *Identificamos sua assinatura ativa:*
 📦 Plano: ${subscription.planType}
 📅 Renovação: ${renewalFormatted} (${renewalInfo})
 💰 Mensalidade: R$ ${subscription.monthlyValue.toFixed(2)}
-
 *Como posso ajudar você hoje?*
-
 1️⃣ 📋 *Ver detalhes da assinatura*
 2️⃣ 📦 *Rastrear meu pedido*
 3️⃣ 📄 *Baixar nota fiscal*
@@ -275,13 +240,10 @@ Olá ${user.name || 'Cliente'}! 👋
 6️⃣ 🔄 *Alterar plano*
 7️⃣ ⏸️ *Pausar assinatura*
 8️⃣ 📞 *Falar com atendente*
-
 Digite o número da opção ou descreva sua necessidade! 😊
-
 ---
 *Dr. Philipe Saraiva Cruz (CRM-MG 69.870)*
 *Atendimento: Seg-Sex, 9h-18h*`
-
     return {
       success: true,
       message: welcomeMessage,
@@ -290,13 +252,11 @@ Digite o número da opção ou descreva sua necessidade! 😊
       userId: user.id,
       userName: user.name || undefined
     }
-
   } catch (error) {
     logger.error(LogCategory.WHATSAPP, 'Erro ao autenticar por telefone', {
       phone,
       error: error instanceof Error ? error.message : 'Unknown'
     })
-
     return {
       success: false,
       message: '❌ Erro ao verificar sua conta. Por favor, tente novamente ou entre em contato:\n📞 WhatsApp: (33) 98606-1427',
@@ -305,7 +265,6 @@ Digite o número da opção ou descreva sua necessidade! 😊
     }
   }
 }
-
 /**
  * Gera token de sessão único
  */
@@ -314,7 +273,6 @@ function generateSessionToken(): string {
   const randomPart = Math.random().toString(36).substring(2, 15)
   return `chatbot_${timestamp}_${randomPart}`
 }
-
 /**
  * Valida se o usuário está autenticado (verifica sessão existente)
  */
@@ -343,19 +301,16 @@ export async function isUserAuthenticated(phone: string): Promise<{
         }
       }
     })
-
     if (!session) {
       return {
         authenticated: false
       }
     }
-
     // Atualizar última atividade
     await prisma.chatbotSession.update({
       where: { id: session.id },
       data: { lastActivityAt: new Date() }
     })
-
     return {
       authenticated: true,
       sessionToken: session.sessionToken,
@@ -363,13 +318,11 @@ export async function isUserAuthenticated(phone: string): Promise<{
       userId: session.userId,
       userName: session.user.name || undefined
     }
-
   } catch (error) {
     logger.error(LogCategory.WHATSAPP, 'Erro ao verificar autenticação', {
       phone,
       error: error instanceof Error ? error.message : 'Unknown'
     })
-
     return {
       authenticated: false
     }

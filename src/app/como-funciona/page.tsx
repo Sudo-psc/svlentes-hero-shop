@@ -5,7 +5,6 @@ import { FinalCTA } from '@/components/sections/FinalCTA'
 import Link from 'next/link'
 import { ArrowLeft, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
 export const metadata: Metadata = {
     title: 'Como Funciona - SV Lentes | Processo de Assinatura Passo a Passo',
     description: 'Entenda como funciona o serviço de assinatura de lentes de contato da SV Lentes. Processo simples em 4 passos: consulta médica, prescrição, entrega automática e acompanhamento contínuo.',
@@ -21,7 +20,6 @@ export const metadata: Metadata = {
         canonical: 'https://svlentes.com.br/como-funciona',
     },
 }
-
 export default function ComoFuncionaPage() {
     return (
         <div className="min-h-screen">
@@ -45,7 +43,6 @@ export default function ComoFuncionaPage() {
                     </div>
                 </div>
             </section>
-
             {/* Page Header */}
             <section className="bg-gradient-to-br from-primary-50 to-white py-16">
                 <div className="container-custom text-center">
@@ -56,19 +53,16 @@ export default function ComoFuncionaPage() {
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
                         Um processo simples e transparente para você nunca mais ficar sem suas lentes de contato
                     </p>
-
                     {/* Trust Strip */}
                     <div className="mt-12">
                         <TrustStrip />
                     </div>
                 </div>
             </section>
-
             {/* Main Content - How It Works */}
             <section>
                 <HowItWorksSection />
             </section>
-
             {/* Quick CTA */}
             <section className="bg-primary-50 py-16">
                 <div className="container-custom text-center">
@@ -92,12 +86,10 @@ export default function ComoFuncionaPage() {
                     </div>
                 </div>
             </section>
-
             {/* Final CTA */}
             <FinalCTA />
         </div>
     )
 }
-
 // Force dynamic rendering for pages using useSession
 export const dynamic = 'force-dynamic'

@@ -1,12 +1,10 @@
 'use client'
-
 import { AlertTriangle, RefreshCw, AlertCircle, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
 interface DashboardErrorProps {
   error: string | null
   onRetry?: () => void
@@ -15,7 +13,6 @@ interface DashboardErrorProps {
   variant?: 'full' | 'inline' | 'minimal'
   className?: string
 }
-
 export function DashboardError({
   error,
   onRetry,
@@ -25,7 +22,6 @@ export function DashboardError({
   className
 }: DashboardErrorProps) {
   if (!error) return null
-
   const getErrorType = (errorMessage: string) => {
     if (errorMessage.includes('Não autorizado') || errorMessage.includes('401')) {
       return 'auth'
@@ -41,9 +37,7 @@ export function DashboardError({
     }
     return 'general'
   }
-
   const errorType = getErrorType(error)
-
   const getErrorIcon = () => {
     switch (errorType) {
       case 'auth':
@@ -56,7 +50,6 @@ export function DashboardError({
         return AlertTriangle
     }
   }
-
   const getErrorTitle = () => {
     switch (errorType) {
       case 'auth':
@@ -71,7 +64,6 @@ export function DashboardError({
         return 'Erro Inesperado'
     }
   }
-
   const getErrorDescription = () => {
     switch (errorType) {
       case 'auth':
@@ -86,7 +78,6 @@ export function DashboardError({
         return 'Ocorreu um erro inesperado. Tente novamente e, se o problema persistir, entre em contato com o suporte.'
     }
   }
-
   const getErrorActions = () => {
     switch (errorType) {
       case 'auth':
@@ -126,9 +117,7 @@ export function DashboardError({
         )
     }
   }
-
   const ErrorIcon = getErrorIcon()
-
   if (variant === 'minimal') {
     return (
       <div className={cn("flex items-center gap-2 p-3 rounded-lg border border-destructive/20 bg-destructive/5", className)}>
@@ -148,7 +137,6 @@ export function DashboardError({
       </div>
     )
   }
-
   if (variant === 'inline') {
     return (
       <Alert className={className}>
@@ -174,7 +162,6 @@ export function DashboardError({
       </Alert>
     )
   }
-
   return (
     <div className={cn("flex items-center justify-center min-h-96", className)}>
       <Card className="w-full max-w-md">
@@ -205,12 +192,10 @@ export function DashboardError({
               {error}
             </div>
           </details>
-
           {/* Ações */}
           <div className="flex flex-col gap-2">
             {getErrorActions()}
           </div>
-
           {/* Sugestões adicionais */}
           <div className="text-xs text-muted-foreground space-y-1">
             <p>• Verifique sua conexão com a internet</p>
@@ -225,7 +210,6 @@ export function DashboardError({
     </div>
   )
 }
-
 // Componente para erro de carregamento parcial (alguns dados falharam)
 export function PartialDataError({
   errors,
@@ -237,7 +221,6 @@ export function PartialDataError({
   className?: string
 }) {
   if (errors.length === 0) return null
-
   return (
     <Alert className={cn("border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20", className)}>
       <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -249,7 +232,6 @@ export function PartialDataError({
           <p>
             Alguns dados não puderam ser carregados. O dashboard está funcionando com informações parciais.
           </p>
-
           <details className="text-xs">
             <summary className="cursor-pointer">Ver erros ({errors.length})</summary>
             <ul className="mt-2 space-y-1">
@@ -260,7 +242,6 @@ export function PartialDataError({
               ))}
             </ul>
           </details>
-
           {onRetry && (
             <Button
               variant="outline"
@@ -277,7 +258,6 @@ export function PartialDataError({
     </Alert>
   )
 }
-
 // Componente para erro de rede específico
 export function NetworkError({ onRetry, isRetrying }: { onRetry?: () => void; isRetrying?: boolean }) {
   return (
@@ -312,7 +292,6 @@ export function NetworkError({ onRetry, isRetrying }: { onRetry?: () => void; is
     </Card>
   )
 }
-
 // Componente para estados offline
 export function OfflineState({ onRetry }: { onRetry?: () => void }) {
   return (

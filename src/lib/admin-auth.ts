@@ -2,11 +2,9 @@
  * JWT Admin Authentication Middleware
  * Fornece autenticação e autorização para APIs administrativas
  */
-
 import jwt from 'jsonwebtoken'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
 // Interfaces
 export interface AdminUser {
   id: string
@@ -15,7 +13,6 @@ export interface AdminUser {
   role: string
   permissions: string[]
 }
-
 export interface JWTPayload {
   sub: string // user ID
   email: string
@@ -24,16 +21,13 @@ export interface JWTPayload {
   iat: number
   exp: number
 }
-
 // JWT Configuration
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET
 const JWT_EXPIRES_IN = process.env.ADMIN_JWT_EXPIRES_IN || '8h'
 const REFRESH_TOKEN_EXPIRES_IN = process.env.ADMIN_REFRESH_TOKEN_EXPIRES_IN || '7d'
-
 if (!JWT_SECRET && process.env.NODE_ENV !== 'production') {
   console.warn('⚠️ JWT_SECRET not configured - admin auth will not work properly')
 }
-
 /**
  * Lista de permissões disponíveis no sistema
  */
@@ -41,14 +35,12 @@ export const PERMISSIONS = {
   // Dashboard
   DASHBOARD_VIEW: 'dashboard:view',
   DASHBOARD_METRICS: 'dashboard:metrics',
-
   // Clientes
   CUSTOMERS_VIEW: 'customers:view',
   CUSTOMERS_CREATE: 'customers:create',
   CUSTOMERS_UPDATE: 'customers:update',
   CUSTOMERS_DELETE: 'customers:delete',
   CUSTOMERS_SEARCH: 'customers:search',
-
   // Assinaturas
   SUBSCRIPTIONS_VIEW: 'subscriptions:view',
   SUBSCRIPTIONS_CREATE: 'subscriptions:create',
@@ -56,14 +48,12 @@ export const PERMISSIONS = {
   SUBSCRIPTIONS_DELETE: 'subscriptions:delete',
   SUBSCRIPTIONS_ANALYTICS: 'subscriptions:analytics',
   SUBSCRIPTIONS_STATUS_UPDATE: 'subscriptions:status_update',
-
   // Pedidos
   ORDERS_VIEW: 'orders:view',
   ORDERS_CREATE: 'orders:create',
   ORDERS_UPDATE: 'orders:update',
   ORDERS_DELETE: 'orders:delete',
   ORDERS_STATUS_UPDATE: 'orders:status_update',
-
   // Suporte
   SUPPORT_VIEW: 'support:view',
   SUPPORT_CREATE: 'support:create',
@@ -71,7 +61,6 @@ export const PERMISSIONS = {
   SUPPORT_DELETE: 'support:delete',
   SUPPORT_ASSIGN: 'support:assign',
   SUPPORT_ESCALATE: 'support:escalate',
-
   // Administração
   ADMIN_USERS: 'admin:users',
   ADMIN_ROLES: 'admin:roles',
@@ -79,7 +68,6 @@ export const PERMISSIONS = {
   ADMIN_LOGS: 'admin:logs',
   ADMIN_SYSTEM: 'admin:system'
 } as const
-
 /**
  * Mapa de roles para permissões
  */
@@ -140,12 +128,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.SUPPORT_VIEW
   ]
 }
-
 /**
  * Roles válidas no sistema
  */
 export const VALID_ROLES = ['super_admin', 'admin', 'manager', 'support', 'viewer'] as const
-
 /**
  * Gera token JWT para usuário admin
  */
@@ -156,14 +142,12 @@ export function generateAdminToken(user: AdminUser): string {
     role: user.role,
     permissions: user.permissions
   }
-
   return jwt.sign(payload, JWT_SECRET!, {
     expiresIn: JWT_EXPIRES_IN,
     issuer: 'svlentes-admin',
     audience: 'svlentes-admin-api'
   })
 }
-
 /**
  * Gera refresh token para usuário admin
  */
@@ -173,14 +157,12 @@ export function generateRefreshToken(user: AdminUser): string {
     email: user.email,
     type: 'refresh'
   }
-
   return jwt.sign(payload, JWT_SECRET!, {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN,
     issuer: 'svlentes-admin',
     audience: 'svlentes-admin-refresh'
   })
 }
-
 /**
  * Verifica e decodifica token JWT
  */
@@ -190,14 +172,12 @@ export function verifyAdminToken(token: string): JWTPayload | null {
       issuer: 'svlentes-admin',
       audience: 'svlentes-admin-api'
     }) as JWTPayload
-
     return decoded
   } catch (error) {
     console.error('JWT verification error:', error)
     return null
   }
 }
-
 /**
  * Verifica refresh token
  */
@@ -207,11 +187,9 @@ export function verifyRefreshToken(token: string): { sub: string; email: string 
       issuer: 'svlentes-admin',
       audience: 'svlentes-admin-refresh'
     }) as any
-
     if (decoded.type !== 'refresh') {
       return null
     }
-
     return {
       sub: decoded.sub,
       email: decoded.email
@@ -221,7 +199,6 @@ export function verifyRefreshToken(token: string): { sub: string; email: string 
     return null
   }
 }
-
 /**
  * Busca usuário admin no banco com permissões
  */
@@ -236,11 +213,9 @@ async function getAdminUser(userId: string): Promise<AdminUser | null> {
         role: true
       }
     })
-
     if (!user || !VALID_ROLES.includes(user.role as any)) {
       return null
     }
-
     return {
       id: user.id,
       email: user.email,
@@ -253,25 +228,20 @@ async function getAdminUser(userId: string): Promise<AdminUser | null> {
     return null
   }
 }
-
 /**
  * Extrai token do header Authorization
  */
 export function extractToken(request: NextRequest): string | null {
   const authHeader = request.headers.get('authorization')
-
   if (!authHeader) {
     return null
   }
-
   // Bearer token format
   if (authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7)
   }
-
   return null
 }
-
 /**
  * Middleware de autenticação para APIs admin
  */
@@ -280,7 +250,6 @@ export async function requireAuth(request: NextRequest): Promise<{
   error?: NextResponse
 }> {
   const token = extractToken(request)
-
   if (!token) {
     return {
       user: null,
@@ -290,7 +259,6 @@ export async function requireAuth(request: NextRequest): Promise<{
       )
     }
   }
-
   // Verificar token
   const payload = verifyAdminToken(token)
   if (!payload) {
@@ -302,7 +270,6 @@ export async function requireAuth(request: NextRequest): Promise<{
       )
     }
   }
-
   // Buscar usuário no banco
   const user = await getAdminUser(payload.sub)
   if (!user) {
@@ -314,10 +281,8 @@ export async function requireAuth(request: NextRequest): Promise<{
       )
     }
   }
-
   return { user }
 }
-
 /**
  * Middleware de verificação de permissões
  */
@@ -327,13 +292,10 @@ export function requirePermission(permission: string) {
     error?: NextResponse
   }> => {
     const authResult = await requireAuth(request)
-
     if (authResult.error) {
       return authResult
     }
-
     const { user } = authResult
-
     if (!user?.permissions.includes(permission)) {
       return {
         user: null,
@@ -348,11 +310,9 @@ export function requirePermission(permission: string) {
         )
       }
     }
-
     return { user }
   }
 }
-
 /**
  * Middleware de verificação de role
  */
@@ -362,13 +322,10 @@ export function requireRole(role: string) {
     error?: NextResponse
   }> => {
     const authResult = await requireAuth(request)
-
     if (authResult.error) {
       return authResult
     }
-
     const { user } = authResult
-
     if (user?.role !== role) {
       return {
         user: null,
@@ -383,25 +340,21 @@ export function requireRole(role: string) {
         )
       }
     }
-
     return { user }
   }
 }
-
 /**
  * Verifica se usuário tem pelo menos uma das permissões listadas
  */
 export function hasAnyPermission(user: AdminUser, permissions: string[]): boolean {
   return permissions.some(permission => user.permissions.includes(permission))
 }
-
 /**
  * Verifica se usuário tem todas as permissões listadas
  */
 export function hasAllPermissions(user: AdminUser, permissions: string[]): boolean {
   return permissions.every(permission => user.permissions.includes(permission))
 }
-
 /**
  * Cria resposta de erro padrão
  */
@@ -415,7 +368,6 @@ export function createErrorResponse(
     { status }
   )
 }
-
 /**
  * Cria resposta de sucesso padrão
  */
@@ -432,7 +384,6 @@ export function createSuccessResponse<T>(
     timestamp: new Date().toISOString()
   })
 }
-
 /**
  * Tipos para respostas de API
  */
@@ -453,7 +404,6 @@ export interface ApiResponse<T = any> {
   }
   timestamp: string
 }
-
 /**
  * Tipos para paginação
  */
@@ -463,7 +413,6 @@ export interface PaginationParams {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
 }
-
 /**
  * Valida e normaliza parâmetros de paginação
  */
@@ -479,6 +428,5 @@ export function validatePagination(params: PaginationParams): {
   const offset = (page - 1) * limit
   const sortBy = params.sortBy || 'createdAt'
   const sortOrder = params.sortOrder || 'desc'
-
   return { page, limit, offset, sortBy, sortOrder }
 }

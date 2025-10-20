@@ -1,11 +1,9 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { AlertTriangle, Shield, Eye, FileText, Download, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
 interface LGPDAlert {
   id: string
   type: 'data_request' | 'consent_missing' | 'retention_warning' | 'access_log'
@@ -18,7 +16,6 @@ interface LGPDAlert {
     onClick: () => void
   }
 }
-
 export function LGDPAlertBanner() {
   const [alerts, setAlerts] = useState<LGPDAlert[]>([
     {
@@ -30,7 +27,7 @@ export function LGDPAlertBanner() {
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
       action: {
         label: 'Gerenciar',
-        onClick: () => console.log('Manage consents')
+        onClick: () => console.log('Manage LGPD settings clicked')
       }
     },
     {
@@ -42,7 +39,7 @@ export function LGDPAlertBanner() {
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 horas atrás
       action: {
         label: 'Ver Solicitação',
-        onClick: () => console.log('View data request')
+        onClick: () => console.log('View data request clicked')
       }
     },
     {
@@ -54,19 +51,17 @@ export function LGDPAlertBanner() {
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 dia atrás
       action: {
         label: 'Revisar',
-        onClick: () => console.log('Review retention policy')
+        onClick: () => {
+          console.log('Revisar alert clicked')
+        }
       }
     }
   ])
-
   const [dismissed, setDismissed] = useState<string[]>([])
-
   const dismissAlert = (alertId: string) => {
     setDismissed(prev => [...prev, alertId])
   }
-
   const visibleAlerts = alerts.filter(alert => !dismissed.includes(alert.id))
-
   const getUrgencyColor = (urgency: LGPDAlert['urgency']) => {
     switch (urgency) {
       case 'critical': return 'bg-red-50 border-red-200 text-red-800'
@@ -75,7 +70,6 @@ export function LGDPAlertBanner() {
       case 'low': return 'bg-blue-50 border-blue-200 text-blue-800'
     }
   }
-
   const getUrgencyIcon = (urgency: LGPDAlert['urgency']) => {
     switch (urgency) {
       case 'critical':
@@ -84,21 +78,17 @@ export function LGDPAlertBanner() {
       case 'low': return <FileText className="h-4 w-4" />
     }
   }
-
   const getTimeAgo = (date: Date) => {
     const diff = Date.now() - date.getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const days = Math.floor(hours / 24)
-
     if (days > 0) return `${days} dia${days > 1 ? 's' : ''} atrás`
     if (hours > 0) return `${hours} hora${hours > 1 ? 's' : ''} atrás`
     return 'Agora'
   }
-
   if (visibleAlerts.length === 0) {
     return null
   }
-
   return (
     <div className="border-b border-border bg-muted/30">
       <div className="max-w-7xl mx-auto px-6 py-3">
@@ -112,7 +102,6 @@ export function LGDPAlertBanner() {
               {visibleAlerts.length} alerta{visibleAlerts.length > 1 ? 's' : ''}
             </Badge>
           </div>
-
           <div className="flex items-center gap-4">
             <div className="flex gap-2">
               {visibleAlerts.slice(0, 2).map((alert) => (
@@ -129,7 +118,6 @@ export function LGDPAlertBanner() {
                 </div>
               ))}
             </div>
-
             <div className="flex items-center gap-2">
               {visibleAlerts.length > 2 && (
                 <Button variant="ghost" size="sm" className="text-xs">
@@ -137,12 +125,10 @@ export function LGDPAlertBanner() {
                   +{visibleAlerts.length - 2} mais
                 </Button>
               )}
-
               <Button variant="ghost" size="sm" className="text-xs">
                 <Download className="h-3 w-3 mr-1" />
                 Relatório LGPD
               </Button>
-
               <Button
                 variant="ghost"
                 size="sm"

@@ -2,10 +2,8 @@
  * Support Analytics API
  * Provides comprehensive analytics for WhatsApp customer support
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
 interface SupportAnalyticsResponse {
   totalTickets: number
   activeTickets: number
@@ -22,32 +20,27 @@ interface SupportAnalyticsResponse {
   sentimentAnalysis: SentimentData[]
   escalationReasons: EscalationReasonData[]
 }
-
 interface TicketPriorityData {
   priority: string
   count: number
   avgResolutionTime: string
 }
-
 interface CategoryData {
   category: string
   count: number
   avgResolutionTime: string
   satisfaction: number
 }
-
 interface ResponseTimeData {
   date: string
   avgResponseTime: number
   targetTime: number
 }
-
 interface SatisfactionData {
   date: string
   satisfaction: number
   tickets: number
 }
-
 interface AgentPerformanceData {
   agentId: string
   agentName: string
@@ -57,30 +50,25 @@ interface AgentPerformanceData {
   escalationRate: number
   specializations: string[]
 }
-
 interface SentimentData {
   sentiment: string
   count: number
   percentage: number
   color: string
 }
-
 interface EscalationReasonData {
   reason: string
   count: number
   percentage: number
   trend: 'up' | 'down' | 'stable'
 }
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const timeRange = searchParams.get('timeRange') || '7d'
-
     // Calculate date range based on timeRange
     const endDate = new Date()
     const startDate = new Date()
-
     switch (timeRange) {
       case '1d':
         startDate.setDate(endDate.getDate() - 1)
@@ -97,7 +85,6 @@ export async function GET(request: NextRequest) {
       default:
         startDate.setDate(endDate.getDate() - 7)
     }
-
     // Fetch tickets in date range
     const tickets = await prisma.supportTicket.findMany({
       where: {
@@ -110,14 +97,12 @@ export async function GET(request: NextRequest) {
         user: true
       }
     })
-
     // Calculate basic metrics
     const totalTickets = tickets.length
     const activeTickets = tickets.filter(t =>
       ['OPEN', 'IN_PROGRESS', 'PENDING_CUSTOMER', 'PENDING_AGENT'].includes(t.status)
     ).length
     const resolvedTickets = tickets.filter(t => t.status === 'RESOLVED').length
-
     // Calculate average response time
     const responseTimes = tickets
       .filter(t => t.assignedAt && t.createdAt)
@@ -128,7 +113,6 @@ export async function GET(request: NextRequest) {
     const averageResponseTime = responseTimes.length > 0
       ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
       : 0
-
     // Calculate customer satisfaction
     const satisfactionScores = tickets
       .filter(t => t.customerSatisfaction)
@@ -136,17 +120,14 @@ export async function GET(request: NextRequest) {
     const customerSatisfaction = satisfactionScores.length > 0
       ? satisfactionScores.reduce((sum, score) => sum + score, 0) / satisfactionScores.length
       : 0
-
     // Calculate escalation rate
     const escalatedTickets = tickets.filter(t => t.escalationId).length
     const escalationRate = totalTickets > 0 ? escalatedTickets / totalTickets : 0
-
     // Calculate first contact resolution
     const resolvedWithoutEscalation = tickets.filter(t =>
       t.status === 'RESOLVED' && !t.escalationId
     ).length
     const firstContactResolution = totalTickets > 0 ? resolvedWithoutEscalation / totalTickets : 0
-
     // Group tickets by priority
     const ticketsByPriority = await prisma.supportTicket.groupBy({
       by: ['priority'],
@@ -156,31 +137,26 @@ export async function GET(request: NextRequest) {
       _count: { priority: true },
       orderBy: { _count: { priority: 'desc' } }
     })
-
     // Helper to calculate average resolution time
     const calculateAvgResolutionTime = (priority: string): string => {
       const resolvedTickets = tickets.filter(t =>
         t.status === 'RESOLVED' && t.priority === priority && t.resolvedAt && t.createdAt
       )
       if (resolvedTickets.length === 0) return '0h 0m'
-
       const totalMinutes = resolvedTickets.reduce((sum, t) => {
         const minutes = (t.resolvedAt!.getTime() - t.createdAt.getTime()) / (1000 * 60)
         return sum + minutes
       }, 0)
-
       const avgMinutes = Math.round(totalMinutes / resolvedTickets.length)
       const hours = Math.floor(avgMinutes / 60)
       const minutes = avgMinutes % 60
       return `${hours}h ${minutes}m`
     }
-
     const priorityData: TicketPriorityData[] = ticketsByPriority.map(item => ({
       priority: item.priority,
       count: item._count.priority,
       avgResolutionTime: calculateAvgResolutionTime(item.priority)
     }))
-
     // Group tickets by category
     const ticketsByCategory = await prisma.supportTicket.groupBy({
       by: ['category'],
@@ -190,78 +166,64 @@ export async function GET(request: NextRequest) {
       _count: { category: true },
       orderBy: { _count: { category: 'desc' } }
     })
-
     // Helper to calculate average satisfaction
     const calculateAvgSatisfaction = (category: string): number => {
       const categoryTickets = tickets.filter(t =>
         t.category === category && t.customerSatisfaction != null
       )
       if (categoryTickets.length === 0) return 0
-
       const total = categoryTickets.reduce((sum, t) => sum + t.customerSatisfaction!, 0)
       return parseFloat((total / categoryTickets.length).toFixed(1))
     }
-
     const categoryData: CategoryData[] = ticketsByCategory.map(item => ({
       category: item.category,
       count: item._count.category,
       avgResolutionTime: calculateAvgResolutionTime(item.category),
       satisfaction: calculateAvgSatisfaction(item.category)
     }))
-
     // Generate response time trend data
     const responseTimeTrend: ResponseTimeData[] = []
     for (let i = 6; i >= 0; i--) {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dateStr = date.toLocaleDateString('pt-BR')
-
       // Calculate average response time for this day
       const dayTickets = tickets.filter(t =>
         t.createdAt.toDateString() === date.toDateString()
       )
-
       const dayResponseTimes = dayTickets
         .filter(t => t.assignedAt && t.createdAt)
         .map(t => (t.assignedAt!.getTime() - t.createdAt.getTime()) / (1000 * 60))
-
       const avgResponseTime = dayResponseTimes.length > 0
         ? dayResponseTimes.reduce((sum, time) => sum + time, 0) / dayResponseTimes.length
         : 15 // Target time
-
       responseTimeTrend.push({
         date: dateStr,
         avgResponseTime: Math.round(avgResponseTime),
         targetTime: 15
       })
     }
-
     // Generate satisfaction trend data
     const satisfactionTrend: SatisfactionData[] = []
     for (let i = 6; i >= 0; i--) {
       const date = new Date()
       date.setDate(date.getDate() - i)
       const dateStr = date.toLocaleDateString('pt-BR')
-
       const dayTickets = tickets.filter(t =>
         t.createdAt.toDateString() === date.toDateString()
       )
-
       const daySatisfactionScores = dayTickets
         .filter(t => t.customerSatisfaction)
         .map(t => t.customerSatisfaction!)
-
       const avgSatisfaction = daySatisfactionScores.length > 0
         ? daySatisfactionScores.reduce((sum, score) => sum + score, 0) / daySatisfactionScores.length
         : 4.0
-
       satisfactionTrend.push({
         date: dateStr,
         satisfaction: parseFloat(avgSatisfaction.toFixed(1)),
         tickets: dayTickets.length
       })
     }
-
     // Get agent performance data
     const agentPerformance = await prisma.agent.findMany({
       where: { isActive: true },
@@ -274,7 +236,6 @@ export async function GET(request: NextRequest) {
         specializations: true
       }
     })
-
     const agentPerformanceData: AgentPerformanceData[] = agentPerformance.map(agent => {
       const agentTickets = tickets.filter(t => t.assignedAgentId === agent.id)
       const agentResponseTimes = agentTickets
@@ -284,7 +245,6 @@ export async function GET(request: NextRequest) {
         .filter(t => t.customerSatisfaction)
         .map(t => t.customerSatisfaction!)
       const agentEscalatedCount = agentTickets.filter(t => t.escalationId).length
-
       return {
         agentId: agent.id,
         agentName: agent.name,
@@ -299,7 +259,6 @@ export async function GET(request: NextRequest) {
         specializations: agent.specializations.map(s => s.type)
       }
     })
-
     // Generate sentiment analysis data
     const sentimentAnalysis = await prisma.whatsAppInteraction.groupBy({
       by: ['sentiment'],
@@ -309,9 +268,7 @@ export async function GET(request: NextRequest) {
       },
       _count: { sentiment: true }
     })
-
     const totalSentimentInteractions = sentimentAnalysis.reduce((sum, item) => sum + item._count.sentiment, 0)
-
     const sentimentData: SentimentData[] = sentimentAnalysis.map(item => ({
       sentiment: item.sentiment || 'neutral',
       count: item._count.sentiment,
@@ -321,7 +278,6 @@ export async function GET(request: NextRequest) {
       color: item.sentiment === 'positive' ? '#22c55e' :
              item.sentiment === 'negative' ? '#ef4444' : '#6b7280'
     }))
-
     // Generate escalation reasons data
     const escalationReasons = await prisma.escalation.groupBy({
       by: ['reason'],
@@ -331,9 +287,7 @@ export async function GET(request: NextRequest) {
       _count: { reason: true },
       orderBy: { _count: { reason: 'desc' } }
     })
-
     const totalEscalations = escalationReasons.reduce((sum, item) => sum + item._count.reason, 0)
-
     const escalationReasonsData: EscalationReasonData[] = escalationReasons.map(item => ({
       reason: item.reason,
       count: item._count.reason,
@@ -342,7 +296,6 @@ export async function GET(request: NextRequest) {
         : 0,
       trend: 'stable' // Would calculate trend based on previous period
     }))
-
     const analyticsData: SupportAnalyticsResponse = {
       totalTickets,
       activeTickets,
@@ -359,9 +312,7 @@ export async function GET(request: NextRequest) {
       sentimentAnalysis: sentimentData,
       escalationReasons: escalationReasonsData
     }
-
     return NextResponse.json(analyticsData)
-
   } catch (error) {
     console.error('Error fetching support analytics:', error)
     return NextResponse.json(
@@ -370,12 +321,10 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { action, data } = body
-
     switch (action) {
       case 'export':
         return await exportAnalyticsData(data)
@@ -390,19 +339,15 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 async function exportAnalyticsData(data: any) {
   try {
     const { timeRange = '7d', format = 'csv' } = data
-
     // Parse timeRange parameter
     const parseTimeRange = (range: string): number => {
       const match = range.match(/^(\d+)([dhm])$/)
       if (!match) return 7 * 24 * 60 * 60 * 1000 // default 7 days
-
       const value = parseInt(match[1], 10)
       const unit = match[2]
-
       switch (unit) {
         case 'd': return value * 24 * 60 * 60 * 1000
         case 'h': return value * 60 * 60 * 1000
@@ -410,10 +355,8 @@ async function exportAnalyticsData(data: any) {
         default: return 7 * 24 * 60 * 60 * 1000
       }
     }
-
     const offsetMs = parseTimeRange(timeRange)
     const gte = new Date(Date.now() - offsetMs)
-
     // Get analytics data (similar to GET but with more detail for export)
     const analytics = await prisma.supportTicket.findMany({
       where: {
@@ -425,7 +368,6 @@ async function exportAnalyticsData(data: any) {
         escalation: true
       }
     })
-
     // Generate CSV content
     const headers = [
       'ID',
@@ -443,25 +385,19 @@ async function exportAnalyticsData(data: any) {
       'Satisfação',
       'Tempo de Resposta (min)'
     ]
-
     // Helper to escape CSV content and prevent injection
     const escapeCsvCell = (value: any): string => {
       if (value == null || value === undefined) return ''
-
       let str = String(value)
-
       // CSV injection mitigation: prefix dangerous characters
       if (/^[=+\-@]/.test(str)) {
         str = "'" + str
       }
-
       // Escape internal double quotes by doubling them
       str = str.replace(/"/g, '""')
-
       // Wrap in quotes
       return `"${str}"`
     }
-
     const rows = analytics.map(ticket => [
       escapeCsvCell(ticket.id),
       escapeCsvCell(ticket.ticketNumber),
@@ -480,12 +416,10 @@ async function exportAnalyticsData(data: any) {
         ? Math.round((ticket.assignedAt.getTime() - ticket.createdAt.getTime()) / (1000 * 60)).toString()
         : '')
     ])
-
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.join(','))
     ].join('\n')
-
     // Return CSV as downloadable file
     return new NextResponse(csvContent, {
       headers: {
@@ -493,7 +427,6 @@ async function exportAnalyticsData(data: any) {
         'Content-Disposition': `attachment; filename="support-analytics-${new Date().toISOString().split('T')[0]}.csv"`
       }
     })
-
   } catch (error) {
     console.error('Error exporting analytics data:', error)
     return NextResponse.json(

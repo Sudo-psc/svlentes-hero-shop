@@ -1,46 +1,38 @@
 'use client'
-
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useToast } from '@/components/assinante/ToastFeedback'
-
 interface DashboardActionState {
   isLoading: boolean
   isUpdating: boolean
   errors: Record<string, string | null>
   lastUpdated: Date | null
 }
-
 export function useDashboardActions() {
   const router = useRouter()
   const { user: authUser } = useAuth()
   const { refetch } = useSubscription()
   const { success, error, warning } = useToast()
-
   const [state, setState] = useState<DashboardActionState>({
     isLoading: false,
     isUpdating: false,
     errors: {},
     lastUpdated: null
   })
-
   const setLoading = useCallback((loading: boolean) => {
     setState(prev => ({ ...prev, isLoading: loading }))
   }, [])
-
   const setError = useCallback((action: string, error: string | null) => {
     setState(prev => ({
       ...prev,
       errors: { ...prev.errors, [action]: error }
     }))
   }, [])
-
   const clearError = useCallback((action: string) => {
     setError(action, null)
   }, [setError])
-
   const executeAction = useCallback(async <T,>(
     actionName: string,
     actionFn: () => Promise<T>,
@@ -50,19 +42,15 @@ export function useDashboardActions() {
     try {
       setError(actionName, null)
       setState(prev => ({ ...prev, isUpdating: true }))
-
       const result = await actionFn()
-
       if (successMessage) {
         success(successMessage)
       }
-
       setState(prev => ({
         ...prev,
         isUpdating: false,
         lastUpdated: new Date()
       }))
-
       return result
     } catch (err) {
       const message = err instanceof Error ? err.message : (errorMessage || 'Ocorreu um erro')
@@ -72,7 +60,6 @@ export function useDashboardActions() {
       return null
     }
   }, [setError, success, error])
-
   // Plan Actions
   const handleChangePlan = useCallback(async (newPlanId: string) => {
     return executeAction(
@@ -86,12 +73,10 @@ export function useDashboardActions() {
           },
           body: JSON.stringify({ newPlanId })
         })
-
         if (!response.ok) {
           const error = await response.json()
           throw new Error(error.error || 'Erro ao alterar plano')
         }
-
         await refetch()
         return response.json()
       },
@@ -99,7 +84,6 @@ export function useDashboardActions() {
       'Não foi possível alterar seu plano no momento'
     )
   }, [executeAction, authUser?.uid, refetch])
-
   // Address Actions
   const handleUpdateAddress = useCallback(async (addressData: any) => {
     return executeAction(
@@ -113,12 +97,10 @@ export function useDashboardActions() {
           },
           body: JSON.stringify(addressData)
         })
-
         if (!response.ok) {
           const error = await response.json()
           throw new Error(error.error || 'Erro ao atualizar endereço')
         }
-
         await refetch()
         return response.json()
       },
@@ -126,7 +108,6 @@ export function useDashboardActions() {
       'Não foi possível atualizar seu endereço no momento'
     )
   }, [executeAction, authUser?.uid, refetch])
-
   // Payment Method Actions
   const handleUpdatePayment = useCallback(async (paymentData: any) => {
     return executeAction(
@@ -140,12 +121,10 @@ export function useDashboardActions() {
           },
           body: JSON.stringify(paymentData)
         })
-
         if (!response.ok) {
           const error = await response.json()
           throw new Error(error.error || 'Erro ao atualizar forma de pagamento')
         }
-
         await refetch()
         return response.json()
       },
@@ -153,7 +132,6 @@ export function useDashboardActions() {
       'Não foi possível atualizar sua forma de pagamento no momento'
     )
   }, [executeAction, authUser?.uid, refetch])
-
   // Reactivate Subscription
   const handleReactivate = useCallback(async () => {
     return executeAction(
@@ -166,12 +144,10 @@ export function useDashboardActions() {
             'x-user-id': authUser?.uid || ''
           }
         })
-
         if (!response.ok) {
           const error = await response.json()
           throw new Error(error.error || 'Erro ao reativar assinatura')
         }
-
         await refetch()
         return response.json()
       },
@@ -179,7 +155,6 @@ export function useDashboardActions() {
       'Não foi possível reativar sua assinatura no momento'
     )
   }, [executeAction, authUser?.uid, refetch])
-
   // Pause Subscription
   const handlePause = useCallback(async (duration: number = 30) => {
     return executeAction(
@@ -193,12 +168,10 @@ export function useDashboardActions() {
           },
           body: JSON.stringify({ duration })
         })
-
         if (!response.ok) {
           const error = await response.json()
           throw new Error(error.error || 'Erro ao pausar assinatura')
         }
-
         await refetch()
         return response.json()
       },
@@ -206,7 +179,6 @@ export function useDashboardActions() {
       'Não foi possível pausar sua assinatura no momento'
     )
   }, [executeAction, authUser?.uid, refetch])
-
   // Cancel Subscription
   const handleCancel = useCallback(async (reason?: string) => {
     return executeAction(
@@ -220,12 +192,10 @@ export function useDashboardActions() {
           },
           body: JSON.stringify({ reason })
         })
-
         if (!response.ok) {
           const error = await response.json()
           throw new Error(error.error || 'Erro ao cancelar assinatura')
         }
-
         await refetch()
         return response.json()
       },
@@ -233,30 +203,24 @@ export function useDashboardActions() {
       'Não foi possível cancelar sua assinatura no momento'
     )
   }, [executeAction, authUser?.uid, refetch])
-
   // Navigation Actions
   const navigateToOrders = useCallback(() => {
     // Open orders modal or navigate to orders page
     success('Abrindo histórico de pedidos...')
   }, [success])
-
   const navigateToInvoices = useCallback(() => {
     // Open invoices modal or navigate to invoices page
     success('Abrindo faturas...')
   }, [success])
-
   const navigateToSettings = useCallback(() => {
     router.push('/area-assinante/configuracoes')
   }, [router])
-
   const navigateToSchedule = useCallback(() => {
     router.push('/agendar-consulta')
   }, [router])
-
   const navigateToUpgrade = useCallback(() => {
     router.push('/assinar')
   }, [router])
-
   // Support Actions
   const contactSupport = useCallback((type: 'whatsapp' | 'phone' | 'email') => {
     switch (type) {
@@ -272,7 +236,6 @@ export function useDashboardActions() {
     }
     success('Canal de suporte aberto')
   }, [success])
-
   // Refresh Data
   const refreshData = useCallback(async () => {
     return executeAction(
@@ -285,11 +248,9 @@ export function useDashboardActions() {
       'Não foi possível atualizar os dados no momento'
     )
   }, [executeAction, refetch])
-
   // Error Recovery
   const retryAction = useCallback(async (actionName: string) => {
     clearError(actionName)
-
     switch (actionName) {
       case 'changePlan':
         warning('Por favor, selecione um novo plano para tentar novamente')
@@ -313,7 +274,6 @@ export function useDashboardActions() {
         await refreshData()
     }
   }, [clearError, handleReactivate, handlePause, refreshData, warning])
-
   return {
     // State
     state,
@@ -321,7 +281,6 @@ export function useDashboardActions() {
     isUpdating: state.isUpdating,
     errors: state.errors,
     lastUpdated: state.lastUpdated,
-
     // Actions
     actions: {
       changePlan: handleChangePlan,
@@ -333,7 +292,6 @@ export function useDashboardActions() {
       refresh: refreshData,
       retry: retryAction
     },
-
     // Navigation
     navigation: {
       orders: navigateToOrders,
@@ -342,16 +300,13 @@ export function useDashboardActions() {
       schedule: navigateToSchedule,
       upgrade: navigateToUpgrade
     },
-
     // Support
     support: {
       contact: contactSupport
     },
-
     // Utilities
     clearError,
     setLoading
   }
 }
-
 export type DashboardActions = ReturnType<typeof useDashboardActions>

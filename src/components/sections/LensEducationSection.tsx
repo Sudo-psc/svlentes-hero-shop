@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +13,6 @@ import {
     Heart,
     Droplets
 } from 'lucide-react'
-
 interface LensType {
     id: string
     name: string
@@ -24,7 +22,6 @@ interface LensType {
     replacementFrequency: string
     priceRange: string
 }
-
 interface CareTopic {
     id: string
     title: string
@@ -32,7 +29,6 @@ interface CareTopic {
     content: string[]
     tips: string[]
 }
-
 const lensTypes: LensType[] = [
     {
         id: 'soft-daily',
@@ -71,7 +67,6 @@ const lensTypes: LensType[] = [
         priceRange: 'R$ 200-350/mês'
     }
 ]
-
 const careTopics: CareTopic[] = [
     {
         id: 'hygiene',
@@ -122,13 +117,10 @@ const careTopics: CareTopic[] = [
         ]
     }
 ]
-
 export function LensEducationSection() {
     const [selectedLens, setSelectedLens] = useState<string>('soft-daily')
     const [expandedTopic, setExpandedTopic] = useState<string | null>(null)
-
     const selectedLensData = lensTypes.find(lens => lens.id === selectedLens)
-
     return (
         <section className="py-16 lg:py-24 bg-gradient-to-b from-white to-gray-50">
             <div className="container-custom">
@@ -145,13 +137,11 @@ export function LensEducationSection() {
                         ideal para seu estilo de vida com acompanhamento do Dr. Philipe Saraiva Cruz.
                     </p>
                 </div>
-
                 {/* Tipos de Lentes */}
                 <div className="mb-16">
                     <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
                         Tipos de Lentes de Contato
                     </h3>
-
                     {/* Lens Type Selector */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                         {lensTypes.map((lens) => (
@@ -175,7 +165,6 @@ export function LensEducationSection() {
                             </button>
                         ))}
                     </div>
-
                     {/* Selected Lens Details */}
                     {selectedLensData && (
                         <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
@@ -185,7 +174,6 @@ export function LensEducationSection() {
                                         {selectedLensData.name}
                                     </h4>
                                     <p className="text-gray-600 mb-6">{selectedLensData.description}</p>
-
                                     <div className="mb-6">
                                         <h5 className="font-semibold text-gray-900 mb-3">Benefícios Principais:</h5>
                                         <ul className="space-y-2">
@@ -197,7 +185,6 @@ export function LensEducationSection() {
                                             ))}
                                         </ul>
                                     </div>
-
                                     <div className="bg-primary-50 rounded-lg p-4">
                                         <div className="flex items-center mb-2">
                                             <Star className="w-5 h-5 text-primary-600 mr-2" />
@@ -206,7 +193,6 @@ export function LensEducationSection() {
                                         <p className="text-primary-700">{selectedLensData.bestFor}</p>
                                     </div>
                                 </div>
-
                                 <div>
                                     <div className="bg-gray-50 rounded-lg p-6 mb-6">
                                         <div className="flex items-center justify-between mb-4">
@@ -218,7 +204,6 @@ export function LensEducationSection() {
                                             <span className="font-semibold text-primary-600">{selectedLensData.priceRange}</span>
                                         </div>
                                     </div>
-
                                     <div className="text-center">
                                         <p className="text-sm text-gray-600 mb-4">
                                             Precisa de ajuda para escolher? Fale com nosso especialista.
@@ -232,13 +217,11 @@ export function LensEducationSection() {
                         </div>
                     )}
                 </div>
-
                 {/* Cuidados Essenciais */}
                 <div className="mb-16">
                     <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
                         Cuidados Essenciais com Lentes
                     </h3>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {careTopics.map((topic) => (
                             <div
@@ -252,7 +235,6 @@ export function LensEducationSection() {
                                         </div>
                                         <h4 className="text-lg font-semibold text-gray-900">{topic.title}</h4>
                                     </div>
-
                                     <div className="space-y-3 mb-4">
                                         {topic.content.slice(0, 2).map((item, index) => (
                                             <div key={index} className="flex items-start">
@@ -261,7 +243,6 @@ export function LensEducationSection() {
                                             </div>
                                         ))}
                                     </div>
-
                                     <button
                                         onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
                                         className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center"
@@ -271,7 +252,6 @@ export function LensEducationSection() {
                                             }`} />
                                     </button>
                                 </div>
-
                                 {expandedTopic === topic.id && (
                                     <div className="px-6 pb-6 bg-gray-50 border-t border-gray-200">
                                         <h5 className="font-semibold text-gray-900 mb-3">Dicas Adicionais:</h5>
@@ -289,7 +269,6 @@ export function LensEducationSection() {
                         ))}
                     </div>
                 </div>
-
                 {/* Internal Links */}
                 <div className="text-center">
                     <div className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl p-8 border border-primary-200">

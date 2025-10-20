@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
 import { PrivacyPolicy } from '@/components/privacy/PrivacyPolicy';
-
 export const metadata: Metadata = {
     title: 'Política de Privacidade | SV Lentes - Assinatura de Lentes',
     description: 'Política de privacidade da SV Lentes em conformidade com a LGPD. Saiba como protegemos seus dados pessoais.',
     robots: 'index, follow',
 };
-
 export default function PrivacyPolicyPage() {
     return (
         <div className="min-h-screen bg-gray-50 py-12">
@@ -16,12 +14,10 @@ export default function PrivacyPolicyPage() {
                         <h1 className="text-3xl font-bold text-gray-900 mb-6">
                             Política de Privacidade
                         </h1>
-
                         <div className="prose max-w-none">
                             <p className="text-sm text-gray-600 mb-8">
                                 Última atualização: {new Date().toLocaleDateString('pt-BR')}
                             </p>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">1. Informações Gerais</h2>
                                 <p className="mb-4">
@@ -30,7 +26,6 @@ export default function PrivacyPolicyPage() {
                                     de nossos usuários, em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018).
                                 </p>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">2. Dados Coletados</h2>
                                 <p className="mb-4">Coletamos os seguintes tipos de dados:</p>
@@ -42,7 +37,6 @@ export default function PrivacyPolicyPage() {
                                     <li><strong>Dados de Pagamento:</strong> Informações processadas pelo Stripe (não armazenamos dados de cartão)</li>
                                 </ul>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">3. Finalidades do Tratamento</h2>
                                 <p className="mb-4">Utilizamos seus dados para:</p>
@@ -55,7 +49,6 @@ export default function PrivacyPolicyPage() {
                                     <li>Cumprimento de obrigações legais e regulatórias</li>
                                 </ul>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">4. Base Legal</h2>
                                 <p className="mb-4">O tratamento dos seus dados é baseado em:</p>
@@ -66,7 +59,6 @@ export default function PrivacyPolicyPage() {
                                     <li><strong>Cumprimento legal:</strong> Para atender obrigações médicas e fiscais</li>
                                 </ul>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">5. Compartilhamento de Dados</h2>
                                 <p className="mb-4">Seus dados podem ser compartilhados com:</p>
@@ -77,7 +69,6 @@ export default function PrivacyPolicyPage() {
                                 </ul>
                                 <p>Não vendemos ou alugamos seus dados pessoais para terceiros.</p>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">6. Seus Direitos</h2>
                                 <p className="mb-4">Você tem direito a:</p>
@@ -91,7 +82,6 @@ export default function PrivacyPolicyPage() {
                                     <li>Revogação do consentimento</li>
                                 </ul>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">7. Cookies</h2>
                                 <p className="mb-4">
@@ -99,7 +89,6 @@ export default function PrivacyPolicyPage() {
                                     preferências através do banner de cookies ou nas configurações do seu navegador.
                                 </p>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">8. Segurança</h2>
                                 <p className="mb-4">
@@ -107,7 +96,6 @@ export default function PrivacyPolicyPage() {
                                     seus dados contra acesso não autorizado, alteração, divulgação ou destruição.
                                 </p>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">9. Retenção de Dados</h2>
                                 <p className="mb-4">
@@ -116,7 +104,6 @@ export default function PrivacyPolicyPage() {
                                     do Conselho Federal de Medicina.
                                 </p>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">10. Contato</h2>
                                 <p className="mb-4">
@@ -128,7 +115,6 @@ export default function PrivacyPolicyPage() {
                                     <li><strong>Responsável:</strong> Dr. Philipe Saraiva Cruz (CRM 69.870)</li>
                                 </ul>
                             </section>
-
                             <section className="mb-8">
                                 <h2 className="text-xl font-semibold mb-4">11. Alterações</h2>
                                 <p className="mb-4">

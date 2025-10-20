@@ -1,28 +1,23 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { Calculator, TrendingDown, Save, ArrowRight, Activity, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { calculateEconomy, formatCurrency } from '@/lib/calculator'
 import { usagePatterns, lensTypes, planPrices } from '@/data/calculator-data'
 import { CalculatorInput, CalculatorResult } from '@/types'
-
 interface ImprovedCalculatorProps {
     onSaveResult?: (result: CalculatorResult) => void
 }
-
 export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
     const [lensType, setLensType] = useState<'daily' | 'weekly' | 'monthly'>('monthly')
     const [usagePattern, setUsagePattern] = useState<'occasional' | 'regular' | 'daily'>('regular')
     const [annualContactLensCost, setAnnualContactLensCost] = useState<number>(1200)
     const [annualConsultationCost, setAnnualConsultationCost] = useState<number>(400)
     const [result, setResult] = useState<CalculatorResult | null>(null)
-
     // Calcular automaticamente quando mudar qualquer valor
     useEffect(() => {
         calculateResults()
     }, [lensType, usagePattern, annualContactLensCost, annualConsultationCost])
-
     const calculateResults = () => {
         const input: CalculatorInput = {
             lensType,
@@ -30,7 +25,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
             annualContactLensCost,
             annualConsultationCost
         }
-
         try {
             const calculationResult = calculateEconomy(input)
             setResult(calculationResult)
@@ -38,13 +32,11 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
             console.error('Erro ao calcular economia:', error)
         }
     }
-
     const handleSaveResult = () => {
         if (result && onSaveResult) {
             onSaveResult(result)
         }
     }
-
     return (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
             {/* Header */}
@@ -59,7 +51,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                     </div>
                 </div>
             </div>
-
             <div className="p-6 space-y-6">
                 {/* Usage Pattern Selection */}
                 <div>
@@ -87,7 +78,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                         ))}
                     </div>
                 </div>
-
                 {/* Lens Type Selection */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-900 mb-3">
@@ -127,7 +117,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                         ))}
                     </div>
                 </div>
-
                 {/* Annual Costs Input */}
                 <div className="grid md:grid-cols-2 gap-6">
                     {/* Contact Lens Annual Cost */}
@@ -159,7 +148,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                             Valor estimado: ~{formatCurrency(annualContactLensCost / 12)}/mês
                         </p>
                     </div>
-
                     {/* Consultation Annual Cost */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-3">
@@ -190,7 +178,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                         </p>
                     </div>
                 </div>
-
                 {/* Results */}
                 {result && result.totalAnnualSavings && result.totalAnnualSavings > 0 && (
                     <div className="space-y-6">
@@ -217,7 +204,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                                     </div>
                                 </div>
                             </div>
-
                             {/* Lens Only Savings */}
                             <div className="bg-white/60 rounded-lg p-4 mb-4">
                                 <div className="flex justify-between items-center">
@@ -227,7 +213,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                                     </span>
                                 </div>
                             </div>
-
                             {/* Consultations Included */}
                             <div className="bg-white/60 rounded-lg p-4">
                                 <div className="flex justify-between items-center">
@@ -238,13 +223,11 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                                 </div>
                             </div>
                         </div>
-
                         {/* Detailed Comparison */}
                         <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
                                 Comparação Detalhada
                             </h3>
-
                             <div className="space-y-4">
                                 {/* Current Costs */}
                                 <div className="bg-white rounded-lg p-4 border border-gray-200">
@@ -268,7 +251,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                                         </div>
                                     </div>
                                 </div>
-
                                 {/* SV Lentes Costs */}
                                 <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
                                     <h4 className="font-medium text-primary-900 mb-3">
@@ -303,7 +285,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                                 </div>
                             </div>
                         </div>
-
                         {/* Benefits */}
                         <div className="bg-primary-50 rounded-xl p-4 border border-primary-200">
                             <h4 className="font-medium text-primary-900 mb-2">Benefícios Adicionais</h4>
@@ -314,7 +295,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                                 <li>✓ Agendamento facilitado de consultas</li>
                             </ul>
                         </div>
-
                         {/* CTA */}
                         <div className="space-y-3">
                             <Button
@@ -331,7 +311,6 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
                         </div>
                     </div>
                 )}
-
                 {result && result.totalAnnualSavings && result.totalAnnualSavings <= 0 && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <p className="text-sm text-yellow-800">

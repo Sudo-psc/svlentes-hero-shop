@@ -1,9 +1,7 @@
 'use client'
-
 import React, { useMemo, useRef } from 'react'
 import { useIntersectionObserver } from '@/lib/performance'
 import { SectionSkeleton } from '@/components/ui/SectionSkeleton'
-
 interface LazySectionProps {
     children: React.ReactNode
     fallback?: React.ReactNode
@@ -12,7 +10,6 @@ interface LazySectionProps {
     rootMargin?: string
     id?: string
 }
-
 export function LazySection({
     children,
     fallback = <SectionSkeleton />,
@@ -27,7 +24,6 @@ export function LazySection({
         [threshold, rootMargin]
     )
     const { hasIntersected } = useIntersectionObserver(ref, observerOptions)
-
     return (
         <div ref={ref} className={className} id={id}>
             {hasIntersected ? <>{children}</> : fallback}

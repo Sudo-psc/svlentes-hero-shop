@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -29,7 +28,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useAdminAuth } from '@/components/admin/providers/AdminAuthProvider'
 import { cn } from '@/lib/utils'
-
 interface Ticket {
   id: string
   customerId: string
@@ -50,7 +48,6 @@ interface Ticket {
   resolutionTime?: number
   tags: string[]
 }
-
 interface Message {
   id: string
   ticketId: string
@@ -66,7 +63,6 @@ interface Message {
     attachments?: string[]
   }
 }
-
 interface Agent {
   id: string
   name: string
@@ -77,7 +73,6 @@ interface Agent {
   averageResponseTime: number
   satisfaction: number
 }
-
 const mockTickets: Ticket[] = [
   {
     id: '1',
@@ -205,7 +200,6 @@ const mockTickets: Ticket[] = [
     ]
   }
 ]
-
 const mockAgents: Agent[] = [
   {
     id: 'agent1',
@@ -235,7 +229,6 @@ const mockAgents: Agent[] = [
     satisfaction: 4.5
   }
 ]
-
 export default function SupportDashboard() {
   const { hasPermission } = useAdminAuth()
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets)
@@ -247,7 +240,6 @@ export default function SupportDashboard() {
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
   const [newMessage, setNewMessage] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-
   // Verificação de permissão
   if (!hasPermission('VIEW_SUPPORT')) {
     return (
@@ -262,20 +254,16 @@ export default function SupportDashboard() {
       </div>
     )
   }
-
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch =
       ticket.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.customerEmail.toLowerCase().includes(searchQuery.toLowerCase())
-
     const matchesStatus = selectedStatus === 'all' || ticket.status === selectedStatus
     const matchesCategory = selectedCategory === 'all' || ticket.category === selectedCategory
     const matchesPriority = selectedPriority === 'all' || ticket.priority === selectedPriority
-
     return matchesSearch && matchesStatus && matchesCategory && matchesPriority
   })
-
   const getStatusColor = (status: Ticket['status']) => {
     switch (status) {
       case 'open': return 'bg-blue-100 text-blue-800 border-blue-200'
@@ -285,7 +273,6 @@ export default function SupportDashboard() {
       case 'closed': return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
-
   const getPriorityColor = (priority: Ticket['priority']) => {
     switch (priority) {
       case 'urgent': return 'bg-red-100 text-red-800 border-red-200'
@@ -294,7 +281,6 @@ export default function SupportDashboard() {
       case 'low': return 'bg-blue-100 text-blue-800 border-blue-200'
     }
   }
-
   const getCategoryIcon = (category: Ticket['category']) => {
     switch (category) {
       case 'technical': return <MessageCircle className="h-4 w-4" />
@@ -304,7 +290,6 @@ export default function SupportDashboard() {
       case 'general': return <MessageCircle className="h-4 w-4" />
     }
   }
-
   const getAgentStatusColor = (status: Agent['status']) => {
     switch (status) {
       case 'online': return 'bg-green-500'
@@ -312,7 +297,6 @@ export default function SupportDashboard() {
       case 'offline': return 'bg-gray-400'
     }
   }
-
   const getStatusText = (status: Ticket['status']) => {
     switch (status) {
       case 'open': return 'Aberto'
@@ -322,7 +306,6 @@ export default function SupportDashboard() {
       case 'closed': return 'Fechado'
     }
   }
-
   const getPriorityText = (priority: Ticket['priority']) => {
     switch (priority) {
       case 'urgent': return 'Urgente'
@@ -331,21 +314,17 @@ export default function SupportDashboard() {
       case 'low': return 'Baixa'
     }
   }
-
   const getTimeSinceLastMessage = (date: Date) => {
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffDays = Math.floor(diffHours / 24)
-
     if (diffDays > 0) return `${diffDays}d atrás`
     if (diffHours > 0) return `${diffHours}h atrás`
     return 'Agora'
   }
-
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedTicket) return
-
     const newMsg: Message = {
       id: Date.now().toString(),
       ticketId: selectedTicket.id,
@@ -357,7 +336,6 @@ export default function SupportDashboard() {
       timestamp: new Date(),
       isRead: true
     }
-
     setTickets(prev => prev.map(ticket =>
       ticket.id === selectedTicket.id
         ? {
@@ -368,16 +346,13 @@ export default function SupportDashboard() {
           }
         : ticket
     ))
-
     setNewMessage('')
   }
-
   const handleWhatsAppIntegration = (ticket: Ticket) => {
     if (ticket.whatsappConversationId) {
       window.open(`https://web.whatsapp.com/`, '_blank')
     }
   }
-
   const stats = {
     total: tickets.length,
     open: tickets.filter(t => t.status === 'open').length,
@@ -386,7 +361,6 @@ export default function SupportDashboard() {
     averageResponseTime: 15, // minutes
     satisfaction: 4.6
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -397,7 +371,6 @@ export default function SupportDashboard() {
             Gerencie tickets de suporte e integração com WhatsApp
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -407,19 +380,16 @@ export default function SupportDashboard() {
             <Filter className="h-4 w-4 mr-2" />
             Filtros
           </Button>
-
           <Button variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
-
           <Button size="sm">
             <MessageCircle className="h-4 w-4 mr-2" />
             Novo Ticket
           </Button>
         </div>
       </div>
-
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5">
         <div className="bg-card border rounded-lg p-4">
@@ -431,7 +401,6 @@ export default function SupportDashboard() {
             <Headphones className="h-8 w-8 text-blue-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -441,7 +410,6 @@ export default function SupportDashboard() {
             <MessageCircle className="h-8 w-8 text-blue-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -451,7 +419,6 @@ export default function SupportDashboard() {
             <Clock className="h-8 w-8 text-yellow-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -461,7 +428,6 @@ export default function SupportDashboard() {
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
         </div>
-
         <div className="bg-card border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -472,7 +438,6 @@ export default function SupportDashboard() {
           </div>
         </div>
       </div>
-
       {/* Filtros */}
       {showFilters && (
         <motion.div
@@ -494,7 +459,6 @@ export default function SupportDashboard() {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Status</label>
               <select
@@ -510,7 +474,6 @@ export default function SupportDashboard() {
                 <option value="closed">Fechados</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Categoria</label>
               <select
@@ -526,7 +489,6 @@ export default function SupportDashboard() {
                 <option value="general">Geral</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Prioridade</label>
               <select
@@ -541,7 +503,6 @@ export default function SupportDashboard() {
                 <option value="low">Baixa</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Agentes Online</label>
               <div className="space-y-1">
@@ -557,7 +518,6 @@ export default function SupportDashboard() {
           </div>
         </motion.div>
       )}
-
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Lista de Tickets */}
         <div className="lg:col-span-1">
@@ -565,7 +525,6 @@ export default function SupportDashboard() {
             <div className="p-4 border-b">
               <h3 className="font-medium">Tickets ({filteredTickets.length})</h3>
             </div>
-
             <div className="divide-y max-h-[600px] overflow-y-auto">
               {filteredTickets.map((ticket, index) => (
                 <motion.div
@@ -584,25 +543,21 @@ export default function SupportDashboard() {
                       <h4 className="font-medium text-sm truncate">{ticket.subject}</h4>
                       <p className="text-xs text-gray-600 truncate">{ticket.customerName}</p>
                     </div>
-
                     <div className="flex flex-col gap-1">
                       <Badge className={cn("text-xs", getPriorityColor(ticket.priority))}>
                         {getPriorityText(ticket.priority)}
                       </Badge>
                     </div>
                   </div>
-
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
                       {getCategoryIcon(ticket.category)}
                       <span className="text-gray-600">{getTimeSinceLastMessage(ticket.lastMessageAt)}</span>
                     </div>
-
                     <Badge className={cn("text-xs", getStatusColor(ticket.status))}>
                       {getStatusText(ticket.status)}
                     </Badge>
                   </div>
-
                   {ticket.whatsappConversationId && (
                     <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
                       <MessageCircle className="h-3 w-3" />
@@ -612,7 +567,6 @@ export default function SupportDashboard() {
                 </motion.div>
               ))}
             </div>
-
             {filteredTickets.length === 0 && (
               <div className="p-8 text-center">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -621,7 +575,6 @@ export default function SupportDashboard() {
             )}
           </div>
         </div>
-
         {/* Detalhes do Ticket */}
         <div className="lg:col-span-2">
           {selectedTicket ? (
@@ -635,7 +588,6 @@ export default function SupportDashboard() {
                       #{selectedTicket.id} • {selectedTicket.customerName}
                     </p>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -645,33 +597,27 @@ export default function SupportDashboard() {
                       <MessageCircle className="h-4 w-4 mr-1" />
                       WhatsApp
                     </Button>
-
                     <Button variant="ghost" size="sm">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3 text-sm">
                   <Badge className={cn("text-xs", getPriorityColor(selectedTicket.priority))}>
                     {getPriorityText(selectedTicket.priority)}
                   </Badge>
-
                   <Badge className={cn("text-xs", getStatusColor(selectedTicket.status))}>
                     {getStatusText(selectedTicket.status)}
                   </Badge>
-
                   <span className="text-gray-500">
                     Criado: {selectedTicket.createdAt.toLocaleDateString('pt-BR')}
                   </span>
-
                   {selectedTicket.assignedTo && (
                     <span className="text-gray-500">
                       Agente: {agents.find(a => a.id === selectedTicket.assignedTo)?.name}
                     </span>
                   )}
                 </div>
-
                 {selectedTicket.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {selectedTicket.tags.map((tag, index) => (
@@ -682,7 +628,6 @@ export default function SupportDashboard() {
                   </div>
                 )}
               </div>
-
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {selectedTicket.messages.map((message, index) => (
@@ -710,9 +655,7 @@ export default function SupportDashboard() {
                           })}
                         </span>
                       </div>
-
                       <p className="text-sm">{message.content}</p>
-
                       {message.metadata?.attachments && (
                         <div className="mt-2">
                           <Button variant="ghost" size="sm" className="text-xs">
@@ -725,14 +668,12 @@ export default function SupportDashboard() {
                   </div>
                 ))}
               </div>
-
               {/* Message Input */}
               <div className="p-4 border-t">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm">
                     <Paperclip className="h-4 w-4" />
                   </Button>
-
                   <Input
                     placeholder="Digite sua resposta..."
                     value={newMessage}
@@ -740,16 +681,13 @@ export default function SupportDashboard() {
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     className="flex-1"
                   />
-
                   <Button variant="ghost" size="sm">
                     <Smile className="h-4 w-4" />
                   </Button>
-
                   <Button size="sm" onClick={handleSendMessage}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
-
                 <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                   <span>WhatsApp: {selectedTicket.whatsappConversationId ? 'Conectado' : 'Não conectado'}</span>
                   <span>•</span>

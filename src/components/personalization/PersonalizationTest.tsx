@@ -1,10 +1,8 @@
 'use client'
-
 import React, { useEffect, useState } from 'react'
 import { usePersonalization } from '@/hooks/usePersonalization'
 import { PersonaAnalyzer } from '@/lib/personalization/persona-analyzer'
 import { PersonalizationEngine } from '@/lib/personalization/personalization-engine'
-
 export function PersonalizationTest() {
     const {
         profile,
@@ -30,11 +28,9 @@ export function PersonalizationTest() {
             consentRequired: false
         }
     })
-
     const [analytics, setAnalytics] = useState<any>(null)
     const [debugData, setDebugData] = useState<any>(null)
     const [testResults, setTestResults] = useState<string[]>([])
-
     // Coletar analytics e debug info
     useEffect(() => {
         if (isInitialized) {
@@ -42,7 +38,6 @@ export function PersonalizationTest() {
             debugInfo().then(setDebugData)
         }
     }, [isInitialized, getAnalytics, debugInfo])
-
     // Testar funcionalidades
     useEffect(() => {
         if (isPersonaDetected && persona) {
@@ -58,7 +53,6 @@ export function PersonalizationTest() {
             setTestResults(tests)
         }
     }, [isPersonaDetected, persona, confidence, profile, variations, recommendations])
-
     // Testar tracking de comportamento
     const handleTestClick = () => {
         trackBehavior({
@@ -70,7 +64,6 @@ export function PersonalizationTest() {
             }
         })
     }
-
     // Testar conversão
     const handleTestConversion = () => {
         trackConversion({
@@ -79,7 +72,6 @@ export function PersonalizationTest() {
             currency: 'BRL'
         })
     }
-
     // Testar atualização manual
     const handleManualUpdate = async () => {
         try {
@@ -91,21 +83,18 @@ export function PersonalizationTest() {
                 updateInterval: 60000,
                 consentRequired: false
             })
-
             await engine.updateProfile({
                 deviceInfo: undefined,
                 pageAnalysis: undefined,
                 trafficSource: undefined,
                 temporalData: undefined
             })
-
             const newProfile = await engine.getAnalytics()
             setTestResults(prev => [...prev, `✅ Atualização manual: ${JSON.stringify(newProfile)}`])
         } catch (error) {
             setTestResults(prev => [...prev, `❌ Erro na atualização: ${error}`])
         }
     }
-
     if (error) {
         return (
             <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
@@ -114,7 +103,6 @@ export function PersonalizationTest() {
             </div>
         )
     }
-
     if (isLoading) {
         return (
             <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
@@ -124,11 +112,9 @@ export function PersonalizationTest() {
             </div>
         )
     }
-
     return (
         <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">🧪 Teste do Sistema de Personalização</h2>
-
             {/* Status do Sistema */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-700 mb-3">📊 Status do Sistema</h3>
@@ -147,7 +133,6 @@ export function PersonalizationTest() {
                     </div>
                 </div>
             </div>
-
             {/* Informações da Persona */}
             {persona && (
                 <div className="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -172,7 +157,6 @@ export function PersonalizationTest() {
                     </div>
                 </div>
             )}
-
             {/* Variações de Conteúdo */}
             {variations && (
                 <div className="mb-6 p-4 bg-green-50 rounded-lg">
@@ -197,7 +181,6 @@ export function PersonalizationTest() {
                     </div>
                 </div>
             )}
-
             {/* Testes Realizados */}
             {testResults.length > 0 && (
                 <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
@@ -209,7 +192,6 @@ export function PersonalizationTest() {
                     </ul>
                 </div>
             )}
-
             {/* Botões de Teste */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-semibold text-gray-700 mb-3">🧪 Botões de Teste</h3>
@@ -234,7 +216,6 @@ export function PersonalizationTest() {
                     </button>
                 </div>
             </div>
-
             {/* Analytics */}
             {analytics && (
                 <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
@@ -259,7 +240,6 @@ export function PersonalizationTest() {
                     </div>
                 </div>
             )}
-
             {/* Debug Info */}
             {debugData && (
                 <div className="mb-6 p-4 bg-gray-100 rounded-lg">
@@ -274,7 +254,6 @@ export function PersonalizationTest() {
                     </details>
                 </div>
             )}
-
             {/* Perfil Completo */}
             {profile && (
                 <div className="mb-6 p-4 bg-gray-100 rounded-lg">
@@ -289,7 +268,6 @@ export function PersonalizationTest() {
                     </details>
                 </div>
             )}
-
             {/* Status Final */}
             <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-gray-200">
                 <div className="text-center">
@@ -306,5 +284,4 @@ export function PersonalizationTest() {
         </div>
     )
 }
-
 export default PersonalizationTest

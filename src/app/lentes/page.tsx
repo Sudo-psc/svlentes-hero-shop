@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-
 // URL de destino para redirecionamento
 const REDIRECT_URL = 'https://saraivavision.com.br/lentes'
-
 // Configuração do metadata para SEO
 export const metadata: Metadata = {
   title: 'Redirecionando para SV Lentes | Saraiva Vision',
@@ -24,7 +22,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 }
-
 /**
  * Página de redirecionamento para https://saraivavision.com.br/lentes
  *

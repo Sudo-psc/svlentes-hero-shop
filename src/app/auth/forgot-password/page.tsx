@@ -1,29 +1,24 @@
 'use client'
-
 import { useState } from 'react'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-
 export default function ForgotPasswordPage() {
   const { sendPasswordReset } = useAuth()
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
     try {
       await sendPasswordReset(email)
       setSuccess(true)
     } catch (error: any) {
       console.error('[FORGOT-PASSWORD] Firebase error:', error)
-
       // Mapear erros do Firebase
       switch (error.code) {
         case 'auth/invalid-email':
@@ -39,7 +34,6 @@ export default function ForgotPasswordPage() {
       setIsLoading(false)
     }
   }
-
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
@@ -47,7 +41,6 @@ export default function ForgotPasswordPage() {
           <div className="flex justify-center mb-8">
             <Logo />
           </div>
-
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg
@@ -64,16 +57,13 @@ export default function ForgotPasswordPage() {
                 />
               </svg>
             </div>
-
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Email Enviado!
             </h2>
-
             <p className="text-gray-600 mb-6">
               Se o email <strong>{email}</strong> estiver cadastrado, você receberá
               instruções para redefinir sua senha.
             </p>
-
             <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-700">
                 <strong>Verifique sua caixa de entrada</strong> e também a pasta de
@@ -81,14 +71,12 @@ export default function ForgotPasswordPage() {
                 <strong>1 hora</strong>.
               </p>
             </div>
-
             <Link href="/area-assinante/login">
               <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
                 Voltar para Login
               </Button>
             </Link>
           </div>
-
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-600 mb-2">Não recebeu o email?</p>
@@ -103,7 +91,6 @@ export default function ForgotPasswordPage() {
       </div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
@@ -111,7 +98,6 @@ export default function ForgotPasswordPage() {
         <div className="flex justify-center mb-8">
           <Logo />
         </div>
-
         {/* Título */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -122,7 +108,6 @@ export default function ForgotPasswordPage() {
             redefinir sua senha.
           </p>
         </div>
-
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
@@ -130,7 +115,6 @@ export default function ForgotPasswordPage() {
               {error}
             </div>
           )}
-
           <div>
             <label
               htmlFor="email"
@@ -149,7 +133,6 @@ export default function ForgotPasswordPage() {
               disabled={isLoading}
             />
           </div>
-
           <Button
             type="submit"
             className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3"
@@ -158,7 +141,6 @@ export default function ForgotPasswordPage() {
             {isLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
           </Button>
         </form>
-
         {/* Links */}
         <div className="mt-6 text-center space-y-3">
           <Link
@@ -177,7 +159,6 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
         </div>
-
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600 mb-2">Precisa de ajuda?</p>

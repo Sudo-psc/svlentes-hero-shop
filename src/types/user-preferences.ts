@@ -1,5 +1,4 @@
 export type NotificationChannel = 'EMAIL' | 'WHATSAPP' | 'BOTH'
-
 export interface UserNotificationPreferences {
   channel: NotificationChannel
   subscriptionReminders: boolean
@@ -7,13 +6,11 @@ export interface UserNotificationPreferences {
   appointmentReminders: boolean
   marketingMessages: boolean
 }
-
 export interface UserPreferences {
   notifications: UserNotificationPreferences
   phone?: string
   phoneVerified?: boolean
 }
-
 export const defaultNotificationPreferences: UserNotificationPreferences = {
   channel: 'EMAIL',
   subscriptionReminders: true,

@@ -1,12 +1,10 @@
 'use client';
-
 import React from 'react';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
 export interface PricingCardProps {
   id: string;
   name: string;
@@ -21,7 +19,6 @@ export interface PricingCardProps {
   onAssinar?: () => void;
   className?: string;
 }
-
 export const PricingCard: React.FC<PricingCardProps> = ({
   id,
   name,
@@ -44,12 +41,10 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       maximumFractionDigits: 2,
     }).format(value);
   };
-
   // Calculate padding-top based on number of badges
   const hasBadges = !!(badge || popularBadge);
   const hasBothBadges = !!(badge && popularBadge);
   const headerPaddingClass = hasBothBadges ? 'pt-16' : hasBadges ? 'pt-12' : 'pt-8';
-
   return (
     <Card
       className={cn(
@@ -82,7 +77,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           </Badge>
         )}
       </div>
-
       <CardHeader className={cn("text-center pb-4", headerPaddingClass)}>
         <CardTitle className="text-2xl font-bold text-silver-900">
           {name}
@@ -91,7 +85,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           {description}
         </CardDescription>
       </CardHeader>
-
       <CardContent className="flex-1 space-y-6">
         {/* Pricing */}
         <div className="text-center space-y-1">
@@ -118,7 +111,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           )}
           <p className="text-sm text-silver-500">ou à vista com desconto</p>
         </div>
-
         {/* Features List */}
         <ul className="space-y-3">
           {features.map((feature, index) => (
@@ -139,7 +131,6 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           ))}
         </ul>
       </CardContent>
-
       <CardFooter className="flex flex-col gap-3 pt-6">
         <Button
           variant={highlighted ? "default" : "outline"}
@@ -164,5 +155,4 @@ export const PricingCard: React.FC<PricingCardProps> = ({
     </Card>
   );
 };
-
 export default PricingCard;

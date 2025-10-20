@@ -2,13 +2,11 @@
  * LangSmith Logs API
  * Provides access to LangChain traces and logs for administrative viewing
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { getLangSmithConfig, isLangSmithConfigured } from '@/lib/langsmith-config'
 import { botMemory } from '@/lib/langchain-memory'
 import { simpleLangChainProcessor } from '@/lib/simple-langchain-processor'
 import { logger, LogCategory } from '@/lib/logger'
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -16,7 +14,6 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
     const level = searchParams.get('level') || 'all'
     const category = searchParams.get('category') || 'all'
-
     logger.info(LogCategory.ADMIN, 'LangSmith logs requested', {
       limit,
       offset,
@@ -24,11 +21,9 @@ export async function GET(request: NextRequest) {
       category,
       ip: request.headers.get('x-forwarded-for') || 'unknown'
     })
-
     // Get LangSmith configuration
     const config = getLangSmithConfig()
     const isConfigured = isLangSmithConfigured()
-
     if (!isConfigured) {
       return NextResponse.json({
         success: false,
@@ -40,10 +35,8 @@ export async function GET(request: NextRequest) {
         }
       })
     }
-
     // Get logs from multiple sources
     const logs = await getLogsFromMultipleSources(limit, offset, level, category)
-
     return NextResponse.json({
       success: true,
       data: {
@@ -65,13 +58,11 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-
   } catch (error) {
     logger.error(LogCategory.ADMIN, 'Error retrieving LangSmith logs', {
       error: error instanceof Error ? error.message : 'Unknown',
       stack: error instanceof Error ? error.stack : undefined
     })
-
     return NextResponse.json(
       {
         success: false,
@@ -82,7 +73,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 /**
  * Get logs from multiple sources (memory, processor, system logs)
  */
@@ -99,7 +89,6 @@ async function getLogsFromMultipleSources(
 }> {
   const allLogs: any[] = []
   const sources: string[] = []
-
   try {
     // Source 1: Memory system logs
     const memoryLogs = await getMemorySystemLogs()
@@ -107,24 +96,20 @@ async function getLogsFromMultipleSources(
       allLogs.push(...memoryLogs)
       sources.push('memory')
     }
-
     // Source 2: Processor logs
     const processorLogs = await getProcessorLogs()
     if (processorLogs.length > 0) {
       allLogs.push(...processorLogs)
       sources.push('processor')
     }
-
     // Source 3: Application logs (mock for now)
     const applicationLogs = await getApplicationLogs()
     if (applicationLogs.length > 0) {
       allLogs.push(...applicationLogs)
       sources.push('application')
     }
-
     // Sort by timestamp (newest first)
     allLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
     // Apply filters
     const filteredLogs = allLogs.filter(log => {
       if (level !== 'all' && log.level !== level.toUpperCase()) {
@@ -135,17 +120,14 @@ async function getLogsFromMultipleSources(
       }
       return true
     })
-
     // Apply pagination
     const paginatedLogs = filteredLogs.slice(offset, offset + limit)
-
     return {
       entries: paginatedLogs,
       total: allLogs.length,
       filtered: filteredLogs.length,
       sources
     }
-
   } catch (error) {
     logger.error(LogCategory.ADMIN, 'Error getting logs from sources', {
       error: error instanceof Error ? error.message : 'Unknown'
@@ -158,7 +140,6 @@ async function getLogsFromMultipleSources(
     }
   }
 }
-
 /**
  * Get logs from memory system
  */
@@ -166,7 +147,6 @@ async function getMemorySystemLogs(): Promise<any[]> {
   try {
     const stats = await botMemory.getStats()
     const logs = []
-
     if (stats.totalInteractions > 0) {
       logs.push({
         id: `memory_${Date.now()}_interactions`,
@@ -185,7 +165,6 @@ async function getMemorySystemLogs(): Promise<any[]> {
         traceId: null
       })
     }
-
     if (stats.cachedSummaries > 0) {
       logs.push({
         id: `memory_${Date.now()}_summaries`,
@@ -201,13 +180,11 @@ async function getMemorySystemLogs(): Promise<any[]> {
         traceId: null
       })
     }
-
     return logs
   } catch (error) {
     return []
   }
 }
-
 /**
  * Get logs from processor system
  */
@@ -215,7 +192,6 @@ async function getProcessorLogs(): Promise<any[]> {
   try {
     const stats = await simpleLangChainProcessor.getStats()
     const logs = []
-
     logs.push({
       id: `processor_${Date.now()}_status`,
       timestamp: new Date().toISOString(),
@@ -233,19 +209,16 @@ async function getProcessorLogs(): Promise<any[]> {
       source: 'processor',
       traceId: null
     })
-
     return logs
   } catch (error) {
     return []
   }
 }
-
 /**
  * Get application logs (mock implementation)
  */
 async function getApplicationLogs(): Promise<any[]> {
   const logs = []
-
   // Mock recent application logs based on current system state
   logs.push({
     id: `app_${Date.now()}_startup`,
@@ -261,7 +234,6 @@ async function getApplicationLogs(): Promise<any[]> {
     source: 'application',
     traceId: null
   })
-
   logs.push({
     id: `app_${Date.now()}_langsmith`,
     timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 min ago
@@ -276,7 +248,6 @@ async function getApplicationLogs(): Promise<any[]> {
     source: 'application',
     traceId: null
   })
-
   // Add a sample WhatsApp processing log
   logs.push({
     id: `app_${Date.now()}_whatsapp`,
@@ -293,10 +264,8 @@ async function getApplicationLogs(): Promise<any[]> {
     source: 'application',
     traceId: 'trace_' + Math.random().toString(36).substr(2, 9)
   })
-
   return logs
 }
-
 /**
  * Search logs endpoint
  */
@@ -304,18 +273,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { query, filters = {} } = body
-
     logger.info(LogCategory.ADMIN, 'LangSmith log search requested', {
       query,
       filters,
       ip: request.headers.get('x-forwarded-for') || 'unknown'
     })
-
     // Get all logs and search
     const allLogsResult = await getLogsFromMultipleSources(1000, 0, 'all', 'all')
-
     let searchResults = allLogsResult.entries
-
     // Apply text search
     if (query) {
       const searchTerm = query.toLowerCase()
@@ -325,25 +290,20 @@ export async function POST(request: NextRequest) {
         JSON.stringify(log.metadata).toLowerCase().includes(searchTerm)
       )
     }
-
     // Apply additional filters
     if (filters.level && filters.level !== 'all') {
       searchResults = searchResults.filter(log => log.level === filters.level.toUpperCase())
     }
-
     if (filters.category && filters.category !== 'all') {
       searchResults = searchResults.filter(log => log.category === filters.category)
     }
-
     if (filters.source && filters.source !== 'all') {
       searchResults = searchResults.filter(log => log.source === filters.source)
     }
-
     // Apply pagination to search results
     const limit = filters.limit || 50
     const offset = filters.offset || 0
     const paginatedResults = searchResults.slice(offset, offset + limit)
-
     return NextResponse.json({
       success: true,
       data: {
@@ -354,13 +314,11 @@ export async function POST(request: NextRequest) {
         searchTime: Date.now()
       }
     })
-
   } catch (error) {
     logger.error(LogCategory.ADMIN, 'Error searching LangSmith logs', {
       error: error instanceof Error ? error.message : 'Unknown',
       stack: error instanceof Error ? error.stack : undefined
     })
-
     return NextResponse.json(
       {
         success: false,

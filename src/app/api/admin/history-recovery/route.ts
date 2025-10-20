@@ -5,7 +5,6 @@ import {
   getBackupStats
 } from '@/lib/history-redundancy'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
-
 /**
  * GET - Get backup statistics
  */
@@ -13,13 +12,10 @@ export async function GET(req: NextRequest) {
   try {
     // Require admin authentication with system administration permission
     const { user, error } = await requirePermission('admin:system')(req)
-
     if (error) {
       return error
     }
-
     const stats = await getBackupStats()
-
     return createSuccessResponse({
       stats: {
         totalBackups: stats.totalBackups,
@@ -37,7 +33,6 @@ export async function GET(req: NextRequest) {
     )
   }
 }
-
 /**
  * POST - Recover history from backups
  */
@@ -45,13 +40,10 @@ export async function POST(req: NextRequest) {
   try {
     // Require admin authentication with system administration permission
     const { user, error } = await requirePermission('admin:system')(req)
-
     if (error) {
       return error
     }
-
     const result = await recoverHistoryFromBackups()
-
     return createSuccessResponse({
       recordsRecovered: result.recordsRecovered,
       errors: result.errors
@@ -66,7 +58,6 @@ export async function POST(req: NextRequest) {
     )
   }
 }
-
 /**
  * DELETE - Clean old backups
  */
@@ -74,22 +65,17 @@ export async function DELETE(req: NextRequest) {
   try {
     // Require admin authentication with system administration permission
     const { user, error } = await requirePermission('admin:system')(req)
-
     if (error) {
       return error
     }
-
     const daysToKeep = parseInt(req.nextUrl.searchParams.get('days') || '30')
-
     if (daysToKeep < 1 || daysToKeep > 365) {
       return NextResponse.json(
         { error: 'Dias deve estar entre 1 e 365' },
         { status: 400 }
       )
     }
-
     const deletedCount = await cleanOldBackups(daysToKeep)
-
     return createSuccessResponse({
       deletedCount,
       daysToKeep

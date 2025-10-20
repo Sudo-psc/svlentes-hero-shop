@@ -3,7 +3,6 @@
  * Event processing for incoming webhook events
  * Uses event emitter pattern for flexible handler registration
  */
-
 import type {
   WebhookEvent,
   WebhookEventType,
@@ -12,19 +11,15 @@ import type {
   ContactEvent,
   ConversationEvent
 } from './types'
-
 type EventHandler<T = any> = (event: T, rawEvent: WebhookEvent) => Promise<void> | void
-
 export class WebhookHandler {
   private handlers: Map<WebhookEventType | 'all', EventHandler[]> = new Map()
   private webhookToken: string | null = null
   private processedEvents: Set<string> = new Set()
   private maxProcessedEvents = 1000 // Prevent memory leak
-
   constructor(webhookToken?: string) {
     this.webhookToken = webhookToken || process.env.SENDPULSE_WEBHOOK_TOKEN || null
   }
-
   /**
    * Validate webhook signature/token
    */
@@ -33,54 +28,43 @@ export class WebhookHandler {
       console.warn('[WebhookHandler] No webhook token configured - skipping validation')
       return true // Allow if no token configured (for testing)
     }
-
     if (!token) {
       return false
     }
-
     return token === this.webhookToken
   }
-
   /**
    * Process incoming webhook event
    */
   async process(event: WebhookEvent): Promise<void> {
     // Generate event ID for deduplication
     const eventId = this.generateEventId(event)
-
     // Check if already processed (deduplication)
     if (this.processedEvents.has(eventId)) {
-      console.log(`[WebhookHandler] Event ${eventId} already processed, skipping`)
       return
     }
-
     // Mark as processed
     this.addProcessedEvent(eventId)
-
     try {
       // Get handlers for this event type
       const specificHandlers = this.handlers.get(event.event) || []
       const globalHandlers = this.handlers.get('all') || []
       const allHandlers = [...specificHandlers, ...globalHandlers]
-
       if (allHandlers.length === 0) {
         console.warn(`[WebhookHandler] No handlers registered for event type: ${event.event}`)
         return
       }
-
       // Execute all handlers in parallel
       await Promise.allSettled(
         allHandlers.map(handler =>
           this.executeHandler(handler, event)
         )
       )
-
     } catch (error) {
       console.error('[WebhookHandler] Error processing webhook event:', error)
       throw error
     }
   }
-
   /**
    * Execute handler with error handling
    */
@@ -92,7 +76,6 @@ export class WebhookHandler {
       // Don't throw - allow other handlers to continue
     }
   }
-
   /**
    * Register handler for specific event type
    */
@@ -101,49 +84,42 @@ export class WebhookHandler {
     handlers.push(handler)
     this.handlers.set(eventType, handlers)
   }
-
   /**
    * Register handler for message.new events
    */
   onMessageReceived(handler: EventHandler<MessageEvent>): void {
     this.on('message.new', handler)
   }
-
   /**
    * Register handler for message.status events
    */
   onMessageStatus(handler: EventHandler<StatusEvent>): void {
     this.on('message.status', handler)
   }
-
   /**
    * Register handler for contact.created events
    */
   onContactCreated(handler: EventHandler<ContactEvent>): void {
     this.on('contact.created', handler)
   }
-
   /**
    * Register handler for contact.updated events
    */
   onContactUpdated(handler: EventHandler<ContactEvent>): void {
     this.on('contact.updated', handler)
   }
-
   /**
    * Register handler for conversation.opened events
    */
   onConversationOpened(handler: EventHandler<ConversationEvent>): void {
     this.on('conversation.opened', handler)
   }
-
   /**
    * Register handler for conversation.closed events
    */
   onConversationClosed(handler: EventHandler<ConversationEvent>): void {
     this.on('conversation.closed', handler)
   }
-
   /**
    * Register handler for all events
    */
@@ -152,7 +128,6 @@ export class WebhookHandler {
     handlers.push(handler)
     this.handlers.set('all', handlers)
   }
-
   /**
    * Remove handler for event type
    */
@@ -162,7 +137,6 @@ export class WebhookHandler {
       this.handlers.delete(eventType)
       return
     }
-
     const handlers = this.handlers.get(eventType) || []
     const index = handlers.indexOf(handler)
     if (index > -1) {
@@ -170,33 +144,28 @@ export class WebhookHandler {
       this.handlers.set(eventType, handlers)
     }
   }
-
   /**
    * Remove all handlers
    */
   removeAllHandlers(): void {
     this.handlers.clear()
   }
-
   /**
    * Generate unique event ID for deduplication
    */
   private generateEventId(event: WebhookEvent): string {
     return `${event.event}_${event.contact_id}_${event.timestamp}`
   }
-
   /**
    * Add event to processed set
    */
   private addProcessedEvent(eventId: string): void {
     this.processedEvents.add(eventId)
-
     // Prevent memory leak by limiting processed events cache
     if (this.processedEvents.size > this.maxProcessedEvents) {
       // Remove oldest 20%
       const toRemove = Math.floor(this.maxProcessedEvents * 0.2)
       const iterator = this.processedEvents.values()
-
       for (let i = 0; i < toRemove; i++) {
         const next = iterator.next()
         if (!next.done) {
@@ -205,7 +174,6 @@ export class WebhookHandler {
       }
     }
   }
-
   /**
    * Parse webhook payload from SendPulse
    */
@@ -216,7 +184,6 @@ export class WebhookHandler {
         console.error('[WebhookHandler] Invalid webhook payload: missing required fields')
         return null
       }
-
       // Map SendPulse payload to our WebhookEvent structure
       return {
         event: body.event as WebhookEventType,
@@ -225,13 +192,11 @@ export class WebhookHandler {
         timestamp: body.timestamp,
         data: body.data || body.message || body.contact || body
       }
-
     } catch (error) {
       console.error('[WebhookHandler] Error parsing webhook payload:', error)
       return null
     }
   }
-
   /**
    * Get handler statistics
    */
@@ -241,25 +206,21 @@ export class WebhookHandler {
     maxProcessedEvents: number
   } {
     const stats: Record<string, number> = {}
-
     Array.from(this.handlers.entries()).forEach(([event, handlers]) => {
       stats[event] = handlers.length
     })
-
     return {
       registeredHandlers: stats,
       processedEvents: this.processedEvents.size,
       maxProcessedEvents: this.maxProcessedEvents
     }
   }
-
   /**
    * Clear processed events cache
    */
   clearProcessedEvents(): void {
     this.processedEvents.clear()
   }
-
   /**
    * Update webhook token
    */
@@ -267,6 +228,5 @@ export class WebhookHandler {
     this.webhookToken = token
   }
 }
-
 // Singleton instance
 export const webhookHandler = new WebhookHandler()

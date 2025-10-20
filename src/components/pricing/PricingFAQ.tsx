@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import {
   Accordion,
@@ -8,19 +7,16 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
-
 interface FAQItem {
   id: string;
   question: string;
   answer: string;
 }
-
 interface PricingFAQProps {
   items: FAQItem[];
   title?: string;
   subtitle?: string;
 }
-
 export const PricingFAQ: React.FC<PricingFAQProps> = ({
   items,
   title = 'Perguntas Frequentes',
@@ -39,7 +35,6 @@ export const PricingFAQ: React.FC<PricingFAQProps> = ({
             </p>
           )}
         </div>
-
         <div className="max-w-3xl mx-auto">
           <Card className="p-6 shadow-lg">
             <Accordion type="single" collapsible className="w-full">
@@ -60,7 +55,6 @@ export const PricingFAQ: React.FC<PricingFAQProps> = ({
               ))}
             </Accordion>
           </Card>
-
           {/* Additional help CTA */}
           <div className="mt-8 text-center">
             <p className="text-silver-600 mb-4">
@@ -83,5 +77,4 @@ export const PricingFAQ: React.FC<PricingFAQProps> = ({
     </section>
   );
 };
-
 export default PricingFAQ;

@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import { doctorInfo, clinicInfo } from '@/data/doctor-info'
 import { pricingPlans } from '@/data/pricing-plans'
 import { featuredFAQ } from '@/data/faq-data'
-
 // Base metadata configuration
 export const baseMetadata: Metadata = {
     metadataBase: new URL('https://svlentes.com.br'),
@@ -82,7 +81,6 @@ export const baseMetadata: Metadata = {
     },
     category: 'healthcare',
 }
-
 // Generate structured data for medical business
 export function generateMedicalBusinessStructuredData() {
     return {
@@ -178,7 +176,6 @@ export function generateMedicalBusinessStructuredData() {
         ]
     }
 }
-
 // Generate FAQ structured data
 export function generateFAQStructuredData() {
     return {
@@ -194,7 +191,6 @@ export function generateFAQStructuredData() {
         }))
     }
 }
-
 // Generate service structured data
 export function generateServiceStructuredData() {
     return {
@@ -232,7 +228,6 @@ export function generateServiceStructuredData() {
         }))
     }
 }
-
 // Generate breadcrumb structured data
 export function generateBreadcrumbStructuredData(items: Array<{ name: string, url: string }>) {
     return {
@@ -246,7 +241,6 @@ export function generateBreadcrumbStructuredData(items: Array<{ name: string, ur
         }))
     }
 }
-
 // Generate organization structured data
 export function generateOrganizationStructuredData() {
     return {
@@ -278,7 +272,6 @@ export function generateOrganizationStructuredData() {
         }
     }
 }
-
 // Generate WebSite structured data
 export function generateWebSiteStructuredData() {
     return {

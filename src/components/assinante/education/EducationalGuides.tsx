@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -21,7 +20,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
 interface Guide {
   id: string
   title: string
@@ -44,7 +42,6 @@ interface Guide {
     avatar?: string
   }
 }
-
 const mockGuides: Guide[] = [
   {
     id: '1',
@@ -151,13 +148,11 @@ const mockGuides: Guide[] = [
     }
   }
 ]
-
 interface EducationalGuidesProps {
   category?: Guide['category']
   limit?: number
   showFilters?: boolean
 }
-
 export function EducationalGuides({ category, limit, showFilters = true }: EducationalGuidesProps) {
   const [guides] = useState<Guide[]>(mockGuides)
   const [selectedCategory, setSelectedCategory] = useState<string>(category || 'all')
@@ -165,7 +160,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
   const [selectedType, setSelectedType] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedGuide, setSelectedGuide] = useState<Guide | null>(null)
-
   const categories = [
     { value: 'all', label: 'Todos', icon: BookOpen },
     { value: 'hygiene', label: 'Higiene', icon: Award },
@@ -174,14 +168,12 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
     { value: 'emergency', label: 'Emergência', icon: AlertTriangle },
     { value: 'maintenance', label: 'Manutenção', icon: CheckCircle }
   ]
-
   const difficulties = [
     { value: 'all', label: 'Todos os níveis' },
     { value: 'beginner', label: 'Iniciante' },
     { value: 'intermediate', label: 'Intermediário' },
     { value: 'advanced', label: 'Avançado' }
   ]
-
   const types = [
     { value: 'all', label: 'Todos os tipos' },
     { value: 'video', label: 'Vídeo' },
@@ -189,7 +181,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
     { value: 'checklist', label: 'Checklist' },
     { value: 'quiz', label: 'Quiz' }
   ]
-
   const filteredGuides = guides.filter(guide => {
     const matchesCategory = selectedCategory === 'all' || guide.category === selectedCategory
     const matchesDifficulty = selectedDifficulty === 'all' || guide.difficulty === selectedDifficulty
@@ -197,10 +188,8 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
     const matchesSearch = guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          guide.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          guide.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-
     return matchesCategory && matchesDifficulty && matchesType && matchesSearch
   }).slice(0, limit)
-
   const getCategoryColor = (category: Guide['category']) => {
     switch (category) {
       case 'hygiene': return 'bg-blue-100 text-blue-800 border-blue-200'
@@ -211,7 +200,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
       default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
-
   const getTypeIcon = (type: Guide['type']) => {
     switch (type) {
       case 'video': return <Video className="h-4 w-4" />
@@ -220,7 +208,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
       case 'quiz': return <HelpCircle className="h-4 w-4" />
     }
   }
-
   const getDifficultyColor = (difficulty: Guide['difficulty']) => {
     switch (difficulty) {
       case 'beginner': return 'text-green-600 bg-green-50'
@@ -228,21 +215,15 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
       case 'advanced': return 'text-red-600 bg-red-50'
     }
   }
-
   const handleViewGuide = (guide: Guide) => {
     setSelectedGuide(guide)
   }
-
   const handleBookmark = (guideId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    console.log('Bookmark guide:', guideId)
   }
-
   const handleComplete = (guideId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    console.log('Mark guide as complete:', guideId)
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -252,7 +233,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
           Aprenda tudo sobre cuidados com lentes de contato com nossos guias especializados
         </p>
       </div>
-
       {/* Estatísticas */}
       <div className="grid gap-4 md:grid-cols-4">
         <div className="bg-card border rounded-lg p-4 text-center">
@@ -278,7 +258,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
           <div className="text-sm text-gray-600">Visualizações</div>
         </div>
       </div>
-
       {/* Filtros */}
       {showFilters && (
         <div className="bg-card border rounded-lg p-4">
@@ -295,7 +274,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                 ))}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Dificuldade</label>
               <select
@@ -308,7 +286,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                 ))}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Tipo</label>
               <select
@@ -321,7 +298,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                 ))}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2">Buscar</label>
               <input
@@ -335,7 +311,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
           </div>
         </div>
       )}
-
       {/* Grid de Guias */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredGuides.map((guide, index) => (
@@ -356,13 +331,11 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                   </div>
                 </div>
               )}
-
               <div className="absolute top-2 left-2">
                 <Badge className={cn("text-xs", getCategoryColor(guide.category))}>
                   {categories.find(c => c.value === guide.category)?.label}
                 </Badge>
               </div>
-
               <div className="absolute top-2 right-2">
                 <div className="flex gap-1">
                   <Button
@@ -375,7 +348,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                   </Button>
                 </div>
               </div>
-
               <div className="absolute bottom-2 left-2 right-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 bg-white bg-opacity-90 rounded px-2 py-1">
@@ -388,12 +360,10 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                 </div>
               </div>
             </div>
-
             {/* Conteúdo */}
             <div className="p-4">
               <h3 className="font-semibold text-sm mb-2 line-clamp-2">{guide.title}</h3>
               <p className="text-xs text-gray-600 mb-3 line-clamp-2">{guide.description}</p>
-
               {/* Tags */}
               <div className="flex flex-wrap gap-1 mb-3">
                 {guide.tags.slice(0, 3).map((tag, tagIndex) => (
@@ -407,14 +377,12 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                   </Badge>
                 )}
               </div>
-
               {/* Autor e Avaliação */}
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   <span>{guide.author.name.split(' ').pop()}</span>
                 </div>
-
                 {guide.rating && (
                   <div className="flex items-center gap-1">
                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -422,7 +390,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                   </div>
                 )}
               </div>
-
               {/* Barra de Progresso */}
               <div className="mt-3 pt-3 border-t">
                 <div className="flex items-center justify-between text-xs">
@@ -440,14 +407,12 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
           </motion.div>
         ))}
       </div>
-
       {filteredGuides.length === 0 && (
         <div className="text-center py-12">
           <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">Nenhum guia encontrado para os filtros selecionados</p>
         </div>
       )}
-
       {/* Modal de Detalhes do Guia */}
       <AnimatePresence>
         {selectedGuide && (
@@ -479,12 +444,10 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                     </Button>
                   </div>
                 )}
-
                 <div className="absolute top-4 left-4 right-4 flex justify-between">
                   <Badge className={cn("text-xs", getCategoryColor(selectedGuide.category))}>
                     {categories.find(c => c.value === selectedGuide.category)?.label}
                   </Badge>
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -494,7 +457,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                     ×
                   </Button>
                 </div>
-
                 <div className="absolute bottom-4 left-4">
                   <h2 className="text-xl font-bold text-gray-900 mb-1">{selectedGuide.title}</h2>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -515,7 +477,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                   </div>
                 </div>
               </div>
-
               {/* Conteúdo */}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -530,7 +491,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                       <p className="text-sm text-gray-600">{selectedGuide.author.title}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -540,7 +500,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                       <Star className={cn("h-4 w-4 mr-1", selectedGuide.isBookmarked ? "fill-yellow-400 text-yellow-400" : "text-gray-400")} />
                       {selectedGuide.isBookmarked ? 'Salvo' : 'Salvar'}
                     </Button>
-
                     {!selectedGuide.isCompleted && (
                       <Button
                         size="sm"
@@ -550,7 +509,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                         Marcar como Concluído
                       </Button>
                     )}
-
                     {selectedGuide.type === 'article' && (
                       <Button size="sm">
                         <Download className="h-4 w-4 mr-1" />
@@ -559,9 +517,7 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                     )}
                   </div>
                 </div>
-
                 <p className="text-gray-700 mb-4">{selectedGuide.description}</p>
-
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2 mb-6">
                   {selectedGuide.tags.map((tag, index) => (
@@ -570,11 +526,9 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                     </Badge>
                   ))}
                 </div>
-
                 {/* Conteúdo do Guia (simulado) */}
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h3 className="font-medium mb-3">Conteúdo do Guia</h3>
-
                   {selectedGuide.type === 'checklist' && (
                     <div className="space-y-2">
                       <label className="flex items-center gap-2">
@@ -595,7 +549,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                       </label>
                     </div>
                   )}
-
                   {selectedGuide.type === 'article' && (
                     <div className="prose prose-sm max-w-none">
                       <p>
@@ -612,7 +565,6 @@ export function EducationalGuides({ category, limit, showFilters = true }: Educa
                       </ul>
                     </div>
                   )}
-
                   {selectedGuide.type === 'quiz' && (
                     <div className="space-y-4">
                       <div className="bg-white p-4 rounded-lg border">

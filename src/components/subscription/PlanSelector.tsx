@@ -1,24 +1,19 @@
 'use client'
-
 import { useState } from 'react'
 import { Check, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { pricingPlans } from '@/data/pricing-plans'
-
 interface PlanSelectorProps {
     onSelectPlan: (planId: string, billingCycle: 'monthly' | 'annual') => void
     initialPlanId?: string
 }
-
 export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
     const [selectedPlan, setSelectedPlan] = useState<string | null>(initialPlanId || null)
-
     const handleSelectPlan = (planId: string) => {
         setSelectedPlan(planId)
         onSelectPlan(planId, billingCycle)
     }
-
     return (
         <div className="space-y-6">
             {/* Billing Cycle Toggle */}
@@ -47,13 +42,11 @@ export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps)
                     </button>
                 </div>
             </div>
-
             {/* Plans Grid */}
             <div className="grid md:grid-cols-3 gap-6">
                 {pricingPlans.map((plan) => {
                     const price = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceAnnual / 12
                     const isSelected = selectedPlan === plan.id
-
                     return (
                         <div
                             key={plan.id}
@@ -73,7 +66,6 @@ export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps)
                                     </div>
                                 </div>
                             )}
-
                             <div className="p-6">
                                 {/* Plan Header */}
                                 <div className="text-center mb-6">
@@ -92,7 +84,6 @@ export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps)
                                         </p>
                                     )}
                                 </div>
-
                                 {/* Features List */}
                                 <ul className="space-y-3 mb-6">
                                     {plan.features.map((feature, index) => (
@@ -102,7 +93,6 @@ export function PlanSelector({ onSelectPlan, initialPlanId }: PlanSelectorProps)
                                         </li>
                                     ))}
                                 </ul>
-
                                 {/* CTA Button */}
                                 <Button
                                     onClick={() => handleSelectPlan(plan.id)}

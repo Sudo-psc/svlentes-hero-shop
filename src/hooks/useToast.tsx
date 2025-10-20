@@ -1,38 +1,28 @@
 'use client'
-
 import { useState, useCallback } from 'react'
 import { Toast } from '@/components/ui/loader'
-
 interface ToastConfig {
     message: string
     type?: 'success' | 'error' | 'info' | 'warning'
     duration?: number
 }
-
 interface ToastItem extends ToastConfig {
     id: string
 }
-
 export function useToast() {
     const [toasts, setToasts] = useState<ToastItem[]>([])
-
     const showToast = useCallback(({ message, type = 'info', duration = 3000 }: ToastConfig) => {
         const id = Math.random().toString(36).substring(7)
         const newToast: ToastItem = { id, message, type, duration }
-
         setToasts((prev) => [...prev, newToast])
-
         setTimeout(() => {
             setToasts((prev) => prev.filter((toast) => toast.id !== id))
         }, duration)
-
         return id
     }, [])
-
     const removeToast = useCallback((id: string) => {
         setToasts((prev) => prev.filter((toast) => toast.id !== id))
     }, [])
-
     const ToastContainer = useCallback(() => {
         return (
             <>
@@ -48,7 +38,6 @@ export function useToast() {
             </>
         )
     }, [toasts, removeToast])
-
     return {
         showToast,
         removeToast,

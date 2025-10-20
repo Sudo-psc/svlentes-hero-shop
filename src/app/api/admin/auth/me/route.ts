@@ -4,10 +4,8 @@
  *
  * Retorna dados do usuário administrativo autenticado
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, createSuccessResponse } from '@/lib/admin-auth'
-
 /**
  * @swagger
  * /api/admin/auth/me:
@@ -61,11 +59,9 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação
     const { user, error } = await requireAuth(request)
-
     if (error) {
       return error
     }
-
     if (!user) {
       return NextResponse.json(
         {
@@ -75,7 +71,6 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       )
     }
-
     // Retornar dados do usuário
     return createSuccessResponse(
       {
@@ -87,7 +82,6 @@ export async function GET(request: NextRequest) {
       },
       'Dados do usuário obtidos com sucesso'
     )
-
   } catch (error) {
     console.error('Admin auth me error:', error)
     return NextResponse.json(

@@ -3,11 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { createPasswordResetToken } from '@/lib/tokens'
 import { sendPasswordResetEmail } from '@/lib/email'
 import { z } from 'zod'
-
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido').toLowerCase().trim(),
 })
-
 /**
  * POST /api/auth/forgot-password
  * Solicita recuperação de senha
@@ -15,24 +13,19 @@ const forgotPasswordSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
     // Validar email
     const validationResult = forgotPasswordSchema.safeParse(body)
-
     if (!validationResult.success) {
       return NextResponse.json(
         { error: 'VALIDATION_ERROR', message: 'Email inválido' },
         { status: 400 }
       )
     }
-
     const { email } = validationResult.data
-
     // Verificar se usuário existe
     const user = await prisma.user.findUnique({
       where: { email },
     })
-
     // Não revela se email existe ou não (segurança)
     if (!user) {
       return NextResponse.json(
@@ -43,7 +36,6 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       )
     }
-
     // Verificar se usuário tem senha (pode ser OAuth only)
     if (!user.password) {
       // Usuário OAuth - não tem senha para resetar
@@ -55,13 +47,9 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       )
     }
-
     // Criar token de reset e enviar email
     const resetToken = await createPasswordResetToken(email)
     await sendPasswordResetEmail(email, resetToken)
-
-    console.log(`[FORGOT-PASSWORD] Password reset email sent to ${email}`)
-
     return NextResponse.json(
       {
         message:
@@ -77,5 +65,4 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 export const dynamic = 'force-dynamic'

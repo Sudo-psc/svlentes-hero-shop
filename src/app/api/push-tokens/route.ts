@@ -2,26 +2,21 @@
  * Push Token Management API
  * Handles registration and unregistration of push notification tokens
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/admin-auth'
 import {
   registerPushToken,
   unregisterPushToken
 } from '@/lib/firebase-push'
-
 export async function POST(request: NextRequest) {
   try {
     // Require user authentication
     const { user, error } = await requireAuth(request)
-
     if (error) {
       return error
     }
-
     const body = await request.json()
     const { token, action } = body
-
     if (!token || !action) {
       return NextResponse.json(
         {
@@ -31,7 +26,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     if (action !== 'register' && action !== 'unregister') {
       return NextResponse.json(
         {
@@ -41,15 +35,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     let success = false
-
     if (action === 'register') {
       success = await registerPushToken(user.id, token)
     } else if (action === 'unregister') {
       success = await unregisterPushToken(user.id, token)
     }
-
     if (!success) {
       return NextResponse.json(
         {
@@ -59,7 +50,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-
     return NextResponse.json({
       success: true,
       message: `Push token ${action}d successfully`,
@@ -77,19 +67,15 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 export async function DELETE(request: NextRequest) {
   try {
     // Require user authentication
     const { user, error } = await requireAuth(request)
-
     if (error) {
       return error
     }
-
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
-
     if (!token) {
       return NextResponse.json(
         {
@@ -99,9 +85,7 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       )
     }
-
     const success = await unregisterPushToken(user.id, token)
-
     if (!success) {
       return NextResponse.json(
         {
@@ -111,7 +95,6 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       )
     }
-
     return NextResponse.json({
       success: true,
       message: 'Push token unregistered successfully',

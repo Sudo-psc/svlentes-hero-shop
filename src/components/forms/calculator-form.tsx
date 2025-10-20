@@ -1,22 +1,18 @@
 'use client';
-
 import { useState } from 'react';
 import { CalculatorInput, CalculatorResult } from '@/types';
 import { usagePatterns, lensTypes } from '@/data/calculator-data';
 import { calculateEconomy } from '@/lib/calculator';
-
 interface CalculatorFormProps {
   onCalculate: (result: CalculatorResult) => void;
   initialData?: Partial<CalculatorInput>;
 }
-
 export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps) {
   const [input, setInput] = useState<CalculatorInput>({
     lensType: initialData?.lensType || 'daily',
     usagePattern: initialData?.usagePattern || 'regular',
     currentMonthlySpend: initialData?.currentMonthlySpend
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -26,7 +22,6 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
       console.error('Erro no cálculo:', error);
     }
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Tipo de Lente */}
@@ -72,7 +67,6 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
           ))}
         </div>
       </div>
-
       {/* Padrão de Uso */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -119,7 +113,6 @@ export function CalculatorForm({ onCalculate, initialData }: CalculatorFormProps
           ))}
         </div>
       </div>
-
       {/* Botão de Calcular */}
       <button
         type="submit"

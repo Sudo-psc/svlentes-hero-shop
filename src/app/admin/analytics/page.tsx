@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -34,7 +33,6 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-
 // Interfaces
 interface AsaasAnalytics {
   overview: {
@@ -108,7 +106,6 @@ interface AsaasAnalytics {
     recent: LogEntry[]
   }
 }
-
 interface LogEntry {
   id: string
   timestamp: string
@@ -122,32 +119,27 @@ interface LogEntry {
   resolved?: boolean
   resolutionNotes?: string
 }
-
 const methodConfig = {
   credit_card: { label: 'Cartão de Crédito', icon: '💳', color: 'blue' },
   pix: { label: 'PIX', icon: '⚡', color: 'green' },
   boleto: { label: 'Boleto', icon: '📄', color: 'orange' }
 }
-
 const levelConfig = {
   critical: { label: 'Crítico', color: 'red', icon: AlertCircle },
   warning: { label: 'Aviso', color: 'yellow', icon: AlertCircle },
   info: { label: 'Informação', color: 'blue', icon: CheckCircle }
 }
-
 export default function AdminAnalyticsPage() {
   const [analytics, setAnalytics] = useState<AsaasAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState('30d')
   const [selectedCategory, setSelectedCategory] = useState('all')
-
   // Load analytics from ASAAS API
   const loadAnalytics = async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/admin/asaas/analytics?timeRange=${timeRange}`)
       if (!response.ok) throw new Error('Failed to fetch analytics')
-
       const data = await response.json()
       setAnalytics(data)
     } catch (error) {
@@ -325,26 +317,21 @@ export default function AdminAnalyticsPage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadAnalytics()
   }, [timeRange])
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
   }
-
   const formatPercentage = (value: number) => {
     return `${value.toFixed(1)}%`
   }
-
   const MetricCard = ({ title, value, change, icon: Icon, color = 'blue' }: any) => {
     const isPositive = change >= 0
     const TrendIcon = isPositive ? TrendingUp : TrendingDown
-
     return (
       <Card className="relative overflow-hidden">
         <CardContent className="p-6">
@@ -369,10 +356,8 @@ export default function AdminAnalyticsPage() {
       </Card>
     )
   }
-
   const LogEntryComponent = ({ entry }: { entry: LogEntry }) => {
     const LevelIcon = levelConfig[entry.level].icon
-
     return (
       <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
         <div className={`p-1 rounded-full bg-${levelConfig[entry.level].color}-100`}>
@@ -416,7 +401,6 @@ export default function AdminAnalyticsPage() {
       </div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-silver-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -435,7 +419,6 @@ export default function AdminAnalyticsPage() {
                 Monitoramento completo do sistema ASAAS e métricas de negócio
               </p>
             </div>
-
             <div className="flex gap-3">
               <Select value={timeRange} onValueChange={setTimeRange}>
                 <SelectTrigger className="w-32">
@@ -448,7 +431,6 @@ export default function AdminAnalyticsPage() {
                   <SelectItem value="1y">1 ano</SelectItem>
                 </SelectContent>
               </Select>
-
               <Button
                 variant="outline"
                 onClick={loadAnalytics}
@@ -457,7 +439,6 @@ export default function AdminAnalyticsPage() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-
               <Button variant="outline">
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
@@ -465,7 +446,6 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
         </motion.div>
-
         {analytics ? (
           <>
             {/* Overview Cards */}
@@ -504,7 +484,6 @@ export default function AdminAnalyticsPage() {
                 color="orange"
               />
             </motion.div>
-
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Visão Geral</TabsTrigger>
@@ -513,7 +492,6 @@ export default function AdminAnalyticsPage() {
                 <TabsTrigger value="customers">Clientes</TabsTrigger>
                 <TabsTrigger value="logs">Logs do Sistema</TabsTrigger>
               </TabsList>
-
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -546,7 +524,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   {/* Operational Metrics */}
                   <Card>
                     <CardHeader>
@@ -581,7 +558,6 @@ export default function AdminAnalyticsPage() {
                     </CardContent>
                   </Card>
                 </div>
-
                 {/* Monthly Revenue Chart */}
                 <Card>
                   <CardHeader>
@@ -605,7 +581,6 @@ export default function AdminAnalyticsPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
               {/* Payments Tab */}
               <TabsContent value="payments" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -622,7 +597,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Taxa de Falha</CardTitle>
@@ -636,7 +610,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Taxa de Reembolso</CardTitle>
@@ -651,7 +624,6 @@ export default function AdminAnalyticsPage() {
                     </CardContent>
                   </Card>
                 </div>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Análise por Método de Pagamento</CardTitle>
@@ -679,7 +651,6 @@ export default function AdminAnalyticsPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
               {/* Subscriptions Tab */}
               <TabsContent value="subscriptions" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -716,7 +687,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Análise de Cohort</CardTitle>
@@ -744,7 +714,6 @@ export default function AdminAnalyticsPage() {
                   </Card>
                 </div>
               </TabsContent>
-
               {/* Customers Tab */}
               <TabsContent value="customers" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -758,7 +727,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Clientes Recorrentes</CardTitle>
@@ -769,7 +737,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle>Customer Lifetime Value</CardTitle>
@@ -781,7 +748,6 @@ export default function AdminAnalyticsPage() {
                     </CardContent>
                   </Card>
                 </div>
-
                 <Card>
                   <CardHeader>
                     <CardTitle>Top Clientes</CardTitle>
@@ -809,7 +775,6 @@ export default function AdminAnalyticsPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
-
               {/* Logs Tab */}
               <TabsContent value="logs" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -828,7 +793,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-yellow-600">
@@ -844,7 +808,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-blue-600">
@@ -860,7 +823,6 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </CardContent>
                   </Card>
-
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-gray-600">
@@ -877,7 +839,6 @@ export default function AdminAnalyticsPage() {
                     </CardContent>
                   </Card>
                 </div>
-
                 {/* System Health */}
                 <Card>
                   <CardHeader>

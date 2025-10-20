@@ -4,12 +4,10 @@
  *
  * Retorna lista paginada de pedidos do sistema
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse, validatePagination } from '@/lib/admin-auth'
 import { orderFiltersSchema, orderCreateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/orders:
@@ -144,18 +142,15 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('orders:view')(request)
-
     if (error) {
       return error
     }
-
     // Validar parâmetros
     const { searchParams } = new URL(request.url)
     const { data: params, error: validationError } = validateQuery(
       orderFiltersSchema,
       searchParams
     )
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -165,13 +160,10 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Validação de paginação
     const pagination = validatePagination(params)
-
     // Construir filtros where
     const where: any = {}
-
     // Filtro de busca
     if (searchParams.get('search')) {
       const searchTerm = searchParams.get('search')!
@@ -182,20 +174,16 @@ export async function GET(request: NextRequest) {
         { subscription: { user: { email: { contains: searchTerm, mode: 'insensitive' } } } }
       ]
     }
-
     // Filtros específicos
     if (params.status) {
       where.deliveryStatus = params.status
     }
-
     if (params.type) {
       where.type = params.type
     }
-
     if (params.subscriptionId) {
       where.subscriptionId = params.subscriptionId
     }
-
     // Filtro por código de rastreio
     if (params.hasTrackingCode !== 'all') {
       if (params.hasTrackingCode === 'yes') {
@@ -204,7 +192,6 @@ export async function GET(request: NextRequest) {
         where.trackingCode = null
       }
     }
-
     // Filtros de data de criação
     if (params.createdAfter || params.createdBefore) {
       where.createdAt = {}
@@ -215,7 +202,6 @@ export async function GET(request: NextRequest) {
         where.createdAt.lte = new Date(params.createdBefore)
       }
     }
-
     // Filtros de data de entrega
     if (params.deliveredAfter || params.deliveredBefore) {
       where.deliveredAt = {}
@@ -226,7 +212,6 @@ export async function GET(request: NextRequest) {
         where.deliveredAt.lte = new Date(params.deliveredBefore)
       }
     }
-
     // Buscar pedidos e contagem total em paralelo
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
@@ -274,14 +259,11 @@ export async function GET(request: NextRequest) {
         skip: pagination.offset,
         take: pagination.limit
       }),
-
       prisma.order.count({ where })
     ])
-
     // Processar dados adicionais
     const processedOrders = orders.map(order => {
       const lastInvoice = order.invoices[0]
-
       // Calcular tempo de entrega
       let deliveryTime = null
       if (order.shippingDate && order.deliveredAt) {
@@ -290,7 +272,6 @@ export async function GET(request: NextRequest) {
           (1000 * 60 * 60 * 24)
         )
       }
-
       // Status para UI
       const statusInfo = {
         current: order.deliveryStatus,
@@ -301,7 +282,6 @@ export async function GET(request: NextRequest) {
         hasTracking: !!order.trackingCode,
         deliveryTime
       }
-
       return {
         id: order.id,
         orderDate: order.orderDate,
@@ -340,10 +320,8 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-
     // Calcular estatísticas
     const stats = await calculateOrderStats(where)
-
     // Montar resposta
     const response = {
       orders: processedOrders,
@@ -364,9 +342,7 @@ export async function GET(request: NextRequest) {
         ...stats
       }
     }
-
     return createSuccessResponse(response, 'Pedidos listados com sucesso')
-
   } catch (error) {
     console.error('Orders list error:', error)
     return NextResponse.json(
@@ -379,7 +355,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 /**
  * POST /api/admin/orders
  * Criar novo pedido
@@ -390,15 +365,12 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('orders:create')(request)
-
     if (error) {
       return error
     }
-
     // Validar body
     const body = await request.json()
     const { data: orderData, error: validationError } = validateBody(orderCreateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -408,7 +380,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Verificar se assinatura existe
     const existingSubscription = await prisma.subscription.findUnique({
       where: { id: orderData.subscriptionId },
@@ -418,7 +389,6 @@ export async function POST(request: NextRequest) {
         userId: true
       }
     })
-
     if (!existingSubscription) {
       return NextResponse.json(
         {
@@ -428,7 +398,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
-
     // Verificar se assinatura está ativa
     if (existingSubscription.status !== 'ACTIVE') {
       return NextResponse.json(
@@ -439,7 +408,6 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       )
     }
-
     // Criar pedido
     const order = await prisma.order.create({
       data: {
@@ -477,7 +445,6 @@ export async function POST(request: NextRequest) {
         }
       }
     })
-
     // Criar fatura associada
     if (orderData.paymentMethodId) {
       await prisma.invoice.create({
@@ -493,9 +460,7 @@ export async function POST(request: NextRequest) {
         }
       })
     }
-
     return createSuccessResponse(order, 'Pedido criado com sucesso', 201)
-
   } catch (error) {
     console.error('Order create error:', error)
     return NextResponse.json(
@@ -508,7 +473,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 // Funções auxiliares
 function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
   data: T | null
@@ -521,7 +485,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
         params[key] = value
       }
     })
-
     const data = schema.parse(params)
     return { data, error: null }
   } catch (error: any) {
@@ -544,7 +507,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
     }
   }
 }
-
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
   error: { field: string; message: string } | null
@@ -572,7 +534,6 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 async function calculateOrderStats(where: any) {
   try {
     const [
@@ -589,7 +550,6 @@ async function calculateOrderStats(where: any) {
           id: true
         }
       }),
-
       // Valor total
       prisma.order.aggregate({
         where,
@@ -597,7 +557,6 @@ async function calculateOrderStats(where: any) {
           totalAmount: true
         }
       }),
-
       // Distribuição por tipo
       prisma.order.groupBy({
         by: ['type'],
@@ -609,7 +568,6 @@ async function calculateOrderStats(where: any) {
           totalAmount: true
         }
       }),
-
       // Tempo médio de entrega (pedidos entregues)
       prisma.order.findMany({
         where: {
@@ -624,22 +582,18 @@ async function calculateOrderStats(where: any) {
         }
       })
     ])
-
     const byStatus = statusCounts.reduce((acc, item) => {
       acc[item.deliveryStatus] = item._count.id
       return acc
     }, {} as Record<string, number>)
-
     const deliveryTimes = averageDeliveryTime.map(order => {
       const shippingDate = new Date(order.shippingDate!)
       const deliveredAt = new Date(order.deliveredAt!)
       return Math.ceil((deliveredAt.getTime() - shippingDate.getTime()) / (1000 * 60 * 60 * 24))
     })
-
     const avgDeliveryTime = deliveryTimes.length > 0
       ? deliveryTimes.reduce((sum, time) => sum + time, 0) / deliveryTimes.length
       : 0
-
     return {
       byStatus,
       totalValue: Number(totalValue._sum.totalAmount || 0),

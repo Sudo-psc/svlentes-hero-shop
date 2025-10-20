@@ -1,12 +1,10 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
-
 export default function LoginPage() {
   const router = useRouter()
   const { user, loading: authLoading, signIn } = useAuth()
@@ -14,28 +12,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-
   useEffect(() => {
     // If user is already authenticated, redirect to dashboard
     if (user && !authLoading) {
       router.push('/area-assinante/dashboard')
     }
   }, [user, authLoading, router])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
     try {
       await signIn(email, password)
-
       // Force redirect to dashboard
       router.push('/area-assinante/dashboard')
       router.refresh()
     } catch (error: any) {
       console.error('[LOGIN] Firebase error:', error)
-
       // Mapear erros do Firebase para mensagens amigáveis
       if (error.message === 'EMAIL_NOT_VERIFIED') {
         setError('Email não verificado. Por favor, verifique sua caixa de entrada.')
@@ -62,7 +55,6 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-silver-50">
@@ -71,7 +63,6 @@ export default function LoginPage() {
       </div>
     )
   }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-silver-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
@@ -83,13 +74,11 @@ export default function LoginPage() {
             Entre com suas credenciais para acessar
           </p>
         </div>
-
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -106,7 +95,6 @@ export default function LoginPage() {
               placeholder="seu@email.com"
             />
           </div>
-
           <div>
             <div className="flex items-center justify-between mb-1">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -130,7 +118,6 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </div>
-
           <Button
             type="submit"
             className="w-full"
@@ -140,10 +127,8 @@ export default function LoginPage() {
             {isLoading ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
-
         {/* Social Login Buttons */}
         <SocialLoginButtons onError={setError} />
-
         {/* Link para Registro */}
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
@@ -153,7 +138,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-
         <div className="mt-6 text-center text-xs text-gray-500">
           <p className="mt-2">Ao se cadastrar, você concorda com nossos</p>
           <p>
@@ -166,7 +150,6 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-
         <div className="mt-4 text-center">
           <Link
             href="/"
@@ -179,6 +162,5 @@ export default function LoginPage() {
     </div>
   )
 }
-
 // Force dynamic rendering for authentication routes
 export const dynamic = 'force-dynamic'

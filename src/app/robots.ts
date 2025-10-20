@@ -1,8 +1,6 @@
 import { MetadataRoute } from 'next'
-
 export default function robots(): MetadataRoute.Robots {
     const baseUrl = 'https://svlentes.com.br'
-
     return {
         rules: [
             {

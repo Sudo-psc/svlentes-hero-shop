@@ -2,14 +2,12 @@
  * Validações para formulários brasileiros
  * Conformidade com padrões LGPD e validação de dados
  */
-
 /**
  * Remove caracteres não numéricos de uma string
  */
 function cleanNumericString(value: string): string {
   return value.replace(/\D/g, '')
 }
-
 /**
  * Valida CPF brasileiro
  * @param cpf - CPF com ou sem formatação
@@ -17,13 +15,10 @@ function cleanNumericString(value: string): string {
  */
 export function validateCPF(cpf: string): boolean {
   const cleaned = cleanNumericString(cpf)
-
   // CPF deve ter 11 dígitos
   if (cleaned.length !== 11) return false
-
   // Verifica se todos os dígitos são iguais (CPFs inválidos conhecidos)
   if (/^(\d)\1+$/.test(cleaned)) return false
-
   // Validação do primeiro dígito verificador
   let sum = 0
   for (let i = 0; i < 9; i++) {
@@ -32,7 +27,6 @@ export function validateCPF(cpf: string): boolean {
   let digit = 11 - (sum % 11)
   if (digit >= 10) digit = 0
   if (digit !== parseInt(cleaned.charAt(9))) return false
-
   // Validação do segundo dígito verificador
   sum = 0
   for (let i = 0; i < 10; i++) {
@@ -41,10 +35,8 @@ export function validateCPF(cpf: string): boolean {
   digit = 11 - (sum % 11)
   if (digit >= 10) digit = 0
   if (digit !== parseInt(cleaned.charAt(10))) return false
-
   return true
 }
-
 /**
  * Valida CNPJ brasileiro
  * @param cnpj - CNPJ com ou sem formatação
@@ -52,13 +44,10 @@ export function validateCPF(cpf: string): boolean {
  */
 export function validateCNPJ(cnpj: string): boolean {
   const cleaned = cleanNumericString(cnpj)
-
   // CNPJ deve ter 14 dígitos
   if (cleaned.length !== 14) return false
-
   // Verifica se todos os dígitos são iguais (CNPJs inválidos conhecidos)
   if (/^(\d)\1+$/.test(cleaned)) return false
-
   // Validação do primeiro dígito verificador
   let sum = 0
   let weight = 5
@@ -68,7 +57,6 @@ export function validateCNPJ(cnpj: string): boolean {
   }
   let digit = sum % 11 < 2 ? 0 : 11 - (sum % 11)
   if (digit !== parseInt(cleaned.charAt(12))) return false
-
   // Validação do segundo dígito verificador
   sum = 0
   weight = 6
@@ -78,10 +66,8 @@ export function validateCNPJ(cnpj: string): boolean {
   }
   digit = sum % 11 < 2 ? 0 : 11 - (sum % 11)
   if (digit !== parseInt(cleaned.charAt(13))) return false
-
   return true
 }
-
 /**
  * Valida CPF ou CNPJ brasileiro
  * @param document - CPF ou CNPJ com ou sem formatação
@@ -89,16 +75,13 @@ export function validateCNPJ(cnpj: string): boolean {
  */
 export function validateCPFOrCNPJ(document: string): boolean {
   const cleaned = cleanNumericString(document)
-
   if (cleaned.length === 11) {
     return validateCPF(document)
   } else if (cleaned.length === 14) {
     return validateCNPJ(document)
   }
-
   return false
 }
-
 /**
  * Valida telefone brasileiro (celular ou fixo)
  * Formatos aceitos:
@@ -109,25 +92,19 @@ export function validateCPFOrCNPJ(document: string): boolean {
  */
 export function validatePhone(phone: string): boolean {
   const cleaned = cleanNumericString(phone)
-
   // Deve ter 10 (fixo) ou 11 (celular) dígitos
   if (cleaned.length !== 10 && cleaned.length !== 11) return false
-
   // DDD válido (11 a 99)
   const ddd = parseInt(cleaned.substring(0, 2))
   if (ddd < 11 || ddd > 99) return false
-
   // Se for celular (11 dígitos), o terceiro dígito deve ser 9
   if (cleaned.length === 11) {
     if (cleaned.charAt(2) !== '9') return false
   }
-
   // Verifica se não são todos os dígitos iguais
   if (/^(\d)\1+$/.test(cleaned)) return false
-
   return true
 }
-
 /**
  * Valida email
  * @param email - Email a ser validado
@@ -137,7 +114,6 @@ export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
-
 /**
  * Formata CPF para exibição
  * @param cpf - CPF sem formatação
@@ -146,10 +122,8 @@ export function validateEmail(email: string): boolean {
 export function formatCPF(cpf: string): string {
   const cleaned = cleanNumericString(cpf)
   if (cleaned.length !== 11) return cpf
-
   return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
 }
-
 /**
  * Formata CNPJ para exibição
  * @param cnpj - CNPJ sem formatação
@@ -158,10 +132,8 @@ export function formatCPF(cpf: string): string {
 export function formatCNPJ(cnpj: string): string {
   const cleaned = cleanNumericString(cnpj)
   if (cleaned.length !== 14) return cnpj
-
   return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
 }
-
 /**
  * Formata telefone para exibição
  * @param phone - Telefone sem formatação
@@ -169,7 +141,6 @@ export function formatCNPJ(cnpj: string): string {
  */
 export function formatPhone(phone: string): string {
   const cleaned = cleanNumericString(phone)
-
   if (cleaned.length === 11) {
     // Celular: (XX) 9XXXX-XXXX
     return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
@@ -177,10 +148,8 @@ export function formatPhone(phone: string): string {
     // Fixo: (XX) XXXX-XXXX
     return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
   }
-
   return phone
 }
-
 /**
  * Aplica máscara de CPF/CNPJ conforme o usuário digita
  * @param value - Valor atual do input
@@ -188,7 +157,6 @@ export function formatPhone(phone: string): string {
  */
 export function maskCPFOrCNPJ(value: string): string {
   const cleaned = cleanNumericString(value)
-
   if (cleaned.length <= 11) {
     // Máscara de CPF
     return cleaned
@@ -204,7 +172,6 @@ export function maskCPFOrCNPJ(value: string): string {
       .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
   }
 }
-
 /**
  * Aplica máscara de telefone conforme o usuário digita
  * @param value - Valor atual do input
@@ -212,7 +179,6 @@ export function maskCPFOrCNPJ(value: string): string {
  */
 export function maskPhone(value: string): string {
   const cleaned = cleanNumericString(value)
-
   if (cleaned.length <= 10) {
     // Fixo: (XX) XXXX-XXXX
     return cleaned
@@ -225,7 +191,6 @@ export function maskPhone(value: string): string {
       .replace(/(\d{5})(\d{1,4})$/, '$1-$2')
   }
 }
-
 /**
  * Valida data de prescrição médica
  * Prescrições de lentes de contato são válidas por até 1 ano
@@ -236,15 +201,12 @@ export function validatePrescriptionDate(prescriptionDate: string | Date): boole
   const date = typeof prescriptionDate === 'string'
     ? new Date(prescriptionDate)
     : prescriptionDate
-
   const now = new Date()
   const oneYearAgo = new Date()
   oneYearAgo.setFullYear(now.getFullYear() - 1)
-
   // Prescrição deve ser menor que 1 ano
   return date >= oneYearAgo && date <= now
 }
-
 /**
  * Valida CRM médico brasileiro
  * @param crm - CRM no formato XXXXXX-UF

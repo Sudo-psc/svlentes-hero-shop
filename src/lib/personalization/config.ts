@@ -1,5 +1,4 @@
 import { PersonalizationConfig } from '@/types/personalization'
-
 export const DEFAULT_PERSONALIZATION_CONFIG: PersonalizationConfig = {
     enabled: process.env.PERSONALIZATION_ENABLED === 'true',
     debug: process.env.PERSONALIZATION_DEBUG === 'true',
@@ -11,7 +10,6 @@ export const DEFAULT_PERSONALIZATION_CONFIG: PersonalizationConfig = {
     defaultPersona: 'price-conscious',
     fallbackStrategy: 'default'
 }
-
 export const PERSONA_DEFINITIONS = {
     'price-conscious': {
         id: 'price-conscious',
@@ -187,7 +185,6 @@ export const PERSONA_DEFINITIONS = {
         },
         triggers: [
             { type: 'page_view' as const, condition: '/resources', weight: 0.8 },
-            { type: 'page_view' as const, condition: '/blog', weight: 0.7 },
             { type: 'frequency' as const, condition: 'multiple-visits', weight: 0.9 }
         ],
         scoringWeights: {
@@ -334,7 +331,6 @@ export const PERSONA_DEFINITIONS = {
         }
     }
 }
-
 export const CACHE_KEYS = {
     USER_PROFILE: 'user_profile',
     BEHAVIOR_DATA: 'behavior_data',
@@ -343,7 +339,6 @@ export const CACHE_KEYS = {
     EXPERIMENT_ASSIGNMENTS: 'experiment_assignments',
     CONSENT_STATUS: 'consent_status'
 }
-
 export const API_ENDPOINTS = {
     PERSONALIZATION: '/api/personalization',
     ANALYTICS: '/api/analytics',
@@ -351,7 +346,6 @@ export const API_ENDPOINTS = {
     CONSENT: '/api/consent',
     BEHAVIOR: '/api/behavior'
 }
-
 export const EVENT_NAMES = {
     PAGE_VIEW: 'page_view',
     CLICK: 'click',
@@ -363,14 +357,12 @@ export const EVENT_NAMES = {
     PERSONA_UPDATE: 'persona_update',
     EXPERIMENT_PARTICIPATION: 'experiment_participation'
 }
-
 export const CONSENT_TYPES = {
     ESSENTIAL: 'essential',
     ANALYTICS: 'analytics',
     PERSONALIZATION: 'personalization',
     MARKETING: 'marketing'
 }
-
 export const RETENTION_POLICIES = {
     BEHAVIOR_DATA: 90, // days
     PERSONA_DATA: 365, // days

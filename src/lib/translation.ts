@@ -7,9 +7,7 @@
  * FIXME: Centralized config disabled - always returns key
  * TODO: Implement client-safe translation loading (API route or build-time generation)
  */
-
 type LocaleCode = 'pt-BR' | 'en-US'
-
 /**
  * Get translation for a given key and locale
  *
@@ -22,7 +20,6 @@ export function getTranslation(key: string, locale: LocaleCode = 'pt-BR'): strin
   // Centralized config requires Node.js fs which doesn't work in browser
   return key
 }
-
 /**
  * React hook for translations
  *
@@ -36,7 +33,6 @@ export function getTranslation(key: string, locale: LocaleCode = 'pt-BR'): strin
 export function useTranslation(locale: LocaleCode = 'pt-BR') {
   return (key: string): string => getTranslation(key, locale)
 }
-
 /**
  * Get multiple translations at once
  *
@@ -56,7 +52,6 @@ export function getTranslations(
     return acc
   }, {} as Record<string, string>)
 }
-
 /**
  * Check if translation key exists
  *

@@ -1,5 +1,4 @@
 'use client'
-
 import {
   LineChart,
   Line,
@@ -16,7 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RevenueData } from '@/types/admin'
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
 interface RevenueChartProps {
   data: RevenueData[]
   title?: string
@@ -27,7 +25,6 @@ interface RevenueChartProps {
   previousPeriodData?: RevenueData[]
   className?: string
 }
-
 export function RevenueChart({
   data,
   title = "Receita Mensal",
@@ -60,19 +57,16 @@ export function RevenueChart({
       </Card>
     )
   }
-
   // Calcular estatísticas
   const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0)
   const averageRevenue = totalRevenue / data.length
   const maxRevenue = Math.max(...data.map(item => item.revenue))
   const minRevenue = Math.min(...data.map(item => item.revenue))
-
   // Calcular crescimento
   const firstMonth = data[0]?.revenue || 0
   const lastMonth = data[data.length - 1]?.revenue || 0
   const growth = firstMonth > 0 ? ((lastMonth - firstMonth) / firstMonth) * 100 : 0
   const isPositiveGrowth = growth >= 0
-
   // Formatar dados para exibição
   const formatData = data.map(item => ({
     ...item,
@@ -84,7 +78,6 @@ export function RevenueChart({
     subscriptions: Number(item.subscriptions),
     orders: Number(item.orders)
   }))
-
   // Formatar dados do período anterior para comparação
   const formatPreviousData = previousPeriodData?.map(item => ({
     ...item,
@@ -95,14 +88,11 @@ export function RevenueChart({
     revenue: Number(item.revenue.toFixed(2)),
     isPrevious: true
   }))
-
   // Combinar dados para comparação
   const comparisonData = showComparison && formatPreviousData
     ? [...formatPreviousData, ...formatData]
     : formatData
-
   const ChartComponent = showArea ? AreaChart : LineChart
-
   return (
     <Card className={className}>
       <CardHeader>
@@ -168,10 +158,8 @@ export function RevenueChart({
               <Tooltip
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null
-
                   const data = payload[0]?.payload
                   const isPrevious = data?.isPrevious
-
                   return (
                     <div className="rounded-lg border bg-background p-3 shadow-lg">
                       <div className="mb-2">
@@ -248,7 +236,6 @@ export function RevenueChart({
             </ChartComponent>
           </ResponsiveContainer>
         </div>
-
         {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
           <div className="text-center">
@@ -292,7 +279,6 @@ export function RevenueChart({
     </Card>
   )
 }
-
 // Versão compacta para espaços menores
 export function RevenueChartCompact({
   data,
@@ -310,7 +296,6 @@ export function RevenueChartCompact({
       </Card>
     )
   }
-
   const formatData = data.slice(-7).map(item => ({ // Últimos 7 pontos
     ...item,
     date: new Date(item.date).toLocaleDateString('pt-BR', {
@@ -318,7 +303,6 @@ export function RevenueChartCompact({
     }),
     revenue: Number(item.revenue.toFixed(2))
   }))
-
   return (
     <Card className={className}>
       <CardContent className="p-4">

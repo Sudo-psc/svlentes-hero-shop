@@ -3,12 +3,12 @@ const nextConfig = {
     experimental: {
         optimizePackageImports: ['@heroicons/react'],
     },
-    // Skip type checking and linting during deployment build if needed
+    // Enable type checking and linting for production builds
     typescript: {
-        ignoreBuildErrors: true, // Workaround for Next.js 15 type generation issue
+        ignoreBuildErrors: false, // 🚀 QUICK WIN: Enable type checking for production safety
     },
     eslint: {
-        ignoreDuringBuilds: true,
+        ignoreDuringBuilds: false, // 🚀 QUICK WIN: Enable ESLint for code quality
     },
     images: {
         remotePatterns: [
@@ -47,7 +47,7 @@ const nextConfig = {
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
         qualities: [75, 85, 90, 95, 100],
-        minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
+        minimumCacheTTL: 60, // 60 seconds for dynamic images
         dangerouslyAllowSVG: true,
         contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
         unoptimized: false,
@@ -87,7 +87,7 @@ const nextConfig = {
                     },
                     {
                         key: 'Content-Security-Policy',
-                        value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net; style-src 'self' 'unsafe-inline' https://r2cdn.perplexity.ai; img-src 'self' data: https: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com *.facebook.com *.facebook.net www.facebook.com; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com;",
+                        value: "default-src 'self'; script-src 'self' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net; style-src 'self' 'unsafe-inline' https://r2cdn.perplexity.ai; img-src 'self' data: https: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com *.facebook.com *.facebook.net www.facebook.com; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com;", // 🚀 QUICK WIN: Removed unsafe-eval for XSS protection
                     },
                 ],
             },
@@ -128,6 +128,12 @@ const nextConfig = {
             net: false,
             tls: false,
         }
+
+        // Handle SVG files properly
+        config.module.rules.push({
+            test: /\.svg$/,
+            use: ['@svgr/webpack'],
+        })
 
         return config
     },

@@ -2,12 +2,9 @@
  * Health check endpoint for monitoring
  * Verifies system health and dependencies
  */
-
 import { NextRequest, NextResponse } from 'next/server'
-
 export async function GET(request: NextRequest) {
     const startTime = Date.now()
-
     try {
         const checks = {
             timestamp: new Date().toISOString(),
@@ -21,7 +18,6 @@ export async function GET(request: NextRequest) {
                 memory: { status: 'healthy' as string, usage: 0 }
             }
         }
-
         // Check Asaas connectivity
         try {
             const asaasStart = Date.now()
@@ -29,7 +25,6 @@ export async function GET(request: NextRequest) {
             const asaasEnv = process.env.ASAAS_ENV || 'sandbox'
             const hasSandboxKey = !!process.env.ASAAS_API_KEY_SANDBOX
             const hasProdKey = !!process.env.ASAAS_API_KEY_PROD
-
             if (asaasEnv === 'production' && !hasProdKey) {
                 checks.checks.asaas = {
                     status: 'warning',
@@ -57,7 +52,6 @@ export async function GET(request: NextRequest) {
             }
             checks.status = 'degraded'
         }
-
         // Check memory usage
         const memoryUsage = process.memoryUsage()
         const memoryUsageMB = Math.round(memoryUsage.heapUsed / 1024 / 1024)
@@ -65,23 +59,18 @@ export async function GET(request: NextRequest) {
             status: memoryUsageMB > 512 ? 'warning' : 'healthy',
             usage: memoryUsageMB
         }
-
         // Overall response time
         const totalResponseTime = Date.now() - startTime
-
         // Determine overall status
         const hasUnhealthy = Object.values(checks.checks).some(check => check.status === 'unhealthy')
         const hasWarning = Object.values(checks.checks).some(check => check.status === 'warning')
-
         if (hasUnhealthy) {
             checks.status = 'unhealthy'
         } else if (hasWarning) {
             checks.status = 'warning'
         }
-
         const statusCode = checks.status === 'healthy' ? 200 :
             checks.status === 'warning' ? 200 : 503
-
         return NextResponse.json({
             ...checks,
             responseTime: totalResponseTime
@@ -93,10 +82,8 @@ export async function GET(request: NextRequest) {
                 'Expires': '0'
             }
         })
-
     } catch (error) {
         console.error('Health check failed:', error)
-
         return NextResponse.json({
             timestamp: new Date().toISOString(),
             status: 'unhealthy',
@@ -110,7 +97,6 @@ export async function GET(request: NextRequest) {
         })
     }
 }
-
 // Handle OPTIONS for CORS
 export async function OPTIONS() {
     return new NextResponse(null, {

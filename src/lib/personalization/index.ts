@@ -44,7 +44,6 @@ export type {
     PersonalizationStrategy,
     CacheStrategy
 } from '@/types/personalization'
-
 // Error classes
 export {
     PersonalizationError,
@@ -54,7 +53,6 @@ export {
     ExperimentError,
     ConsentError
 } from '@/types/personalization'
-
 // Configuration and constants
 export {
     DEFAULT_PERSONALIZATION_CONFIG,
@@ -65,14 +63,12 @@ export {
     CONSENT_TYPES,
     RETENTION_POLICIES
 } from './config'
-
 // Persona analyzer
 export {
     PersonaAnalyzer,
     createPersonaAnalyzer,
     analyzeUserPersona
 } from './persona-analyzer'
-
 export type {
     AnalysisContext,
     DeviceInfo,
@@ -82,19 +78,16 @@ export type {
     PersonaScore,
     ScoreFactor
 } from './persona-analyzer'
-
 // Personalization engine
 export {
     PersonalizationEngine,
     createPersonalizationEngine,
     createPersonalizationEngineWithConfig
 } from './personalization-engine'
-
 export type {
     PersonalizationEngineConfig,
     PersonalizationState
 } from './personalization-engine'
-
 // Storage and cache utilities
 export {
     LocalStorageAdapter,
@@ -108,7 +101,6 @@ export {
     trackBehavior,
     getBehaviorHistory
 } from './storage'
-
 // Re-export commonly used utilities
 export { DEFAULT_PERSONALIZATION_CONFIG as CONFIG } from './config'
 export { personalizationStorage as storage } from './storage'

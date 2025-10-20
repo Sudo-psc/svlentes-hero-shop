@@ -1,5 +1,4 @@
 'use client'
-
 import {
   LineChart,
   Line,
@@ -18,7 +17,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CustomerGrowthData } from '@/types/admin'
 import { Users, UserPlus, UserMinus, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
 interface CustomerGrowthChartProps {
   data: CustomerGrowthData[]
   title?: string
@@ -28,7 +26,6 @@ interface CustomerGrowthChartProps {
   showChurn?: boolean
   className?: string
 }
-
 export function CustomerGrowthChart({
   data,
   title = "Crescimento de Clientes",
@@ -60,7 +57,6 @@ export function CustomerGrowthChart({
       </Card>
     )
   }
-
   // Calcular estatísticas
   const totalNewCustomers = data.reduce((sum, item) => sum + item.newCustomers, 0)
   const totalChurnedCustomers = data.reduce((sum, item) => sum + item.churnedCustomers, 0)
@@ -68,12 +64,10 @@ export function CustomerGrowthChart({
   const currentTotal = data[data.length - 1]?.totalCustomers || 0
   const initialTotal = data[0]?.totalCustomers || 0
   const growthRate = initialTotal > 0 ? ((currentTotal - initialTotal) / initialTotal) * 100 : 0
-
   // Calcular taxa de churn média
   const avgChurnRate = data.length > 0
     ? (totalChurnedCustomers / (data.reduce((sum, item) => sum + item.totalCustomers, 0) / data.length)) * 100
     : 0
-
   // Formatar dados para exibição
   const formatData = data.map(item => ({
     ...item,
@@ -86,14 +80,12 @@ export function CustomerGrowthChart({
     totalCustomers: Number(item.totalCustomers),
     netGrowth: Number(item.newCustomers - item.churnedCustomers)
   }))
-
   // Componente do gráfico baseado no tipo
   const renderChart = () => {
     const commonProps = {
       data: formatData,
       margin: { top: 5, right: 30, left: 20, bottom: 5 }
     }
-
     switch (chartType) {
       case 'bar':
         return (
@@ -145,7 +137,6 @@ export function CustomerGrowthChart({
             )}
           </BarChart>
         )
-
       case 'line':
         return (
           <LineChart {...commonProps}>
@@ -197,7 +188,6 @@ export function CustomerGrowthChart({
             )}
           </LineChart>
         )
-
       case 'area':
       default:
         return (
@@ -282,7 +272,6 @@ export function CustomerGrowthChart({
         )
     }
   }
-
   return (
     <Card className={className}>
       <CardHeader>
@@ -313,7 +302,6 @@ export function CustomerGrowthChart({
             {renderChart()}
           </ResponsiveContainer>
         </div>
-
         {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
           <div className="text-center">
@@ -350,13 +338,10 @@ export function CustomerGrowthChart({
     </Card>
   )
 }
-
 // Tooltip personalizado
 function CustomTooltip({ active, payload, label, showChurn }: any) {
   if (!active || !payload?.length) return null
-
   const data = payload[0]?.payload
-
   return (
     <div className="rounded-lg border bg-background p-3 shadow-lg">
       <p className="text-sm font-medium mb-2">{label}</p>
@@ -400,7 +385,6 @@ function CustomTooltip({ active, payload, label, showChurn }: any) {
     </div>
   )
 }
-
 // Versão compacta
 export function CustomerGrowthChartCompact({
   data,
@@ -418,7 +402,6 @@ export function CustomerGrowthChartCompact({
       </Card>
     )
   }
-
   const formatData = data.slice(-6).map(item => ({
     ...item,
     date: new Date(item.date).toLocaleDateString('pt-BR', {
@@ -426,7 +409,6 @@ export function CustomerGrowthChartCompact({
     }),
     totalCustomers: Number(item.totalCustomers)
   }))
-
   return (
     <Card className={className}>
       <CardContent className="p-4">

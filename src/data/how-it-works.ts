@@ -1,5 +1,4 @@
 // Dados para a seção "Como Funciona"
-
 export const howItWorksSteps = {
     monthly: [
         {
@@ -78,7 +77,6 @@ export const howItWorksSteps = {
         }
     ]
 }
-
 export const processTimeline = {
     steps: [
         'Consulta médica inicial',
@@ -91,7 +89,6 @@ export const processTimeline = {
     totalTime: 'Processo completo em até 7 dias',
     firstDelivery: '2-3 dias úteis após aprovação'
 }
-
 export const serviceFeatures = [
     {
         id: 'medical-expertise',

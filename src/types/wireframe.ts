@@ -1,5 +1,4 @@
 // Tipos baseados no wireframe da landing page
-
 export interface HeaderProps {
     logo: string; // "SV Lentes"
     navigation: {
@@ -11,7 +10,6 @@ export interface HeaderProps {
     ctaPrimary: string; // "Agendar Consulta"
     utilityIcons: string[]; // idioma/conta
 }
-
 export interface HeroSectionProps {
     badge: string; // "Pioneiro no Brasil"
     headline: string; // "Nunca mais fique sem lentes"
@@ -35,7 +33,6 @@ export interface HeroSectionProps {
         ctaCalculator: string; // "Calcule sua economia"
     };
 }
-
 export interface ProblemSolutionProps {
     problems: Array<{
         icon: string;
@@ -48,7 +45,6 @@ export interface ProblemSolutionProps {
     }>;
     ctaContextual: string; // "Fale com um especialista"
 }
-
 export interface HowItWorksProps {
     tabs: ['Mensal', 'Anual'];
     steps: Array<{
@@ -63,7 +59,6 @@ export interface HowItWorksProps {
         steps: string[];
     };
 }
-
 export interface PricingPlan {
     id: string;
     name: string;
@@ -80,7 +75,6 @@ export interface PricingPlan {
     stripePriceId: string;
     asaasProductId?: string; // ID do produto no Asaas (gateway brasileiro)
     ctaText: string; // "Assinar" ou "Agendar"
-
     // Extended properties for enhanced functionality
     lensType?: string; // Tipo de lente (ex: 'asferica', 'torica', 'diaria')
     billingCycle?: string; // Ciclo de cobrança (ex: 'monthly', 'quarterly', 'annual')
@@ -98,7 +92,6 @@ export interface PricingPlan {
     isActive?: boolean; // Status de ativação
     sortOrder?: number; // Ordenação
 }
-
 export interface PricingSectionProps {
     tabs: ['Mensal', 'Anual'];
     plans: PricingPlan[];
@@ -107,7 +100,6 @@ export interface PricingSectionProps {
         planComparison: Record<string, boolean | string>[];
     };
 }
-
 export interface ReferralProgramProps {
     mainCard: {
         title: string;
@@ -120,7 +112,6 @@ export interface ReferralProgramProps {
         rules: string[];
     };
 }
-
 export interface AddOn {
     id: string;
     name: string;
@@ -128,25 +119,21 @@ export interface AddOn {
     price?: number;
     type: 'consulta' | 'teleorientacao' | 'seguro' | 'vip';
 }
-
 export interface AddOnsProps {
     services: AddOn[];
     layout: 'chips' | 'cards';
 }
-
 export interface FAQItem {
     id: string;
     question: string;
     answer: string;
     category?: string;
 }
-
 export interface FAQProps {
     items: FAQItem[];
     layout: 'accordion';
     numbering: boolean; // true para numeração
 }
-
 export interface FinalCTAProps {
     valueReinforcement: string;
     benefits: string[];
@@ -157,7 +144,6 @@ export interface FinalCTAProps {
         placement: 'mobile' | 'desktop';
     };
 }
-
 export interface FooterProps {
     legalInfo: {
         address: string;

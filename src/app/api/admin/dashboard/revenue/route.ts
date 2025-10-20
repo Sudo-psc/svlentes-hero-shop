@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { withAdminAuth } from '@/lib/admin/auth'
 import { Permission, RevenueData } from '@/types/admin'
-
 export const GET = withAdminAuth(
   async (req: NextRequest, { user }) => {
     // Mock revenue data for the last 6 months
@@ -43,7 +42,6 @@ export const GET = withAdminAuth(
         orders: 165,
       },
     ]
-
     return Response.json({
       success: true,
       data: revenueData,

@@ -1,11 +1,9 @@
 /**
  * Helpers para gerenciamento de assinaturas
  */
-
 export type SubscriptionStatus = 'active' | 'inactive' | 'cancelled' | 'paused' | 'pending'
 export type OrderStatus = 'delivered' | 'shipped' | 'processing' | 'cancelled' | 'pending'
 export type InvoiceStatus = 'paid' | 'received' | 'confirmed' | 'pending' | 'overdue' | 'cancelled'
-
 /**
  * Retorna a classe CSS para o status da assinatura
  */
@@ -17,10 +15,8 @@ export function getSubscriptionStatusColor(status: SubscriptionStatus): string {
     inactive: 'bg-gray-100 text-gray-800',
     pending: 'bg-blue-100 text-blue-800'
   }
-
   return statusMap[status] || 'bg-gray-100 text-gray-800'
 }
-
 /**
  * Retorna o label em português para o status da assinatura
  */
@@ -32,10 +28,8 @@ export function getSubscriptionStatusLabel(status: SubscriptionStatus): string {
     inactive: 'Inativa',
     pending: 'Pendente'
   }
-
   return labelMap[status] || status
 }
-
 /**
  * Retorna a classe CSS para o status do pedido
  */
@@ -47,10 +41,8 @@ export function getOrderStatusColor(status: OrderStatus): string {
     cancelled: 'bg-red-100 text-red-800',
     pending: 'bg-gray-100 text-gray-800'
   }
-
   return statusMap[status] || 'bg-gray-100 text-gray-800'
 }
-
 /**
  * Retorna o label em português para o status do pedido
  */
@@ -62,10 +54,8 @@ export function getOrderStatusLabel(status: OrderStatus): string {
     cancelled: 'Cancelado',
     pending: 'Pendente'
   }
-
   return labelMap[status] || status
 }
-
 /**
  * Retorna a classe CSS para o status da fatura
  */
@@ -78,10 +68,8 @@ export function getInvoiceStatusColor(status: InvoiceStatus): string {
     overdue: 'bg-red-100 text-red-800',
     cancelled: 'bg-gray-100 text-gray-800'
   }
-
   return statusMap[status] || 'bg-gray-100 text-gray-800'
 }
-
 /**
  * Retorna o label em português para o status da fatura
  */
@@ -94,24 +82,20 @@ export function getInvoiceStatusLabel(status: InvoiceStatus): string {
     overdue: 'Vencido',
     cancelled: 'Cancelado'
   }
-
   return labelMap[status] || status
 }
-
 /**
  * Verifica se a assinatura está ativa
  */
 export function isSubscriptionActive(status: SubscriptionStatus): boolean {
   return status === 'active'
 }
-
 /**
  * Verifica se a assinatura pode ser renovada
  */
 export function canRenewSubscription(status: SubscriptionStatus): boolean {
   return status === 'cancelled' || status === 'inactive'
 }
-
 /**
  * Verifica se a assinatura pode ser pausada
  */

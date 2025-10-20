@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { Permission, AdminRole } from '@/types/admin'
-
 // Mock admin users - in production, this would come from database
 const MOCK_ADMIN_USERS = {
   'admin@svlentes.com.br': {
@@ -44,7 +43,6 @@ const MOCK_ADMIN_USERS = {
     ],
   },
 }
-
 /**
  * Verifica se um usuário tem permissão de administrador
  */
@@ -53,14 +51,11 @@ export async function checkAdminPermission(
   requiredPermission: Permission
 ): Promise<boolean> {
   const adminUser = MOCK_ADMIN_USERS[userEmail as keyof typeof MOCK_ADMIN_USERS]
-
   if (!adminUser) {
     return false
   }
-
   return adminUser.permissions.includes(requiredPermission)
 }
-
 /**
  * Verifica se um usuário tem alguma das permissões necessárias
  */
@@ -69,35 +64,28 @@ export async function checkAdminPermissions(
   requiredPermissions: Permission | Permission[]
 ): Promise<boolean> {
   const adminUser = MOCK_ADMIN_USERS[userEmail as keyof typeof MOCK_ADMIN_USERS]
-
   if (!adminUser) {
     return false
   }
-
   const permissions = Array.isArray(requiredPermissions)
     ? requiredPermissions
     : [requiredPermissions]
-
   return permissions.some(permission => adminUser.permissions.includes(permission))
 }
-
 /**
  * Obtém informações do usuário administrador
  */
 export async function getAdminUser(userEmail: string) {
   const adminUser = MOCK_ADMIN_USERS[userEmail as keyof typeof MOCK_ADMIN_USERS]
-
   if (!adminUser) {
     return null
   }
-
   return {
     email: adminUser.email,
     role: adminUser.role,
     permissions: adminUser.permissions,
   }
 }
-
 /**
  * Middleware para verificar autenticação admin em server components
  */
@@ -105,28 +93,23 @@ export async function requireAuth(
   requiredPermissions?: Permission | Permission[]
 ) {
   const session = await getServerSession()
-
   if (!session?.user?.email) {
     redirect('/auth/signin?callbackUrl=/admin')
   }
-
   if (requiredPermissions) {
     const hasPermission = await checkAdminPermissions(
       session.user.email,
       requiredPermissions
     )
-
     if (!hasPermission) {
       redirect('/unauthorized')
     }
   }
-
   return {
     session,
     user: await getAdminUser(session.user.email),
   }
 }
-
 /**
  * Wrapper para APIs administrativas
  */
@@ -137,29 +120,24 @@ export function withAdminAuth(
   return async (req: Request, context: any) => {
     try {
       const session = await getServerSession()
-
       if (!session?.user?.email) {
         return Response.json(
           { success: false, error: 'Não autorizado' },
           { status: 401 }
         )
       }
-
       const adminUser = await getAdminUser(session.user.email)
-
       if (!adminUser) {
         return Response.json(
           { success: false, error: 'Acesso administrativo negado' },
           { status: 403 }
         )
       }
-
       if (requiredPermissions) {
         const hasPermission = await checkAdminPermissions(
           session.user.email,
           requiredPermissions
         )
-
         if (!hasPermission) {
           return Response.json(
             { success: false, error: 'Permissões insuficientes' },
@@ -167,7 +145,6 @@ export function withAdminAuth(
           )
         }
       }
-
       return handler(req, { user: adminUser, session })
     } catch (error) {
       console.error('Admin auth middleware error:', error)
@@ -178,7 +155,6 @@ export function withAdminAuth(
     }
   }
 }
-
 /**
  * Hook para usar autenticação admin em client components
  */
@@ -187,7 +163,6 @@ export function useAdminAuth() {
   // For now, we'll create a placeholder
   throw new Error('useAdminAuth should be used with NextAuth client-side hooks')
 }
-
 /**
  * Helper para criar rotas de API protegidas
  */
@@ -201,23 +176,19 @@ export function createProtectedRoute(
   return async (req: Request, context: any) => {
     try {
       const session = await getServerSession()
-
       if (!session?.user?.email) {
         return Response.json(
           { success: false, error: 'Não autorizado' },
           { status: 401 }
         )
       }
-
       const adminUser = await getAdminUser(session.user.email)
-
       if (!adminUser) {
         return Response.json(
           { success: false, error: 'Acesso administrativo negado' },
           { status: 403 }
         )
       }
-
       // Check role requirements
       if (options.roles) {
         const roles = Array.isArray(options.roles) ? options.roles : [options.roles]
@@ -228,17 +199,14 @@ export function createProtectedRoute(
           )
         }
       }
-
       // Check permission requirements
       if (options.permissions) {
         const permissions = Array.isArray(options.permissions)
           ? options.permissions
           : [options.permissions]
-
         const hasPermission = permissions.some(permission =>
           adminUser.permissions.includes(permission)
         )
-
         if (!hasPermission) {
           return Response.json(
             { success: false, error: 'Permissões insuficientes' },
@@ -246,7 +214,6 @@ export function createProtectedRoute(
           )
         }
       }
-
       return handler(req, { user: adminUser, session })
     } catch (error) {
       console.error('Protected route error:', error)
@@ -257,7 +224,6 @@ export function createProtectedRoute(
     }
   }
 }
-
 /**
  * Activity logging for admin actions
  */

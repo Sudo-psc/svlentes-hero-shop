@@ -1,9 +1,7 @@
 'use client'
-
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import PaymentMethodSelector from './PaymentMethodSelector'
-
 interface PaymentTestModalProps {
   isOpen: boolean
   onClose: () => void
@@ -13,23 +11,19 @@ interface PaymentTestModalProps {
     price: number
   }
 }
-
 export const PaymentTestModal: React.FC<PaymentTestModalProps> = ({
   isOpen,
   onClose,
   planData
 }) => {
   const [customerEmail] = useState('test@svlentes.com.br')
-
   const handleAsaasPayment = () => {
     // Redirect to existing checkout flow
     window.location.href = `/api/create-checkout`
   }
-
   if (!isOpen) {
     return null
   }
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -47,7 +41,6 @@ export const PaymentTestModal: React.FC<PaymentTestModalProps> = ({
               </svg>
             </button>
           </div>
-
           <div className="mb-6 p-4 bg-cyan-50 border border-cyan-200 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-cyan-600 rounded-full flex items-center justify-center">
@@ -62,7 +55,6 @@ export const PaymentTestModal: React.FC<PaymentTestModalProps> = ({
               </div>
             </div>
           </div>
-
           <PaymentMethodSelector
             planId={planData.id}
             planName={planData.name}
@@ -70,7 +62,6 @@ export const PaymentTestModal: React.FC<PaymentTestModalProps> = ({
             customerEmail={customerEmail}
             onAsaasPayment={handleAsaasPayment}
           />
-
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="text-sm text-gray-500 text-center">
               <p>Esta é uma interface de teste para validação do fallback do Stripe.</p>
@@ -82,5 +73,4 @@ export const PaymentTestModal: React.FC<PaymentTestModalProps> = ({
     </div>
   )
 }
-
 export default PaymentTestModal

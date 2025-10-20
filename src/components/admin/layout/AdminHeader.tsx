@@ -1,5 +1,4 @@
 'use client'
-
 import { Bell, Search, User, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,26 +6,20 @@ import { Badge } from '@/components/ui/badge'
 import { signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-
 interface AdminHeaderProps {
   session: any
 }
-
 export function AdminHeader({ session }: AdminHeaderProps) {
   const router = useRouter()
   const { data: sessionData } = useSession()
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
-
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' })
   }
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Searching for:', searchQuery)
   }
-
   const userInitials = sessionData?.user?.name
     ? sessionData.user.name
         .split(' ')
@@ -35,7 +28,6 @@ export function AdminHeader({ session }: AdminHeaderProps) {
         .toUpperCase()
         .slice(0, 2)
     : 'AD'
-
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-admin-dashboard-card">
       <div className="flex h-16 items-center gap-x-4 px-6 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
@@ -60,7 +52,6 @@ export function AdminHeader({ session }: AdminHeaderProps) {
             />
           </form>
         </div>
-
         {/* Right side */}
         <div className="flex items-center gap-x-4 lg:gap-x-6">
           {/* Notifications */}
@@ -74,7 +65,6 @@ export function AdminHeader({ session }: AdminHeaderProps) {
             </Badge>
             <span className="sr-only">View notifications</span>
           </Button>
-
           {/* User menu */}
           <div className="relative">
             <Button 
@@ -86,7 +76,6 @@ export function AdminHeader({ session }: AdminHeaderProps) {
                 {userInitials}
               </div>
             </Button>
-            
             {showUserMenu && (
               <>
                 <div 

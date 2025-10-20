@@ -21,23 +21,19 @@ import {
     generateOrganizationStructuredData,
     generateWebSiteStructuredData
 } from '@/lib/seo'
-
 const inter = Inter({
     subsets: ['latin'],
     display: 'swap',
     variable: '--font-inter',
     weight: ['300', '400', '500', '600', '700'],
 })
-
 const poppins = Poppins({
     subsets: ['latin'],
     display: 'swap',
     variable: '--font-poppins',
     weight: ['400', '500', '600', '700', '800'],
 })
-
 export const metadata: Metadata = baseMetadata
-
 export default function RootLayout({
     children,
 }: {
@@ -45,12 +41,10 @@ export default function RootLayout({
 }) {
     // const organizationData = generateOrganizationStructuredData()
     // const websiteData = generateWebSiteStructuredData()
-
     // Initialize chunk error handler
     if (typeof window !== 'undefined') {
         initializeChunkErrorHandler()
     }
-
     return (
         <html lang="pt-BR" className={`${inter.variable} ${poppins.variable}`}>
             <head>
