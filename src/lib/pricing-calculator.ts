@@ -11,6 +11,9 @@ import {
   MargemLucro,
   ResumoFinanceiro,
   ConfigDescontoProgressivo,
+  TipoLente,
+  Acessorio,
+  ConfigPainelCustos,
   FORMULAS,
   VALIDATION_CONSTANTS
 } from '@/types/pricing-calculator'
@@ -343,6 +346,64 @@ export function getCorIndicadorMargem(margem: number): string {
 }
 
 /**
+ * Calcula custo mensal de lentes para um plano
+ */
+export function calcularCustoMensalLentes(
+  tiposLente: TipoLente[],
+  configuracaoLentes: Array<{ tipoId: string; quantidade: number }>
+): number {
+  let custoTotal = 0
+
+  configuracaoLentes.forEach(config => {
+    const tipoLente = tiposLente.find(t => t.id === config.tipoId)
+    if (tipoLente) {
+      // Custo mensal baseado no consumo mensal (considerando 1 par por mês)
+      const custoPorUnidade = tipoLente.custoUnitario
+      const custoMensal = custoPorUnidade * config.quantidade
+      custoTotal += custoMensal
+    }
+  })
+
+  return custoTotal
+}
+
+/**
+ * Calcula custo mensal de acessórios para um plano
+ */
+export function calcularCustoMensalAcessorios(
+  acessorios: Acessorio[],
+  configuracaoAcessorios: Array<{ acessorioId: string; frequencia: 'mensal' | 'trimestral' | 'semestral' | 'anual' }>
+): number {
+  let custoTotal = 0
+
+  configuracaoAcessorios.forEach(config => {
+    const acessorio = acessorios.find(a => a.id === config.acessorioId)
+    if (acessorio) {
+      let custoMensal = 0
+
+      switch (config.frequencia) {
+        case 'mensal':
+          custoMensal = acessorio.custo
+          break
+        case 'trimestral':
+          custoMensal = acessorio.custo / 3
+          break
+        case 'semestral':
+          custoMensal = acessorio.custo / 6
+          break
+        case 'anual':
+          custoMensal = acessorio.custo / 12
+          break
+      }
+
+      custoTotal += custoMensal
+    }
+  })
+
+  return custoTotal
+}
+
+/**
  * Calcula análise de rentabilidade
  */
 export function calcularAnaliseRentabilidade(
@@ -373,11 +434,96 @@ export function calcularAnaliseRentabilidade(
 }
 
 /**
- * Configuração padrão de custos
+ * Dados reais de lentes SV Lentes
  */
-export const getCustosPadrao = (): CustosOperacionais => ({
-  id: 'default',
-  nome: 'Configuração Padrão',
+export const getTiposLenteReais = (): TipoLente[] => [
+  {
+    id: 'asferica',
+    nome: 'Lente Asférica',
+    categoria: 'asferica',
+    custoUnitario: 20,
+    unidadesPorCaixa: 6,
+    descricao: 'Lentes nacionais asféricas de alta qualidade'
+  },
+  {
+    id: 'torica',
+    nome: 'Lente Tórica',
+    categoria: 'torica',
+    custoUnitario: 40,
+    unidadesPorCaixa: 6,
+    descricao: 'Lentes nacionais tóricas para astigmatismo'
+  },
+  {
+    id: 'multifocal',
+    nome: 'Lente Multifocal',
+    categoria: 'multifocal',
+    custoUnitario: 50,
+    unidadesPorCaixa: 6,
+    descricao: 'Lentes nacionais multifocais progressivas'
+  }
+]
+
+/**
+ * Dados reais de acessórios SV Lentes
+ */
+export const getAcessoriosReais = (): Acessorio[] => [
+  {
+    id: 'solucao-300ml',
+    nome: 'Solução de Limpeza 300ml',
+    custo: 30,
+    tipo: 'solucao',
+    descricao: 'Solução completa para limpeza diária'
+  },
+  {
+    id: 'solucao-viagem',
+    nome: 'Solução para Viagem 120ml',
+    custo: 20,
+    tipo: 'solucao',
+    descricao: 'Solução compacta para viagens'
+  },
+  {
+    id: 'colirio-renu',
+    nome: 'Colírio RENU',
+    custo: 23.50,
+    tipo: 'colirio',
+    descricao: 'Colírio lubrificante'
+  },
+  {
+    id: 'estojo-completo',
+    nome: 'Estojo Completo',
+    custo: 10,
+    tipo: 'estojo',
+    descricao: 'Estojo premium com case'
+  },
+  {
+    id: 'pegador',
+    nome: 'Pegador de Lentes',
+    custo: 2,
+    tipo: 'pegador',
+    descricao: 'Pinça para manipulação segura'
+  },
+  {
+    id: 'aplicador-colirio',
+    nome: 'Aplicador de Colírio',
+    custo: 25,
+    tipo: 'aplicador',
+    descricao: 'Aplicador preciso para colírios'
+  },
+  {
+    id: 'abridor-olho',
+    nome: 'Abridor de Olho',
+    custo: 10,
+    tipo: 'abridor',
+    descricao: 'Abridor especializado para pálpebras'
+  }
+]
+
+/**
+ * Configuração padrão de custos atualizada com dados reais SV Lentes
+ */
+export const getCustosPadrao = (): ConfigPainelCustos => ({
+  id: 'default-svlentes-2025',
+  nome: 'Configuração SV Lentes 2025',
   taxaProcessamento: VALIDATION_CONSTANTS.TAXA_PROCESSAMENTO.default,
   custoParcelamento: VALIDATION_CONSTANTS.CUSTO_PARCELAMENTO.default,
   embalagens: VALIDATION_CONSTANTS.EMBALAGENS.default,
@@ -385,7 +531,14 @@ export const getCustosPadrao = (): CustosOperacionais => ({
   administrativo: VALIDATION_CONSTANTS.ADMINISTRATIVO.default,
   insumos: VALIDATION_CONSTANTS.INSUMOS.default,
   operacional: VALIDATION_CONSTANTS.OPERACIONAL.default,
-  beneficios: []
+  beneficios: [],
+  // Metadados
+  dataAtualizacao: new Date().toISOString(),
+  versao: '2.0.0',
+  atualizadoPor: 'Admin SV Lentes',
+  // Custos específicos
+  tiposLente: getTiposLenteReais(),
+  acessorios: getAcessoriosReais()
 })
 
 /**

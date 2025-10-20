@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { LogoHeader } from '@/components/ui/logo'
@@ -10,6 +11,7 @@ interface HeaderProps {
     className?: string
 }
 export function Header({ className }: HeaderProps) {
+    const router = useRouter()
     const { user, loading, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -69,11 +71,11 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
         window.open(whatsappLink, '_blank')
     }, [])
     const handleLogin = useCallback(() => {
-        window.location.href = '/area-assinante/login'
+        router.push('/area-assinante/login')
     }, [])
     const handleLogout = useCallback(async () => {
         await signOut()
-        window.location.href = '/'
+        router.push('/')
     }, [signOut])
     return (
         <header
@@ -125,12 +127,12 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                         {user ? (
                             <>
                                 <Button
-                                    onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
+                                    onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                     variant="outline"
                                     className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                     size="default"
                                 >
-                                    <LayoutDashboard className="w-4 h-4" />
+                                    <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                 </Button>
                                 <Button
@@ -139,7 +141,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
                                     size="default"
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                 </Button>
                             </>
@@ -150,7 +152,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
                                     size="default"
                                 >
-                                    <Phone className="w-4 h-4" />
+                                    <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                 </Button>
                                 <Button
@@ -159,7 +161,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                     size="default"
                                 >
-                                    <User className="w-4 h-4" />
+                                    <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                 </Button>
                             </>
@@ -172,9 +174,9 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                         aria-label="Toggle menu"
                     >
                         {isMenuOpen ? (
-                            <X className="w-6 h-6" />
+                            <X className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
                         ) : (
-                            <Menu className="w-6 h-6" />
+                            <Menu className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
                         )}
                     </button>
                 </div>
@@ -210,12 +212,12 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                 {user ? (
                                     <>
                                         <Button
-                                            onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
+                                            onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                             variant="outline"
                                             className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                             size="default"
                                         >
-                                            <LayoutDashboard className="w-4 h-4" />
+                                            <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                         </Button>
                                         <Button
@@ -224,7 +226,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800"
                                             size="default"
                                         >
-                                            <LogOut className="w-4 h-4" />
+                                            <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                         </Button>
                                     </>
@@ -235,7 +237,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
                                             size="default"
                                         >
-                                            <Phone className="w-4 h-4" />
+                                            <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                         </Button>
                                         <Button
@@ -244,7 +246,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                             size="default"
                                         >
-                                            <User className="w-4 h-4" />
+                                            <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                         </Button>
                                     </>

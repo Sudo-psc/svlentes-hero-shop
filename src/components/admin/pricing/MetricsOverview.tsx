@@ -391,11 +391,11 @@ export function MetricsOverview({ planos, configCustos, loading }: MetricsOvervi
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                <span>Planos com margem >30%</span>
+                <span>Planos com margem &gt;30%</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-                <span>Revisar planos com margem <15%</span>
+                <span>Revisar planos com margem &lt;15%</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
