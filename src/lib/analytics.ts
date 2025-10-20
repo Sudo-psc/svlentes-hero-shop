@@ -1,6 +1,5 @@
 // Google Analytics 4 Configuration and Custom Events
 // Based on the design document requirements for conversion tracking
-
 declare global {
     interface Window {
         gtag: (
@@ -11,21 +10,17 @@ declare global {
         dataLayer: any[];
     }
 }
-
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '';
-
 // Initialize Google Analytics
 export const initGA = () => {
     if (!GA_MEASUREMENT_ID || typeof window === 'undefined') {
         return;
     }
-
     // Initialize dataLayer
     window.dataLayer = window.dataLayer || [];
     window.gtag = function gtag() {
         window.dataLayer.push(arguments);
     };
-
     window.gtag('js', new Date());
     window.gtag('config', GA_MEASUREMENT_ID, {
         page_title: document.title,
@@ -38,7 +33,6 @@ export const initGA = () => {
         },
     });
 };
-
 // Custom Events Interface based on design document
 export interface CustomEvents {
     // Hero Section Events
@@ -63,7 +57,6 @@ export interface CustomEvents {
         context: string;
         has_user_data: boolean;
     };
-
     // Section-Specific Events
     pricing_tab_switched: {
         tab: 'mensal' | 'anual';
@@ -89,7 +82,6 @@ export interface CustomEvents {
         addon_name: string;
         addon_price?: number;
     };
-
     // Conversion Events
     consultation_scheduled: {
         plan_interest: string;
@@ -108,7 +100,6 @@ export interface CustomEvents {
         user_data: boolean;
         message_type: 'lead' | 'consultation' | 'support';
     };
-
     // Error Events
     subscription_error: {
         error_type: string;
@@ -121,7 +112,6 @@ export interface CustomEvents {
         field_name: string;
         error_message: string;
     };
-
     // Engagement Events
     section_viewed: {
         section_name: string;
@@ -137,7 +127,6 @@ export interface CustomEvents {
         method: 'copy' | 'direct_share';
     };
 }
-
 // Generic event tracking function
 export const trackEvent = <T extends keyof CustomEvents>(
     eventName: T,
@@ -147,7 +136,6 @@ export const trackEvent = <T extends keyof CustomEvents>(
         console.warn('Google Analytics not initialized');
         return;
     }
-
     try {
         window.gtag('event', eventName, {
             ...parameters,
@@ -155,16 +143,13 @@ export const trackEvent = <T extends keyof CustomEvents>(
             page_location: window.location.href,
             page_title: document.title,
         });
-
         // Log for debugging in development
         if (process.env.NODE_ENV === 'development') {
-            console.log('GA4 Event:', eventName, parameters);
         }
     } catch (error) {
         console.error('Error tracking event:', error);
     }
 };
-
 // Conversion funnel tracking
 export const trackConversionFunnel = (
     stage: 'awareness' | 'interest' | 'consideration' | 'intent' | 'evaluation' | 'purchase',
@@ -185,16 +170,13 @@ export const trackConversionFunnel = (
     if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) {
         return;
     }
-
     const eventName = stage === 'purchase' ? 'purchase' : 'funnel_step';
-
     window.gtag('event', eventName, {
         funnel_stage: stage,
         ...details,
         timestamp: new Date().toISOString(),
     });
 };
-
 // Enhanced ecommerce events for subscription business
 export const trackSubscriptionEvent = (
     action: 'view_item' | 'add_to_cart' | 'begin_checkout' | 'purchase' | 'cancel_subscription',
@@ -212,7 +194,6 @@ export const trackSubscriptionEvent = (
     if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) {
         return;
     }
-
     const eventData = {
         currency: planData.currency,
         value: planData.price,
@@ -227,22 +208,18 @@ export const trackSubscriptionEvent = (
         ...(planData.transaction_id && { transaction_id: planData.transaction_id }),
         ...(planData.subscription_id && { subscription_id: planData.subscription_id }),
     };
-
     window.gtag('event', action, eventData);
 };
-
 // Page view tracking for SPA navigation
 export const trackPageView = (url: string, title?: string) => {
     if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) {
         return;
     }
-
     window.gtag('config', GA_MEASUREMENT_ID, {
         page_location: url,
         page_title: title || document.title,
     });
 };
-
 // User properties for segmentation
 export const setUserProperties = (properties: {
     user_type?: 'new' | 'returning' | 'subscriber';
@@ -254,22 +231,17 @@ export const setUserProperties = (properties: {
     if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) {
         return;
     }
-
     window.gtag('set', 'user_properties', properties);
 };
-
 // Scroll depth tracking
 export const initScrollTracking = () => {
     if (typeof window === 'undefined') return;
-
     const scrollDepths = [25, 50, 75, 90, 100];
     const trackedDepths: number[] = [];
-
     const trackScrollDepth = () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = Math.round((scrollTop / docHeight) * 100);
-
         scrollDepths.forEach(depth => {
             if (scrollPercent >= depth && !trackedDepths.includes(depth)) {
                 trackedDepths.push(depth);
@@ -280,7 +252,6 @@ export const initScrollTracking = () => {
             }
         });
     };
-
     let ticking = false;
     const handleScroll = () => {
         if (!ticking) {
@@ -291,14 +262,11 @@ export const initScrollTracking = () => {
             ticking = true;
         }
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-
     return () => {
         window.removeEventListener('scroll', handleScroll);
     };
 };
-
 // Session recording integration (for Hotjar/Clarity)
 export const initSessionRecording = () => {
     // This can be extended to integrate with session recording tools

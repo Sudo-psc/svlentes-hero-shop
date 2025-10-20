@@ -1,25 +1,21 @@
 'use client'
-
 import { useState } from 'react'
 import { Check, Plus, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { addOnsData, addOnCategories } from '@/data/add-ons'
 import { AddOn } from '@/types'
 import { formatCurrency } from '@/lib/calculator'
-
 interface AddOnsSelectorProps {
     onContinue: (selectedAddOns: string[]) => void
     onBack: () => void
     preSelectedAddOns?: string[]
 }
-
 // Enhanced AddOn data with additional properties for the selector
 const availableAddOns: (AddOn & { icon: string; recommended?: boolean })[] = addOnsData.map(addOn => ({
     ...addOn,
     icon: getIconForType(addOn.type),
     recommended: ['consulta-extra', 'teleorientacao'].includes(addOn.id) // Mark medical services as recommended
 }))
-
 function getIconForType(type: AddOn['type']): string {
     switch (type) {
         case 'consulta':
@@ -34,10 +30,8 @@ function getIconForType(type: AddOn['type']): string {
             return '📋'
     }
 }
-
 export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: AddOnsSelectorProps) {
     const [selectedAddOns, setSelectedAddOns] = useState<string[]>(preSelectedAddOns)
-
     const toggleAddOn = (addOnId: string) => {
         setSelectedAddOns(prev =>
             prev.includes(addOnId)
@@ -45,15 +39,12 @@ export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: A
                 : [...prev, addOnId]
         )
     }
-
     const calculateTotal = () => {
         return availableAddOns
             .filter(addOn => selectedAddOns.includes(addOn.id))
             .reduce((sum, addOn) => sum + addOn.price, 0)
     }
-
     const total = calculateTotal()
-
     return (
         <div className="space-y-6">
             <div className="text-center mb-8">
@@ -64,12 +55,10 @@ export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: A
                     Adicione serviços extras para uma experiência completa
                 </p>
             </div>
-
             {/* Add-ons Grid */}
             <div className="grid md:grid-cols-2 gap-4">
                 {availableAddOns.map((addOn) => {
                     const isSelected = selectedAddOns.includes(addOn.id)
-
                     return (
                         <button
                             key={addOn.id}
@@ -87,7 +76,6 @@ export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: A
                                     </span>
                                 </div>
                             )}
-
                             {/* Selected Indicator */}
                             {isSelected && (
                                 <div className="absolute top-3 right-3">
@@ -96,13 +84,11 @@ export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: A
                                     </div>
                                 </div>
                             )}
-
                             <div className="flex items-start space-x-4">
                                 {/* Icon */}
                                 <div className="text-3xl flex-shrink-0">
                                     {addOn.icon}
                                 </div>
-
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between mb-1">
@@ -138,7 +124,6 @@ export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: A
                     )
                 })}
             </div>
-
             {/* Total Summary */}
             <div className="bg-gradient-to-r from-primary-50 to-cyan-50 rounded-xl p-6 border border-primary-200">
                 <div className="flex items-center justify-between">
@@ -162,7 +147,6 @@ export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: A
                     )}
                 </div>
             </div>
-
             {/* Actions */}
             <div className="flex space-x-4">
                 <Button

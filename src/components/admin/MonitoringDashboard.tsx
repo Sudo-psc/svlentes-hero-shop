@@ -3,12 +3,9 @@
  * Displays system health, performance metrics, and alerts
  * This would typically be behind authentication in a real application
  */
-
 'use client'
-
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
-
 interface HealthCheck {
     timestamp: string
     status: 'healthy' | 'warning' | 'unhealthy'
@@ -20,7 +17,6 @@ interface HealthCheck {
         uptime: number
     }
 }
-
 interface PerformanceMetrics {
     timestamp: string
     metrics: {
@@ -38,7 +34,6 @@ interface PerformanceMetrics {
         pageLoadTime: { trend: string; change: number }
     }
 }
-
 interface Alert {
     id: string
     type: string
@@ -47,39 +42,32 @@ interface Alert {
     data: any
     status: 'active' | 'resolved'
 }
-
 export default function MonitoringDashboard() {
     const [healthCheck, setHealthCheck] = useState<HealthCheck | null>(null)
     const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null)
     const [alerts, setAlerts] = useState<Alert[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-
     useEffect(() => {
         fetchMonitoringData()
         const interval = setInterval(fetchMonitoringData, 30000) // Refresh every 30 seconds
         return () => clearInterval(interval)
     }, [])
-
     const fetchMonitoringData = async () => {
         try {
             setLoading(true)
-
             // Fetch health check
             const healthResponse = await fetch('/api/health-check')
             const healthData = await healthResponse.json()
             setHealthCheck(healthData)
-
             // Fetch performance metrics
             const performanceResponse = await fetch('/api/monitoring/performance')
             const performanceData = await performanceResponse.json()
             setPerformanceMetrics(performanceData)
-
             // Fetch alerts
             const alertsResponse = await fetch('/api/monitoring/alerts')
             const alertsData = await alertsResponse.json()
             setAlerts(alertsData.alerts || [])
-
             setError(null)
         } catch (err) {
             setError('Failed to fetch monitoring data')
@@ -88,7 +76,6 @@ export default function MonitoringDashboard() {
             setLoading(false)
         }
     }
-
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'healthy': return 'text-green-600 bg-green-100'
@@ -97,7 +84,6 @@ export default function MonitoringDashboard() {
             default: return 'text-gray-600 bg-gray-100'
         }
     }
-
     const getSeverityColor = (severity: string) => {
         switch (severity) {
             case 'info': return 'text-blue-600 bg-blue-100'
@@ -106,14 +92,12 @@ export default function MonitoringDashboard() {
             default: return 'text-gray-600 bg-gray-100'
         }
     }
-
     const formatUptime = (seconds: number) => {
         const days = Math.floor(seconds / 86400)
         const hours = Math.floor((seconds % 86400) / 3600)
         const minutes = Math.floor((seconds % 3600) / 60)
         return `${days}d ${hours}h ${minutes}m`
     }
-
     if (loading && !healthCheck) {
         return (
             <div className="p-6">
@@ -128,20 +112,17 @@ export default function MonitoringDashboard() {
             </div>
         )
     }
-
     return (
         <div className="p-6 max-w-7xl mx-auto">
             <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-900">SV Lentes Monitoring Dashboard</h1>
                 <p className="text-gray-600">System health and performance overview</p>
             </div>
-
             {error && (
                 <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
                     {error}
                 </div>
             )}
-
             {/* System Health */}
             {healthCheck && (
                 <div className="mb-8">
@@ -161,7 +142,6 @@ export default function MonitoringDashboard() {
                                 </div>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Stripe Integration</p>
@@ -171,7 +151,6 @@ export default function MonitoringDashboard() {
                                 <p className="text-xs text-gray-500">{healthCheck.checks.stripe.responseTime}ms</p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Memory Usage</p>
@@ -181,7 +160,6 @@ export default function MonitoringDashboard() {
                                 <p className="text-xs text-gray-500">{healthCheck.checks.memory.status}</p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Uptime</p>
@@ -191,7 +169,6 @@ export default function MonitoringDashboard() {
                     </div>
                 </div>
             )}
-
             {/* Performance Metrics */}
             {performanceMetrics && (
                 <div className="mb-8">
@@ -206,7 +183,6 @@ export default function MonitoringDashboard() {
                                 </p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">First Input Delay</p>
@@ -216,7 +192,6 @@ export default function MonitoringDashboard() {
                                 </p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Cumulative Layout Shift</p>
@@ -226,7 +201,6 @@ export default function MonitoringDashboard() {
                                 </p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Page Load Time</p>
@@ -236,7 +210,6 @@ export default function MonitoringDashboard() {
                                 </p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Error Rate</p>
@@ -244,7 +217,6 @@ export default function MonitoringDashboard() {
                                 <p className="text-xs text-gray-500">Last 24 hours</p>
                             </div>
                         </Card>
-
                         <Card className="p-4">
                             <div>
                                 <p className="text-sm text-gray-600">Conversion Rate</p>
@@ -255,7 +227,6 @@ export default function MonitoringDashboard() {
                     </div>
                 </div>
             )}
-
             {/* Recent Alerts */}
             <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-4">Recent Alerts</h2>
@@ -297,7 +268,6 @@ export default function MonitoringDashboard() {
                     </div>
                 )}
             </div>
-
             {/* Refresh Button */}
             <div className="text-center">
                 <button

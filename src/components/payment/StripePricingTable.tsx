@@ -1,7 +1,5 @@
 'use client'
-
 import React from 'react'
-
 interface StripePricingTableProps {
   pricingTableId: string
   publishableKey: string
@@ -10,7 +8,6 @@ interface StripePricingTableProps {
   customerSessionClientSecret?: string
   className?: string
 }
-
 export const StripePricingTable: React.FC<StripePricingTableProps> = ({
   pricingTableId,
   publishableKey,
@@ -26,7 +23,6 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
       script.src = 'https://js.stripe.com/v3/pricing-table.js'
       script.async = true
       script.onload = () => {
-        console.log('Stripe Pricing Table script loaded')
       }
       script.onerror = () => {
         console.error('Failed to load Stripe Pricing Table script')
@@ -34,7 +30,6 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
       document.head.appendChild(script)
     }
   }, [])
-
   return (
     <div className={`stripe-pricing-table-container ${className}`}>
       <stripe-pricing-table
@@ -47,5 +42,4 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
     </div>
   )
 }
-
 export default StripePricingTable

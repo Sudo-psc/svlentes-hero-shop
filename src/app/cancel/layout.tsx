@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { StructuredData } from '@/components/seo/StructuredData'
 import { generateBreadcrumbStructuredData } from '@/lib/seo'
-
 export const metadata: Metadata = {
     title: 'Pagamento Cancelado - SVlentes',
     description: 'Seu pagamento foi cancelado. Você pode tentar novamente a qualquer momento.',
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
         follow: false,
     },
 }
-
 export default function CancelLayout({
     children,
 }: {
@@ -23,7 +21,6 @@ export default function CancelLayout({
         { name: 'Início', url: 'https://svlentes.com.br' },
         { name: 'Cancelado', url: 'https://svlentes.com.br/cancel' }
     ])
-
     return (
         <>
             <StructuredData data={breadcrumbData} />

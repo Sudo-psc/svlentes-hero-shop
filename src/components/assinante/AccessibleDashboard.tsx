@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -21,38 +20,31 @@ import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Package, AlertTriangle, Settings, Accessibility, Volume2, VolumeX } from 'lucide-react'
 import { formatDate } from '@/lib/formatters'
-
 interface AccessibleDashboardProps {
   className?: string
 }
-
 export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
   const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
   const dashboardActions = useDashboardActions()
   const { toasts } = useToast()
-
   // Modal states
   const [showOrdersModal, setShowOrdersModal] = useState(false)
   const [showInvoicesModal, setShowInvoicesModal] = useState(false)
   const [showChangePlanModal, setShowChangePlanModal] = useState(false)
   const [showUpdateAddressModal, setShowUpdateAddressModal] = useState(false)
   const [showUpdatePaymentModal, setShowUpdatePaymentModal] = useState(false)
-
   // Accessibility states
   const [highContrast, setHighContrast] = useState(false)
   const [largeText, setLargeText] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false)
-
   // Available plans for plan change
   const [availablePlans, setAvailablePlans] = useState<any[]>([])
-
   // Refs for accessibility
   const mainRef = useRef<HTMLElement>(null)
   const skipLinkRef = useRef<HTMLAnchorElement>(null)
-
   // Load pricing plans
   useEffect(() => {
     const loadPlans = async () => {
@@ -65,14 +57,12 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
     }
     loadPlans()
   }, [])
-
   // Handle authentication redirect
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/area-assinante/login')
     }
   }, [authUser, authLoading, router])
-
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -81,13 +71,11 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
         event.preventDefault()
         mainRef.current?.focus()
       }
-
       // Alt + A: Toggle accessibility panel
       if (event.altKey && event.key === 'a') {
         event.preventDefault()
         // Toggle accessibility panel
       }
-
       // Escape: Close modals
       if (event.key === 'Escape') {
         setShowOrdersModal(false)
@@ -97,22 +85,18 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
         setShowUpdatePaymentModal(false)
       }
     }
-
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
-
   // Auto-refresh data
   useEffect(() => {
     if (subscription?.status === 'active') {
       const interval = setInterval(() => {
         refetch()
       }, 5 * 60 * 1000) // Refresh every 5 minutes
-
       return () => clearInterval(interval)
     }
   }, [subscription?.status, refetch])
-
   // Quick actions configuration
   const quickActions = createQuickActions({
     onOrdersClick: () => setShowOrdersModal(true),
@@ -126,15 +110,12 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
     pendingOrders: subscription?.pendingOrders || 0,
     unreadMessages: subscription?.unreadMessages || 0
   })
-
   if (authLoading || subLoading) {
     return <DashboardLoading />
   }
-
   if (!authUser) {
     return null
   }
-
   if (error) {
     return (
       <DashboardError
@@ -143,7 +124,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
       />
     )
   }
-
   const dashboardVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -155,7 +135,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
       }
     }
   }
-
   const contentVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -167,7 +146,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
       }
     }
   }
-
   return (
     <div className={cn(
       'min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50',
@@ -184,7 +162,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
       >
         Pular para o conteúdo principal
       </a>
-
       {/* Accessibility Panel */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -227,7 +204,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           </button>
         </div>
       </motion.div>
-
       {/* Main Content */}
       <main
         ref={mainRef}
@@ -267,7 +243,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
               </Button>
             </div>
           </motion.header>
-
           {/* No Subscription State */}
           <AnimatePresence>
             {!subscription && (
@@ -294,7 +269,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
               </motion.section>
             )}
           </AnimatePresence>
-
           {/* Dashboard with Subscription */}
           <AnimatePresence>
             {subscription && (
@@ -322,7 +296,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
                     isLoading={dashboardActions.isUpdating}
                   />
                 </section>
-
                 {/* Quick Actions */}
                 <section role="region" aria-label="Ações rápidas">
                   <div className="flex items-center gap-2 mb-4">
@@ -357,7 +330,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
                     ))}
                   </div>
                 </section>
-
                 {/* Subscription History Timeline */}
                 <section role="region" aria-label="Histórico da assinatura">
                   <div className="bg-white p-6 rounded-xl shadow-sm border">
@@ -367,7 +339,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
                     <SubscriptionHistoryTimeline userId={authUser.uid} />
                   </div>
                 </section>
-
                 {/* Emergency Contact */}
                 <section role="region" aria-label="Contatos de emergência">
                   <EmergencyContact />
@@ -377,7 +348,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           </AnimatePresence>
         </motion.div>
       </main>
-
       {/* Modals */}
       <AnimatePresence>
         {showOrdersModal && (
@@ -387,7 +357,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           />
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {showInvoicesModal && (
           <InvoicesModal
@@ -396,7 +365,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           />
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {showChangePlanModal && subscription && (
           <ChangePlanModal
@@ -412,7 +380,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           />
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {showUpdateAddressModal && subscription && (
           <UpdateAddressModal
@@ -423,7 +390,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           />
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {showUpdatePaymentModal && subscription && (
           <UpdatePaymentModal
@@ -437,7 +403,6 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
           />
         )}
       </AnimatePresence>
-
       {/* Toast Notifications */}
       <div className="fixed bottom-4 right-4 z-50 space-y-2">
         {toasts.map((toast) => (
@@ -455,10 +420,8 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
     </div>
   )
 }
-
 // Helper function for conditional className
 function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
-
 export default AccessibleDashboard

@@ -1,18 +1,14 @@
 'use client'
-
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-
 interface Props {
   children: ReactNode
   fallback?: ReactNode
 }
-
 interface State {
   hasError: boolean
   error: Error | null
   errorInfo: ErrorInfo | null
 }
-
 /**
  * Error Boundary Component
  *
@@ -28,7 +24,6 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo: null,
     }
   }
-
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Update state so next render shows fallback UI
     return {
@@ -36,7 +31,6 @@ export class ErrorBoundary extends Component<Props, State> {
       error,
     }
   }
-
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error details
     console.error('🚨 ErrorBoundary caught an error:', {
@@ -44,25 +38,21 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
       componentStack: errorInfo.componentStack,
     })
-
     this.setState({
       error,
       errorInfo,
     })
-
     // Check if it's a hydration error
     const isHydrationError =
       error.message?.includes('Hydration') ||
       error.message?.includes('did not match') ||
       error.message?.includes('server-rendered HTML')
-
     if (isHydrationError) {
       console.error('🚨 HYDRATION ERROR DETECTED:', {
         message: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack,
       })
-
       // Send to monitoring service
       this.reportToMonitoring(error, errorInfo, 'hydration')
     } else {
@@ -70,7 +60,6 @@ export class ErrorBoundary extends Component<Props, State> {
       this.reportToMonitoring(error, errorInfo, 'runtime')
     }
   }
-
   private reportToMonitoring(error: Error, errorInfo: ErrorInfo, type: string) {
     // Send to Sentry or similar service
     if (typeof window !== 'undefined' && (window as any).Sentry) {
@@ -85,7 +74,6 @@ export class ErrorBoundary extends Component<Props, State> {
         },
       })
     }
-
     // Send to custom analytics
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'exception', {
@@ -95,47 +83,38 @@ export class ErrorBoundary extends Component<Props, State> {
       })
     }
   }
-
   private handleReload = () => {
     // Clear any cached data
     if (typeof window !== 'undefined') {
       // Clear session storage
       sessionStorage.clear()
-
       // Clear relevant localStorage keys (preserve user preferences)
       const keysToPreserve = ['theme', 'language', 'consent']
       const localStorageBackup: Record<string, string> = {}
-
       keysToPreserve.forEach(key => {
         const value = localStorage.getItem(key)
         if (value) localStorageBackup[key] = value
       })
-
       localStorage.clear()
-
       // Restore preserved keys
       Object.entries(localStorageBackup).forEach(([key, value]) => {
         localStorage.setItem(key, value)
       })
-
       // Reload the page
       window.location.reload()
     }
   }
-
   private handleGoHome = () => {
     if (typeof window !== 'undefined') {
       window.location.href = '/'
     }
   }
-
   render() {
     if (this.state.hasError) {
       // Custom fallback UI if provided
       if (this.props.fallback) {
         return this.props.fallback
       }
-
       // Default fallback UI
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100 p-4">
@@ -163,7 +142,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 Ocorreu um erro inesperado. Por favor, tente recarregar a página.
               </p>
             </div>
-
             <div className="space-y-3">
               <button
                 onClick={this.handleReload}
@@ -184,7 +162,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 </svg>
                 Recarregar Página
               </button>
-
               <button
                 onClick={this.handleGoHome}
                 className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200"
@@ -192,7 +169,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 Voltar para Início
               </button>
             </div>
-
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mt-6 bg-gray-50 rounded-lg p-4">
                 <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
@@ -224,7 +200,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 </div>
               </details>
             )}
-
             <p className="text-xs text-gray-500 text-center mt-6">
               Se o problema persistir, entre em contato com o suporte.
             </p>
@@ -232,7 +207,6 @@ export class ErrorBoundary extends Component<Props, State> {
         </div>
       )
     }
-
     return this.props.children
   }
 }

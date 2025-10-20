@@ -1,5 +1,4 @@
 'use client'
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-
 const navigation = [
   {
     name: 'Dashboard',
@@ -69,11 +67,9 @@ const navigation = [
     current: false,
   },
 ]
-
 export function AdminSidebar() {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
   return (
     <>
       {/* Mobile sidebar */}
@@ -82,7 +78,6 @@ export function AdminSidebar() {
         sidebarOpen ? "block" : "hidden"
       )}>
         <div className="fixed inset-0 bg-gray-900/80" onClick={() => setSidebarOpen(false)} />
-
         <div className="fixed inset-0 flex">
           <div className="relative mr-16 flex w-full max-w-xs flex-1">
             <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
@@ -95,7 +90,6 @@ export function AdminSidebar() {
                 <X className="h-6 w-6 text-white" aria-hidden="true" />
               </button>
             </div>
-
             {/* Sidebar component, swap this element with another sidebar if you like */}
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-admin-sidebar px-6 pb-2 ring-1 ring-white/10">
               <div className="flex h-16 shrink-0 items-center">
@@ -143,7 +137,6 @@ export function AdminSidebar() {
           </div>
         </div>
       </div>
-
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-admin-sidebar px-6 pb-4 border-r border-border">
@@ -189,7 +182,6 @@ export function AdminSidebar() {
           </nav>
         </div>
       </div>
-
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-4 left-4 z-40">
         <Button

@@ -7,13 +7,11 @@ import {
   MessageCircle,
   Phone
 } from 'lucide-react'
-
 interface DashboardErrorProps {
   error?: string
   onRetry?: () => void
   onContactSupport?: () => void
 }
-
 export function DashboardError({
   error = 'Ocorreu um erro inesperado',
   onRetry,
@@ -24,15 +22,12 @@ export function DashboardError({
     const message = encodeURIComponent('Olá! Preciso de ajuda com o dashboard da minha assinatura.')
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
   }
-
   const handlePhoneCall = () => {
     window.open('tel:+5533999898026', '_self')
   }
-
   const handleBackToHome = () => {
     window.location.href = '/'
   }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-silver-50">
       <div className="max-w-md w-full mx-4">
@@ -54,7 +49,6 @@ export function DashboardError({
                 Por favor, tente novamente ou entre em contato com nosso suporte se o problema persistir.
               </p>
             </div>
-
             <div className="space-y-3">
               {onRetry && (
                 <Button
@@ -66,7 +60,6 @@ export function DashboardError({
                   Tentar Novamente
                 </Button>
               )}
-
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   onClick={handleWhatsApp}
@@ -77,7 +70,6 @@ export function DashboardError({
                   <MessageCircle className="h-4 w-4" />
                   WhatsApp
                 </Button>
-
                 <Button
                   onClick={handlePhoneCall}
                   variant="outline"
@@ -89,7 +81,6 @@ export function DashboardError({
                 </Button>
               </div>
             </div>
-
             <div className="pt-4 border-t border-gray-200">
               <div className="text-center space-y-2">
                 <p className="text-sm text-gray-500">
@@ -102,7 +93,6 @@ export function DashboardError({
                 </div>
               </div>
             </div>
-
             <div className="pt-4 border-t border-gray-200">
               <Button
                 onClick={handleBackToHome}
@@ -119,13 +109,11 @@ export function DashboardError({
     </div>
   )
 }
-
 interface DashboardInlineErrorProps {
   error?: string
   onRetry?: () => void
   compact?: boolean
 }
-
 export function DashboardInlineError({
   error = 'Ocorreu um erro',
   onRetry,
@@ -151,7 +139,6 @@ export function DashboardInlineError({
       </div>
     )
   }
-
   return (
     <Card className="border-red-200">
       <CardContent className="pt-6">
@@ -181,11 +168,9 @@ export function DashboardInlineError({
     </Card>
   )
 }
-
 interface NetworkErrorProps {
   onRetry?: () => void
 }
-
 export function NetworkError({ onRetry }: NetworkErrorProps) {
   return (
     <DashboardInlineError
@@ -194,16 +179,13 @@ export function NetworkError({ onRetry }: NetworkErrorProps) {
     />
   )
 }
-
 interface UnauthorizedErrorProps {
   onLogin?: () => void
 }
-
 export function UnauthorizedError({ onLogin }: UnauthorizedErrorProps) {
   const handleLogin = () => {
     window.location.href = '/area-assinante/login'
   }
-
   return (
     <Card className="border-orange-200">
       <CardContent className="pt-6">
@@ -231,5 +213,4 @@ export function UnauthorizedError({ onLogin }: UnauthorizedErrorProps) {
     </Card>
   )
 }
-
 export default DashboardError

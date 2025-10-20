@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,11 +39,9 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { type SavedCalculation } from '@/types/calculator'
-
 interface Props {
   onContinueAction?: () => void
 }
-
 export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
   const [lensType, setLensType] = useState<LensTypeId>('daily')
   const [usagePattern, setUsagePattern] = useState<UsagePatternId>('regular')
@@ -55,11 +52,9 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
   const [result, setResult] = useState<CalculatorResult | null>(null)
   const [savedCalculations, setSavedCalculations] = useState<SavedCalculation[]>([])
   const [showSaved, setShowSaved] = useState(false)
-
   useEffect(() => {
     setSavedCalculations(getSavedCalculations())
   }, [])
-
   const handleCalculate = () => {
     // Validar customUsageDays se estiver em modo customizado
     let validatedCustomDays: number | undefined = undefined
@@ -71,13 +66,11 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
       }
       setCustomUsageDaysError('')
     }
-
     const input: CalculatorInput = {
       lensType,
       usagePattern,
       customUsageDays: validatedCustomDays
     }
-
     try {
       const calculationResult = calculateEconomy(input)
       setResult(calculationResult)
@@ -87,33 +80,26 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
       alert('Erro ao calcular. Por favor, verifique os valores.')
     }
   }
-
   const handleSave = () => {
     if (!result) return
-
     const validatedCustomDays = showCustomUsage && customUsageDays
       ? validateCustomUsageDays(customUsageDays)
       : undefined
-
     const input: CalculatorInput = {
       lensType,
       usagePattern,
       customUsageDays: validatedCustomDays ?? undefined
     }
-
     saveCalculation(input, result)
     setSavedCalculations(getSavedCalculations())
   }
-
   const handleShare = async () => {
     if (!result) return
-
     const shareData = {
       title: 'Minha Economia com SV Lentes',
       text: `Economizaria ${formatCurrency(result.monthlySavings)}/mês (${formatPercentage(result.savingsPercentage)}) com SV Lentes!`,
       url: window.location.href
     }
-
     try {
       if (navigator.share) {
         await navigator.share(shareData)
@@ -127,7 +113,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
       console.error('Error sharing:', error)
     }
   }
-
   const handleLoadSaved = (saved: SavedCalculation) => {
     setLensType(saved.input.lensType)
     setUsagePattern(saved.input.usagePattern)
@@ -143,12 +128,10 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
     setShowResult(true)
     setShowSaved(false)
   }
-
   const handleDeleteSaved = (id: string) => {
     deleteCalculation(id)
     setSavedCalculations(getSavedCalculations())
   }
-
   const chartData = result ? [
     {
       name: 'Atual',
@@ -161,10 +144,8 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
       'Gasto Anual': result.yearlySubscription
     }
   ] : []
-
   const selectedUsagePattern = usagePatterns.find(p => p.id === usagePattern)
   const selectedLensType = lensTypes.find(l => l.id === lensType)
-
   return (
     <TooltipProvider>
       <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
@@ -179,7 +160,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
             Personalize seu cálculo e descubra quanto pode economizar
           </p>
         </div>
-
         {savedCalculations.length > 0 && !showResult && (
           <div className="mb-4">
             <Button
@@ -193,7 +173,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
             </Button>
           </div>
         )}
-
         {showSaved && (
           <div className="mb-6 space-y-2 max-h-60 overflow-y-auto">
             {savedCalculations.map((saved) => (
@@ -222,7 +201,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
             ))}
           </div>
         )}
-
         {!showResult ? (
           <div className="space-y-5">
             <div>
@@ -259,7 +237,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 ))}
               </div>
             </div>
-
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -306,7 +283,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 Personalizar dias de uso
               </button>
             </div>
-
             {showCustomUsage && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -341,7 +317,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 )}
               </div>
             )}
-
             <div className="bg-cyan-50 rounded-lg p-4 border border-cyan-100">
               <h4 className="font-semibold text-gray-900 mb-2 text-sm">Estimativa Atual</h4>
               <div className="space-y-1 text-sm">
@@ -363,7 +338,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 </div>
               </div>
             </div>
-
             <Button
               onClick={handleCalculate}
               className="w-full flex items-center justify-center space-x-2 font-semibold"
@@ -406,7 +380,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 ({formatPercentage(result.savingsPercentage)} de desconto)
               </p>
             </div>
-
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">Comparação Visual</h4>
               <ResponsiveContainer width="100%" height={250}>
@@ -423,7 +396,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
             <div className="bg-white rounded-lg p-4 border border-gray-200">
               <h4 className="font-semibold text-gray-900 mb-3 text-sm">Detalhamento</h4>
               <div className="space-y-2 text-sm">
@@ -451,7 +423,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 </div>
               </div>
             </div>
-
             <div className="flex gap-2">
               <Button
                 onClick={handleShare}
@@ -470,7 +441,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
                 Salvar
               </Button>
             </div>
-
             <Button
               onClick={() => {
                 setShowResult(false)
@@ -480,7 +450,6 @@ export function EnhancedEconomyCalculator({ onContinueAction }: Props) {
             >
               Continuar
             </Button>
-
             <button
               onClick={() => setShowResult(false)}
               className="w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"

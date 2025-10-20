@@ -3,23 +3,18 @@
  * POST /api/addons
  * API endpoints for managing add-ons
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { addOnsData, addOnBundles } from '@/data/add-ons'
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const includeBundles = searchParams.get('includeBundles') === 'true'
-
     let addons = addOnsData
-
     // Filter by category if specified
     if (category) {
       addons = addons.filter(addon => addon.type === category)
     }
-
     const response: any = {
       success: true,
       data: {
@@ -43,12 +38,10 @@ export async function GET(request: NextRequest) {
         }
       }
     }
-
     // Include bundles if requested
     if (includeBundles) {
       response.data.bundles = addOnBundles
     }
-
     return NextResponse.json(response)
   } catch (error) {
     console.error('AddOns API error:', error)
@@ -62,12 +55,10 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { addonIds } = body
-
     if (!addonIds || !Array.isArray(addonIds)) {
       return NextResponse.json(
         {
@@ -78,11 +69,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Validate addon IDs
     const validAddOnIds = addOnsData.map(addon => addon.id)
     const invalidIds = addonIds.filter(id => !validAddOnIds.includes(id))
-
     if (invalidIds.length > 0) {
       return NextResponse.json(
         {
@@ -94,15 +83,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Calculate total and get selected addons
     const selectedAddOns = addOnsData.filter(addon => addonIds.includes(addon.id))
     const total = selectedAddOns.reduce((sum, addon) => sum + (addon.price || 0), 0)
-
     // Check for bundle discounts
     let discount = 0
     let appliedBundle = null
-
     for (const bundle of addOnBundles) {
       if (bundle.addOns.every(id => addonIds.includes(id))) {
         const bundleSavings = bundle.originalPrice - bundle.bundlePrice
@@ -112,9 +98,7 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-
     const finalTotal = total - discount
-
     return NextResponse.json({
       success: true,
       data: {
@@ -138,7 +122,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

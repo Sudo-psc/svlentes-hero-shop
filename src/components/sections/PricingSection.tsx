@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { PricingPlan, PricingSectionProps } from '@/types'
 import { Tabs, TabItem } from '@/components/ui/tabs'
@@ -12,17 +11,14 @@ import {
     trackTabChange
 } from '@/lib/pricing-actions'
 import { trackEvent } from '@/lib/analytics'
-
 interface PricingCardProps {
     plan: PricingPlan
     isAnnual: boolean
 }
-
 function PricingCard({ plan, isAnnual }: PricingCardProps) {
     const price = isAnnual ? plan.priceAnnual : plan.priceMonthly
     const monthlyPrice = isAnnual ? plan.priceAnnual / 12 : plan.priceMonthly
     const savings = isAnnual ? (plan.priceMonthly * 12 - plan.priceAnnual) : 0
-
     return (
         <div className={cn(
             'relative bg-white rounded-2xl border-2 p-8 shadow-lg transition-all duration-300 hover:shadow-xl',
@@ -37,10 +33,8 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                     </Badge>
                 </div>
             )}
-
             <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-
                 <div className="mb-4">
                     <div className="flex items-baseline justify-center">
                         <span className="text-4xl font-bold text-gray-900">
@@ -48,7 +42,6 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                         </span>
                         <span className="text-gray-600 ml-2">/mês</span>
                     </div>
-
                     {isAnnual && (
                         <div className="mt-2">
                             <p className="text-sm text-gray-600">
@@ -63,7 +56,6 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                     )}
                 </div>
             </div>
-
             <ul className="space-y-4 mb-8">
                 {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
@@ -82,7 +74,6 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                     </li>
                 ))}
             </ul>
-
             <div className="space-y-3">
                 <Button
                     onClick={async () => {
@@ -105,7 +96,6 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                 >
                     {plan.ctaText}
                 </Button>
-
                 <Button
                     variant="outline"
                     onClick={async () => {
@@ -126,14 +116,12 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
         </div>
     )
 }
-
 interface ComparisonTableProps {
     plans: PricingPlan[]
     features: string[]
     planComparison: Record<string, boolean | string>[]
     isAnnual: boolean
 }
-
 function ComparisonTable({ plans, features, planComparison, isAnnual }: ComparisonTableProps) {
     return (
         <div className="mt-16">
@@ -163,7 +151,6 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                                 </div>
                             )}
                         </div>
-
                         {/* Features List */}
                         <div className="space-y-3">
                             {planComparison.map((comparison, index) => {
@@ -192,7 +179,6 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                                 )
                             })}
                         </div>
-
                         {/* CTA Button */}
                         <div className="mt-6">
                             <Button
@@ -221,7 +207,6 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                     </div>
                 ))}
             </div>
-
             {/* Desktop View - Comparison Table */}
             <div className="hidden lg:block overflow-x-auto">
                 <div className="inline-block min-w-full align-middle">
@@ -276,7 +261,6 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                                     ))}
                                 </tr>
                             </thead>
-
                             {/* Table Body */}
                             <tbody className="divide-y divide-gray-200 bg-white">
                                 {planComparison.map((comparison, index) => (
@@ -330,7 +314,6 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                                         })}
                                     </tr>
                                 ))}
-
                                 {/* CTA Row */}
                                 <tr className="bg-gray-50">
                                     <td className="px-8 py-6 text-sm font-semibold text-gray-900">
@@ -397,14 +380,12 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
         </div>
     )
 }
-
 export default function PricingSection({
     tabs,
     plans,
     comparisonTable
 }: PricingSectionProps) {
     const [isAnnual, setIsAnnual] = useState(false)
-
     const tabItems: TabItem[] = [
         {
             id: 'monthly',
@@ -438,7 +419,6 @@ export default function PricingSection({
             )
         }
     ]
-
     return (
         <section id="planos-precos" className="py-20 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -457,7 +437,6 @@ export default function PricingSection({
                         Todos os planos incluem acompanhamento médico com Dr. Philipe Saraiva Cruz
                         e entrega gratuita em todo o Brasil
                     </p>
-
                     {/* Enhanced Pricing Toggle */}
                     <div className="flex items-center justify-center mb-8">
                         <div className="bg-white rounded-2xl p-2 shadow-lg border border-gray-200">
@@ -507,7 +486,6 @@ export default function PricingSection({
                         </div>
                     </div>
                 </div>
-
                 {/* Comparison Table */}
                 <ComparisonTable
                     plans={plans}
@@ -515,7 +493,6 @@ export default function PricingSection({
                     planComparison={comparisonTable.planComparison}
                     isAnnual={isAnnual}
                 />
-
                 {/* Trust Indicators */}
                 <div className="mt-16 text-center">
                     <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600">

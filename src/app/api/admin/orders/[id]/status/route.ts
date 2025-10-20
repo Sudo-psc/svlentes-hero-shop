@@ -4,12 +4,10 @@
  *
  * Atualiza o status de entrega de um pedido com informações de rastreio
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { orderStatusUpdateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/orders/{id}/status:
@@ -96,13 +94,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('orders:status_update')(request)
-
     if (error) {
       return error
     }
-
     const orderId = params.id
-
     if (!orderId) {
       return NextResponse.json(
         {
@@ -112,11 +107,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: statusData, error: validationError } = validateBody(orderStatusUpdateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -126,7 +119,6 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se pedido existe
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
@@ -138,7 +130,6 @@ export async function PUT(
         trackingCode: true
       }
     })
-
     if (!existingOrder) {
       return NextResponse.json(
         {
@@ -148,10 +139,8 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     const oldStatus = existingOrder.deliveryStatus
     const newStatus = statusData.status
-
     // Verificar se mudança é válida
     if (!isValidOrderStatusTransition(oldStatus, newStatus)) {
       return NextResponse.json(
@@ -163,34 +152,29 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Preparar dados de atualização
     const updateData: any = {
       deliveryStatus: newStatus,
       updatedAt: new Date(),
       notes: statusData.notes
     }
-
     // Adicionar campos específicos baseado no status
     switch (newStatus) {
       case 'SHIPPED':
         updateData.shippingDate = new Date()
         updateData.trackingCode = statusData.trackingCode || existingOrder.trackingCode
         break
-
       case 'IN_TRANSIT':
         if (statusData.trackingCode) {
           updateData.trackingCode = statusData.trackingCode
         }
         break
-
       case 'DELIVERED':
         updateData.deliveredAt = statusData.deliveredAt ? new Date(statusData.deliveredAt) : new Date()
         if (statusData.trackingCode) {
           updateData.trackingCode = statusData.trackingCode
         }
         break
-
       case 'CANCELLED':
         // Cancelar faturas associadas
         await prisma.invoice.updateMany({
@@ -202,7 +186,6 @@ export async function PUT(
         })
         break
     }
-
     // Atualizar pedido
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
@@ -229,10 +212,8 @@ export async function PUT(
         }
       }
     })
-
     // Disparar ações baseadas no novo status
     await triggerOrderStatusActions(newStatus, updatedOrder, user)
-
     return createSuccessResponse(
       {
         order: updatedOrder,
@@ -247,7 +228,6 @@ export async function PUT(
       },
       'Status do pedido atualizado com sucesso'
     )
-
   } catch (error) {
     console.error('Order status update error:', error)
     return NextResponse.json(
@@ -260,7 +240,6 @@ export async function PUT(
     )
   }
 }
-
 // Funções auxiliares
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
@@ -289,7 +268,6 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 function isValidOrderStatusTransition(from: string, to: string): boolean {
   const validTransitions: Record<string, string[]> = {
     'PENDING': ['SHIPPED', 'CANCELLED'],
@@ -298,10 +276,8 @@ function isValidOrderStatusTransition(from: string, to: string): boolean {
     'DELIVERED': [], // Status final
     'CANCELLED': [] // Status final
   }
-
   return validTransitions[from]?.includes(to) || false
 }
-
 function getValidOrderTransitions(from: string): string[] {
   const validTransitions: Record<string, string[]> = {
     'PENDING': ['SHIPPED', 'CANCELLED'],
@@ -310,10 +286,8 @@ function getValidOrderTransitions(from: string): string[] {
     'DELIVERED': [],
     'CANCELLED': []
   }
-
   return validTransitions[from] || []
 }
-
 async function triggerOrderStatusActions(
   status: string,
   order: any,
@@ -323,28 +297,20 @@ async function triggerOrderStatusActions(
     switch (status) {
       case 'SHIPPED':
         // Enviar notificação de envio
-        console.log(`Pedido ${order.id} enviado por ${user.email}`)
         // TODO: Integrar com sistema de notificações para enviar email/SMS
         break
-
       case 'IN_TRANSIT':
         // Atualizar cliente sobre trânsito
-        console.log(`Pedido ${order.id} em trânsito`)
         // TODO: Enviar atualização de rastreio
         break
-
       case 'DELIVERED':
         // Confirmar entrega
-        console.log(`Pedido ${order.id} entregue`)
         // TODO: Enviar email de confirmação de entrega
         break
-
       case 'CANCELLED':
         // Notificar sobre cancelamento
-        console.log(`Pedido ${order.id} cancelado`)
         // TODO: Enviar notificação de cancelamento e reembolso se aplicável
         break
-
       default:
         // Outros status
         break

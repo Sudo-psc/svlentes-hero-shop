@@ -1,11 +1,8 @@
 // API Route: /api/v1/ml/metrics
 // ML model performance metrics
-
 import { NextRequest, NextResponse } from 'next/server'
 import { mlService } from '@/lib/reminders'
-
 export const runtime = 'nodejs'
-
 /**
  * GET /api/v1/ml/metrics
  * Get ML model accuracy and performance metrics
@@ -13,7 +10,6 @@ export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
   try {
     const metrics = await mlService.getModelAccuracy()
-
     return NextResponse.json({
       success: true,
       metrics: {

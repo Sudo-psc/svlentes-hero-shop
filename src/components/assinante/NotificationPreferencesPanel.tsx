@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { Bell, Mail, MessageCircle, Smartphone, Clock, Shield, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,21 +17,17 @@ import {
   CHANNEL_LABELS,
   DEFAULT_NOTIFICATION_PREFERENCES
 } from '@/types/notification-preferences'
-
 interface NotificationPreferencesPanelProps {
   userId: string
 }
-
 export function NotificationPreferencesPanel({ userId }: NotificationPreferencesPanelProps) {
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
-
   useEffect(() => {
     fetchPreferences()
   }, [userId])
-
   const fetchPreferences = async () => {
     try {
       setLoading(true)
@@ -50,7 +45,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
       setLoading(false)
     }
   }
-
   const savePreferences = async () => {
     try {
       setSaving(true)
@@ -76,7 +70,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
       setSaving(false)
     }
   }
-
   const resetToDefaults = async () => {
     try {
       setSaving(true)
@@ -97,7 +90,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
       setSaving(false)
     }
   }
-
   const toggleChannelEnabled = (channel: NotificationChannel) => {
     setPreferences(prev => ({
       ...prev,
@@ -111,7 +103,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
     }))
     setHasChanges(true)
   }
-
   const toggleEventForChannel = (channel: NotificationChannel, event: NotificationEventType) => {
     setPreferences(prev => ({
       ...prev,
@@ -128,7 +119,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
     }))
     setHasChanges(true)
   }
-
   const updateQuietHours = (field: 'enabled' | 'start' | 'end', value: boolean | string) => {
     setPreferences(prev => ({
       ...prev,
@@ -139,7 +129,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
     }))
     setHasChanges(true)
   }
-
   const updateFrequency = (field: 'maxPerDay' | 'maxPerWeek' | 'respectQuietHours', value: number | boolean) => {
     setPreferences(prev => ({
       ...prev,
@@ -150,7 +139,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
     }))
     setHasChanges(true)
   }
-
   const updateFallback = (field: keyof NotificationPreferences['fallback'], value: any) => {
     setPreferences(prev => ({
       ...prev,
@@ -161,7 +149,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
     }))
     setHasChanges(true)
   }
-
   const getChannelIcon = (channel: NotificationChannel) => {
     const icons = {
       email: Mail,
@@ -171,7 +158,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
     }
     return icons[channel]
   }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -179,7 +165,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
       </div>
     )
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -204,7 +189,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
           </Button>
         </div>
       </div>
-
       {/* Channels Configuration */}
       <Card>
         <CardHeader>
@@ -221,7 +205,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
             const Icon = getChannelIcon(channel)
             const channelData = preferences.channels[channel]
             const label = CHANNEL_LABELS[channel]
-
             return (
               <div key={channel} className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -242,7 +225,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
                     onCheckedChange={() => toggleChannelEnabled(channel)}
                   />
                 </div>
-
                 {channelData.enabled && (
                   <div className="ml-8 space-y-3 pl-4 border-l-2 border-gray-200">
                     <p className="text-sm font-medium text-gray-700">Eventos para este canal:</p>
@@ -250,7 +232,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
                       {(Object.keys(EVENT_LABELS) as NotificationEventType[]).map((event) => {
                         const eventLabel = EVENT_LABELS[event]
                         const isEnabled = channelData.events[event] || false
-
                         return (
                           <div key={event} className="flex items-center justify-between gap-2">
                             <div className="flex-1">
@@ -270,14 +251,12 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
                     </div>
                   </div>
                 )}
-
                 {channel !== 'push' && <Separator />}
               </div>
             )
           })}
         </CardContent>
       </Card>
-
       {/* Quiet Hours */}
       <Card>
         <CardHeader>
@@ -298,7 +277,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
               onCheckedChange={(checked) => updateQuietHours('enabled', checked)}
             />
           </div>
-
           {preferences.quietHours.enabled && (
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -321,7 +299,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
               </div>
             </div>
           )}
-
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2">
             <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
             <p className="text-sm text-blue-900">
@@ -331,7 +308,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
           </div>
         </CardContent>
       </Card>
-
       {/* Frequency Limits */}
       <Card>
         <CardHeader>
@@ -376,7 +352,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
           </div>
         </CardContent>
       </Card>
-
       {/* Fallback Configuration */}
       <Card>
         <CardHeader>
@@ -397,7 +372,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
               onCheckedChange={(checked) => updateFallback('enabled', checked)}
             />
           </div>
-
           {preferences.fallback.enabled && (
             <>
               <div>
@@ -418,7 +392,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <Label htmlFor="fallback-channel">Canal de fallback</Label>
                 <Select
@@ -439,7 +412,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
                 <Label htmlFor="fallback-delay">Tempo de espera (minutos)</Label>
                 <Input
@@ -458,7 +430,6 @@ export function NotificationPreferencesPanel({ userId }: NotificationPreferences
           )}
         </CardContent>
       </Card>
-
       {/* Save Button (fixed at bottom) */}
       {hasChanges && (
         <div className="sticky bottom-4 bg-white border border-cyan-200 rounded-lg shadow-lg p-4 flex items-center justify-between">

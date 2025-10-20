@@ -2,7 +2,6 @@
  * Cliente para integração com Asaas API v3
  * Documentação: https://docs.asaas.com
  */
-
 import type {
   AsaasCustomer,
   AsaasSubscription,
@@ -10,28 +9,23 @@ import type {
   AsaasError,
   AsaasPaginatedResponse
 } from '@/types/asaas'
-
 class AsaasClient {
   private baseURL: string
   private apiKey: string
   private headers: HeadersInit
-
   constructor() {
     this.baseURL = process.env.ASAAS_ENV === 'production'
       ? 'https://api.asaas.com/v3'
       : 'https://sandbox.asaas.com/api/v3'
-
     this.apiKey = process.env.ASAAS_ENV === 'production'
       ? process.env.ASAAS_API_KEY_PROD!
       : process.env.ASAAS_API_KEY_SANDBOX!
-
     this.headers = {
       'Content-Type': 'application/json',
       'access_token': this.apiKey,
       'User-Agent': 'SV-Lentes/1.0.0'
     }
   }
-
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const error: AsaasError = await response.json()
@@ -42,9 +36,7 @@ class AsaasClient {
     }
     return response.json()
   }
-
   // ========== CLIENTES ==========
-
   /**
    * Cria um novo cliente no Asaas
    */
@@ -68,10 +60,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify(data)
     })
-
     return this.handleResponse<AsaasCustomer>(response)
   }
-
   /**
    * Busca um cliente por ID
    */
@@ -80,10 +70,8 @@ class AsaasClient {
       method: 'GET',
       headers: this.headers
     })
-
     return this.handleResponse<AsaasCustomer>(response)
   }
-
   /**
    * Atualiza dados de um cliente
    */
@@ -96,10 +84,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify(data)
     })
-
     return this.handleResponse<AsaasCustomer>(response)
   }
-
   /**
    * Lista clientes com filtros opcionais
    */
@@ -114,7 +100,6 @@ class AsaasClient {
     if (params?.cpfCnpj) queryParams.append('cpfCnpj', params.cpfCnpj)
     if (params?.offset) queryParams.append('offset', params.offset.toString())
     if (params?.limit) queryParams.append('limit', params.limit.toString())
-
     const response = await fetch(
       `${this.baseURL}/customers?${queryParams.toString()}`,
       {
@@ -122,12 +107,9 @@ class AsaasClient {
         headers: this.headers
       }
     )
-
     return this.handleResponse<AsaasPaginatedResponse<AsaasCustomer>>(response)
   }
-
   // ========== ASSINATURAS ==========
-
   /**
    * Cria uma nova assinatura
    */
@@ -152,10 +134,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify(data)
     })
-
     return this.handleResponse<AsaasSubscription>(response)
   }
-
   /**
    * Busca uma assinatura por ID
    */
@@ -164,10 +144,8 @@ class AsaasClient {
       method: 'GET',
       headers: this.headers
     })
-
     return this.handleResponse<AsaasSubscription>(response)
   }
-
   /**
    * Atualiza uma assinatura existente
    */
@@ -186,10 +164,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify(data)
     })
-
     return this.handleResponse<AsaasSubscription>(response)
   }
-
   /**
    * Cancela uma assinatura (soft delete)
    */
@@ -198,10 +174,8 @@ class AsaasClient {
       method: 'DELETE',
       headers: this.headers
     })
-
     return this.handleResponse<{ deleted: boolean; id: string }>(response)
   }
-
   /**
    * Lista assinaturas com filtros opcionais
    */
@@ -216,7 +190,6 @@ class AsaasClient {
     if (params?.status) queryParams.append('status', params.status)
     if (params?.offset) queryParams.append('offset', params.offset.toString())
     if (params?.limit) queryParams.append('limit', params.limit.toString())
-
     const response = await fetch(
       `${this.baseURL}/subscriptions?${queryParams.toString()}`,
       {
@@ -224,12 +197,9 @@ class AsaasClient {
         headers: this.headers
       }
     )
-
     return this.handleResponse<AsaasPaginatedResponse<AsaasSubscription>>(response)
   }
-
   // ========== COBRANÇAS ==========
-
   /**
    * Cria uma nova cobrança avulsa
    */
@@ -265,10 +235,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify(data)
     })
-
     return this.handleResponse<AsaasPayment>(response)
   }
-
   /**
    * Busca uma cobrança por ID
    */
@@ -277,10 +245,8 @@ class AsaasClient {
       method: 'GET',
       headers: this.headers
     })
-
     return this.handleResponse<AsaasPayment>(response)
   }
-
   /**
    * Busca uma cobrança por referência externa
    */
@@ -292,11 +258,9 @@ class AsaasClient {
         headers: this.headers
       }
     )
-
     const data = await this.handleResponse<AsaasPaginatedResponse<AsaasPayment>>(response)
     return data.data[0] || null
   }
-
   /**
    * Lista cobranças com filtros opcionais
    */
@@ -313,7 +277,6 @@ class AsaasClient {
     if (params?.status) queryParams.append('status', params.status)
     if (params?.offset) queryParams.append('offset', params.offset.toString())
     if (params?.limit) queryParams.append('limit', params.limit.toString())
-
     const response = await fetch(
       `${this.baseURL}/payments?${queryParams.toString()}`,
       {
@@ -321,10 +284,8 @@ class AsaasClient {
         headers: this.headers
       }
     )
-
     return this.handleResponse<AsaasPaginatedResponse<AsaasPayment>>(response)
   }
-
   /**
    * Estorna uma cobrança
    */
@@ -334,10 +295,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify({ value })
     })
-
     return this.handleResponse<AsaasPayment>(response)
   }
-
   /**
    * Atualiza uma cobrança pendente
    */
@@ -361,10 +320,8 @@ class AsaasClient {
       headers: this.headers,
       body: JSON.stringify(data)
     })
-
     return this.handleResponse<AsaasPayment>(response)
   }
-
   /**
    * Deleta uma cobrança pendente
    */
@@ -373,10 +330,8 @@ class AsaasClient {
       method: 'DELETE',
       headers: this.headers
     })
-
     return this.handleResponse<{ deleted: boolean; id: string }>(response)
   }
 }
-
 // Singleton instance
 export const asaas = new AsaasClient()

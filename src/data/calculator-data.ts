@@ -1,5 +1,4 @@
 import { UsagePattern, LensType } from '@/types';
-
 // Padrões de uso de lentes
 export const usagePatterns: UsagePattern[] = [
   {
@@ -21,7 +20,6 @@ export const usagePatterns: UsagePattern[] = [
     description: 'Todos os dias da semana'
   }
 ];
-
 // Tipos de lentes com preços
 export const lensTypes: LensType[] = [
   {
@@ -43,14 +41,12 @@ export const lensTypes: LensType[] = [
     subscriptionPrice: 15.00 // por lente na assinatura
   }
 ];
-
 // Mapeamento de planos recomendados baseado no uso
 export const planRecommendations = {
   occasional: 'basic',
   regular: 'premium',
   daily: 'premium'
 };
-
 // Preços dos planos SV Lentes
 export const planPrices = {
   basic: {
@@ -66,7 +62,6 @@ export const planPrices = {
     description: 'Uso diário e acompanhamento completo'
   }
 };
-
 // Preços médios de consultas oftalmológicas no mercado
 export const consultationPrices = {
   market: {

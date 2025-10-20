@@ -14,22 +14,18 @@
  * DO NOT use this for customer-facing message delivery.
  * Use direct API for production messaging.
  */
-
 import { logger, LogCategory } from './logger'
-
 interface MCPServerConfig {
   url: string
   userId: string
   secret: string
 }
-
 interface MCPRequest {
   jsonrpc: '2.0'
   id: string | number
   method: string
   params?: any
 }
-
 interface MCPResponse {
   jsonrpc: '2.0'
   id: string | number
@@ -40,7 +36,6 @@ interface MCPResponse {
     data?: any
   }
 }
-
 interface MCPTool {
   name: string
   description: string
@@ -50,7 +45,6 @@ interface MCPTool {
     required?: string[]
   }
 }
-
 /**
  * MCP SendPulse Client for administrative operations
  */
@@ -59,7 +53,6 @@ export class MCPSendPulseClient {
   private toolsCache: MCPTool[] | null = null
   private toolsCacheExpiry: number = 0
   private requestId: number = 0
-
   constructor() {
     this.config = {
       url: process.env.MCP_SENDPULSE_URL || 'https://mcp.sendpulse.com/mcp',
@@ -67,14 +60,12 @@ export class MCPSendPulseClient {
       secret: process.env.SENDPULSE_APP_SECRET || ''
     }
   }
-
   /**
    * Check if MCP is configured and available
    */
   isAvailable(): boolean {
     return !!(this.config.userId && this.config.secret)
   }
-
   /**
    * Make authenticated request to MCP server
    */
@@ -82,7 +73,6 @@ export class MCPSendPulseClient {
     if (!this.isAvailable()) {
       throw new Error('MCP SendPulse not configured. Set MCP_SENDPULSE_URL, SENDPULSE_APP_ID, SENDPULSE_APP_SECRET')
     }
-
     const requestId = ++this.requestId
     const request: MCPRequest = {
       jsonrpc: '2.0',
@@ -90,7 +80,6 @@ export class MCPSendPulseClient {
       method,
       ...(params && { params })
     }
-
     try {
       const response = await fetch(this.config.url, {
         method: 'POST',
@@ -101,19 +90,14 @@ export class MCPSendPulseClient {
         },
         body: JSON.stringify(request)
       })
-
       if (!response.ok) {
         throw new Error(`MCP HTTP error: ${response.status} ${response.statusText}`)
       }
-
       const data: MCPResponse = await response.json()
-
       if (data.error) {
         throw new Error(`MCP error: ${data.error.message} (code: ${data.error.code})`)
       }
-
       return data
-
     } catch (error) {
       logger.error(LogCategory.SENDPULSE, 'MCP request failed', {
         method,
@@ -122,7 +106,6 @@ export class MCPSendPulseClient {
       throw error
     }
   }
-
   /**
    * List available MCP tools
    */
@@ -131,19 +114,14 @@ export class MCPSendPulseClient {
     if (this.toolsCache && Date.now() < this.toolsCacheExpiry) {
       return this.toolsCache
     }
-
     try {
       const response = await this.mcpRequest('tools/list')
       const tools = response.result?.tools || []
-
       // Cache for 1 hour
       this.toolsCache = tools
       this.toolsCacheExpiry = Date.now() + 60 * 60 * 1000
-
       logger.info(LogCategory.SENDPULSE, `MCP tools discovered: ${tools.length}`)
-
       return tools
-
     } catch (error) {
       logger.error(LogCategory.SENDPULSE, 'Failed to list MCP tools', {
         error: error instanceof Error ? error.message : 'Unknown'
@@ -151,23 +129,18 @@ export class MCPSendPulseClient {
       return []
     }
   }
-
   /**
    * Call an MCP tool by name
    */
   async callTool(toolName: string, args: Record<string, any>): Promise<any> {
     try {
       logger.info(LogCategory.SENDPULSE, `Calling MCP tool: ${toolName}`, { args })
-
       const response = await this.mcpRequest('tools/call', {
         name: toolName,
         arguments: args
       })
-
       logger.info(LogCategory.SENDPULSE, `MCP tool completed: ${toolName}`)
-
       return response.result
-
     } catch (error) {
       logger.error(LogCategory.SENDPULSE, `MCP tool failed: ${toolName}`, {
         error: error instanceof Error ? error.message : 'Unknown',
@@ -176,11 +149,9 @@ export class MCPSendPulseClient {
       throw error
     }
   }
-
   // ============================================================================
   // Administrative Operations (using MCP tools)
   // ============================================================================
-
   /**
    * Get list of chatbots in account
    */
@@ -195,7 +166,6 @@ export class MCPSendPulseClient {
       return []
     }
   }
-
   /**
    * Get bot statistics
    */
@@ -210,7 +180,6 @@ export class MCPSendPulseClient {
       return null
     }
   }
-
   /**
    * Get subscriber information by ID
    */
@@ -227,7 +196,6 @@ export class MCPSendPulseClient {
       return null
     }
   }
-
   /**
    * Search subscribers by filter
    */
@@ -247,7 +215,6 @@ export class MCPSendPulseClient {
       return []
     }
   }
-
   /**
    * Update subscriber variables
    */
@@ -270,11 +237,9 @@ export class MCPSendPulseClient {
       return false
     }
   }
-
   // ============================================================================
   // Intelligent Fallback Operations
   // ============================================================================
-
   /**
    * Try to send message via MCP as fallback
    * Use only when direct API fails
@@ -287,7 +252,6 @@ export class MCPSendPulseClient {
     logger.warn(LogCategory.SENDPULSE, 'Attempting MCP fallback for message sending', {
       phone: params.phone
     })
-
     try {
       // Try to send via MCP
       await this.callTool('chatbots_send_message', {
@@ -298,19 +262,15 @@ export class MCPSendPulseClient {
           text: { body: params.message }
         }
       })
-
       logger.info(LogCategory.SENDPULSE, 'MCP fallback succeeded', {
         phone: params.phone
       })
-
       return { success: true, method: 'mcp' }
-
     } catch (error) {
       logger.error(LogCategory.SENDPULSE, 'MCP fallback also failed', {
         phone: params.phone,
         error: error instanceof Error ? error.message : 'Unknown'
       })
-
       return {
         success: false,
         method: 'failed',
@@ -318,7 +278,6 @@ export class MCPSendPulseClient {
       }
     }
   }
-
   /**
    * Troubleshoot message delivery issues via MCP
    */
@@ -332,25 +291,20 @@ export class MCPSendPulseClient {
     recommendations: string[]
   }> {
     const recommendations: string[] = []
-
     try {
       // 1. Check bot status
       const botStats = await this.getBotStats(params.bot_id)
-
       if (!botStats) {
         recommendations.push('Bot may not be active or accessible')
       }
-
       // 2. Search for subscriber
       const subscribers = await this.searchSubscribers({
         bot_id: params.bot_id,
         filter: { phone: params.phone },
         limit: 1
       })
-
       const subscriberExists = subscribers.length > 0
       const subscriberStatus = subscriberExists ? subscribers[0] : null
-
       if (!subscriberExists) {
         recommendations.push('Subscriber not found in bot - may need to initiate conversation first')
       } else if (subscriberStatus?.is_blocked) {
@@ -358,19 +312,16 @@ export class MCPSendPulseClient {
       } else if (!subscriberStatus?.is_chat_opened) {
         recommendations.push('24-hour conversation window may be closed - use template message')
       }
-
       return {
         botStatus: botStats,
         subscriberExists,
         subscriberStatus,
         recommendations
       }
-
     } catch (error) {
       logger.error(LogCategory.SENDPULSE, 'MCP troubleshooting failed', {
         error: error instanceof Error ? error.message : 'Unknown'
       })
-
       return {
         botStatus: null,
         subscriberExists: false,
@@ -378,18 +329,15 @@ export class MCPSendPulseClient {
       }
     }
   }
-
   // ============================================================================
   // Analytics and Reporting
   // ============================================================================
-
   /**
    * Get comprehensive analytics using MCP tools
    */
   async getAnalytics(botId: string, dateRange?: { from: string; to: string }): Promise<any> {
     try {
       const stats = await this.getBotStats(botId)
-
       return {
         bot: {
           id: botId,
@@ -399,7 +347,6 @@ export class MCPSendPulseClient {
         fetchedAt: new Date().toISOString(),
         source: 'mcp'
       }
-
     } catch (error) {
       logger.error(LogCategory.SENDPULSE, 'Failed to get analytics via MCP', {
         botId,
@@ -408,7 +355,6 @@ export class MCPSendPulseClient {
       return null
     }
   }
-
   /**
    * Export subscriber data for reporting
    */
@@ -428,10 +374,8 @@ export class MCPSendPulseClient {
     }
   }
 }
-
 // Singleton instance
 export const mcpSendPulseClient = new MCPSendPulseClient()
-
 /**
  * Hybrid messaging strategy:
  * 1. Try direct API (sendpulse-client.ts) - PRIMARY
@@ -456,15 +400,12 @@ export async function sendMessageWithFallback(
       phone: params.phone,
       message: params.message
     })
-
     return { success: true, method: 'direct' }
-
   } catch (directError) {
     logger.warn(LogCategory.SENDPULSE, 'Direct API failed, trying MCP fallback', {
       phone: params.phone,
       error: directError instanceof Error ? directError.message : 'Unknown'
     })
-
     // Try MCP fallback (secondary)
     if (mcpSendPulseClient.isAvailable()) {
       return await mcpSendPulseClient.sendMessageFallback({
@@ -473,7 +414,6 @@ export async function sendMessageWithFallback(
         message: params.message
       })
     }
-
     // Both failed
     return {
       success: false,

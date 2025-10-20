@@ -4,12 +4,10 @@
  *
  * Retorna lista paginada de tickets de suporte com filtros avançados
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse, validatePagination } from '@/lib/admin-auth'
 import { supportTicketFiltersSchema, supportTicketCreateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/support/tickets:
@@ -163,18 +161,15 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:view')(request)
-
     if (error) {
       return error
     }
-
     // Validar parâmetros
     const { searchParams } = new URL(request.url)
     const { data: params, error: validationError } = validateQuery(
       supportTicketFiltersSchema,
       searchParams
     )
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -184,13 +179,10 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Validação de paginação
     const pagination = validatePagination(params)
-
     // Construir filtros where
     const where: any = {}
-
     // Filtro de busca
     if (searchParams.get('search')) {
       const searchTerm = searchParams.get('search')!
@@ -202,33 +194,26 @@ export async function GET(request: NextRequest) {
         { user: { email: { contains: searchTerm, mode: 'insensitive' } } }
       ]
     }
-
     // Filtros específicos
     if (params.status) {
       where.status = params.status
     }
-
     if (params.category) {
       where.category = params.category
     }
-
     if (params.priority) {
       where.priority = params.priority
     }
-
     if (params.assignedAgentId) {
       where.assignedAgentId = params.assignedAgentId
     }
-
     if (params.userId) {
       where.userId = params.userId
     }
-
     // Filtro por violação de SLA
     if (params.hasSlaBreach !== 'all') {
       where.slaBreach = params.hasSlaBreach === 'yes'
     }
-
     // Filtros de data de criação
     if (params.createdAfter || params.createdBefore) {
       where.createdAt = {}
@@ -239,7 +224,6 @@ export async function GET(request: NextRequest) {
         where.createdAt.lte = new Date(params.createdBefore)
       }
     }
-
     // Filtros de data de resolução
     if (params.resolvedAfter || params.resolvedBefore) {
       where.resolvedAt = {}
@@ -250,7 +234,6 @@ export async function GET(request: NextRequest) {
         where.resolvedAt.lte = new Date(params.resolvedBefore)
       }
     }
-
     // Buscar tickets e contagem total em paralelo
     const [tickets, total] = await Promise.all([
       prisma.supportTicket.findMany({
@@ -286,10 +269,8 @@ export async function GET(request: NextRequest) {
         skip: pagination.offset,
         take: pagination.limit
       }),
-
       prisma.supportTicket.count({ where })
     ])
-
     // Processar dados adicionais
     const processedTickets = tickets.map(ticket => {
       // Calcular tempo de resolução
@@ -300,16 +281,13 @@ export async function GET(request: NextRequest) {
           (1000 * 60 * 60 * 24)
         )
       }
-
       // Calcular tempo desde a criação
       const daysSinceCreation = Math.ceil(
         (new Date().getTime() - new Date(ticket.createdAt).getTime()) /
         (1000 * 60 * 60 * 24)
       )
-
       // Verificar se está atrasado baseado no SLA
       const isOverdue = !ticket.resolvedAt && daysSinceCreation > getSLADays(ticket.priority)
-
       return {
         id: ticket.id,
         ticketNumber: ticket.ticketNumber,
@@ -339,10 +317,8 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-
     // Calcular estatísticas
     const stats = await calculateTicketStats(where)
-
     // Montar resposta
     const response = {
       tickets: processedTickets,
@@ -363,9 +339,7 @@ export async function GET(request: NextRequest) {
         ...stats
       }
     }
-
     return createSuccessResponse(response, 'Tickets listados com sucesso')
-
   } catch (error) {
     console.error('Support tickets list error:', error)
     return NextResponse.json(
@@ -378,7 +352,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 /**
  * POST /api/admin/support/tickets
  * Criar novo ticket de suporte
@@ -389,15 +362,12 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('support:create')(request)
-
     if (error) {
       return error
     }
-
     // Validar body
     const body = await request.json()
     const { data: ticketData, error: validationError } = validateBody(supportTicketCreateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -407,7 +377,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Verificar se usuário existe
     const existingUser = await prisma.user.findUnique({
       where: { id: ticketData.userId },
@@ -417,7 +386,6 @@ export async function POST(request: NextRequest) {
         email: true
       }
     })
-
     if (!existingUser) {
       return NextResponse.json(
         {
@@ -427,10 +395,8 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
-
     // Gerar número do ticket
     const ticketNumber = await generateTicketNumber()
-
     // Criar ticket
     const ticket = await prisma.supportTicket.create({
       data: {
@@ -456,9 +422,7 @@ export async function POST(request: NextRequest) {
         }
       }
     })
-
     return createSuccessResponse(ticket, 'Ticket criado com sucesso', 201)
-
   } catch (error) {
     console.error('Support ticket create error:', error)
     return NextResponse.json(
@@ -471,7 +435,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 // Funções auxiliares
 function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
   data: T | null
@@ -484,7 +447,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
         params[key] = value
       }
     })
-
     const data = schema.parse(params)
     return { data, error: null }
   } catch (error: any) {
@@ -507,7 +469,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
     }
   }
 }
-
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
   error: { field: string; message: string } | null
@@ -535,15 +496,12 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 async function generateTicketNumber(): Promise<string> {
   const prefix = 'SUP'
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-
   return `${prefix}${date}${random}`
 }
-
 function getSLADays(priority: string): number {
   const slaDays: Record<string, number> = {
     'LOW': 7,
@@ -552,10 +510,8 @@ function getSLADays(priority: string): number {
     'URGENT': 0.5, // 12 horas
     'CRITICAL': 0.25 // 6 horas
   }
-
   return slaDays[priority] || 3
 }
-
 async function calculateTicketStats(where: any) {
   try {
     const [
@@ -573,7 +529,6 @@ async function calculateTicketStats(where: any) {
           id: true
         }
       }),
-
       // Contagem por prioridade
       prisma.supportTicket.groupBy({
         by: ['priority'],
@@ -582,7 +537,6 @@ async function calculateTicketStats(where: any) {
           id: true
         }
       }),
-
       // Contagem por categoria
       prisma.supportTicket.groupBy({
         by: ['category'],
@@ -591,7 +545,6 @@ async function calculateTicketStats(where: any) {
           id: true
         }
       }),
-
       // Tempos de resolução
       prisma.supportTicket.findMany({
         where: {
@@ -603,7 +556,6 @@ async function calculateTicketStats(where: any) {
           resolvedAt: true
         }
       }),
-
       // Tickets escalados
       prisma.supportTicket.count({
         where: {
@@ -612,33 +564,27 @@ async function calculateTicketStats(where: any) {
         }
       })
     ])
-
     const byStatus = statusCounts.reduce((acc, item) => {
       acc[item.status] = item._count.id
       return acc
     }, {} as Record<string, number>)
-
     const byPriority = priorityCounts.reduce((acc, item) => {
       acc[item.priority] = item._count.id
       return acc
     }, {} as Record<string, number>)
-
     const byCategory = categoryCounts.reduce((acc, item) => {
       acc[item.category] = item._count.id
       return acc
     }, {} as Record<string, number>)
-
     // Calcular tempo médio de resolução
     const resolutionTimesInDays = resolutionTimes.map(ticket => {
       const created = new Date(ticket.createdAt)
       const resolved = new Date(ticket.resolvedAt!)
       return (resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
     })
-
     const averageResolutionTime = resolutionTimesInDays.length > 0
       ? resolutionTimesInDays.reduce((sum, time) => sum + time, 0) / resolutionTimesInDays.length
       : 0
-
     return {
       byStatus,
       byPriority,

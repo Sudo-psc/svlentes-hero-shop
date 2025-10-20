@@ -1,5 +1,4 @@
 // Types para integração com Asaas API v3
-
 export interface AsaasCustomer {
   id: string
   name: string
@@ -17,7 +16,6 @@ export interface AsaasCustomer {
   observations?: string
   deleted?: boolean
 }
-
 export interface AsaasSubscription {
   id: string
   customer: string
@@ -32,7 +30,6 @@ export interface AsaasSubscription {
   maxPayments?: number
   externalReference?: string
 }
-
 export interface AsaasPayment {
   id: string
   customer: string
@@ -78,7 +75,6 @@ export interface AsaasPayment {
     expirationDate: string
   }
 }
-
 export interface AsaasRefund {
   id: string
   status: string
@@ -86,7 +82,6 @@ export interface AsaasRefund {
   description?: string
   transactionReceiptUrl?: string
 }
-
 export type AsaasWebhookEvent =
   | 'PAYMENT_CREATED'
   | 'PAYMENT_AWAITING_RISK_ANALYSIS'
@@ -109,19 +104,16 @@ export type AsaasWebhookEvent =
   | 'PAYMENT_DUNNING_REQUESTED'
   | 'PAYMENT_BANK_SLIP_VIEWED'
   | 'PAYMENT_CHECKOUT_VIEWED'
-
 export interface AsaasWebhookPayload {
   event: AsaasWebhookEvent
   payment: AsaasPayment
 }
-
 export interface AsaasError {
   errors: Array<{
     code: string
     description: string
   }>
 }
-
 export interface AsaasPaginatedResponse<T> {
   object: string
   hasMore: boolean

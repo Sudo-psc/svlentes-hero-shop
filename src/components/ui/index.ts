@@ -18,13 +18,11 @@ export * from "./popover"
 export * from "./scroll-area"
 export * from "./skeleton"
 export * from "./progress"
-
 // Custom components
 export * from "./Icon"
 export * from "./Logo"
 export * from "./OptimizedImage"
 export * from "./LazySection"
 export * from "./SmoothScroll"
-
 // Hooks
 export { useToast } from "@/hooks/use-toast"

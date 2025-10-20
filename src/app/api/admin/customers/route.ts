@@ -4,12 +4,10 @@
  *
  * Retorna lista paginada de clientes do sistema
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse, validatePagination } from '@/lib/admin-auth'
 import { customerFiltersSchema, customerCreateSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/customers:
@@ -125,18 +123,15 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:view')(request)
-
     if (error) {
       return error
     }
-
     // Validar parâmetros
     const { searchParams } = new URL(request.url)
     const { data: params, error: validationError } = validateQuery(
       customerFiltersSchema,
       searchParams
     )
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -146,15 +141,12 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Validação de paginação
     const pagination = validatePagination(params)
-
     // Construir filtros where
     const where: any = {
       role: 'subscriber'
     }
-
     // Filtro de busca
     if (searchParams.get('search')) {
       const searchTerm = searchParams.get('search')!
@@ -165,12 +157,10 @@ export async function GET(request: NextRequest) {
         { whatsapp: { contains: searchTerm } }
       ]
     }
-
     // Filtro de role
     if (params.role) {
       where.role = params.role
     }
-
     // Filtros de data
     if (params.createdAfter) {
       where.createdAt = { gte: new Date(params.createdAfter) }
@@ -178,7 +168,6 @@ export async function GET(request: NextRequest) {
     if (params.createdBefore) {
       where.createdAt = { ...where.createdAt, lte: new Date(params.createdBefore) }
     }
-
     // Buscar clientes e contagem total em paralelo
     const [customers, total] = await Promise.all([
       prisma.user.findMany({
@@ -237,16 +226,13 @@ export async function GET(request: NextRequest) {
         skip: pagination.offset,
         take: pagination.limit
       }),
-
       prisma.user.count({ where })
     ])
-
     // Processar dados adicionais
     const processedCustomers = customers.map(customer => {
       const subscription = customer.subscriptions[0]
       const lastTicket = customer.supportTickets[0]
       const lastPayment = customer.payments[0]
-
       // Determinar status do cliente
       let customerStatus = 'inactive'
       if (subscription) {
@@ -258,7 +244,6 @@ export async function GET(request: NextRequest) {
           customerStatus = 'paused'
         }
       }
-
       return {
         id: customer.id,
         email: customer.email,
@@ -293,10 +278,8 @@ export async function GET(request: NextRequest) {
         }
       }
     })
-
     // Aplicar filtros adicionais no cliente (que precisam dos dados processados)
     let filteredCustomers = processedCustomers
-
     // Filtro por status do cliente
     if (params.status !== 'all') {
       filteredCustomers = filteredCustomers.filter(customer => {
@@ -310,25 +293,21 @@ export async function GET(request: NextRequest) {
         }
       })
     }
-
     // Filtro por ter assinatura
     if (params.hasSubscription !== 'all') {
       filteredCustomers = filteredCustomers.filter(customer => {
         return params.hasSubscription === 'yes' ? !!customer.subscription : !customer.subscription
       })
     }
-
     // Filtro por status da assinatura
     if (params.subscriptionStatus) {
       filteredCustomers = filteredCustomers.filter(customer => {
         return customer.subscription?.status === params.subscriptionStatus
       })
     }
-
     // Recalcular paginação após filtros
     const filteredTotal = filteredCustomers.length
     const finalCustomers = filteredCustomers.slice(pagination.offset, pagination.offset + pagination.limit)
-
     // Montar resposta
     const response = {
       customers: finalCustomers,
@@ -350,9 +329,7 @@ export async function GET(request: NextRequest) {
         customersWithSubscription: filteredCustomers.filter(c => c.subscription).length
       }
     }
-
     return createSuccessResponse(response, 'Clientes listados com sucesso')
-
   } catch (error) {
     console.error('Customers list error:', error)
     return NextResponse.json(
@@ -365,7 +342,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 /**
  * POST /api/admin/customers
  * Criar novo cliente
@@ -376,15 +352,12 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:create')(request)
-
     if (error) {
       return error
     }
-
     // Validar body
     const body = await request.json()
     const { data: customerData, error: validationError } = validateBody(customerCreateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -394,12 +367,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     // Verificar se email já existe
     const existingUser = await prisma.user.findUnique({
       where: { email: customerData.email.toLowerCase() }
     })
-
     if (existingUser) {
       return NextResponse.json(
         {
@@ -409,7 +380,6 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       )
     }
-
     // Criar cliente
     const customer = await prisma.user.create({
       data: {
@@ -431,9 +401,7 @@ export async function POST(request: NextRequest) {
         lastLoginAt: true
       }
     })
-
     return createSuccessResponse(customer, 'Cliente criado com sucesso', 201)
-
   } catch (error) {
     console.error('Customer create error:', error)
     return NextResponse.json(
@@ -446,7 +414,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 // Funções auxiliares
 function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
   data: T | null
@@ -459,7 +426,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
         params[key] = value
       }
     })
-
     const data = schema.parse(params)
     return { data, error: null }
   } catch (error: any) {
@@ -482,7 +448,6 @@ function validateQuery<T>(schema: any, searchParams: URLSearchParams): {
     }
   }
 }
-
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
   error: { field: string; message: string } | null

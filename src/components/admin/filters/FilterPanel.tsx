@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +21,6 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { FilterOptions } from '@/types/admin'
-
 interface FilterPanelProps {
   filters: FilterOptions
   onFiltersChange: (filters: FilterOptions) => void
@@ -40,7 +38,6 @@ interface FilterPanelProps {
   assignedToOptions?: { value: string; label: string }[]
   className?: string
 }
-
 export function FilterPanel({
   filters,
   onFiltersChange,
@@ -59,14 +56,11 @@ export function FilterPanel({
   className,
 }: FilterPanelProps) {
   const [dateRangeOpen, setDateRangeOpen] = useState(false)
-
   const handleSearchChange = (search: string) => {
     onFiltersChange({ ...filters, search })
   }
-
   const handleStatusChange = (status: string) => {
     const currentStatuses = filters.status ? (Array.isArray(filters.status) ? filters.status : [filters.status]) : []
-
     if (currentStatuses.includes(status)) {
       const newStatuses = currentStatuses.filter(s => s !== status)
       onFiltersChange({ ...filters, status: newStatuses.length > 0 ? newStatuses : undefined })
@@ -74,36 +68,29 @@ export function FilterPanel({
       onFiltersChange({ ...filters, status: [...currentStatuses, status] })
     }
   }
-
   const handleCategoryChange = (category: string) => {
     onFiltersChange({ ...filters, category: category || undefined })
   }
-
   const handlePriorityChange = (priority: string) => {
     onFiltersChange({ ...filters, priority: priority || undefined })
   }
-
   const handleAssignedToChange = (assignedTo: string) => {
     onFiltersChange({ ...filters, assignedTo: assignedTo || undefined })
   }
-
   const handleDateRangeChange = (range: { from?: Date; to?: Date }) => {
     if (range.from && range.to) {
       onFiltersChange({ ...filters, dateRange: { start: range.from, end: range.to } })
     }
   }
-
   const clearDateRange = () => {
     onFiltersChange({ ...filters, dateRange: undefined })
   }
-
   const hasActiveFilters = !!(filters.search ||
     filters.status ||
     filters.category ||
     filters.priority ||
     filters.assignedTo ||
     filters.dateRange)
-
   const getActiveFiltersCount = () => {
     let count = 0
     if (filters.search) count++
@@ -114,7 +101,6 @@ export function FilterPanel({
     if (filters.dateRange) count++
     return count
   }
-
   return (
     <div className={cn('space-y-4', className)}>
       {/* Search and Quick Actions */}
@@ -130,7 +116,6 @@ export function FilterPanel({
             />
           </div>
         )}
-
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
@@ -160,7 +145,6 @@ export function FilterPanel({
                     </Button>
                   )}
                 </div>
-
                 {/* Date Range Filter */}
                 {showDateRange && (
                   <div className="space-y-2">
@@ -211,7 +195,6 @@ export function FilterPanel({
                     </Popover>
                   </div>
                 )}
-
                 {/* Status Filter */}
                 {showStatus && availableStatuses.length > 0 && (
                   <div className="space-y-2">
@@ -236,7 +219,6 @@ export function FilterPanel({
                     </div>
                   </div>
                 )}
-
                 {/* Category Filter */}
                 {showCategory && availableCategories.length > 0 && (
                   <div className="space-y-2">
@@ -259,7 +241,6 @@ export function FilterPanel({
                     </Select>
                   </div>
                 )}
-
                 {/* Priority Filter */}
                 {showPriority && availablePriorities.length > 0 && (
                   <div className="space-y-2">
@@ -282,7 +263,6 @@ export function FilterPanel({
                     </Select>
                   </div>
                 )}
-
                 {/* Assigned To Filter */}
                 {showAssignedTo && assignedToOptions.length > 0 && (
                   <div className="space-y-2">
@@ -310,12 +290,10 @@ export function FilterPanel({
           </Popover>
         </div>
       </div>
-
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted-foreground">Filtros ativos:</span>
-
           {filters.search && (
             <Badge variant="secondary" className="gap-1">
               Busca: {filters.search}
@@ -325,7 +303,6 @@ export function FilterPanel({
               />
             </Badge>
           )}
-
           {filters.status && (
             <>
               {(Array.isArray(filters.status) ? filters.status : [filters.status]).map((status) => (
@@ -339,7 +316,6 @@ export function FilterPanel({
               ))}
             </>
           )}
-
           {filters.category && (
             <Badge variant="secondary" className="gap-1">
               Categoria: {availableCategories.find(c => c.value === filters.category)?.label || filters.category}
@@ -349,7 +325,6 @@ export function FilterPanel({
               />
             </Badge>
           )}
-
           {filters.priority && (
             <Badge variant="secondary" className="gap-1">
               Prioridade: {availablePriorities.find(p => p.value === filters.priority)?.label || filters.priority}
@@ -359,7 +334,6 @@ export function FilterPanel({
               />
             </Badge>
           )}
-
           {filters.assignedTo && (
             <Badge variant="secondary" className="gap-1">
               Responsável: {assignedToOptions.find(a => a.value === filters.assignedTo)?.label || filters.assignedTo}
@@ -369,7 +343,6 @@ export function FilterPanel({
               />
             </Badge>
           )}
-
           {filters.dateRange && (
             <Badge variant="secondary" className="gap-1">
               Período: {format(filters.dateRange.start, 'dd/MM/yyyy', { locale: ptBR })} - {format(filters.dateRange.end, 'dd/MM/yyyy', { locale: ptBR })}
@@ -379,7 +352,6 @@ export function FilterPanel({
               />
             </Badge>
           )}
-
           <Button
             variant="ghost"
             size="sm"

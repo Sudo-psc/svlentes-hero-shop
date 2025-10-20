@@ -1,8 +1,6 @@
 'use client'
-
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-
 interface ModalProps {
   isOpen: boolean
   onClose: () => void
@@ -11,7 +9,6 @@ interface ModalProps {
   closeOnOverlayClick?: boolean
   closeOnEscape?: boolean
 }
-
 export function Modal({
   isOpen,
   onClose,
@@ -21,21 +18,17 @@ export function Modal({
   closeOnEscape = true
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
-
   // Handle escape key
   useEffect(() => {
     if (!closeOnEscape || !isOpen) return
-
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose()
       }
     }
-
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, closeOnEscape, onClose])
-
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -43,20 +36,16 @@ export function Modal({
     } else {
       document.body.style.overflow = 'unset'
     }
-
     return () => {
       document.body.style.overflow = 'unset'
     }
   }, [isOpen])
-
   if (!isOpen) return null
-
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (closeOnOverlayClick && e.target === overlayRef.current) {
       onClose()
     }
   }
-
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -64,7 +53,6 @@ export function Modal({
     xl: 'max-w-4xl',
     full: 'max-w-7xl'
   }
-
   const modalContent = (
     <div
       ref={overlayRef}
@@ -82,6 +70,5 @@ export function Modal({
       </div>
     </div>
   )
-
   return createPortal(modalContent, document.body)
 }

@@ -27,7 +27,6 @@ export interface ReferralProgram {
         conditions: string[]
     }
 }
-
 export const referralProgramData: ReferralProgram = {
     mainCard: {
         title: 'Indique e Ganhe',
@@ -83,7 +82,6 @@ export const referralProgramData: ReferralProgram = {
         ]
     }
 }
-
 // Dados para tracking e analytics
 export const referralAnalytics = {
     events: {

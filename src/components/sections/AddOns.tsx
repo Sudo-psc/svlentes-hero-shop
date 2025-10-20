@@ -1,12 +1,10 @@
 'use client'
-
 import { useState } from 'react'
 import { AddOn, AddOnsProps } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { trackEvent } from '@/lib/analytics'
-
 interface AddOnCardProps {
     addOn: AddOn
     isSelected: boolean
@@ -14,7 +12,6 @@ interface AddOnCardProps {
     layout: 'chips' | 'cards'
     disabled?: boolean
 }
-
 function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: AddOnCardProps) {
     const formatPrice = (price?: number) => {
         if (!price) return 'Consulte'
@@ -23,7 +20,6 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
             currency: 'BRL'
         }).format(price)
     }
-
     const getTypeIcon = (type: AddOn['type']) => {
         switch (type) {
             case 'consulta':
@@ -38,7 +34,6 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                 return '📋'
         }
     }
-
     const getTypeBadgeColor = (type: AddOn['type']) => {
         switch (type) {
             case 'consulta':
@@ -53,7 +48,6 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                 return 'bg-gray-100 text-gray-800'
         }
     }
-
     if (layout === 'chips') {
         return (
             <div
@@ -71,7 +65,6 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                     onChange={() => onToggle(addOn.id)}
                     className="pointer-events-none"
                 />
-
                 <div className="flex items-center gap-2 flex-1">
                     <span className="text-lg">{getTypeIcon(addOn.type)}</span>
                     <div className="flex-1">
@@ -95,7 +88,6 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
             </div>
         )
     }
-
     // Cards layout
     return (
         <div
@@ -115,14 +107,12 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                     className="pointer-events-none"
                 />
             </div>
-
             <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
                     <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl">
                         {getTypeIcon(addOn.type)}
                     </div>
                 </div>
-
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold text-gray-900">{addOn.name}</h3>
@@ -130,9 +120,7 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                             {addOn.type}
                         </Badge>
                     </div>
-
                     <p className="text-sm text-gray-600 mb-3">{addOn.description}</p>
-
                     <div className="flex items-center justify-between">
                         <div>
                             <span className="text-lg font-bold text-gray-900">
@@ -142,7 +130,6 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
                                 <span className="text-sm text-gray-500 ml-1">/mês</span>
                             )}
                         </div>
-
                         {isSelected && (
                             <Badge className="bg-primary-100 text-primary-800">
                                 Selecionado
@@ -154,20 +141,16 @@ function AddOnCard({ addOn, isSelected, onToggle, layout, disabled = false }: Ad
         </div>
     )
 }
-
 export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
     const [selectedAddOns, setSelectedAddOns] = useState<string[]>([])
-
     const handleToggleAddOn = (id: string) => {
         const addOn = services.find(service => service.id === id)
         const isCurrentlySelected = selectedAddOns.includes(id)
-
         setSelectedAddOns(prev =>
             prev.includes(id)
                 ? prev.filter(addOnId => addOnId !== id)
                 : [...prev, id]
         )
-
         // Track add-on selection/deselection
         if (addOn && !isCurrentlySelected) {
             trackEvent('addon_selected', {
@@ -177,20 +160,17 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
             })
         }
     }
-
     const calculateTotal = () => {
         return services
             .filter(service => selectedAddOns.includes(service.id))
             .reduce((total, service) => total + (service.price || 0), 0)
     }
-
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
             currency: 'BRL'
         }).format(price)
     }
-
     return (
         <section className="py-16 lg:py-24 bg-gray-50">
             <div className="container mx-auto px-4">
@@ -203,7 +183,6 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                         seu cuidado com a saúde ocular
                     </p>
                 </div>
-
                 <div className="max-w-4xl mx-auto">
                     <div className={`
             grid gap-4 mb-8
@@ -222,7 +201,6 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                             />
                         ))}
                     </div>
-
                     {selectedAddOns.length > 0 && (
                         <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                             <div className="flex items-center justify-between mb-4">
@@ -238,7 +216,6 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                     Limpar seleção
                                 </Button>
                             </div>
-
                             <div className="space-y-2 mb-4">
                                 {services
                                     .filter(service => selectedAddOns.includes(service.id))
@@ -252,7 +229,6 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                     ))
                                 }
                             </div>
-
                             <div className="border-t pt-4">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-lg font-semibold text-gray-900">
@@ -262,7 +238,6 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                                         {formatPrice(calculateTotal())}
                                     </span>
                                 </div>
-
                                 <div className="flex gap-3">
                                     <Button
                                         className="flex-1"
@@ -291,7 +266,6 @@ export default function AddOns({ services, layout = 'cards' }: AddOnsProps) {
                             </div>
                         </div>
                     )}
-
                     {selectedAddOns.length === 0 && (
                         <div className="text-center py-8">
                             <p className="text-gray-500 mb-4">

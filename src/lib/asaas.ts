@@ -2,7 +2,6 @@ interface AsaasConfig {
     apiKey: string
     environment: 'sandbox' | 'production'
 }
-
 interface AsaasCustomer {
     name: string
     email: string
@@ -21,7 +20,6 @@ interface AsaasCustomer {
     stateInscription?: string
     observations?: string
 }
-
 interface AsaasPayment {
     customer: string
     billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' | 'DEBIT_CARD'
@@ -45,7 +43,6 @@ interface AsaasPayment {
     }
     postalService?: boolean
 }
-
 interface AsaasPaymentResponse {
     object: string
     id: string
@@ -64,72 +61,58 @@ interface AsaasPaymentResponse {
     externalReference?: string
     deleted: boolean
 }
-
 export class AsaasClient {
     private apiKey: string
     private baseUrl: string
-
     constructor(config: AsaasConfig) {
         this.apiKey = config.apiKey
         this.baseUrl = config.environment === 'production'
             ? 'https://api.asaas.com/v3'
             : 'https://sandbox.asaas.com/api/v3'
     }
-
     private async request<T>(
         endpoint: string,
         method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
         body?: any
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`
-
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
             'access_token': this.apiKey,
         }
-
         const options: RequestInit = {
             method,
             headers,
         }
-
         if (body && (method === 'POST' || method === 'PUT')) {
             options.body = JSON.stringify(body)
         }
-
         try {
             const response = await fetch(url, options)
-
             if (!response.ok) {
                 const error = await response.json()
                 throw new Error(
                     `ASAAS API Error: ${response.status} - ${JSON.stringify(error)}`
                 )
             }
-
             return await response.json()
         } catch (error) {
             console.error('ASAAS API Request Failed:', error)
             throw error
         }
     }
-
     async createCustomer(customerData: AsaasCustomer): Promise<any> {
         return this.request('/customers', 'POST', customerData)
     }
-
     async getCustomer(customerId: string): Promise<any> {
         return this.request(`/customers/${customerId}`, 'GET')
     }
-
     async updateCustomer(customerId: string, customerData: Partial<AsaasCustomer>): Promise<any> {
         return this.request(`/customers/${customerId}`, 'PUT', customerData)
     }
-
     async deleteCustomer(customerId: string): Promise<void> {
         return this.request(`/customers/${customerId}`, 'DELETE')
     }
-
     async listCustomers(filters?: {
         email?: string
         cpfCnpj?: string
@@ -137,7 +120,6 @@ export class AsaasClient {
         limit?: number
     }): Promise<{ data: any[]; totalCount: number }> {
         const queryParams = new URLSearchParams()
-
         if (filters) {
             Object.entries(filters).forEach(([key, value]) => {
                 if (value !== undefined) {
@@ -145,19 +127,15 @@ export class AsaasClient {
                 }
             })
         }
-
         const query = queryParams.toString()
         return this.request(`/customers${query ? `?${query}` : ''}`, 'GET')
     }
-
     async createPayment(paymentData: AsaasPayment): Promise<AsaasPaymentResponse> {
         return this.request('/payments', 'POST', paymentData)
     }
-
     async getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
         return this.request(`/payments/${paymentId}`, 'GET')
     }
-
     async listPayments(filters?: {
         customer?: string
         billingType?: string
@@ -167,7 +145,6 @@ export class AsaasClient {
         limit?: number
     }): Promise<{ data: AsaasPaymentResponse[]; totalCount: number }> {
         const queryParams = new URLSearchParams()
-
         if (filters) {
             Object.entries(filters).forEach(([key, value]) => {
                 if (value !== undefined) {
@@ -175,22 +152,18 @@ export class AsaasClient {
                 }
             })
         }
-
         const query = queryParams.toString()
         return this.request(`/payments${query ? `?${query}` : ''}`, 'GET')
     }
-
     async deletePayment(paymentId: string): Promise<void> {
         return this.request(`/payments/${paymentId}`, 'DELETE')
     }
-
     async refundPayment(paymentId: string, value?: number, description?: string): Promise<any> {
         return this.request(`/payments/${paymentId}/refund`, 'POST', {
             value,
             description
         })
     }
-
     async createSubscription(subscriptionData: {
         customer: string
         billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX'
@@ -206,19 +179,15 @@ export class AsaasClient {
     }): Promise<any> {
         return this.request('/subscriptions', 'POST', subscriptionData)
     }
-
     async getSubscription(subscriptionId: string): Promise<any> {
         return this.request(`/subscriptions/${subscriptionId}`, 'GET')
     }
-
     async updateSubscription(subscriptionId: string, updateData: any): Promise<any> {
         return this.request(`/subscriptions/${subscriptionId}`, 'PUT', updateData)
     }
-
     async deleteSubscription(subscriptionId: string): Promise<void> {
         return this.request(`/subscriptions/${subscriptionId}`, 'DELETE')
     }
-
     async getPixQrCode(paymentId: string): Promise<{
         encodedImage: string
         payload: string
@@ -227,19 +196,14 @@ export class AsaasClient {
         return this.request(`/payments/${paymentId}/pixQrCode`, 'GET')
     }
 }
-
 import { APP_CONFIG } from './constants'
-
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
                    (typeof window === 'undefined' && !APP_CONFIG.asaas.apiKeySandbox && !APP_CONFIG.asaas.apiKeyProduction)
-
 const getApiKey = (): string => {
     if (isBuildTime) {
         return 'build-time-placeholder'
     }
-    
     const env = APP_CONFIG.asaas.environment
-    
     if (env === 'production') {
         const key = APP_CONFIG.asaas.apiKeyProduction
         if (!key) {
@@ -254,16 +218,13 @@ const getApiKey = (): string => {
         return key
     }
 }
-
 // Lazy initialization of ASAAS client
 let asaasInstance: AsaasClient | null = null
-
 export const getAsaasClient = (): AsaasClient => {
     // During build, return a dummy client that will never be used
     if (isBuildTime) {
         throw new Error('ASAAS client cannot be used during build time')
     }
-    
     if (!asaasInstance) {
         const apiKey = getApiKey()
         if (apiKey === 'build-time-placeholder') {
@@ -276,10 +237,8 @@ export const getAsaasClient = (): AsaasClient => {
     }
     return asaasInstance
 }
-
 // Create a completely lazy proxy that doesn't initialize anything until actually used
 let proxyInstance: AsaasClient | null = null
-
 export const asaas = new Proxy({} as AsaasClient, {
     get(target, prop, receiver) {
         if (!proxyInstance) {
@@ -288,7 +247,6 @@ export const asaas = new Proxy({} as AsaasClient, {
         return Reflect.get(proxyInstance, prop, receiver)
     }
 })
-
 export type {
     AsaasConfig,
     AsaasCustomer,

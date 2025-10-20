@@ -4,7 +4,6 @@
  *
  * Autentica usuários com role admin e retorna tokens JWT
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
@@ -19,7 +18,6 @@ import {
   AdminUser
 } from '@/lib/admin-auth'
 import { loginSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/auth/login:
@@ -106,11 +104,9 @@ export async function POST(request: NextRequest) {
     if (rateLimitResult) {
       return rateLimitResult
     }
-
     // Validar body da requisição
     const body = await request.json()
     const { data: loginData, error: validationError } = validateBody(loginSchema, body)
-
     if (validationError) {
       return createErrorResponse(
         'VALIDATION_ERROR',
@@ -118,7 +114,6 @@ export async function POST(request: NextRequest) {
         400
       )
     }
-
     // Buscar usuário no banco
     const user = await prisma.user.findUnique({
       where: { email: loginData.email.toLowerCase() },
@@ -132,7 +127,6 @@ export async function POST(request: NextRequest) {
         lastLoginAt: true
       }
     })
-
     // Verificar se usuário existe
     if (!user) {
       return createErrorResponse(
@@ -141,7 +135,6 @@ export async function POST(request: NextRequest) {
         401
       )
     }
-
     // Verificar se usuário tem role admin
     const validAdminRoles = ['super_admin', 'admin', 'manager', 'support', 'viewer']
     if (!validAdminRoles.includes(user.role)) {
@@ -151,7 +144,6 @@ export async function POST(request: NextRequest) {
         403
       )
     }
-
     // Verificar senha (se usuário tiver senha)
     if (user.password) {
       const isValidPassword = await bcrypt.compare(loginData.password, user.password)
@@ -170,7 +162,6 @@ export async function POST(request: NextRequest) {
         401
       )
     }
-
     // Obter permissões do usuário baseado no role
     const getPermissionsForRole = (role: string): string[] => {
       const rolePermissions: Record<string, string[]> = {
@@ -215,7 +206,6 @@ export async function POST(request: NextRequest) {
       }
       return rolePermissions[role] || []
     }
-
     const adminUser: AdminUser = {
       id: user.id,
       email: user.email,
@@ -223,23 +213,18 @@ export async function POST(request: NextRequest) {
       role: user.role,
       permissions: getPermissionsForRole(user.role)
     }
-
     // Gerar tokens
     const accessToken = generateAdminToken(adminUser)
     const refreshToken = generateRefreshToken(adminUser)
-
     // Atualizar último login
     await prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() }
     })
-
     // Calcular tempo de expiração (8 horas = 28800 segundos)
     const expiresIn = 8 * 60 * 60
-
     // Log de segurança
-    console.log(`Admin login: ${user.email} (${user.role}) from ${request.ip}`)
-
+    console.log(`Admin login attempt from ${request.ip}`)
     return createSuccessResponse(
       {
         user: {
@@ -255,7 +240,6 @@ export async function POST(request: NextRequest) {
       },
       'Login realizado com sucesso'
     )
-
   } catch (error) {
     console.error('Admin login error:', error)
     return createErrorResponse(
@@ -265,7 +249,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 // Função auxiliar para validação
 function validateBody<T>(schema: z.ZodSchema<T>, body: unknown): {
   data: T | null

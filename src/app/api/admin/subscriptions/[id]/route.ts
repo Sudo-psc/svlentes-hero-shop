@@ -4,11 +4,9 @@
  *
  * Retorna informações completas de uma assinatura incluindo histórico
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
-
 /**
  * @swagger
  * /api/admin/subscriptions/{id}:
@@ -70,13 +68,10 @@ export async function GET(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('subscriptions:view')(request)
-
     if (error) {
       return error
     }
-
     const subscriptionId = params.id
-
     if (!subscriptionId) {
       return NextResponse.json(
         {
@@ -86,7 +81,6 @@ export async function GET(
         { status: 400 }
       )
     }
-
     // Buscar assinatura com dados relacionados
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -129,7 +123,6 @@ export async function GET(
         benefits: true
       }
     })
-
     if (!subscription) {
       return NextResponse.json(
         {
@@ -139,18 +132,15 @@ export async function GET(
         { status: 404 }
       )
     }
-
     // Calcular métricas adicionais
     const totalPaid = subscription.payments
       .filter(p => p.status === 'RECEIVED')
       .reduce((sum, p) => sum + Number(p.amount), 0)
-
     const totalOrders = subscription.orders.length
     const deliveredOrders = subscription.orders.filter(o => o.deliveryStatus === 'DELIVERED').length
     const averagePaymentValue = subscription.payments.length > 0
       ? totalPaid / subscription.payments.length
       : 0
-
     // Status detalhado
     const statusInfo = {
       current: subscription.status,
@@ -161,7 +151,6 @@ export async function GET(
       isCancelled: subscription.status === 'CANCELLED',
       nextAction: getNextAction(subscription.status)
     }
-
     // Montar resposta completa
     const subscriptionDetail = {
       subscription: {
@@ -230,9 +219,7 @@ export async function GET(
         createdAt: history.createdAt
       }))
     }
-
     return createSuccessResponse(subscriptionDetail, 'Detalhes da assinatura obtidos com sucesso')
-
   } catch (error) {
     console.error('Subscription detail error:', error)
     return NextResponse.json(
@@ -245,7 +232,6 @@ export async function GET(
     )
   }
 }
-
 /**
  * PUT /api/admin/subscriptions/[id]
  * Atualizar assinatura
@@ -259,13 +245,10 @@ export async function PUT(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('subscriptions:update')(request)
-
     if (error) {
       return error
     }
-
     const subscriptionId = params.id
-
     if (!subscriptionId) {
       return NextResponse.json(
         {
@@ -275,11 +258,9 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Validar body
     const body = await request.json()
     const { data: updateData, error: validationError } = validateBody(subscriptionUpdateSchema, body)
-
     if (validationError) {
       return NextResponse.json(
         {
@@ -289,7 +270,6 @@ export async function PUT(
         { status: 400 }
       )
     }
-
     // Verificar se assinatura existe
     const existingSubscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -303,7 +283,6 @@ export async function PUT(
         lensType: true
       }
     })
-
     if (!existingSubscription) {
       return NextResponse.json(
         {
@@ -313,22 +292,17 @@ export async function PUT(
         { status: 404 }
       )
     }
-
     // Registrar mudanças no histórico
     const changes: Record<string, { old: any; new: any }> = {}
-
     if (updateData.planType && updateData.planType !== existingSubscription.planType) {
       changes.planType = { old: existingSubscription.planType, new: updateData.planType }
     }
-
     if (updateData.monthlyValue && updateData.monthlyValue !== existingSubscription.monthlyValue) {
       changes.monthlyValue = { old: existingSubscription.monthlyValue, new: updateData.monthlyValue }
     }
-
     if (updateData.shippingAddress && JSON.stringify(updateData.shippingAddress) !== JSON.stringify(existingSubscription.shippingAddress)) {
       changes.shippingAddress = { old: existingSubscription.shippingAddress, new: updateData.shippingAddress }
     }
-
     // Atualizar assinatura
     const updatedSubscription = await prisma.subscription.update({
       where: { id: subscriptionId },
@@ -351,7 +325,6 @@ export async function PUT(
         }
       }
     })
-
     // Criar registros de histórico para mudanças significativas
     if (Object.keys(changes).length > 0) {
       await Promise.all(
@@ -370,9 +343,7 @@ export async function PUT(
         )
       )
     }
-
     return createSuccessResponse(updatedSubscription, 'Assinatura atualizada com sucesso')
-
   } catch (error) {
     console.error('Subscription update error:', error)
     return NextResponse.json(
@@ -385,7 +356,6 @@ export async function PUT(
     )
   }
 }
-
 /**
  * DELETE /api/admin/subscriptions/[id]
  * Cancelar assinatura
@@ -399,13 +369,10 @@ export async function DELETE(
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('subscriptions:delete')(request)
-
     if (error) {
       return error
     }
-
     const subscriptionId = params.id
-
     if (!subscriptionId) {
       return NextResponse.json(
         {
@@ -415,7 +382,6 @@ export async function DELETE(
         { status: 400 }
       )
     }
-
     // Verificar se assinatura existe
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -425,7 +391,6 @@ export async function DELETE(
         userId: true
       }
     })
-
     if (!subscription) {
       return NextResponse.json(
         {
@@ -435,7 +400,6 @@ export async function DELETE(
         { status: 404 }
       )
     }
-
     if (subscription.status === 'CANCELLED') {
       return NextResponse.json(
         {
@@ -445,7 +409,6 @@ export async function DELETE(
         { status: 409 }
       )
     }
-
     // Cancelar assinatura
     const cancelledSubscription = await prisma.subscription.update({
       where: { id: subscriptionId },
@@ -461,7 +424,6 @@ export async function DELETE(
         updatedAt: true
       }
     })
-
     // Criar registro no histórico
     await prisma.subscriptionHistory.create({
       data: {
@@ -474,9 +436,7 @@ export async function DELETE(
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown'
       }
     })
-
     return createSuccessResponse(cancelledSubscription, 'Assinatura cancelada com sucesso')
-
   } catch (error) {
     console.error('Subscription delete error:', error)
     return NextResponse.json(
@@ -489,7 +449,6 @@ export async function DELETE(
     )
   }
 }
-
 // Funções auxiliares
 function validateBody<T>(schema: any, body: unknown): {
   data: T | null
@@ -518,7 +477,6 @@ function validateBody<T>(schema: any, body: unknown): {
     }
   }
 }
-
 function getNextAction(status: string): string {
   switch (status) {
     case 'PENDING_ACTIVATION':

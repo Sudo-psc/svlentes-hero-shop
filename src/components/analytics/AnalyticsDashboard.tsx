@@ -1,14 +1,11 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { getConversionMetrics } from '@/lib/conversion-tracking';
 import { GA_MEASUREMENT_ID } from '@/lib/analytics';
-
 interface AnalyticsDashboardProps {
     isVisible?: boolean;
     onToggle?: () => void;
 }
-
 export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDashboardProps) {
     const [metrics, setMetrics] = useState({
         sessionDuration: 0,
@@ -18,13 +15,11 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
         currentStage: 'page_view' as any
     });
     const [events, setEvents] = useState<Array<{ timestamp: string; event: string; data: any }>>([]);
-
     useEffect(() => {
         if (isVisible) {
             // Update metrics
             const currentMetrics = getConversionMetrics();
             setMetrics(currentMetrics);
-
             // Mock recent events (in a real implementation, you'd store these)
             const recentEvents = [
                 { timestamp: new Date().toISOString(), event: 'page_view', data: { page: 'landing' } },
@@ -33,7 +28,6 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
             setEvents(recentEvents);
         }
     }, [isVisible]);
-
     if (!isVisible) {
         return (
             <button
@@ -45,13 +39,11 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
             </button>
         );
     }
-
     const formatDuration = (ms: number) => {
         const seconds = Math.floor(ms / 1000);
         const minutes = Math.floor(seconds / 60);
         return `${minutes}m ${seconds % 60}s`;
     };
-
     return (
         <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-xl p-4 w-80 max-h-96 overflow-y-auto z-50">
             <div className="flex justify-between items-center mb-4">
@@ -63,7 +55,6 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
                     ✕
                 </button>
             </div>
-
             {/* GA4 Status */}
             <div className="mb-4 p-2 bg-gray-50 rounded">
                 <div className="text-sm font-medium">GA4 Status</div>
@@ -71,7 +62,6 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
                     {GA_MEASUREMENT_ID ? `Connected: ${GA_MEASUREMENT_ID}` : 'Not configured'}
                 </div>
             </div>
-
             {/* Conversion Metrics */}
             <div className="mb-4">
                 <h4 className="font-medium mb-2">Conversion Funnel</h4>
@@ -100,7 +90,6 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
                     </div>
                 </div>
             </div>
-
             {/* Funnel Progress Bar */}
             <div className="mb-4">
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -113,7 +102,6 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
                     Funnel Progress: {metrics.conversionRate.toFixed(1)}%
                 </div>
             </div>
-
             {/* Recent Events */}
             <div className="mb-4">
                 <h4 className="font-medium mb-2">Recent Events</h4>
@@ -132,7 +120,6 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
                     )}
                 </div>
             </div>
-
             {/* Debug Actions */}
             <div className="border-t pt-2">
                 <div className="text-xs text-gray-500 mb-2">Debug Actions</div>
@@ -167,24 +154,19 @@ export function AnalyticsDashboard({ isVisible = false, onToggle }: AnalyticsDas
         </div>
     );
 }
-
 // Hook for using the analytics dashboard
 export function useAnalyticsDashboard() {
     const [isVisible, setIsVisible] = useState(false);
-
     // Show dashboard in development mode or when URL contains debug=analytics
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const showDebug = process.env.NODE_ENV === 'development' || urlParams.get('debug') === 'analytics';
-
         if (showDebug) {
             // Auto-show in development after 2 seconds
             const timer = setTimeout(() => setIsVisible(false), 2000);
             return () => clearTimeout(timer);
         }
     }, []);
-
     const toggle = () => setIsVisible(!isVisible);
-
     return { isVisible, toggle };
 }

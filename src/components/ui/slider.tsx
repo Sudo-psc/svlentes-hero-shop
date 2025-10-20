@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-
 export interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   value?: number[];
   onValueChange?: (value: number[]) => void;
@@ -8,13 +7,11 @@ export interface SliderProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
   step?: number;
   min?: number;
 }
-
 const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
   ({ className, value = [0], onValueChange, max = 100, step = 1, min = 0, ...props }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onValueChange?.([parseInt(e.target.value, 10)]);
     };
-
     return (
       <input
         type="range"
@@ -38,7 +35,5 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
     );
   }
 );
-
 Slider.displayName = 'Slider';
-
 export { Slider };

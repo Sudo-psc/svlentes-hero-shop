@@ -1,17 +1,13 @@
 'use client'
-
 import { LensEducationSection } from '@/components/sections/LensEducationSection'
 import { LeadCaptureSection } from '@/components/sections/LeadCaptureSection'
 import FAQ from '@/components/sections/FAQ'
 import { FinalCTA } from '@/components/sections/FinalCTA'
-
 // Force dynamic rendering to avoid prerendering issues
 export const dynamic = 'force-dynamic'
-
 export default function LentesDiariasPage() {
     return (
         <div className="min-h-screen">
-
             {/* Hero Section personalizado */}
             <section id="hero">
                 <div className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-16 lg:py-24">
@@ -39,15 +35,12 @@ export default function LentesDiariasPage() {
                     </div>
                 </div>
             </section>
-
             {/* Seção de Educação sobre Lentes */}
             <LensEducationSection />
-
             {/* Formulário de Captura */}
             <section id="formulario-contato">
                 <LeadCaptureSection />
             </section>
-
             {/* FAQ Específico */}
             <section id="perguntas-frequentes">
                 <div className="container-custom py-16 lg:py-24">
@@ -59,7 +52,6 @@ export default function LentesDiariasPage() {
                     </div>
                 </div>
             </section>
-
             {/* CTA Final */}
             <section id="contato">
                 <FinalCTA />

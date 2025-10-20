@@ -1,11 +1,9 @@
 'use client'
-
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-
 function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -15,30 +13,25 @@ function ResetPasswordContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-
   useEffect(() => {
     const tokenParam = searchParams.get('token')
     setToken(tokenParam)
   }, [searchParams])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
     // Validação client-side
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
       setIsLoading(false)
       return
     }
-
     if (password.length < 6) {
       setError('A senha deve ter pelo menos 6 caracteres')
       setIsLoading(false)
       return
     }
-
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
@@ -50,9 +43,7 @@ function ResetPasswordContent() {
           password,
         }),
       })
-
       const data = await response.json()
-
       if (response.ok) {
         setSuccess(true)
         setTimeout(() => {
@@ -67,7 +58,6 @@ function ResetPasswordContent() {
       setIsLoading(false)
     }
   }
-
   // Token ausente
   if (!token) {
     return (
@@ -76,7 +66,6 @@ function ResetPasswordContent() {
           <div className="flex justify-center mb-8">
             <Logo />
           </div>
-
           <div className="text-center">
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg
@@ -109,7 +98,6 @@ function ResetPasswordContent() {
       </div>
     )
   }
-
   // Sucesso
   if (success) {
     return (
@@ -118,7 +106,6 @@ function ResetPasswordContent() {
           <div className="flex justify-center mb-8">
             <Logo />
           </div>
-
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg
@@ -152,7 +139,6 @@ function ResetPasswordContent() {
       </div>
     )
   }
-
   // Formulário de reset
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
@@ -161,7 +147,6 @@ function ResetPasswordContent() {
         <div className="flex justify-center mb-8">
           <Logo />
         </div>
-
         {/* Título */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -171,7 +156,6 @@ function ResetPasswordContent() {
             Digite sua nova senha abaixo. Ela deve ter pelo menos 6 caracteres.
           </p>
         </div>
-
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
@@ -179,7 +163,6 @@ function ResetPasswordContent() {
               {error}
             </div>
           )}
-
           <div>
             <label
               htmlFor="password"
@@ -199,7 +182,6 @@ function ResetPasswordContent() {
               disabled={isLoading}
             />
           </div>
-
           <div>
             <label
               htmlFor="confirmPassword"
@@ -219,7 +201,6 @@ function ResetPasswordContent() {
               disabled={isLoading}
             />
           </div>
-
           <Button
             type="submit"
             className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3"
@@ -228,7 +209,6 @@ function ResetPasswordContent() {
             {isLoading ? 'Redefinindo...' : 'Redefinir Senha'}
           </Button>
         </form>
-
         {/* Links */}
         <div className="mt-6 text-center">
           <Link
@@ -238,7 +218,6 @@ function ResetPasswordContent() {
             ← Voltar para Login
           </Link>
         </div>
-
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600 mb-2">Precisa de ajuda?</p>
@@ -257,7 +236,6 @@ function ResetPasswordContent() {
     </div>
   )
 }
-
 export default function ResetPasswordPage() {
   return (
     <Suspense
@@ -271,6 +249,5 @@ export default function ResetPasswordPage() {
     </Suspense>
   )
 }
-
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'

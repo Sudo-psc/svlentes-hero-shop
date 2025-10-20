@@ -2,10 +2,8 @@
  * Validações Zod para APIs Administrativas
  * Fornece schemas de validação para requests e responses
  */
-
 import { z } from 'zod'
 import { SubscriptionStatus, PaymentStatus, SupportCategory, SupportPriority, SupportStatus, DeliveryStatus } from '@prisma/client'
-
 // Enums baseados no Prisma
 const subscriptionStatusEnum = z.enum([
   'PENDING_ACTIVATION',
@@ -18,7 +16,6 @@ const subscriptionStatusEnum = z.enum([
   'REFUNDED',
   'PENDING'
 ])
-
 const paymentStatusEnum = z.enum([
   'PENDING',
   'RECEIVED',
@@ -34,7 +31,6 @@ const paymentStatusEnum = z.enum([
   'AWAITING_RISK_ANALYSIS',
   'CANCELLED'
 ])
-
 const supportCategoryEnum = z.enum([
   'BILLING',
   'TECHNICAL',
@@ -46,21 +42,17 @@ const supportCategoryEnum = z.enum([
   'EMERGENCY',
   'GENERAL'
 ])
-
 const supportPriorityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL'])
 const supportStatusEnum = z.enum(['OPEN', 'IN_PROGRESS', 'PENDING_CUSTOMER', 'PENDING_AGENT', 'RESOLVED', 'CLOSED', 'ESCALATED'])
 const deliveryStatusEnum = z.enum(['PENDING', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'])
-
 // Auth Schemas
 export const loginSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(1, 'Senha é obrigatória')
 })
-
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token é obrigatório')
 })
-
 // Customer/Client Schemas
 export const customerCreateSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -70,7 +62,6 @@ export const customerCreateSchema = z.object({
   role: z.string().optional().default('subscriber'),
   metadata: z.record(z.any()).optional()
 })
-
 export const customerUpdateSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
   phone: z.string().optional(),
@@ -78,12 +69,10 @@ export const customerUpdateSchema = z.object({
   role: z.string().optional(),
   metadata: z.record(z.any()).optional()
 })
-
 export const customerSearchSchema = z.object({
   query: z.string().min(2, 'Busca deve ter pelo menos 2 caracteres'),
   fields: z.array(z.enum(['name', 'email', 'phone', 'whatsapp'])).optional().default(['name', 'email'])
 })
-
 // Subscription Schemas
 export const subscriptionCreateSchema = z.object({
   userId: z.string().min(1, 'ID do usuário é obrigatório'),
@@ -96,7 +85,6 @@ export const subscriptionCreateSchema = z.object({
   differentGrades: z.boolean().optional().default(false),
   metadata: z.record(z.any()).optional()
 })
-
 export const subscriptionUpdateSchema = z.object({
   planType: z.string().optional(),
   monthlyValue: z.number().positive().optional(),
@@ -106,13 +94,11 @@ export const subscriptionUpdateSchema = z.object({
   differentGrades: z.boolean().optional(),
   metadata: z.record(z.any()).optional()
 })
-
 export const subscriptionStatusUpdateSchema = z.object({
   status: subscriptionStatusEnum,
   reason: z.string().optional(),
   metadata: z.record(z.any()).optional()
 })
-
 // Order Schemas
 export const orderCreateSchema = z.object({
   subscriptionId: z.string().min(1, 'ID da assinatura é obrigatório'),
@@ -123,14 +109,12 @@ export const orderCreateSchema = z.object({
   notes: z.string().optional(),
   estimatedDelivery: z.string().datetime().optional()
 })
-
 export const orderStatusUpdateSchema = z.object({
   status: deliveryStatusEnum,
   trackingCode: z.string().optional(),
   notes: z.string().optional(),
   deliveredAt: z.string().datetime().optional()
 })
-
 export const orderUpdateSchema = z.object({
   products: z.array(z.record(z.any())).optional(),
   deliveryAddress: z.record(z.any()).optional(),
@@ -141,7 +125,6 @@ export const orderUpdateSchema = z.object({
   status: deliveryStatusEnum.optional(),
   deliveredAt: z.string().datetime().optional()
 })
-
 // Support Ticket Schemas
 export const supportTicketCreateSchema = z.object({
   userId: z.string().min(1, 'ID do usuário é obrigatório'),
@@ -153,7 +136,6 @@ export const supportTicketCreateSchema = z.object({
   tags: z.array(z.string()).optional().default([]),
   context: z.record(z.any()).optional()
 })
-
 export const supportTicketUpdateSchema = z.object({
   subject: z.string().min(3).optional(),
   description: z.string().min(10).optional(),
@@ -163,12 +145,10 @@ export const supportTicketUpdateSchema = z.object({
   tags: z.array(z.string()).optional(),
   context: z.record(z.any()).optional()
 })
-
 export const supportTicketAssignSchema = z.object({
   assignedAgentId: z.string().min(1, 'ID do agente é obrigatório'),
   notes: z.string().optional()
 })
-
 // Pagination and Filter Schemas
 export const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -176,7 +156,6 @@ export const paginationSchema = z.object({
   sortBy: z.string().default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc')
 })
-
 export const dateRangeSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional()
@@ -192,7 +171,6 @@ export const dateRangeSchema = z.object({
     path: ['endDate']
   }
 )
-
 export const customerFiltersSchema = z.object({
   status: z.enum(['active', 'inactive', 'all']).default('all'),
   role: z.string().optional(),
@@ -202,7 +180,6 @@ export const customerFiltersSchema = z.object({
   createdBefore: z.string().datetime().optional(),
   lastActiveAfter: z.string().datetime().optional()
 }).merge(paginationSchema)
-
 export const subscriptionFiltersSchema = z.object({
   status: subscriptionStatusEnum.optional(),
   planType: z.string().optional(),
@@ -215,7 +192,6 @@ export const subscriptionFiltersSchema = z.object({
   nextBillingBefore: z.string().datetime().optional(),
   overdueDays: z.number().int().min(0).optional()
 }).merge(paginationSchema)
-
 export const orderFiltersSchema = z.object({
   status: deliveryStatusEnum.optional(),
   type: z.enum(['subscription', 'one_time']).optional(),
@@ -226,7 +202,6 @@ export const orderFiltersSchema = z.object({
   deliveredBefore: z.string().datetime().optional(),
   hasTrackingCode: z.enum(['yes', 'no', 'all']).default('all')
 }).merge(paginationSchema)
-
 export const supportTicketFiltersSchema = z.object({
   status: supportStatusEnum.optional(),
   category: supportCategoryEnum.optional(),
@@ -239,26 +214,22 @@ export const supportTicketFiltersSchema = z.object({
   resolvedBefore: z.string().datetime().optional(),
   hasSlaBreach: z.enum(['yes', 'no', 'all']).default('all')
 }).merge(paginationSchema)
-
 // Dashboard Schemas
 export const dashboardMetricsSchema = z.object({
   period: z.enum(['7d', '30d', '90d', '1y']).default('30d'),
   compareWith: z.enum(['previous', 'same_last_month', 'same_last_year']).optional()
 })
-
 export const analyticsParamsSchema = z.object({
   metric: z.enum(['revenue', 'subscriptions', 'customers', 'tickets', 'orders']),
   period: z.enum(['7d', '30d', '90d', '1y']).default('30d'),
   granularity: z.enum(['day', 'week', 'month']).default('day'),
   groupBy: z.string().optional()
 })
-
 // Combined Schemas
 export const customerListSchema = customerFiltersSchema
 export const subscriptionListSchema = subscriptionFiltersSchema
 export const orderListSchema = orderFiltersSchema
 export const supportTicketListSchema = supportTicketFiltersSchema
-
 // Response Schemas (para validação de respostas)
 export const userResponseSchema = z.object({
   id: z.string(),
@@ -270,7 +241,6 @@ export const userResponseSchema = z.object({
   createdAt: z.string().datetime(),
   lastLoginAt: z.string().datetime().nullable()
 })
-
 export const subscriptionResponseSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -285,7 +255,6 @@ export const subscriptionResponseSchema = z.object({
   updatedAt: z.string().datetime(),
   user: userResponseSchema.optional()
 })
-
 export const orderResponseSchema = z.object({
   id: z.string(),
   subscriptionId: z.string(),
@@ -297,7 +266,6 @@ export const orderResponseSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime()
 })
-
 export const supportTicketResponseSchema = z.object({
   id: z.string(),
   ticketNumber: z.string(),
@@ -310,7 +278,6 @@ export const supportTicketResponseSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime()
 })
-
 // Type exports
 export type LoginInput = z.infer<typeof loginSchema>
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>
@@ -333,7 +300,6 @@ export type OrderFilters = z.infer<typeof orderFiltersSchema>
 export type SupportTicketFilters = z.infer<typeof supportTicketFiltersSchema>
 export type DashboardMetricsParams = z.infer<typeof dashboardMetricsSchema>
 export type AnalyticsParams = z.infer<typeof analyticsParamsSchema>
-
 // Validation helper functions
 export function validateBody<T>(schema: z.ZodSchema<T>, body: unknown): {
   data: T | null
@@ -362,17 +328,14 @@ export function validateBody<T>(schema: z.ZodSchema<T>, body: unknown): {
     }
   }
 }
-
 export function validateQuery<T>(schema: z.ZodSchema<T>, searchParams: URLSearchParams): {
   data: T | null
   error: { field: string; message: string } | null
 } {
   const params: Record<string, any> = {}
-
   searchParams.forEach((value, key) => {
     params[key] = value
   })
-
   try {
     const data = schema.parse(params)
     return { data, error: null }

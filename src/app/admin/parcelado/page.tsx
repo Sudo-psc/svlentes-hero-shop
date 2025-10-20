@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -46,7 +45,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
-
 // Interfaces
 interface PlanoParcelado {
   id: string
@@ -95,7 +93,6 @@ interface PlanoParcelado {
   createdAt: string
   updatedAt: string
 }
-
 interface ParcelaSubscription {
   id: string
   planId: string
@@ -136,7 +133,6 @@ interface ParcelaSubscription {
   asaasSubscriptionId?: string
   asaas_dashboard_url?: string
 }
-
 interface ParceladoStats {
   totalPlans: number
   activePlans: number
@@ -150,21 +146,18 @@ interface ParceladoStats {
   mostPopularPlan: PlanoParcelado | null
   monthlyGrowth: number
 }
-
 const categoryConfig = {
   daily: { label: 'Lentes Diárias', icon: '👁️', color: 'blue' },
   monthly: { label: 'Lentes Mensais', icon: '👁️', color: 'green' },
   toric: { label: 'Lentes Tóricas', icon: '🎯', color: 'purple' },
   colored: { label: 'Lentes Coloridas', icon: '🎨', color: 'pink' }
 }
-
 const statusConfig = {
   active: { label: 'Ativo', color: 'bg-green-500', bgColor: 'bg-green-50', textColor: 'text-green-700' },
   delayed: { label: 'Atrasado', color: 'bg-red-500', bgColor: 'bg-red-50', textColor: 'text-red-700' },
   cancelled: { label: 'Cancelado', color: 'bg-gray-500', bgColor: 'bg-gray-50', textColor: 'text-gray-700' },
   completed: { label: 'Concluído', color: 'bg-blue-500', bgColor: 'bg-blue-50', textColor: 'text-blue-700' }
 }
-
 export default function AdminParceladoPage() {
   const [plans, setPlans] = useState<PlanoParcelado[]>([])
   const [subscriptions, setSubscriptions] = useState<ParcelaSubscription[]>([])
@@ -178,14 +171,12 @@ export default function AdminParceladoPage() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('plans')
-
   // Load data from ASAAS API
   const loadData = async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/admin/asaas/parcelado')
       if (!response.ok) throw new Error('Failed to fetch parcelado data')
-
       const data = await response.json()
       setPlans(data.plans || [])
       setSubscriptions(data.subscriptions || [])
@@ -354,7 +345,6 @@ export default function AdminParceladoPage() {
           updatedAt: '2024-03-15T16:45:00Z'
         }
       ]
-
       const mockSubscriptions: ParcelaSubscription[] = [
         {
           id: 'sub_parcelado_001',
@@ -435,7 +425,6 @@ export default function AdminParceladoPage() {
           asaas_dashboard_url: 'https://asaas.com/sub/sub_asaas_002'
         }
       ]
-
       const mockStats: ParceladoStats = {
         totalPlans: mockPlans.length,
         activePlans: mockPlans.filter(p => p.isActive).length,
@@ -453,7 +442,6 @@ export default function AdminParceladoPage() {
         mostPopularPlan: mockPlans[0],
         monthlyGrowth: 15.8
       }
-
       setPlans(mockPlans)
       setSubscriptions(mockSubscriptions)
       setStats(mockStats)
@@ -461,38 +449,30 @@ export default function AdminParceladoPage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadData()
   }, [])
-
   // Apply filters
   const filteredSubscriptions = subscriptions.filter(sub => {
     const matchesSearch = searchTerm === '' ||
       sub.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sub.customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sub.plan.name.toLowerCase().includes(searchTerm.toLowerCase())
-
     const matchesStatus = statusFilter === 'all' || sub.status === statusFilter
     const matchesCategory = categoryFilter === 'all' || sub.plan.category === categoryFilter
-
     return matchesSearch && matchesStatus && matchesCategory
   })
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
   }
-
   const formatPercentage = (value: number) => {
     return `${value.toFixed(2)}%`
   }
-
   const PlanCard = ({ plan }: { plan: PlanoParcelado }) => {
     const categoryInfo = categoryConfig[plan.category]
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -524,7 +504,6 @@ export default function AdminParceladoPage() {
               )}
             </div>
           </div>
-
           {/* Pricing */}
           <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 mb-4">
             <div className="grid grid-cols-2 gap-4">
@@ -556,7 +535,6 @@ export default function AdminParceladoPage() {
               </div>
             </div>
           </div>
-
           {/* Features */}
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Incluso no plano:</p>
@@ -574,7 +552,6 @@ export default function AdminParceladoPage() {
               )}
             </div>
           </div>
-
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="text-center p-2 bg-gray-50 rounded">
@@ -590,7 +567,6 @@ export default function AdminParceladoPage() {
               <p className="text-xs text-gray-600">Churn</p>
             </div>
           </div>
-
           {/* Actions */}
           <div className="flex gap-2">
             <Button
@@ -618,11 +594,9 @@ export default function AdminParceladoPage() {
       </motion.div>
     )
   }
-
   const SubscriptionCard = ({ subscription }: { subscription: ParcelaSubscription }) => {
     const statusInfo = statusConfig[subscription.status]
     const categoryInfo = categoryConfig[subscription.plan.category]
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -644,7 +618,6 @@ export default function AdminParceladoPage() {
               {statusInfo.label}
             </Badge>
           </div>
-
           {/* Payment Info */}
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
             <div className="grid grid-cols-2 gap-4">
@@ -678,7 +651,6 @@ export default function AdminParceladoPage() {
               </div>
             </div>
           </div>
-
           {/* Progress */}
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
@@ -692,7 +664,6 @@ export default function AdminParceladoPage() {
               className="h-2"
             />
           </div>
-
           {/* Medical Info */}
           {subscription.medicalInfo && (
             <div className="flex items-center gap-2 mb-4 p-2 bg-blue-50 rounded-lg">
@@ -711,7 +682,6 @@ export default function AdminParceladoPage() {
               </div>
             </div>
           )}
-
           {/* Actions */}
           <div className="flex gap-2">
             <Button
@@ -739,7 +709,6 @@ export default function AdminParceladoPage() {
       </motion.div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-silver-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -758,7 +727,6 @@ export default function AdminParceladoPage() {
                 Gestão de planos anuais parcelados em até 12x via ASAAS com taxas repassadas
               </p>
             </div>
-
             <div className="flex gap-3">
               <Button
                 variant="outline"
@@ -768,7 +736,6 @@ export default function AdminParceladoPage() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-
               <Button
                 onClick={() => window.open('https://asaas.com', '_blank')}
                 className="bg-cyan-600 hover:bg-cyan-700"
@@ -778,7 +745,6 @@ export default function AdminParceladoPage() {
             </div>
           </div>
         </motion.div>
-
         {/* Stats Cards */}
         {stats && (
           <motion.div
@@ -801,7 +767,6 @@ export default function AdminParceladoPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -816,7 +781,6 @@ export default function AdminParceladoPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -831,7 +795,6 @@ export default function AdminParceladoPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -848,14 +811,12 @@ export default function AdminParceladoPage() {
             </Card>
           </motion.div>
         )}
-
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="plans">Planos</TabsTrigger>
             <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
           </TabsList>
-
           {/* Plans Tab */}
           <TabsContent value="plans">
             <motion.div
@@ -880,7 +841,6 @@ export default function AdminParceladoPage() {
               </div>
             </motion.div>
           </TabsContent>
-
           {/* Subscriptions Tab */}
           <TabsContent value="subscriptions">
             {/* Filters */}
@@ -900,7 +860,6 @@ export default function AdminParceladoPage() {
                     className="pl-10"
                   />
                 </div>
-
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Status" />
@@ -914,7 +873,6 @@ export default function AdminParceladoPage() {
                     ))}
                   </SelectContent>
                 </Select>
-
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Categoria" />
@@ -928,7 +886,6 @@ export default function AdminParceladoPage() {
                     ))}
                   </SelectContent>
                 </Select>
-
                 <Button variant="outline" onClick={() => {
                   setSearchTerm('')
                   setStatusFilter('all')
@@ -938,7 +895,6 @@ export default function AdminParceladoPage() {
                 </Button>
               </div>
             </motion.div>
-
             {/* Subscriptions List */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -967,7 +923,6 @@ export default function AdminParceladoPage() {
             </motion.div>
           </TabsContent>
         </Tabs>
-
         {/* Plan Detail Modal */}
         <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -977,7 +932,6 @@ export default function AdminParceladoPage() {
                 Informações completas do plano anual parcelado
               </DialogDescription>
             </DialogHeader>
-
             {selectedPlan && (
               <Tabs defaultValue="details" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
@@ -986,7 +940,6 @@ export default function AdminParceladoPage() {
                   <TabsTrigger value="features">Benefícios</TabsTrigger>
                   <TabsTrigger value="stats">Estatísticas</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="details" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1015,7 +968,6 @@ export default function AdminParceladoPage() {
                     </div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="pricing" className="space-y-4">
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="font-medium mb-3">Estrutura de Preços</h3>
@@ -1053,7 +1005,6 @@ export default function AdminParceladoPage() {
                     </div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="features" className="space-y-4">
                   <div>
                     <h3 className="font-medium mb-3">Benefícios Inclusos</h3>
@@ -1066,9 +1017,7 @@ export default function AdminParceladoPage() {
                       ))}
                     </div>
                   </div>
-
                   <Separator />
-
                   <div>
                     <h3 className="font-medium mb-3">Informações Médicas</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1087,7 +1036,6 @@ export default function AdminParceladoPage() {
                     </div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="stats" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4">
@@ -1112,7 +1060,6 @@ export default function AdminParceladoPage() {
             )}
           </DialogContent>
         </Dialog>
-
         {/* Subscription Detail Modal */}
         <Dialog open={isSubscriptionModalOpen} onOpenChange={setIsSubscriptionModalOpen}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -1122,7 +1069,6 @@ export default function AdminParceladoPage() {
                 Informações completas da assinatura e histórico de pagamentos
               </DialogDescription>
             </DialogHeader>
-
             {selectedSubscription && (
               <Tabs defaultValue="details" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
@@ -1131,7 +1077,6 @@ export default function AdminParceladoPage() {
                   <TabsTrigger value="customer">Cliente</TabsTrigger>
                   <TabsTrigger value="medical">Médico</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="details" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1155,9 +1100,7 @@ export default function AdminParceladoPage() {
                       <p className="text-sm text-gray-900">{new Date(selectedSubscription.endDate).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="font-medium mb-3">Informações Financeiras</h3>
                     <div className="space-y-2">
@@ -1184,7 +1127,6 @@ export default function AdminParceladoPage() {
                     </div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="installments" className="space-y-4">
                   <div className="space-y-2">
                     {selectedSubscription.installments.map((installment) => (
@@ -1224,7 +1166,6 @@ export default function AdminParceladoPage() {
                     ))}
                   </div>
                 </TabsContent>
-
                 <TabsContent value="customer" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1245,7 +1186,6 @@ export default function AdminParceladoPage() {
                     </div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="medical" className="space-y-4">
                   {selectedSubscription.medicalInfo ? (
                     <div className="grid grid-cols-2 gap-4">

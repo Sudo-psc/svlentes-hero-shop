@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -21,7 +20,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
 interface Reminder {
   id: string
   type: 'lens_replacement' | 'appointment' | 'payment' | 'prescription_expiry' | 'delivery' | 'checkup'
@@ -44,7 +42,6 @@ interface Reminder {
     prescriptionExpiry?: Date
   }
 }
-
 const mockReminders: Reminder[] = [
   {
     id: '1',
@@ -138,13 +135,11 @@ const mockReminders: Reminder[] = [
     actionUrl: '/agendar-consulta'
   }
 ]
-
 interface SmartRemindersProps {
   maxItems?: number
   showSettings?: boolean
   compact?: boolean
 }
-
 export function SmartReminders({ maxItems = 5, showSettings = true, compact = false }: SmartRemindersProps) {
   const [reminders, setReminders] = useState<Reminder[]>(mockReminders)
   const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null)
@@ -156,15 +151,12 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
     sms: false,
     advanceNotice: 7 // dias
   })
-
   // Filtrar lembretes futuros (não expirados) e não concluídos
   const upcomingReminders = reminders
     .filter(r => !r.isCompleted && r.daysUntil >= -1)
     .sort((a, b) => a.daysUntil - b.daysUntil)
     .slice(0, maxItems)
-
   const unreadReminders = upcomingReminders.filter(r => !r.isRead)
-
   const getUrgencyColor = (urgency: Reminder['urgency']) => {
     switch (urgency) {
       case 'urgent': return 'bg-red-100 text-red-800 border-red-200'
@@ -173,7 +165,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
       case 'low': return 'bg-blue-100 text-blue-800 border-blue-200'
     }
   }
-
   const getDaysUntilColor = (daysUntil: number) => {
     if (daysUntil < 0) return 'text-gray-500'
     if (daysUntil <= 3) return 'text-red-600'
@@ -181,14 +172,12 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
     if (daysUntil <= 14) return 'text-yellow-600'
     return 'text-green-600'
   }
-
   const getDaysUntilText = (daysUntil: number) => {
     if (daysUntil < 0) return `${Math.abs(daysUntil)} dia${Math.abs(daysUntil) > 1 ? 's' : ''} atrás`
     if (daysUntil === 0) return 'Hoje'
     if (daysUntil === 1) return 'Amanhã'
     return `Em ${daysUntil} dias`
   }
-
   const getChannelIcon = (channel: Reminder['channels'][0]) => {
     switch (channel) {
       case 'app': return <Smartphone className="h-3 w-3" />
@@ -197,28 +186,24 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
       case 'sms': return <MessageCircle className="h-3 w-3" />
     }
   }
-
   const handleMarkAsRead = (reminderId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setReminders(prev => prev.map(r =>
       r.id === reminderId ? { ...r, isRead: true } : r
     ))
   }
-
   const handleMarkAsCompleted = (reminderId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setReminders(prev => prev.map(r =>
       r.id === reminderId ? { ...r, isCompleted: true } : r
     ))
   }
-
   const handleActionClick = (reminder: Reminder, e: React.MouseEvent) => {
     e.stopPropagation()
     if (reminder.actionUrl) {
       window.open(reminder.actionUrl, '_blank')
     }
   }
-
   const formatScheduledDate = (date: Date) => {
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -226,11 +211,9 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
       year: 'numeric'
     })
   }
-
   if (compact && upcomingReminders.length === 0) {
     return null
   }
-
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -245,7 +228,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
               </Badge>
             )}
           </div>
-
           {showSettings && (
             <Button
               variant="ghost"
@@ -257,7 +239,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
           )}
         </div>
       )}
-
       {/* Lista de Lembretes */}
       <div className="space-y-3">
         <AnimatePresence>
@@ -287,7 +268,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                   )}>
                     {reminder.icon}
                   </div>
-
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -296,22 +276,18 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                         <div className="h-2 w-2 bg-blue-600 rounded-full" />
                       )}
                     </div>
-
                     <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                       {reminder.description}
                     </p>
-
                     {/* Metadata */}
                     <div className="flex items-center gap-3 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>{formatScheduledDate(reminder.scheduledDate)}</span>
                       </div>
-
                       <div className={cn("font-medium", getDaysUntilColor(reminder.daysUntil))}>
                         {getDaysUntilText(reminder.daysUntil)}
                       </div>
-
                       {/* Canais */}
                       <div className="flex items-center gap-1">
                         {reminder.channels.slice(0, 2).map((channel, i) => (
@@ -324,7 +300,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                         )}
                       </div>
                     </div>
-
                     {/* Additional Info */}
                     {reminder.metadata && (
                       <div className="mt-2 text-xs text-gray-600">
@@ -344,7 +319,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                     )}
                   </div>
                 </div>
-
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   {!reminder.isRead && (
@@ -357,7 +331,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                       <CheckCircle className="h-4 w-4" />
                     </Button>
                   )}
-
                   {reminder.actionLabel && (
                     <Button
                       size="sm"
@@ -369,7 +342,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                   )}
                 </div>
               </div>
-
               {/* Urgency Badge */}
               <div className="mt-3">
                 <Badge className={cn("text-xs", getUrgencyColor(reminder.urgency))}>
@@ -383,7 +355,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
           ))}
         </AnimatePresence>
       </div>
-
       {upcomingReminders.length === 0 && !compact && (
         <div className="text-center py-8">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
@@ -391,7 +362,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
           <p className="text-sm text-gray-500">Você receberá notificações quando houver eventos próximos</p>
         </div>
       )}
-
       {/* View All Link */}
       {!compact && reminders.length > maxItems && (
         <div className="text-center">
@@ -401,7 +371,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
           </Button>
         </div>
       )}
-
       {/* Modal de Detalhes */}
       <AnimatePresence>
         {selectedReminder && (
@@ -441,7 +410,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                       </Badge>
                     </div>
                   </div>
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -450,9 +418,7 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-
                 <p className="text-gray-700 mb-4">{selectedReminder.description}</p>
-
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-gray-500" />
@@ -461,7 +427,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                       ({getDaysUntilText(selectedReminder.daysUntil)})
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2 text-sm">
                     <Bell className="h-4 w-4 text-gray-500" />
                     <span>Notificações via: </span>
@@ -476,7 +441,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                       ))}
                     </div>
                   </div>
-
                   {selectedReminder.metadata && Object.entries(selectedReminder.metadata).map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2 text-sm">
                       <Info className="h-4 w-4 text-gray-500" />
@@ -490,7 +454,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                     </div>
                   ))}
                 </div>
-
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
@@ -499,7 +462,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                   >
                     Fechar
                   </Button>
-
                   {!selectedReminder.isRead && (
                     <Button
                       variant="outline"
@@ -512,7 +474,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                       Marcar como lida
                     </Button>
                   )}
-
                   {selectedReminder.actionLabel && selectedReminder.actionUrl && (
                     <Button
                       onClick={() => {
@@ -529,7 +490,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Settings Modal */}
       <AnimatePresence>
         {showSettingsModal && (
@@ -558,11 +518,9 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Canais de Notificação</h4>
-
                     <label className="flex items-center justify-between">
                       <span className="text-sm">Notificações no App</span>
                       <input
@@ -575,7 +533,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                         className="rounded"
                       />
                     </label>
-
                     <label className="flex items-center justify-between">
                       <span className="text-sm">WhatsApp</span>
                       <input
@@ -588,7 +545,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                         className="rounded"
                       />
                     </label>
-
                     <label className="flex items-center justify-between">
                       <span className="text-sm">Email</span>
                       <input
@@ -601,7 +557,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                         className="rounded"
                       />
                     </label>
-
                     <label className="flex items-center justify-between">
                       <span className="text-sm">SMS</span>
                       <input
@@ -615,10 +570,8 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                       />
                     </label>
                   </div>
-
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Antecedência de Lembretes</h4>
-
                     <select
                       value={notificationPreferences.advanceNotice}
                       onChange={(e) => setNotificationPreferences(prev => ({
@@ -635,7 +588,6 @@ export function SmartReminders({ maxItems = 5, showSettings = true, compact = fa
                     </select>
                   </div>
                 </div>
-
                 <div className="flex gap-3 mt-6">
                   <Button
                     variant="outline"

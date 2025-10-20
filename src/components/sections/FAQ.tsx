@@ -1,15 +1,12 @@
 'use client'
-
 import React, { useCallback, useMemo } from 'react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { featuredFAQ } from '@/data/faq-data'
 import { FAQProps } from '@/types/wireframe'
 import { trackEvent } from '@/lib/analytics'
-
 interface FAQSectionProps {
     className?: string
 }
-
 export default function FAQ({ className }: FAQSectionProps) {
     const faqProps: FAQProps = useMemo(
         () => ({
@@ -19,7 +16,6 @@ export default function FAQ({ className }: FAQSectionProps) {
         }),
         []
     )
-
     const handleFAQClick = useCallback((questionId: string, questionText: string, position: number) => {
         trackEvent('faq_opened', {
             question_id: questionId,
@@ -27,7 +23,6 @@ export default function FAQ({ className }: FAQSectionProps) {
             section_position: position,
         })
     }, [])
-
     const structuredData = useMemo(
         () => ({
             '@context': 'https://schema.org',
@@ -43,7 +38,6 @@ export default function FAQ({ className }: FAQSectionProps) {
         }),
         [faqProps.items]
     )
-
     return (
         <section
             className={`py-16 lg:py-24 bg-white ${className || ''}`}
@@ -53,7 +47,6 @@ export default function FAQ({ className }: FAQSectionProps) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
             />
-
             <div className="container mx-auto px-4 max-w-4xl">
                 {/* Section Header */}
                 <div className="text-center mb-12">
@@ -64,7 +57,6 @@ export default function FAQ({ className }: FAQSectionProps) {
                         Tire suas dúvidas sobre nosso serviço de assinatura de lentes com acompanhamento médico
                     </p>
                 </div>
-
                 {/* FAQ Accordion */}
                 <div className="max-w-3xl mx-auto">
                     <Accordion type="single" collapsible className="space-y-4">
@@ -85,14 +77,12 @@ export default function FAQ({ className }: FAQSectionProps) {
                                                 {String(index + 1).padStart(2, '0')}
                                             </span>
                                         )}
-
                                         {/* Question Text */}
                                         <span className="font-semibold text-gray-900 text-base md:text-lg leading-relaxed">
                                             {item.question}
                                         </span>
                                     </div>
                                 </AccordionTrigger>
-
                                 <AccordionContent className="pt-2 pb-6">
                                     <div className={`${faqProps.numbering ? 'ml-12' : ''} text-gray-600 text-base leading-relaxed`}>
                                         {item.answer}
@@ -102,7 +92,6 @@ export default function FAQ({ className }: FAQSectionProps) {
                         ))}
                     </Accordion>
                 </div>
-
                 {/* Contact CTA */}
                 <div className="text-center mt-12">
                     <p className="text-gray-600 mb-6">

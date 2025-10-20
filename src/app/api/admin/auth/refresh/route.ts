@@ -4,7 +4,6 @@
  *
  * Gera novo access token usando refresh token válido
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
@@ -17,7 +16,6 @@ import {
   AdminUser
 } from '@/lib/admin-auth'
 import { refreshTokenSchema } from '@/lib/admin-validations'
-
 /**
  * @swagger
  * /api/admin/auth/refresh:
@@ -94,7 +92,6 @@ export async function POST(request: NextRequest) {
     // Validar body da requisição
     const body = await request.json()
     const { data: refreshData, error: validationError } = validateBody(refreshTokenSchema, body)
-
     if (validationError) {
       return createErrorResponse(
         'VALIDATION_ERROR',
@@ -102,7 +99,6 @@ export async function POST(request: NextRequest) {
         400
       )
     }
-
     // Verificar refresh token
     const refreshPayload = verifyRefreshToken(refreshData.refreshToken)
     if (!refreshPayload) {
@@ -112,7 +108,6 @@ export async function POST(request: NextRequest) {
         401
       )
     }
-
     // Buscar usuário no banco
     const user = await prisma.user.findUnique({
       where: { id: refreshPayload.sub },
@@ -123,7 +118,6 @@ export async function POST(request: NextRequest) {
         role: true
       }
     })
-
     if (!user) {
       return createErrorResponse(
         'USER_NOT_FOUND',
@@ -131,7 +125,6 @@ export async function POST(request: NextRequest) {
         401
       )
     }
-
     // Verificar se usuário ainda tem role admin
     const validAdminRoles = ['super_admin', 'admin', 'manager', 'support', 'viewer']
     if (!validAdminRoles.includes(user.role)) {
@@ -141,7 +134,6 @@ export async function POST(request: NextRequest) {
         403
       )
     }
-
     // Obter permissões do usuário baseado no role
     const getPermissionsForRole = (role: string): string[] => {
       const rolePermissions: Record<string, string[]> = {
@@ -186,7 +178,6 @@ export async function POST(request: NextRequest) {
       }
       return rolePermissions[role] || []
     }
-
     const adminUser: AdminUser = {
       id: user.id,
       email: user.email,
@@ -194,17 +185,13 @@ export async function POST(request: NextRequest) {
       role: user.role,
       permissions: getPermissionsForRole(user.role)
     }
-
     // Gerar novos tokens
     const newAccessToken = generateAdminToken(adminUser)
     const newRefreshToken = generateRefreshToken(adminUser)
-
     // Calcular tempo de expiração (8 horas = 28800 segundos)
     const expiresIn = 8 * 60 * 60
-
     // Log de segurança
-    console.log(`Admin token refresh: ${user.email} (${user.role}) from ${request.ip}`)
-
+    console.log(`Admin token refresh from ${request.ip}`)
     return createSuccessResponse(
       {
         user: {
@@ -220,7 +207,6 @@ export async function POST(request: NextRequest) {
       },
       'Token renovado com sucesso'
     )
-
   } catch (error) {
     console.error('Admin refresh token error:', error)
     return createErrorResponse(
@@ -230,7 +216,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 // Função auxiliar para validação
 function validateBody<T>(schema: z.ZodSchema<T>, body: unknown): {
   data: T | null

@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { asaas } from '@/lib/asaas'
 import { pricingPlans } from '@/data/pricing-plans'
 import { logger, LogCategory } from '@/lib/logger'
-
 // Schema para validação dos dados do checkout
 const checkoutRequestSchema = z.object({
     planId: z.enum(['basic', 'premium', 'vip'], {
@@ -32,16 +31,12 @@ const checkoutRequestSchema = z.object({
     }),
     metadata: z.record(z.string()).optional(),
 })
-
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-
         // Validar dados de entrada
         const validatedData = checkoutRequestSchema.parse(body)
-
         const { planId, billingInterval, billingType, customerData, metadata = {} } = validatedData
-
         // Encontrar o plano selecionado
         const selectedPlan = pricingPlans.find(plan => plan.id === planId)
         if (!selectedPlan) {
@@ -50,12 +45,10 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             )
         }
-
         // Calcular o valor baseado no intervalo
         const planValue = billingInterval === 'annual'
             ? selectedPlan.priceAnnual
             : selectedPlan.priceMonthly
-
         if (metadata.syntheticTest === 'true' || metadata.syntheticTest === true) {
             const syntheticDueDate = new Date()
             syntheticDueDate.setDate(syntheticDueDate.getDate() + 7)
@@ -105,16 +98,13 @@ export async function POST(request: NextRequest) {
                 },
             })
         }
-
         // 1. Criar ou atualizar cliente no Asaas
         let customer
-
         // Verificar se cliente já existe
         const existingCustomers = await asaas.listCustomers({
             email: customerData.email,
             limit: 1,
         })
-
         if (existingCustomers.data && existingCustomers.data.length > 0) {
             // Atualizar cliente existente
             customer = await asaas.updateCustomer(existingCustomers.data[0].id, {
@@ -145,15 +135,12 @@ export async function POST(request: NextRequest) {
                 externalReference: `plan_${planId}_email_${customerData.email}`,
             })
         }
-
         // 2. Calcular próxima data de vencimento (7 dias a partir de hoje)
         const nextDueDate = new Date()
         nextDueDate.setDate(nextDueDate.getDate() + 7)
         const nextDueDateStr = nextDueDate.toISOString().split('T')[0]
-
         // 3. Determinar ciclo de cobrança
         const cycle = billingInterval === 'annual' ? 'YEARLY' : 'MONTHLY'
-
         // 4. Criar assinatura no Asaas
         const subscription = await asaas.createSubscription({
             customer: customer.id,
@@ -164,15 +151,12 @@ export async function POST(request: NextRequest) {
             description: `Assinatura ${selectedPlan.name} - SV Lentes`,
             externalReference: `plan_${planId}_${metadata.source || 'web'}`,
         })
-
         // 5. Buscar primeira cobrança gerada
         const payments = await asaas.listPayments({
             subscription: subscription.id,
             limit: 1,
         })
-
         const firstPayment = payments.data && payments.data.length > 0 ? payments.data[0] : null
-
         // 6. Se for PIX, buscar QR Code
         let pixData = null
         if (billingType === 'PIX' && firstPayment) {
@@ -182,13 +166,11 @@ export async function POST(request: NextRequest) {
                 console.error('Erro ao buscar QR Code PIX:', error)
             }
         }
-
         logger.logPayment('checkout_created', {
             customerId: customer.id,
             subscriptionId: subscription.id,
             paymentId: firstPayment?.id,
         })
-
         return NextResponse.json({
             success: true,
             customer: {
@@ -224,10 +206,8 @@ export async function POST(request: NextRequest) {
                 amount: planValue,
             }
         })
-
     } catch (error) {
         logger.error(LogCategory.PAYMENT, 'Failed to create checkout', error as Error)
-
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 {
@@ -240,21 +220,18 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             )
         }
-
         if (error instanceof Error && error.message.includes('Asaas')) {
             return NextResponse.json(
                 { error: 'Erro no processamento do pagamento. Tente novamente.' },
                 { status: 500 }
             )
         }
-
         return NextResponse.json(
             { error: 'Erro interno do servidor. Tente novamente.' },
             { status: 500 }
         )
     }
 }
-
 // Endpoint GET para obter informações dos planos disponíveis
 export async function GET() {
     try {
@@ -268,13 +245,11 @@ export async function GET() {
             recommended: plan.recommended,
             ctaText: plan.ctaText,
         }))
-
         return NextResponse.json({
             plans: plansInfo,
             currency: 'BRL',
             locale: 'pt-BR',
         })
-
     } catch (error) {
         logger.error(LogCategory.API, 'Failed to fetch plans info', error as Error)
         return NextResponse.json(

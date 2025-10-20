@@ -1,21 +1,16 @@
 'use client'
-
 import { createContext, useContext, ReactNode, useState } from 'react'
-
 interface AdminAuthContextType {
   session: any
   permissions: string[]
   hasPermission: (permission: string) => boolean
   hasAnyPermission: (permissions: string[]) => boolean
 }
-
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined)
-
 interface AdminAuthProviderProps {
   children: ReactNode
   session: any
 }
-
 export function AdminAuthProvider({ children, session }: AdminAuthProviderProps) {
   // Mock permissions - in real app, get from session or API
   const [permissions] = useState<string[]>([
@@ -35,15 +30,12 @@ export function AdminAuthProvider({ children, session }: AdminAuthProviderProps)
     'RESPOND_TICKETS',
     'EXPORT_REPORTS'
   ])
-
   const hasPermission = (permission: string): boolean => {
     return permissions.includes(permission)
   }
-
   const hasAnyPermission = (requiredPermissions: string[]): boolean => {
     return requiredPermissions.some(permission => permissions.includes(permission))
   }
-
   return (
     <AdminAuthContext.Provider
       value={{
@@ -57,7 +49,6 @@ export function AdminAuthProvider({ children, session }: AdminAuthProviderProps)
     </AdminAuthContext.Provider>
   )
 }
-
 export function useAdminAuth() {
   const context = useContext(AdminAuthContext)
   if (context === undefined) {

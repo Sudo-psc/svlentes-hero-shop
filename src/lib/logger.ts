@@ -4,7 +4,6 @@
  * Sistema centralizado de logging com suporte a diferentes níveis,
  * estruturação de dados e integração com serviços externos.
  */
-
 export enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
@@ -12,7 +11,6 @@ export enum LogLevel {
   ERROR = 'error',
   FATAL = 'fatal',
 }
-
 export enum LogCategory {
   PAYMENT = 'payment',
   WEBHOOK = 'webhook',
@@ -28,7 +26,6 @@ export enum LogCategory {
   DATABASE = 'database',
   CACHE = 'cache',
 }
-
 interface LogMetadata {
   [key: string]: any
   userId?: string
@@ -43,7 +40,6 @@ interface LogMetadata {
   duration?: number
   statusCode?: number
 }
-
 interface LogEntry {
   timestamp: string
   level: LogLevel
@@ -55,16 +51,13 @@ interface LogEntry {
   service: string
   version: string
 }
-
 class Logger {
   private service: string = 'svlentes-api'
   private version: string = '1.0.0'
   private environment: string
-
   constructor() {
     this.environment = process.env.NODE_ENV || 'development'
   }
-
   private createLogEntry(
     level: LogLevel,
     category: LogCategory,
@@ -84,30 +77,23 @@ class Logger {
       version: this.version,
     }
   }
-
   private formatLog(entry: LogEntry): string {
     // Em desenvolvimento, formato legível
     if (this.environment === 'development') {
       const emoji = this.getLevelEmoji(entry.level)
       const color = this.getLevelColor(entry.level)
-
       let output = `${emoji} [${entry.level.toUpperCase()}] ${entry.category} - ${entry.message}`
-
       if (entry.metadata && Object.keys(entry.metadata).length > 0) {
         output += '\n  Metadata: ' + JSON.stringify(entry.metadata, null, 2)
       }
-
       if (entry.stack) {
         output += '\n  Stack: ' + entry.stack
       }
-
       return output
     }
-
     // Em produção, JSON estruturado
     return JSON.stringify(entry)
   }
-
   private getLevelEmoji(level: LogLevel): string {
     const emojis = {
       [LogLevel.DEBUG]: '🔍',
@@ -118,7 +104,6 @@ class Logger {
     }
     return emojis[level] || 'ℹ️'
   }
-
   private getLevelColor(level: LogLevel): string {
     const colors = {
       [LogLevel.DEBUG]: '\x1b[36m', // Cyan
@@ -129,17 +114,13 @@ class Logger {
     }
     return colors[level] || '\x1b[0m'
   }
-
   private writeLog(entry: LogEntry): void {
     const formatted = this.formatLog(entry)
-
     // Console output
     switch (entry.level) {
       case LogLevel.DEBUG:
-        console.debug(formatted)
         break
       case LogLevel.INFO:
-        console.info(formatted)
         break
       case LogLevel.WARN:
         console.warn(formatted)
@@ -149,28 +130,23 @@ class Logger {
         console.error(formatted)
         break
     }
-
     // Em produção, enviar para serviços externos
     if (this.environment === 'production') {
       this.sendToExternalService(entry)
     }
   }
-
   private async sendToExternalService(entry: LogEntry): Promise<void> {
     // Integração com serviços de logging
     // Exemplos: DataDog, New Relic, CloudWatch, Sentry
-
     try {
       // DataDog
       if (process.env.DATADOG_API_KEY) {
         // await this.sendToDataDog(entry)
       }
-
       // Sentry (apenas erros)
       if (process.env.SENTRY_DSN && (entry.level === LogLevel.ERROR || entry.level === LogLevel.FATAL)) {
         // await this.sendToSentry(entry)
       }
-
       // CloudWatch
       if (process.env.AWS_CLOUDWATCH_LOG_GROUP) {
         // await this.sendToCloudWatch(entry)
@@ -180,70 +156,53 @@ class Logger {
       console.error('Failed to send log to external service:', error)
     }
   }
-
   // Métodos públicos de logging
-
   debug(category: LogCategory, message: string, metadata?: LogMetadata): void {
     const entry = this.createLogEntry(LogLevel.DEBUG, category, message, metadata)
     this.writeLog(entry)
   }
-
   info(category: LogCategory, message: string, metadata?: LogMetadata): void {
     const entry = this.createLogEntry(LogLevel.INFO, category, message, metadata)
     this.writeLog(entry)
   }
-
   warn(category: LogCategory, message: string, metadata?: LogMetadata): void {
     const entry = this.createLogEntry(LogLevel.WARN, category, message, metadata)
     this.writeLog(entry)
   }
-
   error(category: LogCategory, message: string, error?: Error, metadata?: LogMetadata): void {
     const entry = this.createLogEntry(LogLevel.ERROR, category, message, metadata, error)
     this.writeLog(entry)
   }
-
   fatal(category: LogCategory, message: string, error?: Error, metadata?: LogMetadata): void {
     const entry = this.createLogEntry(LogLevel.FATAL, category, message, metadata, error)
     this.writeLog(entry)
   }
-
   // Métodos específicos por contexto
-
   logPayment(action: string, metadata: LogMetadata): void {
     this.info(LogCategory.PAYMENT, `Payment ${action}`, metadata)
   }
-
   logWebhook(event: string, metadata: LogMetadata): void {
     this.info(LogCategory.WEBHOOK, `Webhook received: ${event}`, metadata)
   }
-
   logAPI(method: string, path: string, metadata: LogMetadata): void {
     this.info(LogCategory.API, `${method} ${path}`, metadata)
   }
-
   logAuth(action: string, metadata: LogMetadata): void {
     this.info(LogCategory.AUTH, `Auth ${action}`, metadata)
   }
-
   logSecurity(event: string, metadata: LogMetadata): void {
     this.warn(LogCategory.SECURITY, `Security event: ${event}`, metadata)
   }
-
   logPerformance(metric: string, metadata: LogMetadata): void {
     this.info(LogCategory.PERFORMANCE, `Performance: ${metric}`, metadata)
   }
-
   logBusiness(event: string, metadata: LogMetadata): void {
     this.info(LogCategory.BUSINESS, `Business event: ${event}`, metadata)
   }
-
   // SendPulse specific logging
-
   logSendPulseWebhook(event: string, metadata: LogMetadata): void {
     this.info(LogCategory.SENDPULSE, `SendPulse webhook: ${event}`, this.sanitizeMetadata(metadata))
   }
-
   logSendPulseMessageSent(phone: string, messageId: string, messageLength: number, metadata?: LogMetadata): void {
     this.info(LogCategory.SENDPULSE, `Message sent`, this.sanitizeMetadata({
       phone: this.sanitizePhone(phone),
@@ -252,7 +211,6 @@ class Logger {
       ...metadata
     }))
   }
-
   logSendPulseMessageStatus(messageId: string, oldStatus: string, newStatus: string, duration?: number, metadata?: LogMetadata): void {
     this.info(LogCategory.SENDPULSE, `Message status: ${oldStatus} → ${newStatus}`, this.sanitizeMetadata({
       messageId,
@@ -262,13 +220,10 @@ class Logger {
       ...metadata
     }))
   }
-
   logSendPulseError(operation: string, error: Error, metadata?: LogMetadata): void {
     this.error(LogCategory.SENDPULSE, `SendPulse error: ${operation}`, error, this.sanitizeMetadata(metadata || {}))
   }
-
   // WhatsApp specific logging
-
   logWhatsAppMessageReceived(phone: string, messageId: string, contentLength: number, metadata?: LogMetadata): void {
     this.info(LogCategory.WHATSAPP, `Message received`, this.sanitizeMetadata({
       phone: this.sanitizePhone(phone),
@@ -277,7 +232,6 @@ class Logger {
       ...metadata
     }))
   }
-
   logWhatsAppConversationStarted(phone: string, conversationId: string, metadata?: LogMetadata): void {
     this.info(LogCategory.WHATSAPP, `Conversation started`, this.sanitizeMetadata({
       phone: this.sanitizePhone(phone),
@@ -285,7 +239,6 @@ class Logger {
       ...metadata
     }))
   }
-
   logWhatsAppIntentDetected(intent: string, confidence: number, phone: string, metadata?: LogMetadata): void {
     this.info(LogCategory.WHATSAPP, `Intent detected: ${intent}`, this.sanitizeMetadata({
       intent,
@@ -294,7 +247,6 @@ class Logger {
       ...metadata
     }))
   }
-
   logWhatsAppEscalation(phone: string, reason: string, priority: string, metadata?: LogMetadata): void {
     this.warn(LogCategory.WHATSAPP, `Escalation required: ${reason}`, this.sanitizeMetadata({
       phone: this.sanitizePhone(phone),
@@ -303,9 +255,7 @@ class Logger {
       ...metadata
     }))
   }
-
   // LangChain specific logging
-
   logLangChainProcessing(messageId: string, intent: string, confidence: number, duration: number, metadata?: LogMetadata): void {
     this.info(LogCategory.LANGCHAIN, `Message processed: ${intent}`, this.sanitizeMetadata({
       messageId,
@@ -315,13 +265,10 @@ class Logger {
       ...metadata
     }))
   }
-
   logLangChainError(operation: string, error: Error, metadata?: LogMetadata): void {
     this.error(LogCategory.LANGCHAIN, `LangChain error: ${operation}`, error, this.sanitizeMetadata(metadata || {}))
   }
-
   // Database specific logging
-
   logDatabaseQuery(operation: string, table: string, duration: number, recordCount?: number, metadata?: LogMetadata): void {
     this.debug(LogCategory.DATABASE, `${operation} on ${table}`, this.sanitizeMetadata({
       operation,
@@ -331,17 +278,14 @@ class Logger {
       ...metadata
     }))
   }
-
   logDatabaseError(operation: string, table: string, error: Error, metadata?: LogMetadata): void {
     this.error(LogCategory.DATABASE, `Database error: ${operation} on ${table}`, error, this.sanitizeMetadata(metadata || {}))
   }
-
   // Helper para medir duração de operações
   startTimer(): () => number {
     const start = Date.now()
     return () => Date.now() - start
   }
-
   // Helper para log de request/response
   logRequest(req: {
     method: string
@@ -355,7 +299,6 @@ class Logger {
       bodySize: req.body ? JSON.stringify(req.body).length : 0,
     })
   }
-
   logResponse(
     req: { method: string; url: string },
     statusCode: number,
@@ -363,7 +306,6 @@ class Logger {
     requestId?: string
   ): void {
     const level = statusCode >= 500 ? LogLevel.ERROR : statusCode >= 400 ? LogLevel.WARN : LogLevel.INFO
-
     const entry = this.createLogEntry(
       level,
       LogCategory.API,
@@ -374,26 +316,20 @@ class Logger {
         duration,
       }
     )
-
     this.writeLog(entry)
   }
-
   // Sanitizar dados sensíveis
   private sanitizeHeaders(headers?: Record<string, string>): Record<string, string> {
     if (!headers) return {}
-
     const sanitized = { ...headers }
     const sensitiveKeys = ['authorization', 'cookie', 'access_token', 'api-key']
-
     for (const key of Object.keys(sanitized)) {
       if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
         sanitized[key] = '[REDACTED]'
       }
     }
-
     return sanitized
   }
-
   /**
    * Sanitize phone numbers for LGPD compliance
    * Masks middle digits: 5533999898026 -> 5533****8026
@@ -404,42 +340,34 @@ class Logger {
     if (cleaned.length < 8) return '****'
     return `${cleaned.substring(0, 4)}****${cleaned.substring(cleaned.length - 4)}`
   }
-
   sanitizeMetadata(metadata: LogMetadata): LogMetadata {
     const sanitized = { ...metadata }
     const sensitiveKeys = ['password', 'token', 'secret', 'apiKey', 'creditCard', 'cvv']
-
     for (const key of Object.keys(sanitized)) {
       // Sanitize phone numbers for LGPD compliance
       if (key.toLowerCase().includes('phone') && typeof sanitized[key] === 'string') {
         sanitized[key] = this.sanitizePhone(sanitized[key])
         continue
       }
-
       // Redact sensitive keys
       if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
         sanitized[key] = '[REDACTED]'
         continue
       }
-
       // Recursively sanitize nested objects
       if (typeof sanitized[key] === 'object' && sanitized[key] !== null && !Array.isArray(sanitized[key])) {
         sanitized[key] = this.sanitizeMetadata(sanitized[key] as LogMetadata)
       }
     }
-
     return sanitized
   }
 }
-
 // Singleton instance
 export const logger = new Logger()
-
 // Helper para criar request ID único
 export function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
 }
-
 // Middleware para Next.js API routes
 export function withLogging<T>(
   handler: (req: any, res: any) => Promise<T>,
@@ -448,7 +376,6 @@ export function withLogging<T>(
   return async (req: any, res: any): Promise<T> => {
     const requestId = generateRequestId()
     const timer = logger.startTimer()
-
     logger.logRequest(
       {
         method: req.method,
@@ -457,22 +384,18 @@ export function withLogging<T>(
       },
       requestId
     )
-
     try {
       const result = await handler(req, res)
       const duration = timer()
-
       logger.logResponse(
         { method: req.method, url: req.url },
         res.statusCode || 200,
         duration,
         requestId
       )
-
       return result
     } catch (error) {
       const duration = timer()
-
       logger.error(
         LogCategory.API,
         `Error in ${routeName}`,
@@ -484,11 +407,9 @@ export function withLogging<T>(
           duration,
         }
       )
-
       throw error
     }
   }
 }
-
 // Export types
 export type { LogMetadata, LogEntry }

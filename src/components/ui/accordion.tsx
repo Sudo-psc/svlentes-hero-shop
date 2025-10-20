@@ -1,6 +1,5 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-
 const Accordion = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -12,7 +11,6 @@ const Accordion = React.forwardRef<
   />
 ))
 Accordion.displayName = "Accordion"
-
 const AccordionItem = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -24,7 +22,6 @@ const AccordionItem = React.forwardRef<
   />
 ))
 AccordionItem.displayName = "AccordionItem"
-
 const AccordionTrigger = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }
@@ -55,7 +52,6 @@ const AccordionTrigger = React.forwardRef<
   </button>
 ))
 AccordionTrigger.displayName = "AccordionTrigger"
-
 const AccordionContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -72,5 +68,4 @@ const AccordionContent = React.forwardRef<
   </div>
 ))
 AccordionContent.displayName = "AccordionContent"
-
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }

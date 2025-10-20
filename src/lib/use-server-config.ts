@@ -4,10 +4,8 @@
  * Provides access to centralized configuration data in client components
  * through server-side prop passing or API calls.
  */
-
 import { useMemo } from 'react'
 import { config } from '@/config/loader'
-
 export interface ServerConfigData {
   site: {
     name: string
@@ -49,7 +47,6 @@ export interface ServerConfigData {
     email?: string
   }
 }
-
 /**
  * Hook to get server configuration data
  * This should be called in server components and the result passed to client components
@@ -59,9 +56,7 @@ export function useServerConfig(): ServerConfigData {
   if (typeof window !== 'undefined') {
     throw new Error('useServerConfig() can only be called in server components')
   }
-
   const configData = config.get()
-
   return useMemo(() => ({
     site: configData.site,
     i18n: configData.i18n,
@@ -69,7 +64,6 @@ export function useServerConfig(): ServerConfigData {
     contact: configData.contact || {}
   }), [configData])
 }
-
 /**
  * Client-safe hook that receives server config as props
  * Use this in client components to access configuration data
@@ -77,7 +71,6 @@ export function useServerConfig(): ServerConfigData {
 export function useClientConfig(serverConfig: ServerConfigData) {
   return useMemo(() => serverConfig, [serverConfig])
 }
-
 /**
  * Default configuration for client-side fallback
  */

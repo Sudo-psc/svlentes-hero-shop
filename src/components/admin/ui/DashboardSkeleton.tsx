@@ -1,13 +1,10 @@
 'use client'
-
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-
 interface DashboardSkeletonProps {
   className?: string
 }
-
 export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
   return (
     <div className={cn("space-y-6 animate-pulse", className)}>
@@ -22,7 +19,6 @@ export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
           <Skeleton className="h-8 w-8" />
         </div>
       </div>
-
       {/* Metrics Cards Skeleton */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
@@ -41,7 +37,6 @@ export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
           </Card>
         ))}
       </div>
-
       {/* Second Row Metrics Skeleton */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
@@ -57,7 +52,6 @@ export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
           </Card>
         ))}
       </div>
-
       {/* Charts Skeleton */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -74,7 +68,6 @@ export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
             <Skeleton className="h-64 w-full" />
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -90,7 +83,6 @@ export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
           </CardContent>
         </Card>
       </div>
-
       {/* Recent Activity Skeleton */}
       <Card>
         <CardHeader>
@@ -132,12 +124,10 @@ export function DashboardSkeleton({ className }: DashboardSkeletonProps) {
     </div>
   )
 }
-
 interface MetricCardSkeletonProps {
   className?: string
   showTrend?: boolean
 }
-
 export function MetricCardSkeleton({ className, showTrend = true }: MetricCardSkeletonProps) {
   return (
     <Card className={cn("relative overflow-hidden", className)}>
@@ -155,14 +145,12 @@ export function MetricCardSkeleton({ className, showTrend = true }: MetricCardSk
     </Card>
   )
 }
-
 interface ChartSkeletonProps {
   height?: number
   title?: string
   showStats?: boolean
   className?: string
 }
-
 export function ChartSkeleton({
   height = 300,
   title,
@@ -200,12 +188,10 @@ export function ChartSkeleton({
     </Card>
   )
 }
-
 interface ActivityListSkeletonProps {
   items?: number
   className?: string
 }
-
 export function ActivityListSkeleton({ items = 5, className }: ActivityListSkeletonProps) {
   return (
     <Card className={className}>
@@ -247,7 +233,6 @@ export function ActivityListSkeleton({ items = 5, className }: ActivityListSkele
     </Card>
   )
 }
-
 // Skeleton compacto para widgets pequenos
 export function WidgetSkeleton({ className }: { className?: string }) {
   return (
@@ -262,7 +247,6 @@ export function WidgetSkeleton({ className }: { className?: string }) {
     </Card>
   )
 }
-
 // Skeleton para tabela de dados
 export function TableSkeleton({
   rows = 5,

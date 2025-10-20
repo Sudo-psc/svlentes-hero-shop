@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -41,7 +40,6 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-
 // Interfaces
 interface AsaasOrder {
   id: string
@@ -126,7 +124,6 @@ interface AsaasOrder {
   updatedAt: string
   ASAAS_dashboard_url?: string
 }
-
 interface OrderStats {
   total: number
   pending: number
@@ -139,7 +136,6 @@ interface OrderStats {
   deliveryRate: number
   paymentRate: number
 }
-
 // Status configurations
 const orderStatusConfig = {
   PENDING: {
@@ -192,20 +188,17 @@ const orderStatusConfig = {
     icon: RefreshCw
   }
 }
-
 const paymentMethodConfig = {
   credit_card: { label: 'Cartão de Crédito', icon: '💳' },
   pix: { label: 'PIX', icon: '⚡' },
   boleto: { label: 'Boleto', icon: '📄' }
 }
-
 const shippingMethodConfig = {
   sedex: { label: 'SEDEX', icon: '📦', days: '1-3 dias úteis' },
   pac: { label: 'PAC', icon: '📮', days: '3-7 dias úteis' },
   motoboy: { label: 'Motoboy', icon: '🏍️', days: 'Mesmo dia' },
   retira_local: { label: 'Retira na Clínica', icon: '🏥', days: 'Imediato' }
 }
-
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AsaasOrder[]>([])
   const [filteredOrders, setFilteredOrders] = useState<AsaasOrder[]>([])
@@ -217,14 +210,12 @@ export default function AdminOrdersPage() {
   const [shippingFilter, setShippingFilter] = useState<string>('all')
   const [selectedOrder, setSelectedOrder] = useState<AsaasOrder | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-
   // Load orders from ASAAS API
   const loadOrders = async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/admin/asaas/orders')
       if (!response.ok) throw new Error('Failed to fetch orders')
-
       const data = await response.json()
       setOrders(data.orders || [])
       setStats(data.stats || null)
@@ -412,15 +403,12 @@ export default function AdminOrdersPage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadOrders()
   }, [])
-
   // Apply filters
   useEffect(() => {
     let filtered = orders
-
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(order =>
@@ -430,40 +418,32 @@ export default function AdminOrdersPage() {
         order.customer.cpfCnpj.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, ''))
       )
     }
-
     // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(order => order.status === statusFilter)
     }
-
     // Payment method filter
     if (paymentFilter !== 'all') {
       filtered = filtered.filter(order => order.paymentInfo.method === paymentFilter)
     }
-
     // Shipping method filter
     if (shippingFilter !== 'all') {
       filtered = filtered.filter(order => order.shipping.method === shippingFilter)
     }
-
     setFilteredOrders(filtered)
   }, [orders, searchTerm, statusFilter, paymentFilter, shippingFilter])
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
   }
-
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('pt-BR').format(new Date(dateString))
   }
-
   const OrderCard = ({ order }: { order: AsaasOrder }) => {
     const statusConfig = orderStatusConfig[order.status]
     const StatusIcon = statusConfig.icon
-
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -487,7 +467,6 @@ export default function AdminOrdersPage() {
                 {formatDate(order.createdAt)}
               </p>
             </div>
-
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.textColor}`}>
                 <StatusIcon className="w-3 h-3 inline mr-1" />
@@ -495,7 +474,6 @@ export default function AdminOrdersPage() {
               </span>
             </div>
           </div>
-
           {/* Customer Info */}
           <div className="mb-4">
             <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
@@ -514,7 +492,6 @@ export default function AdminOrdersPage() {
               </span>
             </div>
           </div>
-
           {/* Items */}
           <div className="mb-4">
             <div className="text-sm text-gray-600 mb-2">
@@ -546,7 +523,6 @@ export default function AdminOrdersPage() {
               </div>
             ))}
           </div>
-
           {/* Payment and Shipping Info */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-gray-50 rounded-lg p-3">
@@ -560,7 +536,6 @@ export default function AdminOrdersPage() {
                 {order.paymentInfo.status === 'CONFIRMED' ? 'Pago' : 'Pendente'}
               </div>
             </div>
-
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">{shippingMethodConfig[order.shipping.method].icon}</span>
@@ -577,7 +552,6 @@ export default function AdminOrdersPage() {
               </div>
             </div>
           </div>
-
           {/* Footer */}
           <div className="flex justify-between items-center pt-4 border-t border-gray-100">
             <div className="flex items-center gap-4">
@@ -600,7 +574,6 @@ export default function AdminOrdersPage() {
                 </div>
               )}
             </div>
-
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -613,7 +586,6 @@ export default function AdminOrdersPage() {
                 <Eye className="w-4 h-4 mr-1" />
                 Detalhes
               </Button>
-
               {order.ASAAS_dashboard_url && (
                 <Button
                   variant="outline"
@@ -629,7 +601,6 @@ export default function AdminOrdersPage() {
       </motion.div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-silver-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -648,7 +619,6 @@ export default function AdminOrdersPage() {
                 Controle completo de pedidos e logística via ASAAS
               </p>
             </div>
-
             <div className="flex gap-3">
               <Button
                 variant="outline"
@@ -658,7 +628,6 @@ export default function AdminOrdersPage() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-
               <Button
                 onClick={() => window.open('https://asaas.com', '_blank')}
                 className="bg-cyan-600 hover:bg-cyan-700"
@@ -668,7 +637,6 @@ export default function AdminOrdersPage() {
             </div>
           </div>
         </motion.div>
-
         {/* Stats Cards */}
         {stats && (
           <motion.div
@@ -691,7 +659,6 @@ export default function AdminOrdersPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -706,7 +673,6 @@ export default function AdminOrdersPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -721,7 +687,6 @@ export default function AdminOrdersPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -738,7 +703,6 @@ export default function AdminOrdersPage() {
             </Card>
           </motion.div>
         )}
-
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -756,7 +720,6 @@ export default function AdminOrdersPage() {
                 className="pl-10"
               />
             </div>
-
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
@@ -770,7 +733,6 @@ export default function AdminOrdersPage() {
                 ))}
               </SelectContent>
             </Select>
-
             <Select value={paymentFilter} onValueChange={setPaymentFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Pagamento" />
@@ -784,7 +746,6 @@ export default function AdminOrdersPage() {
                 ))}
               </SelectContent>
             </Select>
-
             <Select value={shippingFilter} onValueChange={setShippingFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Entrega" />
@@ -798,7 +759,6 @@ export default function AdminOrdersPage() {
                 ))}
               </SelectContent>
             </Select>
-
             <Button variant="outline" onClick={() => {
               setSearchTerm('')
               setStatusFilter('all')
@@ -809,7 +769,6 @@ export default function AdminOrdersPage() {
             </Button>
           </div>
         </motion.div>
-
         {/* Orders List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -840,7 +799,6 @@ export default function AdminOrdersPage() {
             </div>
           )}
         </motion.div>
-
         {/* Order Detail Modal */}
         <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -850,7 +808,6 @@ export default function AdminOrdersPage() {
                 Informações completas do pedido e histórico
               </DialogDescription>
             </DialogHeader>
-
             {selectedOrder && (
               <Tabs defaultValue="details" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
@@ -859,7 +816,6 @@ export default function AdminOrdersPage() {
                   <TabsTrigger value="timeline">Timeline</TabsTrigger>
                   <TabsTrigger value="medical">Médico</TabsTrigger>
                 </TabsList>
-
                 <TabsContent value="details" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -883,9 +839,7 @@ export default function AdminOrdersPage() {
                       <p className="text-sm font-bold">{formatCurrency(selectedOrder.value)}</p>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Itens do Pedido</label>
                     {selectedOrder.items.map((item, index) => (
@@ -916,7 +870,6 @@ export default function AdminOrdersPage() {
                     ))}
                   </div>
                 </TabsContent>
-
                 <TabsContent value="customer" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -936,9 +889,7 @@ export default function AdminOrdersPage() {
                       <p className="text-sm text-gray-900">{selectedOrder.customer.cpfCnpj}</p>
                     </div>
                   </div>
-
                   <Separator />
-
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Endereço de Entrega</label>
                     <div className="bg-gray-50 rounded-lg p-3">
@@ -953,7 +904,6 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="timeline" className="space-y-4">
                   <div className="space-y-3">
                     {selectedOrder.timeline.map((event, index) => (
@@ -976,7 +926,6 @@ export default function AdminOrdersPage() {
                     ))}
                   </div>
                 </TabsContent>
-
                 <TabsContent value="medical" className="space-y-4">
                   {selectedOrder.medicalInfo ? (
                     <div className="grid grid-cols-2 gap-4">

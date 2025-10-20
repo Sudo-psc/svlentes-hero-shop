@@ -1,9 +1,7 @@
 'use client'
-
 import dynamic from 'next/dynamic'
 import { LazySection } from '@/components/ui/LazySection'
 import { SectionSkeleton } from '@/components/ui/SectionSkeleton'
-
 const QuickStartSection = dynamic(
     () =>
         import('@/components/sections/QuickStartSection').then((mod) => ({
@@ -14,7 +12,6 @@ const QuickStartSection = dynamic(
         ssr: false,
     }
 )
-
 const FinalCTA = dynamic(
     () =>
         import('@/components/sections/FinalCTA').then((mod) => ({
@@ -25,7 +22,6 @@ const FinalCTA = dynamic(
         ssr: false,
     }
 )
-
 const FAQSection = dynamic(
     () => import('@/components/sections/FAQ'),
     {
@@ -33,18 +29,15 @@ const FAQSection = dynamic(
         ssr: false,
     }
 )
-
 export function HomeLazySections() {
     return (
         <>
             <section id="planos-precos" className="bg-gradient-to-br from-primary-600 to-primary-700">
                 <QuickStartSection />
             </section>
-
             <LazySection id="contato">
                 <FinalCTA />
             </LazySection>
-
             <LazySection id="perguntas-frequentes">
                 <FAQSection />
             </LazySection>

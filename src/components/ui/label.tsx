@@ -1,11 +1,9 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-
 export interface LabelProps
   extends React.LabelHTMLAttributes<HTMLLabelElement> {
   disabled?: boolean
 }
-
 const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ className, disabled, ...props }, ref) => {
     return (
@@ -22,6 +20,5 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   }
 )
 Label.displayName = "Label"
-
 export { Label }
 export { Label as LabelComponent }

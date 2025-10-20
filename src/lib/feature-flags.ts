@@ -8,9 +8,7 @@
  * - Logs detalhados para auditoria
  * - Suporte a múltiplos ambientes
  */
-
 import { PrismaClient, FeatureFlagStatus, FeatureFlagEnvironment } from '@prisma/client';
-
 // Types
 export interface FeatureFlagConfig {
   name: string;
@@ -24,31 +22,25 @@ export interface FeatureFlagConfig {
   owner?: string;
   tags?: string[];
 }
-
 export interface FeatureFlagEvaluationResult {
   enabled: boolean;
   reason: string;
   metadata?: Record<string, any>;
 }
-
 export interface FeatureFlagCache {
   flags: Map<string, any>;
   lastUpdated: Date;
 }
-
 // Constants
 const CACHE_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_ENVIRONMENT = process.env.NODE_ENV as FeatureFlagEnvironment || FeatureFlagEnvironment.DEVELOPMENT;
-
 // Global cache instance
 const flagCache: FeatureFlagCache = {
   flags: new Map(),
   lastUpdated: new Date(0), // Force initial load
 };
-
 // Singleton Prisma instance for feature flags
 let prisma: PrismaClient | null = null;
-
 /**
  * Get or create Prisma client instance
  */
@@ -58,7 +50,6 @@ function getPrismaClient(): PrismaClient {
   }
   return prisma;
 }
-
 /**
  * Hash function for consistent user bucketing
  * Uses simple hash for rollout percentage calculation
@@ -66,28 +57,23 @@ function getPrismaClient(): PrismaClient {
 function hashUserIdToBucket(userId: string, flagKey: string): number {
   const combined = `${userId}:${flagKey}`;
   let hash = 0;
-
   for (let i = 0; i < combined.length; i++) {
     const char = combined.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32bit integer
   }
-
   return Math.abs(hash % 100);
 }
-
 /**
  * Refresh feature flags cache from database
  */
 async function refreshCache(): Promise<void> {
   const now = new Date();
   const timeSinceLastUpdate = now.getTime() - flagCache.lastUpdated.getTime();
-
   // Only refresh if cache is stale
   if (timeSinceLastUpdate < CACHE_REFRESH_INTERVAL) {
     return;
   }
-
   try {
     const client = getPrismaClient();
     const flags = await client.featureFlag.findMany({
@@ -97,22 +83,17 @@ async function refreshCache(): Promise<void> {
         },
       },
     });
-
     // Update cache
     flagCache.flags.clear();
     flags.forEach(flag => {
       flagCache.flags.set(flag.key, flag);
     });
-
     flagCache.lastUpdated = now;
-
-    console.log(`[FeatureFlags] Cache refreshed: ${flags.length} flags loaded`);
   } catch (error) {
     console.error('[FeatureFlags] Failed to refresh cache:', error);
     // Keep using stale cache on error
   }
 }
-
 /**
  * Get feature flag from cache (with auto-refresh)
  */
@@ -120,7 +101,6 @@ async function getFlagFromCache(flagKey: string): Promise<any | null> {
   await refreshCache();
   return flagCache.flags.get(flagKey) || null;
 }
-
 /**
  * Log feature flag evaluation
  */
@@ -148,7 +128,6 @@ async function logEvaluation(
     console.error('[FeatureFlags] Failed to log evaluation:', error);
   }
 }
-
 /**
  * Check if feature is enabled for a specific user
  *
@@ -174,7 +153,6 @@ export async function isFeatureEnabled(
   const result = await evaluateFeatureFlag(flagKey, userId, options);
   return result.enabled;
 }
-
 /**
  * Evaluate feature flag with detailed result
  *
@@ -193,7 +171,6 @@ export async function evaluateFeatureFlag(
 ): Promise<FeatureFlagEvaluationResult> {
   try {
     const flag = await getFlagFromCache(flagKey);
-
     // Flag doesn't exist
     if (!flag) {
       const result = {
@@ -201,10 +178,8 @@ export async function evaluateFeatureFlag(
         reason: 'flag_not_found',
         metadata: { flagKey },
       };
-
       return result;
     }
-
     // Flag is inactive
     if (flag.status !== FeatureFlagStatus.ACTIVE) {
       const result = {
@@ -212,20 +187,16 @@ export async function evaluateFeatureFlag(
         reason: 'flag_inactive',
         metadata: { status: flag.status },
       };
-
       if (!options?.skipLogging) {
         await logEvaluation(flag.id, false, result.reason, userId, result.metadata);
       }
-
       return result;
     }
-
     // Check environment targeting
     const targetEnv = options?.environment || DEFAULT_ENVIRONMENT;
     const isEnvironmentMatch =
       flag.targetEnvironments.includes(FeatureFlagEnvironment.ALL) ||
       flag.targetEnvironments.includes(targetEnv);
-
     if (!isEnvironmentMatch) {
       const result = {
         enabled: false,
@@ -235,14 +206,11 @@ export async function evaluateFeatureFlag(
           targetEnvs: flag.targetEnvironments,
         },
       };
-
       if (!options?.skipLogging) {
         await logEvaluation(flag.id, false, result.reason, userId, result.metadata);
       }
-
       return result;
     }
-
     // Check if user is explicitly targeted
     if (userId && flag.targetUserIds && flag.targetUserIds.length > 0) {
       if (flag.targetUserIds.includes(userId)) {
@@ -251,15 +219,12 @@ export async function evaluateFeatureFlag(
           reason: 'target_user',
           metadata: { userId },
         };
-
         if (!options?.skipLogging) {
           await logEvaluation(flag.id, true, result.reason, userId, result.metadata);
         }
-
         return result;
       }
     }
-
     // Check rollout percentage
     if (flag.rolloutPercentage === 100) {
       const result = {
@@ -267,33 +232,26 @@ export async function evaluateFeatureFlag(
         reason: 'full_rollout',
         metadata: { rolloutPercentage: 100 },
       };
-
       if (!options?.skipLogging) {
         await logEvaluation(flag.id, true, result.reason, userId, result.metadata);
       }
-
       return result;
     }
-
     if (flag.rolloutPercentage === 0) {
       const result = {
         enabled: false,
         reason: 'zero_rollout',
         metadata: { rolloutPercentage: 0 },
       };
-
       if (!options?.skipLogging) {
         await logEvaluation(flag.id, false, result.reason, userId, result.metadata);
       }
-
       return result;
     }
-
     // Percentage-based rollout (requires userId for consistent bucketing)
     if (userId && flag.rolloutPercentage > 0 && flag.rolloutPercentage < 100) {
       const bucket = hashUserIdToBucket(userId, flagKey);
       const enabled = bucket < flag.rolloutPercentage;
-
       const result = {
         enabled,
         reason: 'percentage_rollout',
@@ -303,14 +261,11 @@ export async function evaluateFeatureFlag(
           userId,
         },
       };
-
       if (!options?.skipLogging) {
         await logEvaluation(flag.id, enabled, result.reason, userId, result.metadata);
       }
-
       return result;
     }
-
     // Default: disabled if no userId provided for percentage rollout
     const result = {
       enabled: false,
@@ -320,16 +275,12 @@ export async function evaluateFeatureFlag(
         requiresUserId: true,
       },
     };
-
     if (!options?.skipLogging) {
       await logEvaluation(flag.id, false, result.reason, userId, result.metadata);
     }
-
     return result;
-
   } catch (error) {
     console.error('[FeatureFlags] Evaluation error:', error);
-
     // Fail closed: disable feature on error
     return {
       enabled: false,
@@ -340,13 +291,11 @@ export async function evaluateFeatureFlag(
     };
   }
 }
-
 /**
  * Create or update a feature flag
  */
 export async function upsertFeatureFlag(config: FeatureFlagConfig): Promise<any> {
   const client = getPrismaClient();
-
   const flag = await client.featureFlag.upsert({
     where: { key: config.key },
     create: {
@@ -373,13 +322,10 @@ export async function upsertFeatureFlag(config: FeatureFlagConfig): Promise<any>
       tags: config.tags,
     },
   });
-
   // Invalidate cache
   flagCache.lastUpdated = new Date(0);
-
   return flag;
 }
-
 /**
  * Activate a feature flag
  */
@@ -389,15 +335,12 @@ export async function activateFeatureFlag(
   reason?: string
 ): Promise<void> {
   const client = getPrismaClient();
-
   const flag = await client.featureFlag.findUnique({
     where: { key: flagKey },
   });
-
   if (!flag) {
     throw new Error(`Feature flag not found: ${flagKey}`);
   }
-
   await client.featureFlag.update({
     where: { key: flagKey },
     data: {
@@ -405,7 +348,6 @@ export async function activateFeatureFlag(
       activatedAt: new Date(),
     },
   });
-
   // Log the change
   await client.featureFlagLog.create({
     data: {
@@ -417,11 +359,9 @@ export async function activateFeatureFlag(
       reason: reason || null,
     },
   });
-
   // Invalidate cache
   flagCache.lastUpdated = new Date(0);
 }
-
 /**
  * Deactivate a feature flag
  */
@@ -431,15 +371,12 @@ export async function deactivateFeatureFlag(
   reason?: string
 ): Promise<void> {
   const client = getPrismaClient();
-
   const flag = await client.featureFlag.findUnique({
     where: { key: flagKey },
   });
-
   if (!flag) {
     throw new Error(`Feature flag not found: ${flagKey}`);
   }
-
   await client.featureFlag.update({
     where: { key: flagKey },
     data: {
@@ -447,7 +384,6 @@ export async function deactivateFeatureFlag(
       deactivatedAt: new Date(),
     },
   });
-
   // Log the change
   await client.featureFlagLog.create({
     data: {
@@ -459,11 +395,9 @@ export async function deactivateFeatureFlag(
       reason: reason || null,
     },
   });
-
   // Invalidate cache
   flagCache.lastUpdated = new Date(0);
 }
-
 /**
  * Update feature flag rollout percentage
  */
@@ -476,24 +410,19 @@ export async function updateRolloutPercentage(
   if (percentage < 0 || percentage > 100) {
     throw new Error('Rollout percentage must be between 0 and 100');
   }
-
   const client = getPrismaClient();
-
   const flag = await client.featureFlag.findUnique({
     where: { key: flagKey },
   });
-
   if (!flag) {
     throw new Error(`Feature flag not found: ${flagKey}`);
   }
-
   await client.featureFlag.update({
     where: { key: flagKey },
     data: {
       rolloutPercentage: percentage,
     },
   });
-
   // Log the change
   await client.featureFlagLog.create({
     data: {
@@ -505,11 +434,9 @@ export async function updateRolloutPercentage(
       reason: reason || null,
     },
   });
-
   // Invalidate cache
   flagCache.lastUpdated = new Date(0);
 }
-
 /**
  * Get all feature flags
  */
@@ -527,7 +454,6 @@ export async function getAllFeatureFlags(): Promise<any[]> {
     },
   });
 }
-
 /**
  * Get feature flag logs
  */
@@ -536,22 +462,18 @@ export async function getFeatureFlagLogs(
   limit: number = 50
 ): Promise<any[]> {
   const client = getPrismaClient();
-
   const flag = await client.featureFlag.findUnique({
     where: { key: flagKey },
   });
-
   if (!flag) {
     throw new Error(`Feature flag not found: ${flagKey}`);
   }
-
   return client.featureFlagLog.findMany({
     where: { flagId: flag.id },
     orderBy: { timestamp: 'desc' },
     take: limit,
   });
 }
-
 /**
  * Get feature flag evaluation statistics
  */
@@ -566,33 +488,26 @@ export async function getFeatureFlagStats(
   reasonBreakdown: Record<string, number>;
 }> {
   const client = getPrismaClient();
-
   const flag = await client.featureFlag.findUnique({
     where: { key: flagKey },
   });
-
   if (!flag) {
     throw new Error(`Feature flag not found: ${flagKey}`);
   }
-
   const whereClause: any = { flagId: flag.id };
   if (since) {
     whereClause.timestamp = { gte: since };
   }
-
   const evaluations = await client.featureFlagEvaluation.findMany({
     where: whereClause,
   });
-
   const enabledCount = evaluations.filter(e => e.result).length;
   const disabledCount = evaluations.filter(e => !e.result).length;
   const totalEvaluations = evaluations.length;
-
   const reasonBreakdown: Record<string, number> = {};
   evaluations.forEach(e => {
     reasonBreakdown[e.reason] = (reasonBreakdown[e.reason] || 0) + 1;
   });
-
   return {
     totalEvaluations,
     enabledCount,
@@ -601,7 +516,6 @@ export async function getFeatureFlagStats(
     reasonBreakdown,
   };
 }
-
 /**
  * Clean up old evaluation logs (for maintenance)
  */
@@ -609,7 +523,6 @@ export async function cleanupOldEvaluations(daysToKeep: number = 30): Promise<nu
   const client = getPrismaClient();
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-
   const result = await client.featureFlagEvaluation.deleteMany({
     where: {
       timestamp: {
@@ -617,7 +530,5 @@ export async function cleanupOldEvaluations(daysToKeep: number = 30): Promise<nu
       },
     },
   });
-
-  console.log(`[FeatureFlags] Cleaned up ${result.count} old evaluations`);
   return result.count;
 }

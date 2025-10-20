@@ -8,7 +8,6 @@
  * - Context-aware responses
  * - Real-time learning capabilities
  */
-
 import { ChatOpenAI } from '@langchain/openai'
 import { PromptTemplate, ChatPromptTemplate } from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
@@ -19,7 +18,6 @@ import { botMemory, ConversationSummary } from './langchain-memory'
 import { getLangSmithConfig, getLangSmithRunConfig } from './langsmith-config'
 import { logger, LogCategory } from './logger'
 import { responseCache } from './response-cache'
-
 // Enhanced type definitions
 export interface EnhancedIntent {
   name: string
@@ -42,7 +40,6 @@ export interface EnhancedIntent {
   followUpRequired: boolean
   estimatedResolutionTime?: string
 }
-
 export interface EnhancedSupportContext {
   sessionId: string
   userId?: string
@@ -80,7 +77,6 @@ export interface EnhancedSupportContext {
     maintenanceMode: boolean
   }
 }
-
 export interface ProcessingResult {
   intent: EnhancedIntent
   response: string
@@ -95,7 +91,6 @@ export interface ProcessingResult {
   estimatedCost?: number
   confidence: number
 }
-
 /**
  * Enhanced validation schemas
  */
@@ -121,7 +116,6 @@ const IntentSchema = z.object({
   estimatedResolutionTime: z.string().optional(),
   riskLevel: z.enum(['low', 'medium', 'high', 'critical']).optional()
 })
-
 /**
  * Enhanced LangChain Processor with Memory Integration
  */
@@ -129,11 +123,9 @@ export class EnhancedLangChainProcessor {
   private llm: ChatOpenAI
   private memory: typeof botMemory
   private langsmithConfig: any
-
   // Enhanced prompt templates
   private readonly ENHANCED_INTENT_TEMPLATE = `
 Você é um assistente de IA avançado da SV Lentes, especializado em atendimento oftalmológico.
-
 CONTEXTUALIZAÇÃO COMPLETA:
 - Data/Hora: {currentTime}
 - Horário de atendimento: {businessHours}
@@ -143,17 +135,12 @@ CONTEXTUALIZAÇÃO COMPLETA:
 - Plano: {subscriptionPlan}
 - Interações anteriores: {previousInteractions}
 - Resumo da conversa: {conversationSummary}
-
 HISTÓRICO RECENTE:
 {conversationHistory}
-
 TICKETS ANTERIORES:
 {previousTickets}
-
 MENSAGEM ATUAL: "{userMessage}"
-
 ANALISE E CLASSIFIQUE:
-
 1. INTENÇÃO PRINCIPAL (seja específico):
    - subscription_pause, subscription_cancel, subscription_reactivate
    - payment_failed, payment_method_update, billing_inquiry
@@ -163,17 +150,14 @@ ANALISE E CLASSIFIQUE:
    - technical_support, website_issues, app_problems
    - emergency_medical, urgent_eye_problem
    - general_inquiry, compliment, complaint
-
 2. CATEGORIA:
    - SUBSCRIPTION, BILLING, DELIVERY, PRODUCT, TECHNICAL, EMERGENCY, GENERAL
-
 3. PRIORIDADE:
    - CRITICAL: Emergências médicas, risco à visão
    - URGENT: Pagamentos urgentes, entrega atrasada
    - HIGH: Reclamações, problemas técnicos
    - MEDIUM: Dúvidas comuns, agendamentos
    - LOW: Elogios, informações gerais
-
 4. ENTIDADES EXTRAÍDAS:
    - Sentimento: positive/negative/neutral
    - Urgência: low/medium/high/critical
@@ -183,21 +167,16 @@ ANALISE E CLASSIFIQUE:
    - Pedidos mencionados
    - Datas mencionadas
    - Valores mencionados
-
 5. ANÁLISE DE RISCO:
    - Nível de risco: low/medium/high/critical
    - Possibilidade de escalonamento
    - Requerimento de acompanhamento
-
 Forneça a análise em formato JSON válido:
 {intent_analysis_schema}
-
 Considere o contexto completo do cliente e histórico de interações.
 `
-
   private readonly ENHANCED_RESPONSE_TEMPLATE = `
 Você é um assistente inteligente da SV Lentes, especializado em lentes de contato oftalmológicas.
-
 INFORMAÇÕES DA CLÍNICA:
 - Clínica: Saraiva Vision - Caratinga/MG
 - Responsável: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
@@ -206,19 +185,16 @@ INFORMAÇÕES DA CLÍNICA:
 - E-mail: contato@svlentes.com.br
 - Site: svlentes.com.br
 - Endereço: Rua Catarina Maria Passos, 97 - Santa Zita
-
 PERFIL DO CLIENTE:
 - Nome: {customerName}
 - Status: {customerStatus}
 - Plano: {subscriptionPlan}
 - Telefone: {customerPhone}
 - Interações anteriores: {previousInteractions}
-
 CONTEXTO DA CONVERSA:
 - Resumo anterior: {conversationSummary}
 - Histórico recente: {conversationHistory}
 - Tickets anteriores: {previousTickets}
-
 INTENÇÃO DETECTADA:
 - Tipo: {intentType}
 - Categoria: {intentCategory}
@@ -226,12 +202,9 @@ INTENÇÃO DETECTADA:
 - Confiança: {intentConfidence}
 - Sentimento: {sentiment}
 - Urgência: {urgency}
-
 MENSAGEM DO CLIENTE: "{userMessage}"
-
 INSTRUÇÕES ESPECÍFICAS:
 {specificInstructions}
-
 REGRAS DE RESPOSTA:
 1. **Personalização**: Use o nome do cliente e referências a conversas anteriores
 2. **Empatia**: Demonstre compreensão do sentimento e urgência
@@ -239,20 +212,16 @@ REGRAS DE RESPOSTA:
 4. **Segurança**: Priorize saúde e bem-estar ocular
 5. ** Clareza**: Seja objetivo e fácil de entender
 6. **Proatividade**: Antecipe próximas perguntas necessárias
-
 ESTRUTURA DA RESPOSTA:
 - Saudação personalizada
 - Reconhecimento da necessidade
 - Solução ou próximos passos
 - Opções de resposta rápida
 - Informações de contato se necessário
-
 Gere uma resposta natural, empática e eficaz em português brasileiro.
 `
-
   private readonly EMERGENCY_DETECTION_TEMPLATE = `
 ANÁLISE DE EMERGÊNCIA OFTALMOLÓGICA
-
 SINAIS CRÍTICOS:
 - Dor intensa ou súbita nos olhos
 - Perda parcial ou total de visão
@@ -264,36 +233,28 @@ SINAIS CRÍTICOS:
 - Visão borrada repentina
 - Flashes ou moscas volantes
 - Sensação de corpo estranho
-
 MENSAGEM: "{userMessage}"
 CONTEXTO: {customerContext}
-
 ANALISE E RESPONDA APENAS COM:
 EMERGENCY_TRUE (se houver sinais claros de emergência)
 OU
 EMERGENCY_FALSE (se não houver emergência)
-
 Priorize a segurança do paciente acima de tudo.
 `
-
   private readonly CONTEXT_SUMMARY_TEMPLATE = `
 CRIE UM RESUMO DA CONVERSA ANTERIOR:
-
 CONTEXTO:
 - Cliente: {customerName}
 - Status: {customerStatus}
 - Total de interações: {totalInteractions}
-
 MENSAGENS ANTERIORES:
 {previousMessages}
-
 INSTRUÇÕES:
 1. Extraia os tópicos principais discutidos
 2. Identifique o sentimento geral
 3. Liste ações pendentes
 4. Identifique se há necessidade de acompanhamento
 5. Crie um resumo conciso (máximo 200 caracteres)
-
 FORNEÇA EM FORMATO JSON:
 {{
   "summary": "Resumo conciso da conversa",
@@ -304,23 +265,19 @@ FORNEÇA EM FORMATO JSON:
   "resolution": "resolved/ongoing/escalated"
 }}
 `
-
   // Processing chains
   private intentChain: RunnableSequence<any, EnhancedIntent>
   private responseChain: RunnableSequence<any, string>
   private emergencyChain: RunnableSequence<any, string>
   private summaryChain: RunnableSequence<any, any>
-
   constructor() {
     // Validate OpenAI configuration
     const openAIApiKey = process.env.OPENAI_API_KEY
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured. Required: OPENAI_API_KEY')
     }
-
     this.langsmithConfig = getLangSmithConfig()
     this.memory = botMemory
-
     // Initialize LLM with advanced configuration
     this.llm = new ChatOpenAI({
       modelName: 'gpt-5-mini',
@@ -330,10 +287,8 @@ FORNEÇA EM FORMATO JSON:
       timeout: 30000, // 30 seconds timeout
       callbacks: this.langsmithConfig.tracingEnabled ? undefined : []
     })
-
     this.initializeChains()
   }
-
   private initializeChains(): void {
     // Intent classification chain with enhanced schema
     this.intentChain = RunnableSequence.from([
@@ -342,21 +297,18 @@ FORNEÇA EM FORMATO JSON:
       new StringOutputParser(),
       this.parseEnhancedIntent.bind(this)
     ])
-
     // Response generation chain
     this.responseChain = RunnableSequence.from([
       PromptTemplate.fromTemplate(this.ENHANCED_RESPONSE_TEMPLATE),
       this.llm,
       new StringOutputParser()
     ])
-
     // Emergency detection chain
     this.emergencyChain = RunnableSequence.from([
       PromptTemplate.fromTemplate(this.EMERGENCY_DETECTION_TEMPLATE),
       this.llm,
       new StringOutputParser()
     ])
-
     // Context summary chain
     this.summaryChain = RunnableSequence.from([
       PromptTemplate.fromTemplate(this.CONTEXT_SUMMARY_TEMPLATE),
@@ -365,7 +317,6 @@ FORNEÇA EM FORMATO JSON:
       this.parseSummary.bind(this)
     ])
   }
-
   /**
    * Main processing method with full memory integration
    */
@@ -375,7 +326,6 @@ FORNEÇA EM FORMATO JSON:
   ): Promise<ProcessingResult> {
     const startTime = Date.now()
     const sessionId = context.sessionId
-
     try {
       logger.info(LogCategory.WHATSAPP, 'Starting enhanced message processing', {
         sessionId,
@@ -384,18 +334,15 @@ FORNEÇA EM FORMATO JSON:
         hasHistory: context.conversationHistory.length > 0,
         hasSummary: !!context.conversationSummary
       })
-
       // Step 1: Check cache first
       const cacheKey = this.generateCacheKey(userMessage, context)
       const cachedResponse = responseCache.get(userMessage, context)
-
       if (cachedResponse) {
         logger.debug(LogCategory.WHATSAPP, 'Cache hit for message', {
           sessionId,
           intent: cachedResponse.intent,
           confidence: cachedResponse.confidence
         })
-
         return {
           intent: this.parseCachedIntent(cachedResponse),
           response: cachedResponse.response,
@@ -409,7 +356,6 @@ FORNEÇA EM FORMATO JSON:
           confidence: cachedResponse.confidence
         }
       }
-
       // Step 2: Emergency detection (always first)
       const isEmergency = await this.detectEmergency(userMessage, context)
       if (isEmergency) {
@@ -424,7 +370,6 @@ FORNEÇA EM FORMATO JSON:
           responseTime: Date.now() - startTime,
           llmModel: 'gpt-5-mini'
         })
-
         return {
           ...emergencyResult,
           memoryStored: true,
@@ -434,19 +379,14 @@ FORNEÇA EM FORMATO JSON:
           confidence: 1.0
         }
       }
-
       // Step 3: Enhanced intent classification
       const intent = await this.classifyEnhancedIntent(userMessage, context)
-
       // Step 4: Generate contextual response
       const response = await this.generateEnhancedResponse(userMessage, intent, context)
-
       // Step 5: Generate quick replies
       const quickReplies = this.generateEnhancedQuickReplies(intent, response)
-
       // Step 6: Determine follow-up requirements
       const followUpRequired = this.determineFollowUpRequired(intent, response)
-
       // Step 7: Store in memory with full metadata
       await this.memory.saveInteraction(sessionId, userMessage, response, {
         intent: intent.name,
@@ -460,7 +400,6 @@ FORNEÇA EM FORMATO JSON:
         tokensUsed: this.estimateTokens(userMessage + response),
         cost: this.estimateCost(userMessage + response)
       })
-
       // Step 8: Cache appropriate responses
       if (this.shouldCacheResponse(intent, response)) {
         responseCache.set(
@@ -473,9 +412,7 @@ FORNEÇA EM FORMATO JSON:
           [intent.category, intent.responseStrategy]
         )
       }
-
       const processingTime = Date.now() - startTime
-
       logger.info(LogCategory.WHATSAPP, 'Message processed successfully', {
         sessionId,
         intent: intent.name,
@@ -483,7 +420,6 @@ FORNEÇA EM FORMATO JSON:
         processingTime,
         tokensUsed: this.estimateTokens(userMessage + response)
       })
-
       return {
         intent,
         response,
@@ -498,14 +434,12 @@ FORNEÇA EM FORMATO JSON:
         estimatedCost: this.estimateCost(userMessage + response),
         confidence: intent.confidence
       }
-
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error processing message', {
         sessionId,
         error: error instanceof Error ? error.message : 'Unknown',
         processingTime: Date.now() - startTime
       })
-
       return {
         intent: {
           name: 'processing_error',
@@ -535,7 +469,6 @@ FORNEÇA EM FORMATO JSON:
       }
     }
   }
-
   /**
    * Enhanced intent classification with full context
    */
@@ -549,7 +482,6 @@ FORNEÇA EM FORMATO JSON:
       step: 'enhanced-intent-classification',
       tags: ['intent', 'classification', 'enhanced']
     })
-
     const promptData = {
       currentTime: context.systemState.currentTime.toISOString(),
       businessHours: context.systemState.businessHours,
@@ -564,19 +496,15 @@ FORNEÇA EM FORMATO JSON:
       userMessage,
       intent_analysis_schema: JSON.stringify(IntentSchema.shape, null, 2)
     }
-
     const result = await this.intentChain.invoke(promptData, runConfig)
-
     logger.debug(LogCategory.WHATSAPP, 'Intent classified', {
       sessionId: context.sessionId,
       intent: result.name,
       confidence: result.confidence,
       category: result.category
     })
-
     return result
   }
-
   /**
    * Parse enhanced intent from LLM response
    */
@@ -587,12 +515,9 @@ FORNEÇA EM FORMATO JSON:
         .replace(/```json\s*/g, '')
         .replace(/```\s*/g, '')
         .trim()
-
       const parsed = JSON.parse(cleanedResult)
-
       // Validate with schema
       const validated = IntentSchema.parse(parsed)
-
       return {
         ...validated,
         name: validated.intent,
@@ -608,7 +533,6 @@ FORNEÇA EM FORMATO JSON:
         error: error instanceof Error ? error.message : 'Unknown',
         result: result.substring(0, 200)
       })
-
       // Return fallback intent
       return {
         name: 'general_inquiry',
@@ -628,7 +552,6 @@ FORNEÇA EM FORMATO JSON:
       }
     }
   }
-
   /**
    * Generate enhanced contextual response
    */
@@ -645,9 +568,7 @@ FORNEÇA EM FORMATO JSON:
       category: intent.category,
       tags: ['response', 'generation', 'enhanced']
     })
-
     const specificInstructions = this.getSpecificInstructions(intent)
-
     const promptData = {
       customerName: context.userProfile.name || 'Cliente',
       customerStatus: context.userProfile.subscriptionStatus,
@@ -666,18 +587,14 @@ FORNEÇA EM FORMATO JSON:
       userMessage,
       specificInstructions
     }
-
     const response = await this.responseChain.invoke(promptData, runConfig)
-
     logger.debug(LogCategory.WHATSAPP, 'Response generated', {
       sessionId: context.sessionId,
       intent: intent.name,
       responseLength: response.length
     })
-
     return response
   }
-
   /**
    * Get specific instructions based on intent
    */
@@ -695,11 +612,9 @@ FORNEÇA EM FORMATO JSON:
       complaint: 'Demonstrar empatia genuína, ouvir atentamente, oferecer soluções concretas',
       compliment: 'Agradecer sinceramente, reforçar positividade, solicitar feedback'
     }
-
     return instructions[intent.name as keyof typeof instructions] ||
            'Fornecer informação clara e útil, oferecer ajuda adicional quando apropriado'
   }
-
   /**
    * Generate enhanced quick replies based on intent
    */
@@ -718,14 +633,12 @@ FORNEÇA EM FORMATO JSON:
       complaint: ['Falar com gerente', 'Registrar reclamação', 'Solução imediata', 'Reembolso'],
       compliment: ['Avaliar serviço', 'Indicar amigos', 'Ver promoções', 'Deixar depoimento']
     }
-
     return quickReplyMap[intent.name as keyof typeof quickReplyMap] || [
       'Falar com atendente',
       'Menu principal',
       'Ajuda adicional'
     ]
   }
-
   /**
    * Emergency detection with enhanced context
    */
@@ -736,14 +649,11 @@ FORNEÇA EM FORMATO JSON:
         step: 'emergency-detection',
         tags: ['emergency', 'safety', 'critical']
       })
-
       const customerContext = `${context.userProfile.name} (${context.userProfile.subscriptionStatus})`
-
       const result = await this.emergencyChain.invoke({
         userMessage,
         customerContext
       }, runConfig)
-
       return result === 'EMERGENCY_TRUE'
     } catch (error) {
       logger.error(LogCategory.WHATSAPP, 'Error in emergency detection', {
@@ -753,33 +663,25 @@ FORNEÇA EM FORMATO JSON:
       return false
     }
   }
-
   /**
    * Handle emergency response
    */
   private async handleEmergency(context: EnhancedSupportContext): Promise<Partial<ProcessingResult>> {
     const emergencyResponse = `⚠️ **EMERGÊNCIA OFTALMOLÓGICA DETECTADA** ⚠️
-
 ${context.userProfile.name ? `Olá ${context.userProfile.name},` : 'Olá,'}
-
 Sua mensagem indica uma possível emergência oftalmológica. **NÃO ESPERE!**
-
 🚨 **PROCURE ATENDIMENTO MÉDICO IMEDIATO:**
 - Pronto-socorro oftalmológico mais próximo
 - Hospital com serviço de oftalmologia
 - Oftalmologista de plantão
-
 📞 **CONTATO DIRETO SARAIVA VISION:**
 - Dr. Philipe Saraiva Cruz: (33) 98606-1427
 - WhatsApp para emergências: (33) 98606-1427
 - Disponível 24/7 para emergências
-
 📍 **CLÍNICA:**
 - Saraiva Vision - Caratinga/MG
 - Rua Catarina Maria Passos, 97 - Santa Zita
-
 Sua visão é prioridade absoluta. Não adie o atendimento médico!`
-
     return {
       intent: {
         name: 'emergency_medical',
@@ -805,7 +707,6 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       followUpRequired: true
     }
   }
-
   /**
    * Determine if follow-up is required
    */
@@ -818,23 +719,18 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
       ['subscription_cancel', 'product_exchange', 'complaint'].includes(intent.name)
     )
   }
-
   /**
    * Generate error response
    */
   private generateErrorResponse(customerName?: string): string {
     return `Olá ${customerName || 'cliente'},
-
 Tive uma dificuldade técnica para processar sua mensagem. Um atendente humano já foi notificado e irá te ajudar em breve.
-
 Enquanto isso, você pode:
 - Tentar enviar a mensagem novamente
 - Nos ligar: (33) 98606-1427
 - Acessar sua área do assinante: svlentes.shop/area-assinante
-
 Pedimos desculpas pelo inconveniente.`
   }
-
   /**
    * Utility methods
    */
@@ -843,7 +739,6 @@ Pedimos desculpas pelo inconveniente.`
     const contextHash = context.userId || context.userProfile.phone
     return `${normalizedMessage}:${contextHash}`
   }
-
   private parseCachedIntent(cached: any): EnhancedIntent {
     return {
       name: cached.intent,
@@ -862,7 +757,6 @@ Pedimos desculpas pelo inconveniente.`
       followUpRequired: false
     }
   }
-
   private shouldCacheResponse(intent: EnhancedIntent, response: string): boolean {
     return (
       intent.confidence > 0.8 &&
@@ -872,18 +766,15 @@ Pedimos desculpas pelo inconveniente.`
       !['emergency_medical', 'complaint'].includes(intent.name)
     )
   }
-
   private estimateTokens(text: string): number {
     // Rough estimation: ~4 characters per token
     return Math.ceil(text.length / 4)
   }
-
   private estimateCost(text: string): number {
     // GPT-4 Turbo pricing: ~$0.01 per 1K tokens (input), $0.03 per 1K tokens (output)
     const tokens = this.estimateTokens(text)
     return (tokens / 1000) * 0.02 // Average input/output cost
   }
-
   private async parseSummary(result: string): Promise<any> {
     try {
       const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
@@ -892,14 +783,12 @@ Pedimos desculpas pelo inconveniente.`
       return null
     }
   }
-
   /**
    * Get processing statistics
    */
   async getStats(): Promise<any> {
     const memoryStats = await this.memory.getStats()
     const langsmithEnabled = this.langsmithConfig.tracingEnabled
-
     return {
       langsmith: {
         enabled: langsmithEnabled,
@@ -915,6 +804,5 @@ Pedimos desculpas pelo inconveniente.`
     }
   }
 }
-
 // Export singleton instance
 export const enhancedLangChainProcessor = new EnhancedLangChainProcessor()

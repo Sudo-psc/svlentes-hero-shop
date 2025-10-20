@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -36,7 +35,6 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { useAdminAuth } from '@/components/admin/providers/AdminAuthProvider'
 import { cn } from '@/lib/utils'
-
 // Interfaces de dados
 interface SubscriptionMetrics {
   total: number
@@ -54,7 +52,6 @@ interface SubscriptionMetrics {
     professional: { count: number; revenue: number }
   }
 }
-
 interface OrderMetrics {
   total: number
   pending: number
@@ -68,7 +65,6 @@ interface OrderMetrics {
   todayOrders: number
   thisMonthOrders: number
 }
-
 interface CustomerMetrics {
   total: number
   active: number
@@ -79,7 +75,6 @@ interface CustomerMetrics {
   conversionRate: number
   retentionRate: number
 }
-
 interface AnalyticsMetrics {
   dailyRevenue: Array<{ date: string; revenue: number; orders: number }>
   subscriptionGrowth: Array<{ date: string; active: number; new: number; churned: number }>
@@ -87,7 +82,6 @@ interface AnalyticsMetrics {
   topProducts: Array<{ name: string; sales: number; revenue: number }>
   conversionFunnel: Array<{ stage: string; count: number; rate: number }>
 }
-
 interface SystemLogs {
   total: number
   errors: number
@@ -100,13 +94,11 @@ interface SystemLogs {
     errorRate: number
   }
 }
-
 export default function AdminDashboard() {
   const { hasPermission } = useAdminAuth()
   const [selectedPeriod, setSelectedPeriod] = useState('30d')
   const [lastRefresh, setLastRefresh] = useState(new Date())
   const [isLoading, setIsLoading] = useState(false)
-
   // Dados mockados para substituir hooks não implementados
   const subscriptionMetrics: SubscriptionMetrics = {
     total: 1247,
@@ -124,7 +116,6 @@ export default function AdminDashboard() {
       professional: { count: 137, revenue: 29654.48 }
     }
   }
-
   const orderMetrics: OrderMetrics = {
     total: 3456,
     pending: 23,
@@ -138,7 +129,6 @@ export default function AdminDashboard() {
     todayOrders: 34,
     thisMonthOrders: 423
   }
-
   const customerMetrics: CustomerMetrics = {
     total: 1567,
     active: 1247,
@@ -149,7 +139,6 @@ export default function AdminDashboard() {
     conversionRate: 23.4,
     retentionRate: 94.1
   }
-
   const analyticsMetrics: AnalyticsMetrics = {
     dailyRevenue: Array.from({ length: 30 }, (_, i) => ({
       date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -183,7 +172,6 @@ export default function AdminDashboard() {
       { stage: 'Assinantes Ativos', count: 982, rate: 9.8 }
     ]
   }
-
   const systemLogs: SystemLogs = {
     total: 15234,
     errors: 23,
@@ -196,7 +184,6 @@ export default function AdminDashboard() {
       errorRate: 0.15
     }
   }
-
   const refreshData = useCallback(() => {
     setIsLoading(true)
     setTimeout(() => {
@@ -204,12 +191,10 @@ export default function AdminDashboard() {
       setIsLoading(false)
     }, 1000)
   }, [])
-
   useEffect(() => {
     const interval = setInterval(refreshData, 30000) // 30 segundos
     return () => clearInterval(interval)
   }, [refreshData])
-
   // Verificação de permissão
   if (!hasPermission('VIEW_DASHBOARD')) {
     return (
@@ -224,22 +209,18 @@ export default function AdminDashboard() {
       </div>
     )
   }
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
   }
-
   const formatNumber = (value: number) => {
     return value.toLocaleString('pt-BR')
   }
-
   const formatPercentage = (value: number) => {
     return `${value.toFixed(1)}%`
   }
-
   return (
     <motion.div
       className="space-y-6"
@@ -255,7 +236,6 @@ export default function AdminDashboard() {
             Gestão de assinaturas, pedidos e analytics em tempo real
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <select
             value={selectedPeriod}
@@ -267,19 +247,16 @@ export default function AdminDashboard() {
             <option value="90d">Últimos 90 dias</option>
             <option value="365d">Último ano</option>
           </select>
-
           <Button variant="outline" size="sm" onClick={refreshData} disabled={isLoading}>
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Atualizar
           </Button>
-
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
         </div>
       </div>
-
       {/* Indicador de última atualização */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center">
@@ -288,7 +265,6 @@ export default function AdminDashboard() {
           <span className="mx-2">•</span>
           Auto-refresh: 30 segundos
         </div>
-
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -304,7 +280,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-
       {/* Métricas Principais - Assinaturas */}
       <div className="grid gap-4 md:grid-cols-5">
         <motion.div
@@ -332,7 +307,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -352,7 +326,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -372,7 +345,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -392,7 +364,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -413,7 +384,6 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
       </div>
-
       {/* Métricas de Pedidos */}
       <div className="grid gap-6 lg:grid-cols-4">
         <motion.div
@@ -426,13 +396,11 @@ export default function AdminDashboard() {
             <h3 className="font-semibold text-gray-900">Pedidos</h3>
             <Package className="h-5 w-5 text-gray-500" />
           </div>
-
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Total</span>
               <span className="font-semibold">{formatNumber(orderMetrics.total)}</span>
             </div>
-
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-gray-600">Pendentes</span>
@@ -459,7 +427,6 @@ export default function AdminDashboard() {
                 </Badge>
               </div>
             </div>
-
             <div className="pt-3 border-t">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-gray-600">Hoje</span>
@@ -468,7 +435,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
-
         {/* Distribuição de Planos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -480,7 +446,6 @@ export default function AdminDashboard() {
             <h3 className="font-semibold text-gray-900">Distribuição de Planos</h3>
             <PieChart className="h-5 w-5 text-gray-500" />
           </div>
-
           <div className="space-y-3">
             {analyticsMetrics.planDistribution.map((plan, index) => (
               <div key={index} className="space-y-2">
@@ -498,7 +463,6 @@ export default function AdminDashboard() {
             ))}
           </div>
         </motion.div>
-
         {/* Top Produtos */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -510,7 +474,6 @@ export default function AdminDashboard() {
             <h3 className="font-semibold text-gray-900">Top Produtos</h3>
             <TrendingUp className="h-5 w-5 text-gray-500" />
           </div>
-
           <div className="space-y-3">
             {analyticsMetrics.topProducts.slice(0, 4).map((product, index) => (
               <div key={index} className="flex items-center justify-between text-sm">
@@ -525,7 +488,6 @@ export default function AdminDashboard() {
             ))}
           </div>
         </motion.div>
-
         {/* System Logs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -537,13 +499,11 @@ export default function AdminDashboard() {
             <h3 className="font-semibold text-gray-900">System Logs</h3>
             <FileText className="h-5 w-5 text-gray-500" />
           </div>
-
           <div className="space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-600">Total Logs</span>
               <span className="font-medium">{formatNumber(systemLogs.total)}</span>
             </div>
-
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div className="text-center p-2 bg-red-50 rounded">
                 <div className="font-medium text-red-600">{systemLogs.errors}</div>
@@ -558,7 +518,6 @@ export default function AdminDashboard() {
                 <div className="text-blue-700">Última hora</div>
               </div>
             </div>
-
             <div className="pt-3 border-t space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">API Response</span>
@@ -572,7 +531,6 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
       </div>
-
       {/* Analytics Detalhados */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Gráfico de Receita Diária */}
@@ -586,7 +544,6 @@ export default function AdminDashboard() {
             <h3 className="font-semibold text-gray-900">Receita Diária</h3>
             <BarChart3 className="h-5 w-5 text-gray-500" />
           </div>
-
           <div className="h-64">
             <div className="grid grid-cols-7 gap-1 h-full">
               {analyticsMetrics.dailyRevenue.slice(-7).map((day, index) => (
@@ -604,7 +561,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </motion.div>
-
         {/* Funil de Conversão */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -616,7 +572,6 @@ export default function AdminDashboard() {
             <h3 className="font-semibold text-gray-900">Funil de Conversão</h3>
             <Target className="h-5 w-5 text-gray-500" />
           </div>
-
           <div className="space-y-3">
             {analyticsMetrics.conversionFunnel.map((stage, index) => (
               <div key={index} className="space-y-2">
@@ -635,7 +590,6 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
       </div>
-
       {/* Quick Actions */}
       <div className="bg-card border rounded-lg p-4">
         <h3 className="font-semibold mb-4">Ações Rápidas</h3>
