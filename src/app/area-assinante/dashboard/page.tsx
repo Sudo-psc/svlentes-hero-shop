@@ -1,9 +1,10 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useResilientSubscription } from '@/hooks/useResilientSubscription'
+import { ResilientDashboardWrapper } from '@/components/assinante/ResilientDashboardWrapper'
 import { AccessibleDashboard } from '@/components/assinante/AccessibleDashboard'
 import { ToastContainer } from '@/components/assinante/ToastFeedback'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
@@ -19,13 +20,13 @@ import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
 import { motion } from 'framer-motion'
 import { useToast } from '@/components/assinante/ToastFeedback'
-
-export default function DashboardPage() {
+import { Button } from '@/components/ui/button'
+import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings } from 'lucide-react'
+function DashboardContent() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
-  const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
+  const { subscription, user, loading: subLoading, error, refetch } = useResilientSubscription()
   const { toasts, removeToast } = useToast()
-
   // Modal states
   const [showOrdersModal, setShowOrdersModal] = useState(false)
   const [showInvoicesModal, setShowInvoicesModal] = useState(false)
@@ -33,11 +34,9 @@ export default function DashboardPage() {
   const [showUpdateAddressModal, setShowUpdateAddressModal] = useState(false)
   const [showUpdatePaymentModal, setShowUpdatePaymentModal] = useState(false)
   const [availablePlans, setAvailablePlans] = useState<any[]>([])
-
   // Enhanced features state
   const [useEnhancedUI, setUseEnhancedUI] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
-
   // Load pricing plans
   useEffect(() => {
     const loadPlans = async () => {
@@ -53,13 +52,11 @@ export default function DashboardPage() {
     }
     loadPlans()
   }, [])
-
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/area-assinante/login')
     }
   }, [authUser, authLoading, router])
-
   // Enhanced handler functions with better error handling
   const handlePlanChange = async (newPlanId: string) => {
     setIsLoading(true)
@@ -72,12 +69,10 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({ newPlanId })
       })
-
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Erro ao alterar plano')
       }
-
       await refetch()
       return response.json()
     } catch (err) {
@@ -86,7 +81,6 @@ export default function DashboardPage() {
       setIsLoading(false)
     }
   }
-
   const handleAddressUpdate = async (addressData: any) => {
     setIsLoading(true)
     try {
@@ -98,12 +92,10 @@ export default function DashboardPage() {
         },
         body: JSON.stringify(addressData)
       })
-
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Erro ao atualizar endereço')
       }
-
       await refetch()
       return response.json()
     } catch (err) {
@@ -112,7 +104,6 @@ export default function DashboardPage() {
       setIsLoading(false)
     }
   }
-
   const handlePaymentUpdate = async (paymentData: any) => {
     setIsLoading(true)
     try {
@@ -124,12 +115,10 @@ export default function DashboardPage() {
         },
         body: JSON.stringify(paymentData)
       })
-
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || 'Erro ao atualizar forma de pagamento')
       }
-
       await refetch()
       return response.json()
     } catch (err) {
@@ -138,20 +127,16 @@ export default function DashboardPage() {
       setIsLoading(false)
     }
   }
-
   // Toggle enhanced UI for fallback
   const toggleEnhancedUI = () => {
     setUseEnhancedUI(!useEnhancedUI)
   }
-
   if (authLoading || subLoading) {
     return <DashboardLoading />
   }
-
   if (!authUser) {
     return null
   }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center">
@@ -173,19 +158,16 @@ export default function DashboardPage() {
       </div>
     )
   }
-
   // Use Enhanced Dashboard when available, fallback to original
   if (useEnhancedUI) {
     return (
       <>
         <AccessibleDashboard />
-
         {/* Toast Notifications */}
         <ToastContainer
           toasts={toasts}
           onRemove={removeToast}
         />
-
         {/* Global Loading Overlay */}
         {isLoading && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -195,7 +177,6 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-
         {/* Debug Toggle */}
         <div className="fixed bottom-4 left-4 z-40">
           <Button
@@ -210,7 +191,6 @@ export default function DashboardPage() {
       </>
     )
   }
-
   // Enhanced Original Dashboard (kept as fallback)
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
@@ -245,7 +225,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
@@ -261,7 +240,6 @@ export default function DashboardPage() {
             Aqui você pode acompanhar sua assinatura de lentes de contato e gerenciar seus dados.
           </p>
         </motion.div>
-
         {/* No Subscription State */}
         {!subscription && (
           <motion.div
@@ -282,7 +260,6 @@ export default function DashboardPage() {
             </Button>
           </motion.div>
         )}
-
         {/* Dashboard with Subscription */}
         {subscription && (
           <>
@@ -345,7 +322,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </motion.div>
-
               {/* Payment & Delivery Info */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
@@ -410,7 +386,6 @@ export default function DashboardPage() {
                 </div>
               </motion.div>
             </div>
-
             {/* Enhanced Benefits Section */}
             {subscription.benefits && subscription.benefits.length > 0 && (
               <motion.div
@@ -463,7 +438,6 @@ export default function DashboardPage() {
                 </div>
               </motion.div>
             )}
-
             {/* Enhanced Quick Actions */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -484,7 +458,6 @@ export default function DashboardPage() {
                 Configurações
               </Button>
             </motion.div>
-
             {/* Subscription History Timeline */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -500,7 +473,6 @@ export default function DashboardPage() {
             </motion.div>
           </>
         )}
-
         {/* Enhanced Emergency Contact */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -511,11 +483,9 @@ export default function DashboardPage() {
           <EmergencyContact />
         </motion.div>
       </main>
-
       {/* Enhanced Modals */}
       <OrdersModal isOpen={showOrdersModal} onClose={() => setShowOrdersModal(false)} />
       <InvoicesModal isOpen={showInvoicesModal} onClose={() => setShowInvoicesModal(false)} />
-
       {subscription && (
         <>
           <ChangePlanModal
@@ -529,14 +499,12 @@ export default function DashboardPage() {
             availablePlans={availablePlans}
             onPlanChange={handlePlanChange}
           />
-
           <UpdateAddressModal
             isOpen={showUpdateAddressModal}
             onClose={() => setShowUpdateAddressModal(false)}
             currentAddress={subscription.shippingAddress}
             onAddressUpdate={handleAddressUpdate}
           />
-
           <UpdatePaymentModal
             isOpen={showUpdatePaymentModal}
             onClose={() => setShowUpdatePaymentModal(false)}
@@ -548,13 +516,11 @@ export default function DashboardPage() {
           />
         </>
       )}
-
       {/* Toast Notifications */}
       <ToastContainer
         toasts={toasts}
         onRemove={removeToast}
       />
-
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -567,6 +533,13 @@ export default function DashboardPage() {
     </div>
   )
 }
-
+// Wrapper principal com sistema resiliente
+export default function DashboardPage() {
+  return (
+    <ResilientDashboardWrapper>
+      <DashboardContent />
+    </ResilientDashboardWrapper>
+  )
+}
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic'
