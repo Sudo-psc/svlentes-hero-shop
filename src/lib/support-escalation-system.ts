@@ -2,12 +2,10 @@
  * Support Escalation System
  * Intelligent escalation management with human agent handoff
  */
-
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { TicketPriority, TicketStatus, AgentSpecialization } from './support-ticket-manager'
 import { langchainSupportProcessor } from './langchain-support-processor'
-
 // Escalation Reasons
 export enum EscalationReason {
   EMERGENCY = 'emergency',
@@ -21,7 +19,6 @@ export enum EscalationReason {
   RECURRING_PROBLEM = 'recurring_problem',
   SPECIALIST_REQUIRED = 'specialist_required'
 }
-
 // Escalation Status
 export enum EscalationStatus {
   PENDING = 'pending',
@@ -30,7 +27,6 @@ export enum EscalationStatus {
   RESOLVED = 'resolved',
   CANCELLED = 'cancelled'
 }
-
 // Escalation Schema
 export const escalationSchema = z.object({
   ticketId: z.string(),
@@ -55,9 +51,7 @@ export const escalationSchema = z.object({
   notes: z.string().optional(),
   escalationScore: z.number().min(0).max(100).default(50)
 })
-
 export type EscalationRequest = z.infer<typeof escalationSchema>
-
 // Agent Availability Schema
 export const agentAvailabilitySchema = z.object({
   agentId: z.string(),
@@ -76,19 +70,15 @@ export const agentAvailabilitySchema = z.object({
   lastActive: z.date(),
   nextAvailable: z.date().optional()
 })
-
 export type AgentAvailability = z.infer<typeof agentAvailabilitySchema>
-
 export class SupportEscalationSystem {
   private escalationQueue: Map<string, EscalationRequest> = new Map()
   private agentAvailability: Map<string, AgentAvailability> = new Map()
   private escalationRules: Map<string, any> = new Map()
-
   constructor() {
     this.initializeEscalationRules()
     this.loadAgentAvailability()
   }
-
   /**
    * Initialize escalation rules
    */
@@ -99,21 +89,18 @@ export class SupportEscalationSystem {
       maxResponseTime: 300, // 5 minutes
       autoNotify: ['manager', 'on_call_doctor']
     })
-
     this.escalationRules.set('payment_failure', {
       maxAttempts: 3,
       escalationAfter: 30, // 30 minutes
       requiredSpecialization: AgentSpecialization.BILLING,
       autoEscalate: true
     })
-
     this.escalationRules.set('complaint', {
       satisfactionThreshold: 2.0,
       escalationAfter: 1, // immediate if sentiment negative
       requiredSpecialization: AgentSpecialization.CUSTOMER_SERVICE,
       notifyManager: true
     })
-
     this.escalationRules.set('technical_issue', {
       maxAttempts: 2,
       escalationAfter: 15, // 15 minutes
@@ -121,7 +108,6 @@ export class SupportEscalationSystem {
       autoEscalate: false
     })
   }
-
   /**
    * Load agent availability data
    */
@@ -130,20 +116,17 @@ export class SupportEscalationSystem {
       const agents = await prisma.agent.findMany({
         where: { isActive: true }
       })
-
       agents.forEach(agent => {
         // Parse JSON fields
         const specializations = Array.isArray(agent.specializations)
           ? agent.specializations as string[]
           : []
-
         const workingHours = agent.workingHours as {
           start: string
           end: string
           timezone: string
           daysAvailable: string[]
         }
-
         this.agentAvailability.set(agent.id, {
           agentId: agent.id,
           isOnline: agent.isOnline,
@@ -165,7 +148,6 @@ export class SupportEscalationSystem {
       console.error('Error loading agent availability:', error)
     }
   }
-
   /**
    * Process escalation request
    */
@@ -192,7 +174,6 @@ export class SupportEscalationSystem {
         priority: this.calculateEscalationPriority(reason, context),
         escalationScore: this.calculateEscalationScore(reason, context)
       })
-
       // Check if escalation is necessary
       if (!await this.shouldEscalate(escalationData)) {
         return {
@@ -201,22 +182,15 @@ export class SupportEscalationSystem {
           nextSteps: ['Continue automated support', 'Monitor for further escalation triggers']
         }
       }
-
       // Create escalation record
       const escalation = await this.createEscalationRecord(escalationData)
-
       // Find and assign suitable agent
       const agentAssignment = await this.findAndAssignAgent(escalation)
-
       // Update escalation status
       await this.updateEscalationStatus(escalation.id, agentAssignment.assigned ? EscalationStatus.ASSIGNED : EscalationStatus.PENDING)
-
       // Send notifications
       await this.sendEscalationNotifications(escalation, agentAssignment)
-
       // Log escalation
-      console.log(`Escalation processed: ${escalation.id} for ticket ${ticketId}`)
-
       return {
         escalationId: escalation.id,
         assigned: agentAssignment.assigned,
@@ -229,46 +203,37 @@ export class SupportEscalationSystem {
       throw error
     }
   }
-
   /**
    * Determine if escalation is necessary
    */
   private async shouldEscalate(escalation: EscalationRequest): Promise<boolean> {
     const rule = this.escalationRules.get(escalation.reason.toString())
-
     // Emergency escalations are always approved
     if (escalation.reason === EscalationReason.EMERGENCY || escalation.priority >= TicketPriority.CRITICAL) {
       return true
     }
-
     // Customer request escalations
     if (escalation.requestedBy === 'customer') {
       return true
     }
-
     // Apply escalation rules
     if (rule?.immediateEscalation) {
       return true
     }
-
     if (rule?.maxAttempts && escalation.context.previousAttempts >= rule.maxAttempts) {
       return true
     }
-
     if (rule?.escalationAfter) {
       const ticketAge = Date.now() - escalation.requestedAt.getTime()
       const escalationThreshold = rule.escalationAfter * 60 * 1000 // Convert minutes to milliseconds
       return ticketAge >= escalationThreshold
     }
-
     // Sentiment-based escalation
     if (escalation.context.customerSentiment === 'negative' && escalation.priority >= TicketPriority.HIGH) {
       return true
     }
-
     return escalation.escalationScore >= 70 // High escalation score threshold
   }
-
   /**
    * Calculate escalation priority
    */
@@ -277,36 +242,29 @@ export class SupportEscalationSystem {
     if (reason === EscalationReason.EMERGENCY) {
       return TicketPriority.CRITICAL
     }
-
     // Customer requested escalation
     if (context.customerRequested) {
       return TicketPriority.HIGH
     }
-
     // Payment issues
     if (reason === EscalationReason.PAYMENT_ISSUE) {
       return TicketPriority.URGENT
     }
-
     // Complaint escalations
     if (reason === EscalationReason.COMPLAINT_ESCALATION) {
       return context.businessImpact === 'high' ? TicketPriority.HIGH : TicketPriority.MEDIUM
     }
-
     // Technical issues
     if (reason === EscalationReason.TECHNICAL_LIMITATION) {
       return context.affectedUsers > 10 ? TicketPriority.HIGH : TicketPriority.MEDIUM
     }
-
     return TicketPriority.MEDIUM
   }
-
   /**
    * Calculate escalation score (0-100)
    */
   private calculateEscalationScore(reason: EscalationReason, context: any): number {
     let score = 50 // Base score
-
     // Reason-based scoring
     const reasonScores = {
       [EscalationReason.EMERGENCY]: 95,
@@ -320,23 +278,18 @@ export class SupportEscalationSystem {
       [EscalationReason.LEGAL_CONCERN]: 90,
       [EscalationReason.COMPLEX_ISSUE]: 45
     }
-
     score = reasonScores[reason] || 50
-
     // Context-based adjustments
     if (context.previousAttempts > 3) score += 10
     if (context.customerSentiment === 'negative') score += 15
     if (context.businessImpact === 'high') score += 20
     if (context.timeWaiting > 60) score += 10 // minutes
-
     // Risk level adjustments
     if (context.riskLevel === 'critical') score += 25
     if (context.riskLevel === 'high') score += 15
     if (context.riskLevel === 'medium') score += 5
-
     return Math.min(100, score)
   }
-
   /**
    * Create escalation record in database
    */
@@ -355,17 +308,14 @@ export class SupportEscalationSystem {
           estimatedResolution: this.calculateEstimatedResolution(escalationData.priority)
         }
       })
-
       // Add to cache
       this.escalationQueue.set(escalation.id, escalationData)
-
       return escalation
     } catch (error) {
       console.error('Error creating escalation record:', error)
       throw error
     }
   }
-
   /**
    * Find and assign best agent for escalation
    */
@@ -377,14 +327,12 @@ export class SupportEscalationSystem {
     try {
       const rule = this.escalationRules.get(escalation.reason)
       const requiredSpecialization = rule?.requiredSpecialization
-
       // Find available agents
       const availableAgents = Array.from(this.agentAvailability.values())
         .filter(agent => {
           if (!agent.isOnline) return false
           if (agent.currentLoad >= agent.maxCapacity) return false
           if (requiredSpecialization && !agent.specializations.includes(requiredSpecialization)) return false
-
           // Check working hours
           return this.isAgentWorking(agent)
         })
@@ -394,20 +342,16 @@ export class SupportEscalationSystem {
           const scoreB = this.calculateAgentScore(b, escalation)
           return scoreB - scoreA
         })
-
       if (availableAgents.length === 0) {
         return {
           assigned: false,
           estimatedResponseTime: 'Próximo agente disponível em até 2 horas'
         }
       }
-
       // Assign best agent
       const bestAgent = availableAgents[0]
-
       // Update agent load
       await this.updateAgentLoad(bestAgent.agentId, 1)
-
       // Update escalation with agent assignment
       await prisma.escalation.update({
         where: { id: escalation.id },
@@ -417,7 +361,6 @@ export class SupportEscalationSystem {
           status: EscalationStatus.ASSIGNED.toString()
         }
       })
-
       return {
         assigned: true,
         agentId: bestAgent.agentId,
@@ -428,17 +371,14 @@ export class SupportEscalationSystem {
       return { assigned: false }
     }
   }
-
   /**
    * Calculate agent score for assignment
    */
   private calculateAgentScore(agent: AgentAvailability, escalation: any): number {
     let score = 0
-
     // Availability score (40% weight)
     const availabilityScore = (1 - agent.currentLoad / agent.maxCapacity) * 40
     score += availabilityScore
-
     // Specialization match (30% weight)
     const rule = this.escalationRules.get(escalation.reason)
     if (rule?.requiredSpecialization && agent.specializations.includes(rule.requiredSpecialization)) {
@@ -446,47 +386,37 @@ export class SupportEscalationSystem {
     } else {
       score += 10
     }
-
     // Performance score (20% weight)
     if (agent.satisfactionScore) {
       score += (agent.satisfactionScore / 5) * 20
     }
-
     // Response time score (10% weight)
     if (agent.averageResponseTime) {
       const responseScore = Math.max(0, 10 - agent.averageResponseTime / 60) // Lower response time = higher score
       score += responseScore
     }
-
     return score
   }
-
   /**
    * Check if agent is currently working
    */
   private isAgentWorking(agent: AgentAvailability): boolean {
     const now = new Date()
     const agentTime = new Date(now.toLocaleString('en-US', { timeZone: agent.workingHours.timezone }))
-
     const currentHour = agentTime.getHours()
     const currentDay = agentTime.getDay()
-
     const startHour = parseInt(agent.workingHours.start.split(':')[0])
     const endHour = parseInt(agent.workingHours.end.split(':')[0])
     const workingDays = agent.workingHours.daysAvailable.map(day => day.toLowerCase())
-
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     const currentDayName = dayNames[currentDay]
-
     return workingDays.includes(currentDayName) && currentHour >= startHour && currentHour < endHour
   }
-
   /**
    * Calculate agent response time
    */
   private calculateAgentResponseTime(agent: AgentAvailability, priority: TicketPriority): string {
     const baseTime = agent.averageResponseTime || 15 // minutes
-
     const multipliers = {
       [TicketPriority.CRITICAL]: 0.5,
       [TicketPriority.URGENT]: 0.75,
@@ -494,18 +424,14 @@ export class SupportEscalationSystem {
       [TicketPriority.MEDIUM]: 1.5,
       [TicketPriority.LOW]: 2.0
     }
-
     const adjustedTime = baseTime * (multipliers[priority] || 1.0)
     const loadPenalty = (agent.currentLoad / agent.maxCapacity) * 10
-
     const totalMinutes = Math.round(adjustedTime + loadPenalty)
-
     if (totalMinutes < 5) return 'menos de 5 minutos'
     if (totalMinutes < 30) return `aproximadamente ${totalMinutes} minutos`
     if (totalMinutes < 60) return `aproximadamente ${Math.round(totalMinutes / 10) * 10} minutos`
     return `aproximadamente ${Math.round(totalMinutes / 15) * 15} minutos`
   }
-
   /**
    * Update agent load
    */
@@ -518,7 +444,6 @@ export class SupportEscalationSystem {
           lastActive: new Date()
         }
       })
-
       // Update cache
       const agent = this.agentAvailability.get(agentId)
       if (agent) {
@@ -529,7 +454,6 @@ export class SupportEscalationSystem {
       console.error('Error updating agent load:', error)
     }
   }
-
   /**
    * Update escalation status
    */
@@ -542,7 +466,6 @@ export class SupportEscalationSystem {
           updatedAt: new Date()
         }
       })
-
       // Update cache
       const escalation = this.escalationQueue.get(escalationId)
       if (escalation) {
@@ -552,7 +475,6 @@ export class SupportEscalationSystem {
       console.error('Error updating escalation status:', error)
     }
   }
-
   /**
    * Send escalation notifications
    */
@@ -562,13 +484,11 @@ export class SupportEscalationSystem {
       if (agentAssignment.assigned && agentAssignment.agentId) {
         await this.notifyAgent(agentAssignment.agentId, escalation)
       }
-
       // Notify manager if required
       const rule = this.escalationRules.get(escalation.reason)
       if (rule?.notifyManager || escalation.priority >= TicketPriority.HIGH) {
         await this.notifyManager(escalation)
       }
-
       // Send emergency notifications
       if (escalation.reason === EscalationReason.EMERGENCY) {
         await this.sendEmergencyNotifications(escalation)
@@ -577,37 +497,29 @@ export class SupportEscalationSystem {
       console.error('Error sending escalation notifications:', error)
     }
   }
-
   /**
    * Notify assigned agent
    */
   private async notifyAgent(agentId: string, escalation: any): Promise<void> {
     // Implementation would send notification to agent dashboard/email/WhatsApp
-    console.log(`Agent ${agentId} notified of escalation ${escalation.id}`)
   }
-
   /**
    * Notify manager
    */
   private async notifyManager(escalation: any): Promise<void> {
     // Implementation would send notification to manager
-    console.log(`Manager notified of escalation ${escalation.id}`)
   }
-
   /**
    * Send emergency notifications
    */
   private async sendEmergencyNotifications(escalation: any): Promise<void> {
     // Implementation would send emergency notifications to all channels
-    console.log(`Emergency notifications sent for escalation ${escalation.id}`)
   }
-
   /**
    * Generate next steps for customer
    */
   private generateNextSteps(escalation: any, agentAssignment: any): string[] {
     const steps = []
-
     if (agentAssignment.assigned) {
       steps.push(`Aguardar contato do atendente em ${agentAssignment.estimatedResponseTime}`)
       steps.push('Manter WhatsApp disponível para contato')
@@ -615,16 +527,12 @@ export class SupportEscalationSystem {
       steps.push('Aguardar próximo atendente disponível')
       steps.push('Você receberá uma notificação quando um atendente for designado')
     }
-
     if (escalation.reason === EscalationReason.EMERGENCY) {
       steps.push('Em caso de emergência, entre em contato com a Saraiva Vision: (33) 98606-1427')
     }
-
     steps.push('Seu caso tem prioridade máxima em nossa fila')
-
     return steps
   }
-
   /**
    * Calculate estimated resolution time
    */
@@ -636,10 +544,8 @@ export class SupportEscalationSystem {
       [TicketPriority.MEDIUM]: '24 horas',
       [TicketPriority.LOW]: '48 horas'
     }
-
     return estimates[priority] || '24 horas'
   }
-
   /**
    * Get active escalations for monitoring
    */
@@ -662,7 +568,6 @@ export class SupportEscalationSystem {
       return []
     }
   }
-
   /**
    * Handle escalation resolution
    */
@@ -681,23 +586,18 @@ export class SupportEscalationSystem {
           resolvedBy
         }
       })
-
       // Update agent load
       const escalation = this.escalationQueue.get(escalationId)
       if (escalation?.assignedAgentId) {
         await this.updateAgentLoad(escalation.assignedAgentId, -1)
       }
-
       // Remove from cache
       this.escalationQueue.delete(escalationId)
-
-      console.log(`Escalation resolved: ${escalationId} by ${resolvedBy}`)
     } catch (error) {
       console.error('Error resolving escalation:', error)
       throw error
     }
   }
 }
-
 // Singleton instance
 export const supportEscalationSystem = new SupportEscalationSystem()

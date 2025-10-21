@@ -1,25 +1,19 @@
 'use client';
-
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 import { initGA, initScrollTracking, initSessionRecording, GA_MEASUREMENT_ID } from '@/lib/analytics';
 import { usePrivacy } from '@/components/privacy/PrivacyProvider';
-
 export function GoogleAnalytics() {
     const { hasAnalyticsConsent } = usePrivacy();
     const [isInitialized, setIsInitialized] = useState(false);
-
     useEffect(() => {
         // Only initialize GA4 if user has given consent
         if (GA_MEASUREMENT_ID && hasAnalyticsConsent && !isInitialized) {
             initGA();
-
             // Initialize additional tracking features
             const cleanupScrollTracking = initScrollTracking();
             initSessionRecording();
-
             setIsInitialized(true);
-
             // Cleanup function
             return () => {
                 if (cleanupScrollTracking) {
@@ -28,12 +22,10 @@ export function GoogleAnalytics() {
             };
         }
     }, [hasAnalyticsConsent, isInitialized]);
-
     // Don't render anything if no measurement ID or no consent
     if (!GA_MEASUREMENT_ID || !hasAnalyticsConsent) {
         return null;
     }
-
     return (
         <>
             {/* Google Analytics 4 Script */}
@@ -41,10 +33,8 @@ export function GoogleAnalytics() {
                 src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
                 strategy="afterInteractive"
                 onLoad={() => {
-                    console.log('Google Analytics script loaded');
                 }}
             />
-
             {/* Initialize GA4 */}
             <Script
                 id="google-analytics-init"
@@ -54,13 +44,11 @@ export function GoogleAnalytics() {
                         window.dataLayer = window.dataLayer || [];
                         function gtag(){dataLayer.push(arguments);}
                         gtag('js', new Date());
-                        
                         // Set initial consent state
                         gtag('consent', 'default', {
                             analytics_storage: 'granted',
                             ad_storage: 'denied'
                         });
-                        
                         gtag('config', '${GA_MEASUREMENT_ID}', {
                             page_title: document.title,
                             page_location: window.location.href,
@@ -76,7 +64,6 @@ export function GoogleAnalytics() {
         </>
     );
 }
-
 // Hook for tracking page views in App Router
 export function usePageTracking() {
     useEffect(() => {

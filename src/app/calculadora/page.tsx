@@ -1,10 +1,8 @@
 'use client'
-
 import { ImprovedCalculator } from '@/components/subscription/ImprovedCalculator'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
-
 export default function CalculadoraPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-cyan-50 py-16">
@@ -18,7 +16,6 @@ export default function CalculadoraPage() {
                         Descubra em segundos a economia que você terá com a assinatura SV Lentes
                     </p>
                 </div>
-
                 {/* Calculator */}
                 <div className="mb-8">
                     <ImprovedCalculator
@@ -29,7 +26,6 @@ export default function CalculadoraPage() {
                         }}
                     />
                 </div>
-
                 {/* Benefits */}
                 <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -65,7 +61,6 @@ export default function CalculadoraPage() {
                         </div>
                     </div>
                 </div>
-
                 {/* CTA */}
                 <div className="text-center">
                     <Link

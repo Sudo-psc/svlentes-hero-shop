@@ -1,16 +1,13 @@
 'use client';
-
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { Label } from '@/components/ui/Label';
-
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 interface CookiePreferences {
     necessary: boolean;
     analytics: boolean;
     marketing: boolean;
 }
-
 export function CookieConsent() {
     const [isVisible, setIsVisible] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
@@ -19,7 +16,6 @@ export function CookieConsent() {
         analytics: false,
         marketing: false,
     });
-
     useEffect(() => {
         // Check if user has already made a choice
         const consent = localStorage.getItem('cookie-consent');
@@ -27,60 +23,48 @@ export function CookieConsent() {
             setIsVisible(true);
         }
     }, []);
-
     const handleAcceptAll = () => {
         const allAccepted = {
             necessary: true,
             analytics: true,
             marketing: true,
         };
-
         saveCookiePreferences(allAccepted);
         setIsVisible(false);
     };
-
     const handleAcceptSelected = () => {
         saveCookiePreferences(preferences);
         setIsVisible(false);
     };
-
     const handleRejectAll = () => {
         const onlyNecessary = {
             necessary: true,
             analytics: false,
             marketing: false,
         };
-
         saveCookiePreferences(onlyNecessary);
         setIsVisible(false);
     };
-
     const saveCookiePreferences = (prefs: CookiePreferences) => {
         const consentData = {
             preferences: prefs,
             timestamp: new Date().toISOString(),
             version: '1.0',
         };
-
         localStorage.setItem('cookie-consent', JSON.stringify(consentData));
-
         // Dispatch event for analytics initialization
         window.dispatchEvent(new CustomEvent('cookieConsentUpdated', {
             detail: prefs
         }));
     };
-
     const handlePreferenceChange = (type: keyof CookiePreferences, checked: boolean) => {
         if (type === 'necessary') return; // Cannot disable necessary cookies
-
         setPreferences(prev => ({
             ...prev,
             [type]: checked
         }));
     };
-
     if (!isVisible) return null;
-
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
             <div className="max-w-7xl mx-auto p-2">
@@ -93,7 +77,6 @@ export function CookieConsent() {
                             Utilizamos cookies essenciais para o funcionamento do site e cookies opcionais
                             para análise e marketing. Você pode escolher quais aceitar.
                         </p>
-
                         {showDetails && (
                             <div className="mt-2 space-y-2">
                                 <div className="flex items-center space-x-2">
@@ -106,7 +89,6 @@ export function CookieConsent() {
                                         <strong>Cookies Necessários</strong> - Essenciais para o funcionamento do site
                                     </Label>
                                 </div>
-
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="analytics"
@@ -117,7 +99,6 @@ export function CookieConsent() {
                                         <strong>Cookies de Análise</strong> - Nos ajudam a entender como você usa o site
                                     </Label>
                                 </div>
-
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="marketing"
@@ -131,7 +112,6 @@ export function CookieConsent() {
                             </div>
                         )}
                     </div>
-
                     <div className="flex flex-col sm:flex-row gap-1 lg:ml-4">
                         {!showDetails ? (
                             <>

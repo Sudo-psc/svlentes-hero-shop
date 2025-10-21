@@ -8,9 +8,7 @@ import {
 } from '@/types/notification-preferences'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
-
 interface NotificationData {
   userId: string
   eventType: NotificationEventType
@@ -19,7 +17,6 @@ interface NotificationData {
   metadata?: any
   priority?: 'low' | 'medium' | 'high' | 'critical'
 }
-
 interface NotificationResult {
   success: boolean
   channel: NotificationChannel
@@ -28,7 +25,6 @@ interface NotificationResult {
   fallbackTriggered?: boolean
   retryCount?: number
 }
-
 // Retry configuration
 const RETRY_CONFIG = {
   maxRetries: 3,
@@ -36,10 +32,8 @@ const RETRY_CONFIG = {
   maxDelayMs: 10000,
   backoffMultiplier: 2
 }
-
 // Local backup directory for critical notifications
 const BACKUP_DIR = '/tmp/svlentes-notifications-backup'
-
 /**
  * Advanced notification system with fallback and redundancy
  */
@@ -49,57 +43,41 @@ export class NotificationService {
    */
   static async send(data: NotificationData): Promise<NotificationResult[]> {
     const results: NotificationResult[] = []
-
     try {
       // Get user preferences
       const preferences = await this.getUserPreferences(data.userId)
-
       // Check if event is allowed
       if (!this.isEventAllowed(preferences, data.eventType)) {
-        console.log(`Event ${data.eventType} is disabled for user ${data.userId}`)
         return results
       }
-
       // Check quiet hours
       if (this.isQuietHours(preferences)) {
-        console.log(`Quiet hours active for user ${data.userId}, scheduling for later`)
         await this.scheduleForLater(data, preferences)
         return results
       }
-
       // Check frequency limits
       if (!(await this.checkFrequencyLimits(data.userId, preferences))) {
-        console.log(`Frequency limit reached for user ${data.userId}`)
         return results
       }
-
       // Determine channels to use
       const channels = this.getEnabledChannels(preferences, data.eventType, data.priority)
-
       // Backup notification data locally (redundancy)
       await this.backupNotificationData(data)
-
       // Send to all enabled channels
       for (const channel of channels) {
         const result = await this.sendToChannel(channel, data, preferences)
         results.push(result)
-
         // If primary channel fails and fallback is enabled, trigger fallback
         if (!result.success && preferences.fallback.enabled && channel === preferences.fallback.primaryChannel) {
-          console.log(`Primary channel ${channel} failed, triggering fallback`)
-
           // Schedule fallback notification
           await this.scheduleFallback(data, preferences)
         }
       }
-
       return results
     } catch (error) {
       console.error('Error in notification service:', error)
-
       // Emergency fallback - save to file system
       await this.emergencyBackup(data, error)
-
       return [{
         success: false,
         channel: 'email',
@@ -107,7 +85,6 @@ export class NotificationService {
       }]
     }
   }
-
   /**
    * Get user notification preferences with fallback to defaults
    */
@@ -117,14 +94,11 @@ export class NotificationService {
         where: { id: userId },
         select: { preferences: true }
       })
-
       if (!user?.preferences) {
         return DEFAULT_NOTIFICATION_PREFERENCES
       }
-
       const userPrefs = user.preferences as any
       const notificationPrefs = userPrefs.notifications as NotificationPreferences
-
       // Merge with defaults to ensure all fields exist
       return {
         ...DEFAULT_NOTIFICATION_PREFERENCES,
@@ -141,7 +115,6 @@ export class NotificationService {
       return DEFAULT_NOTIFICATION_PREFERENCES
     }
   }
-
   /**
    * Check if event is allowed in user preferences
    */
@@ -151,17 +124,14 @@ export class NotificationService {
     if (criticalEvents.includes(eventType)) {
       return true
     }
-
     // Check if at least one channel has this event enabled
     for (const channel of Object.values(preferences.channels)) {
       if (channel.enabled && channel.events[eventType]) {
         return true
       }
     }
-
     return false
   }
-
   /**
    * Check if current time is within quiet hours
    */
@@ -169,19 +139,15 @@ export class NotificationService {
     if (!preferences.quietHours.enabled) {
       return false
     }
-
     try {
       const now = new Date()
       const currentHour = now.getHours()
       const currentMinute = now.getMinutes()
       const currentTime = currentHour * 60 + currentMinute
-
       const [startHour, startMinute] = preferences.quietHours.start.split(':').map(Number)
       const [endHour, endMinute] = preferences.quietHours.end.split(':').map(Number)
-
       const startTime = startHour * 60 + startMinute
       const endTime = endHour * 60 + endMinute
-
       // Handle overnight quiet hours (e.g., 22:00 to 08:00)
       if (startTime > endTime) {
         return currentTime >= startTime || currentTime <= endTime
@@ -193,7 +159,6 @@ export class NotificationService {
       return false
     }
   }
-
   /**
    * Check frequency limits
    */
@@ -202,7 +167,6 @@ export class NotificationService {
       const now = new Date()
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-
       // Count notifications sent in last 24 hours
       const dailyCount = await prisma.notification.count({
         where: {
@@ -211,11 +175,9 @@ export class NotificationService {
           status: { in: ['SENT', 'DELIVERED'] }
         }
       })
-
       if (dailyCount >= preferences.frequency.maxPerDay) {
         return false
       }
-
       // Count notifications sent in last 7 days
       const weeklyCount = await prisma.notification.count({
         where: {
@@ -224,18 +186,15 @@ export class NotificationService {
           status: { in: ['SENT', 'DELIVERED'] }
         }
       })
-
       if (weeklyCount >= preferences.frequency.maxPerWeek) {
         return false
       }
-
       return true
     } catch (error) {
       console.error('Error checking frequency limits:', error)
       return true // Fail open to avoid blocking critical notifications
     }
   }
-
   /**
    * Get enabled channels for event type
    */
@@ -245,21 +204,17 @@ export class NotificationService {
     priority?: string
   ): NotificationChannel[] {
     const channels: NotificationChannel[] = []
-
     // For critical priority, use all available channels
     if (priority === 'critical') {
       return ['email', 'whatsapp', 'sms', 'push']
     }
-
     for (const [channelName, channelPrefs] of Object.entries(preferences.channels)) {
       if (channelPrefs.enabled && channelPrefs.events[eventType]) {
         channels.push(channelName as NotificationChannel)
       }
     }
-
     return channels
   }
-
   /**
    * Send to specific channel with retry logic
    */
@@ -271,7 +226,6 @@ export class NotificationService {
   ): Promise<NotificationResult> {
     try {
       let result: NotificationResult
-
       switch (channel) {
         case 'email':
           result = await this.sendEmail(data, preferences)
@@ -288,20 +242,16 @@ export class NotificationService {
         default:
           result = { success: false, channel, error: 'Unknown channel' }
       }
-
       // Retry on failure with exponential backoff
       if (!result.success && retryCount < RETRY_CONFIG.maxRetries) {
         const delay = Math.min(
           RETRY_CONFIG.baseDelayMs * Math.pow(RETRY_CONFIG.backoffMultiplier, retryCount),
           RETRY_CONFIG.maxDelayMs
         )
-
-        console.log(`Retrying ${channel} notification after ${delay}ms (attempt ${retryCount + 1}/${RETRY_CONFIG.maxRetries})`)
-
+        console.log(`Retrying ${channel} after delay`)
         await this.sleep(delay)
         return this.sendToChannel(channel, data, preferences, retryCount + 1)
       }
-
       result.retryCount = retryCount
       return result
     } catch (error) {
@@ -314,7 +264,6 @@ export class NotificationService {
       }
     }
   }
-
   /**
    * Send email notification
    */
@@ -324,15 +273,12 @@ export class NotificationService {
         where: { id: data.userId },
         select: { email: true, name: true }
       })
-
       if (!user?.email) {
         throw new Error('User email not found')
       }
-
       if (!resend) {
         throw new Error('Resend not configured')
       }
-
       const emailResponse = await resend.emails.send({
         from: 'SVLentes <noreply@svlentes.shop>',
         to: user.email,
@@ -344,7 +290,6 @@ export class NotificationService {
           metadata: data.metadata
         })
       })
-
       // Log to database
       const notification = await prisma.notification.create({
         data: {
@@ -359,7 +304,6 @@ export class NotificationService {
           status: 'SENT'
         }
       })
-
       return {
         success: true,
         channel: 'email',
@@ -367,10 +311,8 @@ export class NotificationService {
       }
     } catch (error) {
       console.error('Email send error:', error)
-
       // Log failed attempt
       await this.logFailedNotification(data.userId, 'email', data, error)
-
       return {
         success: false,
         channel: 'email',
@@ -378,7 +320,6 @@ export class NotificationService {
       }
     }
   }
-
   /**
    * Send WhatsApp notification
    */
@@ -388,17 +329,13 @@ export class NotificationService {
         where: { id: data.userId },
         select: { whatsapp: true, phone: true, name: true }
       })
-
       const phoneNumber = user?.whatsapp || user?.phone
       if (!phoneNumber) {
         throw new Error('User phone number not found')
       }
-
       const { sendPulseClient } = await import('@/lib/sendpulse-client')
       const message = `*${data.subject}*\n\n${data.message}\n\n_Mensagem automática da SVLentes_`
-
       await sendPulseClient.sendMessage(phoneNumber, message)
-
       // Log to database
       const notification = await prisma.notification.create({
         data: {
@@ -413,7 +350,6 @@ export class NotificationService {
           status: 'SENT'
         }
       })
-
       return {
         success: true,
         channel: 'whatsapp',
@@ -421,9 +357,7 @@ export class NotificationService {
       }
     } catch (error) {
       console.error('WhatsApp send error:', error)
-
       await this.logFailedNotification(data.userId, 'whatsapp', data, error)
-
       return {
         success: false,
         channel: 'whatsapp',
@@ -431,25 +365,20 @@ export class NotificationService {
       }
     }
   }
-
   /**
    * Send SMS notification (placeholder)
    */
   private static async sendSMS(data: NotificationData, preferences: NotificationPreferences): Promise<NotificationResult> {
     // SMS integration would go here (e.g., Twilio, AWS SNS)
-    console.log('SMS not implemented yet')
     return { success: false, channel: 'sms', error: 'Not implemented' }
   }
-
   /**
    * Send push notification (placeholder)
    */
   private static async sendPush(data: NotificationData, preferences: NotificationPreferences): Promise<NotificationResult> {
     // Push notification integration would go here (e.g., Firebase Cloud Messaging)
-    console.log('Push not implemented yet')
     return { success: false, channel: 'push', error: 'Not implemented' }
   }
-
   /**
    * Schedule notification for later (after quiet hours)
    */
@@ -459,12 +388,10 @@ export class NotificationService {
       const [endHour, endMinute] = preferences.quietHours.end.split(':').map(Number)
       const scheduledTime = new Date()
       scheduledTime.setHours(endHour, endMinute, 0, 0)
-
       // If scheduled time is in the past, add a day
       if (scheduledTime <= new Date()) {
         scheduledTime.setDate(scheduledTime.getDate() + 1)
       }
-
       await prisma.notification.create({
         data: {
           userId: data.userId,
@@ -477,13 +404,11 @@ export class NotificationService {
           status: 'SCHEDULED'
         }
       })
-
-      console.log(`Notification scheduled for ${scheduledTime.toISOString()}`)
+      console.log("Notification scheduled successfully")
     } catch (error) {
       console.error('Error scheduling notification:', error)
     }
   }
-
   /**
    * Schedule fallback notification
    */
@@ -491,7 +416,6 @@ export class NotificationService {
     try {
       const scheduledTime = new Date()
       scheduledTime.setMinutes(scheduledTime.getMinutes() + preferences.fallback.fallbackDelayMinutes)
-
       await prisma.notification.create({
         data: {
           userId: data.userId,
@@ -504,13 +428,11 @@ export class NotificationService {
           status: 'SCHEDULED'
         }
       })
-
-      console.log(`Fallback notification scheduled for ${scheduledTime.toISOString()}`)
+      console.log("Fallback notification scheduled successfully")
     } catch (error) {
       console.error('Error scheduling fallback:', error)
     }
   }
-
   /**
    * Backup notification data to file system
    */
@@ -518,43 +440,34 @@ export class NotificationService {
     try {
       // Ensure backup directory exists
       await fs.mkdir(BACKUP_DIR, { recursive: true })
-
       const filename = `${Date.now()}_${data.userId}_${data.eventType}.json`
       const filepath = path.join(BACKUP_DIR, filename)
-
       await fs.writeFile(filepath, JSON.stringify({
         ...data,
         timestamp: new Date().toISOString()
       }, null, 2))
-
-      console.log(`Notification backed up to ${filepath}`)
     } catch (error) {
       console.error('Error backing up notification:', error)
     }
   }
-
   /**
    * Emergency backup when all else fails
    */
   private static async emergencyBackup(data: NotificationData, error: any): Promise<void> {
     try {
       await fs.mkdir(BACKUP_DIR, { recursive: true })
-
       const filename = `EMERGENCY_${Date.now()}_${data.userId}.json`
       const filepath = path.join(BACKUP_DIR, filename)
-
       await fs.writeFile(filepath, JSON.stringify({
         ...data,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       }, null, 2))
-
       console.error(`Emergency backup saved to ${filepath}`)
     } catch (backupError) {
       console.error('Emergency backup failed:', backupError)
     }
   }
-
   /**
    * Log failed notification attempt
    */
@@ -582,7 +495,6 @@ export class NotificationService {
       console.error('Error logging failed notification:', logError)
     }
   }
-
   /**
    * Map event type to notification type enum
    */
@@ -603,10 +515,8 @@ export class NotificationService {
       marketing: 'PROMOTION',
       system_updates: 'UPDATE'
     }
-
     return mapping[eventType] || 'UPDATE'
   }
-
   /**
    * Generate HTML email template
    */
@@ -699,17 +609,14 @@ export class NotificationService {
             <div class="logo">SVLentes</div>
             <p style="color: #666; margin: 0;">Lentes de Contato por Assinatura</p>
           </div>
-
           <div class="content">
             <p class="greeting">Olá, ${data.userName}!</p>
             <div class="message">${data.message}</div>
-
             <div style="text-align: center;">
               <a href="https://svlentes.shop/area-assinante/dashboard" class="button">
                 Acessar Meu Painel
               </a>
             </div>
-
             <div class="contact-info">
               <strong>Precisa de ajuda?</strong><br>
               WhatsApp: (33) 99989-8026<br>
@@ -719,7 +626,6 @@ export class NotificationService {
               Dr. Philipe Saraiva Cruz - CRM-MG 69.870
             </div>
           </div>
-
           <div class="footer">
             <p>Este é um email automático. Por favor, não responda.</p>
             <p>&copy; 2025 SVLentes - Saraiva Vision. Todos os direitos reservados.</p>
@@ -733,7 +639,6 @@ export class NotificationService {
       </html>
     `
   }
-
   /**
    * Utility function to sleep
    */

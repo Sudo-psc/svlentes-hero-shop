@@ -1,73 +1,37 @@
 'use client'
-
 import { useState } from 'react'
 import { Check, Plus, Minus } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-
-interface AddOn {
-    id: string
-    name: string
-    description: string
-    price: number
-    icon: string
-    recommended?: boolean
-}
-
+import { Button } from '@/components/ui/button'
+import { addOnsData, addOnCategories } from '@/data/add-ons'
+import { AddOn } from '@/types'
+import { formatCurrency } from '@/lib/calculator'
 interface AddOnsSelectorProps {
     onContinue: (selectedAddOns: string[]) => void
     onBack: () => void
+    preSelectedAddOns?: string[]
 }
-
-const availableAddOns: AddOn[] = [
-    {
-        id: 'solution',
-        name: 'Solução de Limpeza',
-        description: 'Solução multiuso premium para higienização',
-        price: 25,
-        icon: '💧',
-        recommended: true
-    },
-    {
-        id: 'drops',
-        name: 'Lágrimas Artificiais',
-        description: 'Colírio lubrificante para conforto extra',
-        price: 15,
-        icon: '👁️',
-        recommended: true
-    },
-    {
-        id: 'case',
-        name: 'Estojo Premium',
-        description: 'Estojo antibacteriano de reposição',
-        price: 10,
-        icon: '📦'
-    },
-    {
-        id: 'consultation',
-        name: 'Consultas Extras',
-        description: 'Consultas adicionais de acompanhamento',
-        price: 80,
-        icon: '👨‍⚕️'
-    },
-    {
-        id: 'insurance',
-        name: 'Seguro Premium',
-        description: 'Cobertura contra perda ou dano',
-        price: 20,
-        icon: '🛡️'
-    },
-    {
-        id: 'express',
-        name: 'Entrega Express',
-        description: 'Entrega em até 24h em emergências',
-        price: 30,
-        icon: '🚀'
+// Enhanced AddOn data with additional properties for the selector
+const availableAddOns: (AddOn & { icon: string; recommended?: boolean })[] = addOnsData.map(addOn => ({
+    ...addOn,
+    icon: getIconForType(addOn.type),
+    recommended: ['consulta-extra', 'teleorientacao'].includes(addOn.id) // Mark medical services as recommended
+}))
+function getIconForType(type: AddOn['type']): string {
+    switch (type) {
+        case 'consulta':
+            return '👨‍⚕️'
+        case 'teleorientacao':
+            return '📱'
+        case 'seguro':
+            return '🛡️'
+        case 'vip':
+            return '⭐'
+        default:
+            return '📋'
     }
-]
-
-export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
-    const [selectedAddOns, setSelectedAddOns] = useState<string[]>([])
-
+}
+export function AddOnsSelector({ onContinue, onBack, preSelectedAddOns = [] }: AddOnsSelectorProps) {
+    const [selectedAddOns, setSelectedAddOns] = useState<string[]>(preSelectedAddOns)
     const toggleAddOn = (addOnId: string) => {
         setSelectedAddOns(prev =>
             prev.includes(addOnId)
@@ -75,15 +39,12 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                 : [...prev, addOnId]
         )
     }
-
     const calculateTotal = () => {
         return availableAddOns
             .filter(addOn => selectedAddOns.includes(addOn.id))
             .reduce((sum, addOn) => sum + addOn.price, 0)
     }
-
     const total = calculateTotal()
-
     return (
         <div className="space-y-6">
             <div className="text-center mb-8">
@@ -94,12 +55,10 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                     Adicione serviços extras para uma experiência completa
                 </p>
             </div>
-
             {/* Add-ons Grid */}
             <div className="grid md:grid-cols-2 gap-4">
                 {availableAddOns.map((addOn) => {
                     const isSelected = selectedAddOns.includes(addOn.id)
-
                     return (
                         <button
                             key={addOn.id}
@@ -117,7 +76,6 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                                     </span>
                                 </div>
                             )}
-
                             {/* Selected Indicator */}
                             {isSelected && (
                                 <div className="absolute top-3 right-3">
@@ -126,13 +84,11 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                                     </div>
                                 </div>
                             )}
-
                             <div className="flex items-start space-x-4">
                                 {/* Icon */}
                                 <div className="text-3xl flex-shrink-0">
                                     {addOn.icon}
                                 </div>
-
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between mb-1">
@@ -145,7 +101,7 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                                     </p>
                                     <div className="flex items-center justify-between">
                                         <span className="text-lg font-bold text-primary-600">
-                                            +R$ {addOn.price}/mês
+                                            +{formatCurrency(addOn.price)}/mês
                                         </span>
                                         <div className={`flex items-center space-x-1 text-sm font-medium ${isSelected ? 'text-primary-600' : 'text-gray-500'
                                             }`}>
@@ -168,7 +124,6 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                     )
                 })}
             </div>
-
             {/* Total Summary */}
             <div className="bg-gradient-to-r from-primary-50 to-cyan-50 rounded-xl p-6 border border-primary-200">
                 <div className="flex items-center justify-between">
@@ -177,7 +132,7 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                             {selectedAddOns.length} {selectedAddOns.length === 1 ? 'serviço selecionado' : 'serviços selecionados'}
                         </p>
                         <p className="text-2xl font-bold text-gray-900">
-                            {total > 0 ? `+R$ ${total.toFixed(2)}/mês` : 'Nenhum add-on selecionado'}
+                            {total > 0 ? `+${formatCurrency(total)}/mês` : 'Nenhum add-on selecionado'}
                         </p>
                     </div>
                     {selectedAddOns.length > 0 && (
@@ -186,13 +141,12 @@ export function AddOnsSelector({ onContinue, onBack }: AddOnsSelectorProps) {
                                 Economia vs avulso
                             </p>
                             <p className="text-lg font-bold text-green-600">
-                                ~R$ {(total * 0.3).toFixed(2)}/mês
+                                ~{formatCurrency(total * 0.3)}/mês
                             </p>
                         </div>
                     )}
                 </div>
             </div>
-
             {/* Actions */}
             <div className="flex space-x-4">
                 <Button

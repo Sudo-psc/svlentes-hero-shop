@@ -1,8 +1,7 @@
 'use client'
-
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { LogoFooter } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { LogoFooter } from '@/components/ui/logo'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
 import { generateWhatsAppLink } from '@/lib/utils'
 import { doctorInfo, clinicInfo } from '@/data/doctor-info'
@@ -21,23 +20,19 @@ import {
     Settings,
     Download
 } from 'lucide-react'
-
 interface FooterProps {
     className?: string
 }
-
 export function Footer({ className }: FooterProps) {
     const currentYear = new Date().getFullYear()
     const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false)
     const [showPrivacySettings, setShowPrivacySettings] = useState(false)
     const [showDataControl, setShowDataControl] = useState(false)
-
     // FIXME: Configuração centralizada desabilitada temporariamente
     // ConfigService requer acesso a fs (Node.js) que não funciona no client
     // TODO: Implementar servidor de config ou passar como props de server component
     const useCentralizedConfig = false
     const footerMenu = null
-
     // Quick Links: usar config centralizado se disponível
     const quickLinks = useCentralizedConfig && footerMenu
         ? footerMenu.quickLinks.map((item: any) => ({
@@ -53,7 +48,6 @@ export function Footer({ className }: FooterProps) {
             { name: 'Programa de Indicação', href: '#programa-indicacao' },
             { name: 'Manual do Paciente (PDF)', href: '/ManualPacienteLentesContato2025.pdf', download: true, icon: 'download' },
         ]
-
     // Legal Links: usar config centralizado se disponível
     const legalLinksFromConfig = useCentralizedConfig && footerMenu
         ? footerMenu.legalLinks.map((item: any) => {
@@ -63,7 +57,6 @@ export function Footer({ className }: FooterProps) {
                 'showPrivacySettings': () => setShowPrivacySettings(true),
                 'showDataControl': () => setShowDataControl(true)
             }
-
             return {
                 name: item.label,
                 href: item.href && !item.action ? item.href : undefined,
@@ -71,7 +64,6 @@ export function Footer({ className }: FooterProps) {
             }
         })
         : null
-
     const legalLinks = legalLinksFromConfig || [
         {
             name: 'Política de Privacidade',
@@ -87,13 +79,11 @@ export function Footer({ className }: FooterProps) {
         },
         { name: 'Termos de Uso', href: '/termos-uso' },
     ]
-
     return (
         <footer className={`bg-white text-gray-800 ${className}`}>
             {/* Main Footer Content */}
             <div className="container-custom py-16 border-t border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-
                     {/* Company Info */}
                     <div className="lg:col-span-2 space-y-6">
                         <div>
@@ -109,7 +99,6 @@ export function Footer({ className }: FooterProps) {
                                 Nunca mais fique sem lentes com a comodidade e segurança que você merece.
                             </p>
                         </div>
-
                         {/* Doctor Info */}
                         <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                             <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -143,7 +132,6 @@ export function Footer({ className }: FooterProps) {
                             </div>
                         </div>
                     </div>
-
                     {/* Quick Links */}
                     <div>
                         <h4 className="font-semibold text-lg text-gray-900 mb-6 pb-2 border-b border-gray-300">
@@ -170,14 +158,12 @@ export function Footer({ className }: FooterProps) {
                             </ul>
                         </nav>
                     </div>
-
                     {/* Contact Info */}
                     <div>
                         <h4 className="font-semibold text-lg text-gray-900 mb-6 pb-2 border-b border-gray-300">
                             Atendimento
                         </h4>
                         <div className="space-y-5">
-
                             {/* Address */}
                             <div className="flex items-start space-x-3">
                                 <MapPin className="w-5 h-5 text-cyan-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -188,7 +174,6 @@ export function Footer({ className }: FooterProps) {
                                     <p>CEP: {clinicInfo.address.zipCode}</p>
                                 </address>
                             </div>
-
                             {/* Phone */}
                             <div className="flex items-center space-x-3">
                                 <Phone className="w-5 h-5 text-cyan-500 flex-shrink-0" aria-hidden="true" />
@@ -200,7 +185,6 @@ export function Footer({ className }: FooterProps) {
                                     {clinicInfo.contact.phone}
                                 </a>
                             </div>
-
                             {/* Email */}
                             <div className="flex items-center space-x-3">
                                 <Mail className="w-5 h-5 text-cyan-500 flex-shrink-0" aria-hidden="true" />
@@ -212,7 +196,6 @@ export function Footer({ className }: FooterProps) {
                                     {clinicInfo.contact.email}
                                 </a>
                             </div>
-
                             {/* Business Hours */}
                             <div className="flex items-start space-x-3">
                                 <Clock className="w-5 h-5 text-cyan-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -229,7 +212,6 @@ export function Footer({ className }: FooterProps) {
                     </div>
                 </div>
             </div>
-
             {/* Coverage Banner */}
             <div className="bg-gradient-to-r from-cyan-500 to-slate-400 py-4">
                 <div className="container-custom">
@@ -245,7 +227,6 @@ export function Footer({ className }: FooterProps) {
                     </div>
                 </div>
             </div>
-
             {/* Bottom Bar */}
             <div className="bg-gray-100 py-8 border-t border-gray-300">
                 <div className="container-custom">
@@ -277,7 +258,6 @@ export function Footer({ className }: FooterProps) {
                             )
                         ))}
                     </div>
-
                     {/* Trust Indicators */}
                     <div className="flex flex-wrap items-center justify-center gap-6 mb-6 pb-6 border-b border-gray-300">
                         <div className="flex items-center space-x-2 text-gray-600">
@@ -293,7 +273,6 @@ export function Footer({ className }: FooterProps) {
                             <span className="text-sm">Produtos ANVISA</span>
                         </div>
                     </div>
-
                     {/* Copyright & Company Info */}
                     <div className="text-center space-y-2">
                         <p className="text-gray-600 text-sm">
@@ -307,7 +286,6 @@ export function Footer({ className }: FooterProps) {
                     </div>
                 </div>
             </div>
-
             {/* Privacy Modals */}
             <PrivacyPolicy
                 isOpen={showPrivacyPolicy}

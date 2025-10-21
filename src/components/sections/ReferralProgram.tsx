@@ -1,12 +1,10 @@
 'use client'
-
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { referralProgramData } from '@/data/referral-program'
 import { trackEvent } from '@/lib/analytics'
-
 interface ReferralCardProps {
     title: string
     description?: string
@@ -15,7 +13,6 @@ interface ReferralCardProps {
     highlight?: boolean
     className?: string
 }
-
 function ReferralCard({
     title,
     description,
@@ -43,13 +40,11 @@ function ReferralCard({
         </div>
     )
 }
-
 interface BenefitBadgeProps {
     amount: string
     label: string
     variant?: 'primary' | 'secondary'
 }
-
 function BenefitBadge({ amount, label, variant = 'primary' }: BenefitBadgeProps) {
     return (
         <div className={cn(
@@ -63,14 +58,12 @@ function BenefitBadge({ amount, label, variant = 'primary' }: BenefitBadgeProps)
         </div>
     )
 }
-
 interface StepCardProps {
     number: number
     title: string
     description: string
     icon: string
 }
-
 function StepCard({ number, title, description, icon }: StepCardProps) {
     return (
         <div className="flex items-start space-x-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -89,12 +82,10 @@ function StepCard({ number, title, description, icon }: StepCardProps) {
         </div>
     )
 }
-
 export default function ReferralProgram() {
     const [showTerms, setShowTerms] = useState(false)
     const [referralLink, setReferralLink] = useState('')
     const [isGeneratingLink, setIsGeneratingLink] = useState(false)
-
     const generateReferralLink = async () => {
         setIsGeneratingLink(true)
         try {
@@ -102,7 +93,6 @@ export default function ReferralProgram() {
             await new Promise(resolve => setTimeout(resolve, 1000))
             const mockLink = `https://svlentes.com.br/ref/${Math.random().toString(36).substr(2, 9)}`
             setReferralLink(mockLink)
-
             // Track analytics event
             trackEvent('referral_link_generated', {
                 source: 'main_card',
@@ -115,12 +105,9 @@ export default function ReferralProgram() {
             setIsGeneratingLink(false)
         }
     }
-
     const shareReferralLink = async (platform: string) => {
         if (!referralLink) return
-
         const shareText = `🎯 Descubra a SVlentes - Nunca mais fique sem lentes de contato!\n\n✅ Lentes entregues em casa\n✅ Acompanhamento médico incluído\n✅ Economia garantida\n\nUse meu link e ganhe R$ 30 de desconto: ${referralLink}`
-
         try {
             if (platform === 'whatsapp') {
                 const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
@@ -132,7 +119,6 @@ export default function ReferralProgram() {
                 const emailUrl = `mailto:?subject=${encodeURIComponent('Conheça a SVlentes - Assinatura de Lentes')}&body=${encodeURIComponent(shareText)}`
                 window.open(emailUrl)
             }
-
             // Track analytics event
             trackEvent('referral_link_shared', {
                 platform: platform,
@@ -143,9 +129,7 @@ export default function ReferralProgram() {
             alert('Erro ao compartilhar. Tente novamente.')
         }
     }
-
     const { mainCard, rulesCard, howItWorks, terms } = referralProgramData
-
     return (
         <section id="programa-indicacao" className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 to-primary-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,7 +148,6 @@ export default function ReferralProgram() {
                         Indique amigos e familiares para a SVlentes e ambos ganham descontos especiais
                     </p>
                 </div>
-
                 {/* Main Cards Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
                     {/* Main Benefits Card */}
@@ -185,14 +168,12 @@ export default function ReferralProgram() {
                                     />
                                     <p className="text-sm text-gray-600 mt-2">Na sua próxima mensalidade</p>
                                 </div>
-
                                 <div className="hidden sm:flex items-center">
                                     <svg className="w-8 h-8 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                         <path fillRule="evenodd" d="M3 10a1 1 0 011-1h10a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                                     </svg>
                                 </div>
-
                                 <div className="text-center">
                                     <BenefitBadge
                                         amount={mainCard.benefitIndicated}
@@ -202,7 +183,6 @@ export default function ReferralProgram() {
                                     <p className="text-sm text-gray-600 mt-2">Na primeira assinatura</p>
                                 </div>
                             </div>
-
                             {/* Referral Link Generation */}
                             <div className="space-y-4">
                                 {!referralLink ? (
@@ -250,7 +230,6 @@ export default function ReferralProgram() {
                                                 </Button>
                                             </div>
                                         </div>
-
                                         {/* Share Buttons */}
                                         <div className="flex flex-col sm:flex-row gap-2">
                                             <Button
@@ -279,7 +258,6 @@ export default function ReferralProgram() {
                             </div>
                         </div>
                     </ReferralCard>
-
                     {/* Rules Card */}
                     <ReferralCard
                         title={rulesCard.title}
@@ -307,14 +285,12 @@ export default function ReferralProgram() {
                         </div>
                     </ReferralCard>
                 </div>
-
                 {/* How It Works Section */}
                 <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
                     <div className="text-center mb-8">
                         <h3 className="text-2xl font-bold text-gray-900 mb-4">{howItWorks.title}</h3>
                         <p className="text-gray-600">Processo simples em 3 passos</p>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {howItWorks.steps.map((step) => (
                             <StepCard
@@ -327,7 +303,6 @@ export default function ReferralProgram() {
                         ))}
                     </div>
                 </div>
-
                 {/* Terms and Conditions */}
                 <div className="text-center">
                     <Button
@@ -344,7 +319,6 @@ export default function ReferralProgram() {
                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
                     </Button>
-
                     {showTerms && (
                         <div className="bg-gray-50 rounded-xl p-6 text-left max-w-4xl mx-auto">
                             <h4 className="text-lg font-semibold text-gray-900 mb-4">{terms.title}</h4>

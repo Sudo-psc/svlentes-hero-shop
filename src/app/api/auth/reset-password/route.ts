@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { validatePasswordResetToken, consumePasswordResetToken } from '@/lib/tokens'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token é obrigatório'),
   password: z
@@ -11,7 +10,6 @@ const resetPasswordSchema = z.object({
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
     .max(100, 'Senha deve ter no máximo 100 caracteres'),
 })
-
 /**
  * POST /api/auth/reset-password
  * Reseta a senha do usuário
@@ -19,10 +17,8 @@ const resetPasswordSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
     // Validar dados
     const validationResult = resetPasswordSchema.safeParse(body)
-
     if (!validationResult.success) {
       const errors = validationResult.error.errors.map((err) => err.message).join(', ')
       return NextResponse.json(
@@ -30,45 +26,34 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
     const { token, password } = validationResult.data
-
     // Validar token
     const email = await validatePasswordResetToken(token)
-
     if (!email) {
       return NextResponse.json(
         { error: 'INVALID_TOKEN', message: 'Token inválido ou expirado' },
         { status: 400 }
       )
     }
-
     // Verificar se usuário existe
     const user = await prisma.user.findUnique({
       where: { email },
     })
-
     if (!user) {
       return NextResponse.json(
         { error: 'USER_NOT_FOUND', message: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     // Hash nova senha
     const hashedPassword = await bcrypt.hash(password, 10)
-
     // Atualizar senha
     await prisma.user.update({
       where: { email },
       data: { password: hashedPassword },
     })
-
     // Consumir token (deletar)
     await consumePasswordResetToken(token)
-
-    console.log(`[RESET-PASSWORD] Password reset successful for ${email}`)
-
     return NextResponse.json(
       {
         message: 'Senha redefinida com sucesso',
@@ -83,5 +68,4 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 export const dynamic = 'force-dynamic'

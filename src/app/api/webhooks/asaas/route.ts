@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger, LogCategory } from '@/lib/logger'
-
+import { svlentesRateLimits } from '@/lib/rate-limiting-enhanced'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
 interface AsaasWebhookEvent {
     event: string
     payment?: {
@@ -30,7 +29,6 @@ interface AsaasWebhookEvent {
         deleted: boolean
     }
 }
-
 interface WebhookLog {
     eventType: string
     paymentId?: string
@@ -42,7 +40,6 @@ interface WebhookLog {
     details?: any
     error?: string
 }
-
 function logWebhookEvent(log: WebhookLog) {
     logger.logWebhook(log.eventType, {
         paymentId: log.paymentId,
@@ -52,7 +49,6 @@ function logWebhookEvent(log: WebhookLog) {
         ...log.details
     })
 }
-
 async function handlePaymentCreated(payment: any) {
     try {
         logWebhookEvent({
@@ -69,7 +65,6 @@ async function handlePaymentCreated(payment: any) {
                 description: payment.description,
             }
         })
-
     } catch (error) {
         logger.error(LogCategory.WEBHOOK, 'Error handling payment created', error as Error, {
             paymentId: payment.id,
@@ -77,7 +72,6 @@ async function handlePaymentCreated(payment: any) {
         throw error
     }
 }
-
 async function handlePaymentReceived(payment: any) {
     try {
         logWebhookEvent({
@@ -94,7 +88,6 @@ async function handlePaymentReceived(payment: any) {
                 externalReference: payment.externalReference,
             }
         })
-
         console.log('CONVERSION_EVENT:', {
             event: 'payment_confirmed',
             paymentId: payment.id,
@@ -103,13 +96,11 @@ async function handlePaymentReceived(payment: any) {
             currency: 'BRL',
             externalReference: payment.externalReference,
         })
-
     } catch (error) {
         console.error('Error handling payment received:', error)
         throw error
     }
 }
-
 async function handlePaymentConfirmed(payment: any) {
     try {
         logWebhookEvent({
@@ -125,7 +116,6 @@ async function handlePaymentConfirmed(payment: any) {
                 netValue: payment.netValue,
             }
         })
-
         console.log('PAYMENT_CONFIRMED:', {
             paymentId: payment.id,
             customer: payment.customer,
@@ -136,7 +126,6 @@ async function handlePaymentConfirmed(payment: any) {
         throw error
     }
 }
-
 async function handlePaymentOverdue(payment: any) {
     try {
         logWebhookEvent({
@@ -152,19 +141,16 @@ async function handlePaymentOverdue(payment: any) {
                 originalDueDate: payment.originalDueDate,
             }
         })
-
         console.log('PAYMENT_OVERDUE:', {
             paymentId: payment.id,
             customer: payment.customer,
             dueDate: payment.dueDate,
         })
-
     } catch (error) {
         console.error('Error handling payment overdue:', error)
         throw error
     }
 }
-
 async function handlePaymentRefunded(payment: any) {
     try {
         logWebhookEvent({
@@ -179,7 +165,6 @@ async function handlePaymentRefunded(payment: any) {
                 refundDate: new Date().toISOString(),
             }
         })
-
         console.log('PAYMENT_REFUNDED:', {
             paymentId: payment.id,
             customer: payment.customer,
@@ -190,12 +175,11 @@ async function handlePaymentRefunded(payment: any) {
         throw error
     }
 }
-
-export async function POST(request: NextRequest) {
+// 🚀 Quick Win: Handler principal com rate limiting
+async function handleAsaasWebhook(request: NextRequest): Promise<NextResponse> {
     try {
         const asaasToken = request.headers.get('asaas-access-token')
         const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN
-        
         if (expectedToken && asaasToken !== expectedToken) {
             console.error('ASAAS_WEBHOOK_AUTH_FAILED: Invalid token')
             return NextResponse.json(
@@ -203,89 +187,55 @@ export async function POST(request: NextRequest) {
                 { status: 401 }
             )
         }
-
         const body: AsaasWebhookEvent = await request.json()
-
-        console.log(`ASAAS_WEBHOOK_RECEIVED: ${body.event}`)
-
         if (!body.event || !body.payment) {
             return NextResponse.json(
                 { error: 'Invalid webhook payload' },
                 { status: 400 }
             )
         }
-
         switch (body.event) {
             case 'PAYMENT_CREATED':
                 await handlePaymentCreated(body.payment)
                 break
-
             case 'PAYMENT_UPDATED':
-                console.log('PAYMENT_UPDATED:', body.payment.id)
                 break
-
             case 'PAYMENT_CONFIRMED':
             case 'PAYMENT_RECEIVED':
                 await handlePaymentConfirmed(body.payment)
                 await handlePaymentReceived(body.payment)
                 break
-
             case 'PAYMENT_OVERDUE':
                 await handlePaymentOverdue(body.payment)
                 break
-
             case 'PAYMENT_DELETED':
-                console.log('PAYMENT_DELETED:', body.payment.id)
                 break
-
             case 'PAYMENT_RESTORED':
-                console.log('PAYMENT_RESTORED:', body.payment.id)
                 break
-
             case 'PAYMENT_REFUNDED':
                 await handlePaymentRefunded(body.payment)
                 break
-
             case 'PAYMENT_RECEIVED_IN_CASH_UNDONE':
-                console.log('PAYMENT_RECEIVED_IN_CASH_UNDONE:', body.payment.id)
                 break
-
             case 'PAYMENT_CHARGEBACK_REQUESTED':
-                console.log('PAYMENT_CHARGEBACK_REQUESTED:', body.payment.id)
                 break
-
             case 'PAYMENT_CHARGEBACK_DISPUTE':
-                console.log('PAYMENT_CHARGEBACK_DISPUTE:', body.payment.id)
                 break
-
             case 'PAYMENT_AWAITING_CHARGEBACK_REVERSAL':
-                console.log('PAYMENT_AWAITING_CHARGEBACK_REVERSAL:', body.payment.id)
                 break
-
             case 'PAYMENT_DUNNING_RECEIVED':
-                console.log('PAYMENT_DUNNING_RECEIVED:', body.payment.id)
                 break
-
             case 'PAYMENT_DUNNING_REQUESTED':
-                console.log('PAYMENT_DUNNING_REQUESTED:', body.payment.id)
                 break
-
             case 'PAYMENT_BANK_SLIP_VIEWED':
-                console.log('PAYMENT_BANK_SLIP_VIEWED:', body.payment.id)
                 break
-
             case 'PAYMENT_CHECKOUT_VIEWED':
-                console.log('PAYMENT_CHECKOUT_VIEWED:', body.payment.id)
                 break
-
             default:
-                console.log('Unknown webhook event:', body.event)
         }
-
         return NextResponse.json({ received: true }, { status: 200 })
     } catch (error: any) {
         console.error('Error processing ASAAS webhook:', error)
-
         logWebhookEvent({
             eventType: 'WEBHOOK_ERROR',
             timestamp: new Date().toISOString(),
@@ -293,10 +243,12 @@ export async function POST(request: NextRequest) {
             error: error.message,
             details: error,
         })
-
         return NextResponse.json(
             { error: 'Webhook processing failed' },
             { status: 500 }
         )
     }
 }
+
+// 🚀 Quick Win: Nova função POST com rate limiting
+export const POST = svlentesRateLimits.asaasWebhook(handleAsaasWebhook);

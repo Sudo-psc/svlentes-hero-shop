@@ -1,12 +1,10 @@
 'use client'
-
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Checkbox } from '@/components/ui/Checkbox'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Calculator, Plus, Minus, CheckCircle, ArrowRight } from 'lucide-react'
 import { BUSINESS_CONSTANTS } from '@/lib/constants'
-
 interface CalculatorData {
     currentSpending: string
     lensType: 'mensal' | 'trimestral' | 'semestral'
@@ -17,23 +15,19 @@ interface CalculatorData {
         consultation: boolean
     }
 }
-
 interface EconomyResult {
     monthlyEconomy: number
     annualEconomy: number
     percentage: number
     planPrice: number
 }
-
 const addOnPrices = BUSINESS_CONSTANTS.addOnPrices
-
 const addOnDescriptions = {
     solution: 'Solução de limpeza mensal',
     drops: 'Lágrimas artificiais',
     case: 'Estojos de reposição',
     consultation: 'Consultas de acompanhamento'
 }
-
 export function EconomyCalculator({ onContinue }: { onContinue: (data: CalculatorData, result: EconomyResult) => void }) {
     const [calculatorData, setCalculatorData] = useState<CalculatorData>({
         currentSpending: '',
@@ -45,25 +39,19 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
             consultation: false
         }
     })
-
     const [showResult, setShowResult] = useState(false)
     const [result, setResult] = useState<EconomyResult | null>(null)
-
     const calculateEconomy = (): EconomyResult => {
         const currentSpending = parseFloat(calculatorData.currentSpending) || 0
-
         const basePlanPrice = BUSINESS_CONSTANTS.planBasePrices[calculatorData.lensType]
-
         // Calcular preço dos add-ons
         const addOnsTotal = Object.entries(calculatorData.addOns)
             .filter(([_, selected]) => selected)
             .reduce((total, [addOn]) => total + addOnPrices[addOn as keyof typeof addOnPrices], 0)
-
         const planPrice = basePlanPrice + addOnsTotal
         const monthlyEconomy = currentSpending - planPrice
         const annualEconomy = monthlyEconomy * 12
         const percentage = currentSpending > 0 ? (monthlyEconomy / currentSpending) * 100 : 0
-
         return {
             monthlyEconomy,
             annualEconomy,
@@ -71,15 +59,12 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
             planPrice
         }
     }
-
     const handleCalculate = () => {
         if (!calculatorData.currentSpending) return
-
         const calculationResult = calculateEconomy()
         setResult(calculationResult)
         setShowResult(true)
     }
-
     const handleAddOnToggle = (addOn: keyof typeof calculatorData.addOns) => {
         setCalculatorData(prev => ({
             ...prev,
@@ -89,21 +74,16 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
             }
         }))
     }
-
     const handleContinue = () => {
         if (result) {
             onContinue(calculatorData, result)
         }
     }
-
     const selectedAddOnsTotal = Object.entries(calculatorData.addOns)
         .filter(([_, selected]) => selected)
         .reduce((total, [addOn]) => total + addOnPrices[addOn as keyof typeof addOnPrices], 0)
-
     const basePlanPrice = BUSINESS_CONSTANTS.planBasePrices[calculatorData.lensType]
-
     const totalPlanPrice = basePlanPrice + selectedAddOnsTotal
-
     return (
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
             <div className="text-center mb-6">
@@ -117,7 +97,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                     Descubra quanto você pode economizar sem compromisso
                 </p>
             </div>
-
             {!showResult ? (
                 <div className="space-y-4">
                     <Input
@@ -129,7 +108,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                         min="0"
                         step="0.01"
                     />
-
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Tipo de lente que usa atualmente
@@ -153,7 +131,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                             ))}
                         </div>
                     </div>
-
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                             Serviços adicionais que utiliza
@@ -179,7 +156,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                             ))}
                         </div>
                     </div>
-
                     {/* Resumo do Carrinho */}
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                         <h4 className="font-semibold text-gray-900 mb-3">Resumo do Plano</h4>
@@ -204,7 +180,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                             </div>
                         </div>
                     </div>
-
                     <Button
                         onClick={handleCalculate}
                         className="w-full flex items-center justify-center space-x-2 font-semibold text-base"
@@ -240,13 +215,11 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                             </div>
                         </div>
                     </div>
-
                     {/* Opt-in */}
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600 text-center">
                             Quer receber esta economia? Deixe seu contato para falarmos com você:
                         </p>
-
                         <div className="space-y-3">
                             <Input
                                 placeholder="Seu nome completo"
@@ -262,7 +235,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                                 className="w-full"
                             />
                         </div>
-
                         <Checkbox>
                             <span className="text-sm text-gray-700">
                                 Aceito receber contato sobre o serviço e concordo com a{' '}
@@ -271,7 +243,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                                 </a>
                             </span>
                         </Checkbox>
-
                         <Button
                             onClick={handleContinue}
                             className="w-full flex items-center justify-center space-x-2 font-semibold text-base"
@@ -280,7 +251,6 @@ export function EconomyCalculator({ onContinue }: { onContinue: (data: Calculato
                             <span>Continuar e Agendar Consulta</span>
                         </Button>
                     </div>
-
                     <button
                         onClick={() => setShowResult(false)}
                         className="w-full text-sm text-gray-500 hover:text-gray-700 transition-colors"

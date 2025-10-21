@@ -4,7 +4,6 @@ import { getAsaasClient } from '@/lib/asaas'
 import { NotificationService } from '@/lib/notifications-advanced'
 import { saveHistoryWithBackup } from '@/lib/history-redundancy'
 import { z } from 'zod'
-
 const paymentMethodSchema = z.object({
   billingType: z.enum(['CREDIT_CARD', 'BOLETO', 'PIX']),
   // For credit card updates
@@ -25,21 +24,17 @@ const paymentMethodSchema = z.object({
     phone: z.string().regex(/^\d{10,11}$/)
   }).optional()
 })
-
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     const body = await req.json()
     const paymentData = paymentMethodSchema.parse(body)
-
     // Find user by database ID or Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
@@ -54,7 +49,6 @@ export async function POST(req: NextRequest) {
         }
       }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
@@ -70,37 +64,30 @@ export async function POST(req: NextRequest) {
         }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     if (user.subscriptions.length === 0) {
       return NextResponse.json(
         { error: 'Nenhuma assinatura ativa encontrada' },
         { status: 404 }
       )
     }
-
     const subscription = user.subscriptions[0]
-
     if (!subscription.asaasSubscriptionId) {
       return NextResponse.json(
         { error: 'Assinatura não está vinculada ao Asaas' },
         { status: 400 }
       )
     }
-
     const asaas = getAsaasClient()
-
     // Prepare update data for Asaas
     const updateData: any = {
       billingType: paymentData.billingType
     }
-
     // If updating to credit card, include card details
     if (paymentData.billingType === 'CREDIT_CARD' && paymentData.creditCard && paymentData.creditCardHolderInfo) {
       updateData.creditCard = {
@@ -110,7 +97,6 @@ export async function POST(req: NextRequest) {
         expiryYear: paymentData.creditCard.expiryYear,
         ccv: paymentData.creditCard.ccv
       }
-
       updateData.creditCardHolderInfo = {
         name: paymentData.creditCardHolderInfo.name,
         email: paymentData.creditCardHolderInfo.email,
@@ -120,29 +106,24 @@ export async function POST(req: NextRequest) {
         phone: paymentData.creditCardHolderInfo.phone
       }
     }
-
     // Update subscription payment method in Asaas
     await asaas.updateSubscription(subscription.asaasSubscriptionId, updateData)
-
     // Extract last 4 digits if credit card
     let last4: string | null = null
     if (paymentData.billingType === 'CREDIT_CARD' && paymentData.creditCard) {
       last4 = paymentData.creditCard.number.slice(-4)
     }
-
     // Map billing type to PaymentMethod enum
     const paymentMethodMap: Record<string, any> = {
       'CREDIT_CARD': 'CREDIT_CARD',
       'BOLETO': 'BOLETO',
       'PIX': 'PIX'
     }
-
     // Store old payment method for history
     const oldPaymentMethod = {
       type: subscription.paymentMethod,
       last4: subscription.paymentMethodLast4
     }
-
     // Update subscription in database
     const updatedSubscription = await prisma.subscription.update({
       where: { id: subscription.id },
@@ -156,7 +137,6 @@ export async function POST(req: NextRequest) {
         paymentMethodLast4: true
       }
     })
-
     // Format payment method names for display
     const paymentMethodNames: Record<string, string> = {
       'CREDIT_CARD': 'Cartão de Crédito',
@@ -164,7 +144,6 @@ export async function POST(req: NextRequest) {
       'BOLETO': 'Boleto Bancário',
       'PIX': 'PIX'
     }
-
     // Register change in history with redundancy backup
     await saveHistoryWithBackup({
       subscriptionId: subscription.id,
@@ -182,7 +161,6 @@ export async function POST(req: NextRequest) {
       ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
       userAgent: req.headers.get('user-agent') || undefined
     })
-
     // Send notifications with advanced service (async, don't wait)
     NotificationService.send({
       userId: user.id,
@@ -196,7 +174,6 @@ export async function POST(req: NextRequest) {
         last4: last4
       }
     }).catch(err => console.error('Error sending notifications:', err))
-
     return NextResponse.json({
       success: true,
       paymentMethod: {
@@ -211,7 +188,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-
     console.error('Error updating payment method:', error)
     return NextResponse.json(
       { error: 'Erro ao atualizar forma de pagamento. Tente novamente mais tarde.' },

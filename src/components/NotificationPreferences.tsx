@@ -1,22 +1,19 @@
 'use client'
-
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/Label'
+import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { 
   type NotificationChannel, 
   type UserNotificationPreferences 
 } from '@/types/user-preferences'
 import { Mail, MessageCircle, Bell, Package, Calendar, Megaphone } from 'lucide-react'
-
 interface NotificationPreferencesProps {
   preferences: UserNotificationPreferences
   phone?: string
   onSave: (preferences: UserNotificationPreferences) => Promise<void>
 }
-
 export function NotificationPreferences({ 
   preferences: initialPreferences, 
   phone,
@@ -24,15 +21,12 @@ export function NotificationPreferences({
 }: NotificationPreferencesProps) {
   const [preferences, setPreferences] = useState(initialPreferences)
   const [saving, setSaving] = useState(false)
-
   const handleChannelChange = (channel: NotificationChannel) => {
     setPreferences(prev => ({ ...prev, channel }))
   }
-
   const handleToggle = (key: keyof Omit<UserNotificationPreferences, 'channel'>) => {
     setPreferences(prev => ({ ...prev, [key]: !prev[key] }))
   }
-
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -41,10 +35,8 @@ export function NotificationPreferences({
       setSaving(false)
     }
   }
-
   const hasChanges = JSON.stringify(preferences) !== JSON.stringify(initialPreferences)
   const canUseWhatsApp = !!phone
-
   return (
     <div className="space-y-6">
       <Card>
@@ -57,7 +49,6 @@ export function NotificationPreferences({
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <Label className="text-base font-semibold">Canal de Comunicação</Label>
-            
             <div className="grid gap-3">
               <button
                 onClick={() => handleChannelChange('EMAIL')}
@@ -82,7 +73,6 @@ export function NotificationPreferences({
                   </div>
                 )}
               </button>
-
               <button
                 onClick={() => canUseWhatsApp && handleChannelChange('WHATSAPP')}
                 disabled={!canUseWhatsApp}
@@ -114,7 +104,6 @@ export function NotificationPreferences({
                   </div>
                 )}
               </button>
-
               <button
                 onClick={() => canUseWhatsApp && handleChannelChange('BOTH')}
                 disabled={!canUseWhatsApp}
@@ -147,7 +136,6 @@ export function NotificationPreferences({
                 )}
               </button>
             </div>
-
             {!canUseWhatsApp && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800">
@@ -156,12 +144,9 @@ export function NotificationPreferences({
               </div>
             )}
           </div>
-
           <hr className="border-gray-200" />
-
           <div className="space-y-4">
             <Label className="text-base font-semibold">Tipos de Notificação</Label>
-
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -178,7 +163,6 @@ export function NotificationPreferences({
                   onCheckedChange={() => handleToggle('subscriptionReminders')}
                 />
               </div>
-
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-blue-100">
@@ -194,7 +178,6 @@ export function NotificationPreferences({
                   onCheckedChange={() => handleToggle('orderUpdates')}
                 />
               </div>
-
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-purple-100">
@@ -210,7 +193,6 @@ export function NotificationPreferences({
                   onCheckedChange={() => handleToggle('appointmentReminders')}
                 />
               </div>
-
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-pink-100">
@@ -228,7 +210,6 @@ export function NotificationPreferences({
               </div>
             </div>
           </div>
-
           <div className="pt-4">
             <Button
               onClick={handleSave}

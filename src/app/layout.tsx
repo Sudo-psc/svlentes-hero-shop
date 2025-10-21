@@ -14,29 +14,26 @@ import { PrivacyProvider } from '@/components/privacy/PrivacyProvider'
 import { CookieConsent } from '@/components/privacy/CookieConsent'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
 import { CriticalCSS } from '@/components/performance/CriticalCSS'
+import { StripeScript } from '@/components/payment/StripeScript'
 import { AuthProvider } from '@/contexts/AuthContext'
 import {
     baseMetadata,
     generateOrganizationStructuredData,
     generateWebSiteStructuredData
 } from '@/lib/seo'
-
 const inter = Inter({
     subsets: ['latin'],
     display: 'swap',
     variable: '--font-inter',
     weight: ['300', '400', '500', '600', '700'],
 })
-
 const poppins = Poppins({
     subsets: ['latin'],
     display: 'swap',
     variable: '--font-poppins',
     weight: ['400', '500', '600', '700', '800'],
 })
-
 export const metadata: Metadata = baseMetadata
-
 export default function RootLayout({
     children,
 }: {
@@ -44,12 +41,10 @@ export default function RootLayout({
 }) {
     // const organizationData = generateOrganizationStructuredData()
     // const websiteData = generateWebSiteStructuredData()
-
     // Initialize chunk error handler
     if (typeof window !== 'undefined') {
         initializeChunkErrorHandler()
     }
-
     return (
         <html lang="pt-BR" className={`${inter.variable} ${poppins.variable}`}>
             <head>
@@ -60,8 +55,9 @@ export default function RootLayout({
                 <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.png" />
                 <link rel="manifest" href="/site.webmanifest" />
                   <link rel="dns-prefetch" href="https://api.whatsapp.com" />
+                <link rel="dns-prefetch" href="https://js.stripe.com" />
                 <meta name="theme-color" content="#0066cc" />
-                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
                 <meta name="format-detection" content="telephone=no" />
             </head>
@@ -81,6 +77,7 @@ export default function RootLayout({
                         <CookieConsent />
                         <WhatsAppFloat />
                         <SmoothScroll />
+                        <StripeScript publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} />
                     </PrivacyProvider>
                 </AuthProvider>
             </body>

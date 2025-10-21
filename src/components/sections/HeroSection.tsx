@@ -1,44 +1,40 @@
 'use client'
-
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { HeroImage } from '@/components/sections/HeroImage'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import { Phone, MessageCircle, Award } from 'lucide-react'
-
+import { useConfigValue } from '@/lib/use-config'
 interface HeroSectionProps {
     className?: string
 }
-
 export function HeroSection({ className = '' }: HeroSectionProps) {
-    // FIXME: Centralized config disabled - using hardcoded copy
-    // Always use hardcoded text (centralized config not available in client components)
+    // Use centralized configuration with fallback to hardcoded values
+    const heroContent = useConfigValue('content.hero', {})
     const copy = {
         badge: '🏆 Pioneiro no Brasil',
         title: {
-            line1: 'Nunca mais',
-            line2: 'fique sem lentes',
+            line1: heroContent?.title?.line1 || 'Nunca mais',
+            line2: heroContent?.title?.line2 || 'fique sem lentes',
+            line3: heroContent?.title?.line3 || 'Receba no conforto da sua casa',
         },
-        subtitle: 'Assinatura com acompanhamento médico especializado.',
-        description: 'Receba suas lentes em casa com logística integrada e consultas regulares.',
-        ctaPrimary: 'Agendar consulta com oftalmologista',
-        ctaSecondary: 'Tirar dúvidas no WhatsApp',
+        subtitle: heroContent?.subtitle || 'Assinatura com acompanhamento médico especializado.',
+        description: heroContent?.description || 'Lentes de contato de qualidade com entrega mensal e suporte dedicado.',
+        ctaPrimary: heroContent?.cta?.primary || 'Agendar consulta com oftalmologista',
+        ctaSecondary: heroContent?.cta?.secondary || 'Tirar dúvidas no WhatsApp',
     }
-
     const handleAgendarConsulta = () => {
         openWhatsAppWithContext('consultation', {
             page: 'landing-page',
             section: 'hero-primary-cta'
         })
     }
-
     const handleFalarWhatsApp = () => {
         openWhatsAppWithContext('hero', {
             page: 'landing-page',
             section: 'hero-secondary-cta'
         })
     }
-
     return (
         <section className={`relative bg-gradient-to-br from-primary-50 via-white to-secondary-50 overflow-hidden ${className}`}>
             {/* Background Pattern */}
@@ -47,13 +43,10 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                 <div className="absolute top-0 right-0 w-96 h-96 bg-secondary-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
                 <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse-slow" style={{ animationDelay: '4s' }}></div>
             </div>
-
             <div className="container-custom relative">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[80vh] py-16 lg:py-24">
-
                     {/* Left Column - Hero Content */}
                     <div className="space-y-8 animate-fade-in">
-
                         {/* Pioneer Badge */}
                         <div className="flex justify-center lg:justify-start">
                             <Badge
@@ -64,23 +57,24 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 {copy.badge}
                             </Badge>
                         </div>
-
                         {/* Main Headline */}
                         <div className="text-center lg:text-left">
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
                                 <span className="block">{copy.title.line1}</span>
                                 <span className="block text-gradient">{copy.title.line2}</span>
+                                {copy.title.line3 && (
+                                    <span className="block text-2xl md:text-3xl lg:text-4xl text-gray-700 mt-2">
+                                        {copy.title.line3}
+                                    </span>
+                                )}
                             </h1>
-
                             <p className="text-xl md:text-2xl text-gray-600 leading-relaxed max-w-2xl mb-4">
                                 {copy.subtitle}
                             </p>
-
                             <p className="text-lg text-gray-700 max-w-2xl">
                                 {copy.description}
                             </p>
                         </div>
-
                         {/* CTAs - Primary destacado */}
                         <div className="flex flex-col gap-4 justify-center lg:justify-start">
                             {/* Mobile: CTA primária full-width */}
@@ -93,7 +87,6 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 <Phone className="w-5 h-5" aria-hidden="true" />
                                 <span>{copy.ctaPrimary}</span>
                             </Button>
-
                             <Button
                                 onClick={handleFalarWhatsApp}
                                 variant="outline"
@@ -105,7 +98,6 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 <span>{copy.ctaSecondary}</span>
                             </Button>
                         </div>
-
                         {/* Mobile Sticky CTA */}
                         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
                             <Button
@@ -118,9 +110,7 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                                 <span>{copy.ctaPrimary}</span>
                             </Button>
                         </div>
-
                     </div>
-
                     {/* Right Column - Hero Image */}
                     <div className="space-y-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
                         {/* Hero Image */}
@@ -131,7 +121,6 @@ export function HeroSection({ className = '' }: HeroSectionProps) {
                     </div>
                 </div>
             </div>
-
             {/* Bottom Wave */}
             <div className="absolute bottom-0 left-0 right-0">
                 <svg

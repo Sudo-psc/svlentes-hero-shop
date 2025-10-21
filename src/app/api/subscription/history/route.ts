@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
 export async function GET(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-
     if (!userId) {
       return NextResponse.json(
         { error: 'Não autenticado' },
         { status: 401 }
       )
     }
-
     // Find user by database ID or Firebase UID
     let user = await prisma.user.findUnique({
       where: { id: userId },
@@ -25,7 +22,6 @@ export async function GET(req: NextRequest) {
         }
       }
     })
-
     if (!user) {
       user = await prisma.user.findUnique({
         where: { firebaseUid: userId },
@@ -40,33 +36,27 @@ export async function GET(req: NextRequest) {
         }
       })
     }
-
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       )
     }
-
     if (user.subscriptions.length === 0) {
       return NextResponse.json(
         { error: 'Nenhuma assinatura ativa encontrada' },
         { status: 404 }
       )
     }
-
     const subscriptionId = user.subscriptions[0].id
-
     // Fetch subscription history with pagination support
     const page = parseInt(req.nextUrl.searchParams.get('page') || '1')
     const limit = parseInt(req.nextUrl.searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
-
     // Get total count
     const totalCount = await prisma.subscriptionHistory.count({
       where: { subscriptionId }
     })
-
     // Fetch history entries
     const history = await prisma.subscriptionHistory.findMany({
       where: { subscriptionId },
@@ -83,7 +73,6 @@ export async function GET(req: NextRequest) {
         createdAt: true
       }
     })
-
     return NextResponse.json({
       history,
       pagination: {

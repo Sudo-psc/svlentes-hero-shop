@@ -1,5 +1,4 @@
 // Core Notification Service for Intelligent Reminder System
-
 import { prisma } from '@/lib/prisma'
 import {
   type NotificationPayload,
@@ -8,7 +7,6 @@ import {
   NotificationStatus,
   InteractionType,
 } from '@/types/reminders'
-
 /**
  * Notification Service
  * Handles creation, scheduling, and sending of notifications across multiple channels
@@ -30,10 +28,8 @@ export class NotificationService {
         status: NotificationStatus.SCHEDULED,
       },
     })
-
     return notification.id
   }
-
   /**
    * Send a notification through specified channel
    */
@@ -43,18 +39,14 @@ export class NotificationService {
         where: { id: notificationId },
         include: { user: true },
       })
-
       if (!notification) {
         throw new Error('Notification not found')
       }
-
       // Update status to SENDING
       await this.updateNotificationStatus(notificationId, NotificationStatus.SENDING)
-
       // Send through appropriate channel
       let success = false
       let error: string | undefined
-
       switch (notification.channel) {
         case NotificationChannel.EMAIL:
           success = await this.sendEmail(notification)
@@ -71,7 +63,6 @@ export class NotificationService {
         default:
           throw new Error(`Unsupported channel: ${notification.channel}`)
       }
-
       // Update notification status
       const newStatus = success ? NotificationStatus.SENT : NotificationStatus.FAILED
       await this.updateNotificationStatus(
@@ -80,12 +71,10 @@ export class NotificationService {
         success ? new Date() : undefined,
         error
       )
-
       // Record interaction
       if (success) {
         await this.recordInteraction(notificationId, notification.userId, InteractionType.SENT)
       }
-
       return {
         success,
         notificationId,
@@ -97,7 +86,6 @@ export class NotificationService {
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Unknown error'
       await this.updateNotificationStatus(notificationId, NotificationStatus.FAILED, undefined, error)
-      
       return {
         success: false,
         notificationId,
@@ -107,7 +95,6 @@ export class NotificationService {
       }
     }
   }
-
   /**
    * Send email notification
    */
@@ -115,101 +102,83 @@ export class NotificationService {
     try {
       // Import email service dynamically to avoid circular dependencies
       const { sendEmail } = await import('@/lib/email')
-      
       const result = await sendEmail({
         to: notification.user.email,
         subject: notification.subject || 'Notification',
         html: notification.content,
       })
-
       return result && 'id' in result
     } catch (error) {
       console.error('Email send failed:', error)
       return false
     }
   }
-
   /**
    * Send WhatsApp notification via SendPulse
    */
   private async sendWhatsApp(notification: any): Promise<boolean> {
     try {
       const { sendPulseClient } = await import('@/lib/sendpulse-client')
-      
       const phone = notification.user.whatsapp || notification.user.phone || notification.metadata?.phone
       if (!phone) {
         throw new Error('Phone number not available')
       }
-
       const quickReplies = notification.metadata?.quickReplies || []
-      
       const result = await sendPulseClient.sendMessageWithQuickReplies({
         phone,
         message: notification.content,
         quickReplies
       })
-
       return result && !result.error
     } catch (error) {
       console.error('WhatsApp send failed:', error)
       return false
     }
   }
-
   /**
    * Send SMS notification via SendPulse
    */
   private async sendSMS(notification: any): Promise<boolean> {
     try {
       const { sendPulseClient } = await import('@/lib/sendpulse-client')
-      
       const phone = notification.user.phone || notification.metadata?.phone
       if (!phone) {
         throw new Error('Phone number not available')
       }
-
       const result = await sendPulseClient.sendMessage({
         phone,
         message: notification.content
       })
-
       return result && !result.error
     } catch (error) {
       console.error('SMS send failed:', error)
       return false
     }
   }
-
   /**
    * Send push notification
    */
   private async sendPush(notification: any): Promise<boolean> {
     try {
-      // TODO: Implement push notification with Firebase
-      // const { sendPushNotification } = await import('@/lib/firebase-admin')
-      
+      const { sendPushNotification } = await import('@/lib/firebase-push')
       const token = notification.metadata?.pushToken
       if (!token) {
         throw new Error('Push token not available')
       }
-
-      // TODO: Uncomment when sendPushNotification is implemented
-      // const result = await sendPushNotification({
-      //   token,
-      //   title: notification.subject || 'Notification',
-      //   body: notification.content,
-      //   data: notification.metadata || {},
-      // })
-      // return result.success
-
-      console.log('Push notification not yet fully integrated:', { token })
-      return false
+      const result = await sendPushNotification({
+        token,
+        title: notification.subject || 'Notification',
+        body: notification.content,
+        data: notification.metadata || {},
+        userId: notification.userId,
+        type: 'transactional'
+      })
+      return result.success
     } catch (error) {
       console.error('Push send failed:', error)
       return false
     }
   }
-
   /**
    * Update notification status
    */
@@ -229,7 +198,6 @@ export class NotificationService {
       },
     })
   }
-
   /**
    * Record user interaction with notification
    */
@@ -247,7 +215,6 @@ export class NotificationService {
         metadata: metadata || {},
       },
     })
-
     // Update notification status based on interaction
     if (actionType === InteractionType.DELIVERED) {
       await this.updateNotificationStatus(notificationId, NotificationStatus.DELIVERED, undefined)
@@ -257,7 +224,6 @@ export class NotificationService {
       await this.updateNotificationStatus(notificationId, NotificationStatus.CLICKED, undefined)
     }
   }
-
   /**
    * Get notifications by user
    */
@@ -273,7 +239,6 @@ export class NotificationService {
       },
     })
   }
-
   /**
    * Get scheduled notifications ready to send
    */
@@ -289,7 +254,6 @@ export class NotificationService {
       take: limit,
     })
   }
-
   /**
    * Cancel a scheduled notification
    */
@@ -302,7 +266,6 @@ export class NotificationService {
       },
     })
   }
-
   /**
    * Get notification by ID
    */
@@ -318,6 +281,5 @@ export class NotificationService {
     })
   }
 }
-
 // Export singleton instance
 export const notificationService = new NotificationService()

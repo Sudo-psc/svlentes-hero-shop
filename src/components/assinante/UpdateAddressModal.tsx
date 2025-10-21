@@ -1,12 +1,10 @@
 'use client'
-
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
+import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { X, Check, AlertCircle, MapPin } from 'lucide-react'
-
 interface AddressData {
   zipCode: string
   street: string
@@ -16,14 +14,12 @@ interface AddressData {
   city: string
   state: string
 }
-
 interface UpdateAddressModalProps {
   isOpen: boolean
   onClose: () => void
   currentAddress?: AddressData | null
   onAddressUpdate: (address: AddressData) => Promise<void>
 }
-
 export function UpdateAddressModal({
   isOpen,
   onClose,
@@ -45,26 +41,20 @@ export function UpdateAddressModal({
   const [loadingCep, setLoadingCep] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-
   const handleCepBlur = async () => {
     const cep = formData.zipCode.replace(/\D/g, '')
-
     if (cep.length !== 8) {
       return
     }
-
     try {
       setLoadingCep(true)
       setError(null)
-
       const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
       const data = await response.json()
-
       if (data.erro) {
         setError('CEP não encontrado')
         return
       }
-
       setFormData(prev => ({
         ...prev,
         street: data.logradouro || prev.street,
@@ -78,10 +68,8 @@ export function UpdateAddressModal({
       setLoadingCep(false)
     }
   }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     try {
       setLoading(true)
       setError(null)
@@ -97,11 +85,9 @@ export function UpdateAddressModal({
       setLoading(false)
     }
   }
-
   const handleChange = (field: keyof AddressData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
       <div className="p-6">
@@ -118,7 +104,6 @@ export function UpdateAddressModal({
             <X className="h-6 w-6" />
           </button>
         </div>
-
         {/* Success Message */}
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -128,7 +113,6 @@ export function UpdateAddressModal({
             </div>
           </div>
         )}
-
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -138,7 +122,6 @@ export function UpdateAddressModal({
             </div>
           </div>
         )}
-
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* CEP */}
@@ -157,7 +140,6 @@ export function UpdateAddressModal({
               <p className="text-xs text-gray-500 mt-1">Buscando CEP...</p>
             )}
           </div>
-
           {/* Street */}
           <div>
             <Label htmlFor="street">Rua *</Label>
@@ -169,7 +151,6 @@ export function UpdateAddressModal({
               required
             />
           </div>
-
           {/* Number and Complement */}
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -192,7 +173,6 @@ export function UpdateAddressModal({
               />
             </div>
           </div>
-
           {/* Neighborhood */}
           <div>
             <Label htmlFor="neighborhood">Bairro *</Label>
@@ -204,7 +184,6 @@ export function UpdateAddressModal({
               required
             />
           </div>
-
           {/* City and State */}
           <div className="grid md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
@@ -229,7 +208,6 @@ export function UpdateAddressModal({
               />
             </div>
           </div>
-
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <Button

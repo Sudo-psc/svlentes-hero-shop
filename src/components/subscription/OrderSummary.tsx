@@ -1,13 +1,11 @@
 'use client'
-
 import { Check, Edit2, ShoppingCart, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Checkbox } from '@/components/ui/Checkbox'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { pricingPlans } from '@/data/pricing-plans'
 import { ContactData, LensData } from '@/types/subscription'
 import { useOrderContactForm } from '@/hooks/useOrderContactForm'
-
 interface OrderSummaryProps {
     planId: string
     billingCycle: 'monthly' | 'annual'
@@ -16,7 +14,6 @@ interface OrderSummaryProps {
     onBack: () => void
     onConfirm: (contactData: ContactData) => void
 }
-
 const addOnPrices: Record<string, { name: string; price: number }> = {
     solution: { name: 'Solução de Limpeza', price: 25 },
     drops: { name: 'Lágrimas Artificiais', price: 15 },
@@ -25,7 +22,6 @@ const addOnPrices: Record<string, { name: string; price: number }> = {
     insurance: { name: 'Seguro Premium', price: 20 },
     express: { name: 'Entrega Express', price: 30 }
 }
-
 export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, onConfirm }: OrderSummaryProps) {
     const {
         contactData,
@@ -37,15 +33,12 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
         setBillingType,
         isValid,
     } = useOrderContactForm()
-
     const plan = pricingPlans.find(p => p.id === planId)
     if (!plan) return null
-
     const planPrice = billingCycle === 'monthly' ? plan.priceMonthly : plan.priceAnnual / 12
     const addOnsTotal = addOns.reduce((sum, addOnId) => sum + (addOnPrices[addOnId]?.price || 0), 0)
     const monthlyTotal = planPrice + addOnsTotal
     const annualTotal = billingCycle === 'annual' ? plan.priceAnnual + (addOnsTotal * 12) : monthlyTotal * 12
-
     return (
         <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
@@ -59,7 +52,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                     Revise os detalhes antes de finalizar
                 </p>
             </div>
-
             <div className="grid md:grid-cols-2 gap-6">
                 {/* Order Details */}
                 <div className="space-y-6">
@@ -86,7 +78,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                             </div>
                         </div>
                     </div>
-
                     {/* Lens Details */}
                     <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
                         <div className="flex items-center justify-between mb-4">
@@ -124,7 +115,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                             </div>
                         </div>
                     </div>
-
                     {/* Add-ons */}
                     {addOns.length > 0 && (
                         <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
@@ -154,7 +144,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                         </div>
                     )}
                 </div>
-
                 {/* Contact Form & Total */}
                 <div className="space-y-6">
                     {/* Contact Information */}
@@ -178,7 +167,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                     </p>
                                 )}
                             </div>
-
                             <div>
                                 <Input
                                     label="WhatsApp"
@@ -197,7 +185,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                     </p>
                                 )}
                             </div>
-
                             <div>
                                 <Input
                                     label="E-mail"
@@ -216,7 +203,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                     </p>
                                 )}
                             </div>
-
                             <div>
                                 <Input
                                     label="CPF/CNPJ"
@@ -276,7 +262,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                                         <p className="text-red-600 text-xs mt-1 ml-7">{errors.acceptsTerms}</p>
                                     )}
                                 </div>
-
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                     <label className="flex items-start space-x-3 cursor-pointer">
                                         <Checkbox
@@ -300,7 +285,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                             </div>
                         </div>
                     </div>
-
                     {/* Price Summary */}
                     <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl p-6 text-white">
                         <h4 className="font-semibold mb-4">Resumo de Valores</h4>
@@ -337,7 +321,6 @@ export function OrderSummary({ planId, billingCycle, lensData, addOns, onBack, o
                             </div>
                         </div>
                     </div>
-
                     {/* Actions */}
                     <div className="space-y-3">
                         <Button

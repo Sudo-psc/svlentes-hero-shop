@@ -1,13 +1,11 @@
-import { Badge } from '@/components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import { trustBadges } from '@/data/trust-indicators'
 import { Shield, CheckCircle } from 'lucide-react'
-
 interface TrustBadgesProps {
     variant?: 'horizontal' | 'vertical' | 'grid'
     showIcons?: boolean
     className?: string
 }
-
 export function TrustBadges({
     variant = 'horizontal',
     showIcons = true,
@@ -18,7 +16,6 @@ export function TrustBadges({
         vertical: 'flex flex-col space-y-3',
         grid: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3'
     }
-
     return (
         <div className={`${layoutClasses[variant]} ${className}`}>
             {trustBadges.map((badge) => (
@@ -34,7 +31,6 @@ export function TrustBadges({
                             )}
                         </div>
                     )}
-
                     <Badge
                         variant="default"
                         className={`${badge.color} transition-all duration-200 group-hover:scale-105 text-xs`}
@@ -46,7 +42,6 @@ export function TrustBadges({
         </div>
     )
 }
-
 // Componente simplificado para selo Pioneiro (outros badges no Footer)
 export function InlineTrustIndicators({ className = '' }: { className?: string }) {
     return (

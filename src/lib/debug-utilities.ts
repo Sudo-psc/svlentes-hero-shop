@@ -2,13 +2,10 @@
  * Debugging Utilities for SendPulse Integration
  * Comprehensive debugging tools for message tracking and troubleshooting
  */
-
 import { logger, LogCategory } from './logger'
 import { messageStatusTracker, MessageStatus } from './message-status-tracker'
 import { PrismaClient } from '@prisma/client'
-
 const prisma = new PrismaClient()
-
 /**
  * Debug Level
  */
@@ -18,7 +15,6 @@ export enum DebugLevel {
   VERBOSE = 'verbose',
   TRACE = 'trace'
 }
-
 /**
  * Message Flow Event
  */
@@ -29,7 +25,6 @@ export interface MessageFlowEvent {
   duration?: number
   data?: Record<string, any>
 }
-
 /**
  * Message Debug Info
  */
@@ -59,7 +54,6 @@ export interface MessageDebugInfo {
   }
   metadata?: Record<string, any>
 }
-
 /**
  * Conversation Debug Info
  */
@@ -82,7 +76,6 @@ export interface ConversationDebugInfo {
     escalated: boolean
   }>
 }
-
 /**
  * System Health Status
  */
@@ -101,13 +94,11 @@ export interface SystemHealthStatus {
   }
   alerts: string[]
 }
-
 /**
  * Debug Utilities Class
  */
 export class DebugUtilities {
   private debugLevel: DebugLevel = DebugLevel.STANDARD
-
   /**
    * Set debug level
    */
@@ -115,14 +106,12 @@ export class DebugUtilities {
     this.debugLevel = level
     logger.info(LogCategory.SYSTEM, `Debug level set to: ${level}`)
   }
-
   /**
    * Get comprehensive message debug info
    */
   async getMessageDebugInfo(messageId: string): Promise<MessageDebugInfo | null> {
     try {
       const timer = logger.startTimer()
-
       // Get message interaction
       const interaction = await prisma.whatsAppInteraction.findUnique({
         where: { messageId },
@@ -131,19 +120,15 @@ export class DebugUtilities {
           user: true
         }
       })
-
       if (!interaction) {
         logger.warn(LogCategory.WHATSAPP, `Message not found: ${messageId}`)
         return null
       }
-
       // Parse metadata
       const metadata = interaction.intent ? JSON.parse(interaction.intent) : {}
       const statusHistory = metadata.statusHistory || []
-
       // Build flow events
       const flowEvents: MessageFlowEvent[] = []
-
       flowEvents.push({
         timestamp: interaction.createdAt,
         stage: 'received',
@@ -153,7 +138,6 @@ export class DebugUtilities {
           contentLength: interaction.content.length
         }
       })
-
       if (interaction.response) {
         flowEvents.push({
           timestamp: new Date(interaction.createdAt.getTime() + (interaction.processingTime || 0)),
@@ -166,7 +150,6 @@ export class DebugUtilities {
           }
         })
       }
-
       statusHistory.forEach((statusEvent: any) => {
         flowEvents.push({
           timestamp: new Date(statusEvent.timestamp),
@@ -178,26 +161,21 @@ export class DebugUtilities {
           }
         })
       })
-
       // Calculate stages and durations
       const stages: MessageDebugInfo['stages'] = {
         received: interaction.createdAt
       }
-
       const durations: MessageDebugInfo['durations'] = {
         processing: interaction.processingTime || undefined
       }
-
       if (metadata.deliveryTime) {
         durations.delivery = metadata.deliveryTime
         stages.delivered = new Date(interaction.createdAt.getTime() + metadata.deliveryTime)
       }
-
       if (metadata.readTime) {
         durations.readTime = metadata.readTime
         stages.read = new Date((stages.delivered?.getTime() || interaction.createdAt.getTime()) + metadata.readTime)
       }
-
       // Get error info if failed
       const currentStatus = metadata.currentStatus as MessageStatus
       const errorInfo = (currentStatus === MessageStatus.FAILED || currentStatus === MessageStatus.REJECTED) ? {
@@ -205,7 +183,6 @@ export class DebugUtilities {
         errorMessage: statusHistory[statusHistory.length - 1]?.errorMessage || 'No error message',
         timestamp: new Date(statusHistory[statusHistory.length - 1]?.timestamp)
       } : undefined
-
       const debugInfo: MessageDebugInfo = {
         messageId,
         phone: interaction.customerPhone,
@@ -217,24 +194,20 @@ export class DebugUtilities {
         errorInfo,
         metadata
       }
-
       const duration = timer()
       logger.debug(LogCategory.WHATSAPP, `Message debug info retrieved in ${duration}ms`, { messageId })
-
       return debugInfo
     } catch (error) {
       logger.error(LogCategory.SYSTEM, 'Error getting message debug info', error as Error, { messageId })
       throw error
     }
   }
-
   /**
    * Get conversation debug info
    */
   async getConversationDebugInfo(phone: string): Promise<ConversationDebugInfo | null> {
     try {
       const timer = logger.startTimer()
-
       // Get conversation
       const conversation = await prisma.whatsAppConversation.findUnique({
         where: { customerPhone: phone },
@@ -245,12 +218,10 @@ export class DebugUtilities {
           }
         }
       })
-
       if (!conversation) {
         logger.warn(LogCategory.WHATSAPP, `Conversation not found for phone: ${phone}`)
         return null
       }
-
       // Collect intents and sentiments
       const intents = new Set<string>()
       const sentiments = new Set<string>()
@@ -258,19 +229,16 @@ export class DebugUtilities {
       let tickets = 0
       let totalResponseTime = 0
       let responseCount = 0
-
       const messages = conversation.messages.map(msg => {
         if (msg.intent) intents.add(msg.intent)
         if (msg.sentiment) sentiments.add(msg.sentiment)
         if (msg.escalationRequired) escalations++
         if (msg.ticketCreated) tickets++
-
         // Calculate response time if available
         if (!msg.isFromCustomer && msg.processingTime) {
           totalResponseTime += msg.processingTime
           responseCount++
         }
-
         return {
           messageId: msg.messageId,
           timestamp: msg.createdAt,
@@ -280,9 +248,7 @@ export class DebugUtilities {
           escalated: msg.escalationRequired
         }
       })
-
       const averageResponseTime = responseCount > 0 ? totalResponseTime / responseCount : 0
-
       const debugInfo: ConversationDebugInfo = {
         conversationId: conversation.id,
         phone,
@@ -295,17 +261,14 @@ export class DebugUtilities {
         averageResponseTime,
         messages
       }
-
       const duration = timer()
       logger.debug(LogCategory.WHATSAPP, `Conversation debug info retrieved in ${duration}ms`, { phone })
-
       return debugInfo
     } catch (error) {
       logger.error(LogCategory.SYSTEM, 'Error getting conversation debug info', error as Error, { phone })
       throw error
     }
   }
-
   /**
    * Get system health status
    */
@@ -313,7 +276,6 @@ export class DebugUtilities {
     try {
       const timer = logger.startTimer()
       const alerts: string[] = []
-
       // Check database
       let databaseHealthy = false
       try {
@@ -323,27 +285,21 @@ export class DebugUtilities {
         alerts.push('Database connection failed')
         logger.error(LogCategory.DATABASE, 'Database health check failed', error as Error)
       }
-
       // Check SendPulse (basic check)
       const sendpulseHealthy = true // TODO: Implement actual SendPulse health check
-
       // Check LangChain (basic check)
       const langchainHealthy = true // TODO: Implement actual LangChain health check
-
       // Get metrics from last 24 hours
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-
       const messagesLast24h = await prisma.whatsAppInteraction.count({
         where: {
           createdAt: { gte: yesterday }
         }
       })
-
       // Get failure rate
       const stats = await messageStatusTracker.getGlobalStats(1)
       const failureRate = stats.failureRate
-
       // Determine overall status
       let status: 'healthy' | 'degraded' | 'critical' = 'healthy'
       if (!databaseHealthy) {
@@ -355,7 +311,6 @@ export class DebugUtilities {
         status = 'degraded'
         alerts.push(`Slow delivery times: ${stats.averageDeliveryTime.toFixed(0)}ms`)
       }
-
       const healthStatus: SystemHealthStatus = {
         status,
         checks: {
@@ -371,36 +326,30 @@ export class DebugUtilities {
         },
         alerts
       }
-
       const duration = timer()
       logger.info(LogCategory.SYSTEM, `System health check completed in ${duration}ms`, { status })
-
       return healthStatus
     } catch (error) {
       logger.error(LogCategory.SYSTEM, 'Error getting system health', error as Error)
       throw error
     }
   }
-
   /**
    * Trace webhook processing
    */
   async traceWebhookProcessing(webhookData: any, source: string = 'sendpulse'): Promise<void> {
     if (this.debugLevel === DebugLevel.MINIMAL) return
-
     logger.debug(LogCategory.WEBHOOK, `Webhook received from ${source}`, {
       source,
       dataKeys: Object.keys(webhookData),
       dataSize: JSON.stringify(webhookData).length
     })
-
     if (this.debugLevel === DebugLevel.VERBOSE || this.debugLevel === DebugLevel.TRACE) {
       logger.debug(LogCategory.WEBHOOK, 'Full webhook payload', {
         payload: webhookData
       })
     }
   }
-
   /**
    * Trace message processing pipeline
    */
@@ -410,40 +359,32 @@ export class DebugUtilities {
     duration?: number
   ): Promise<void> {
     if (this.debugLevel === DebugLevel.MINIMAL) return
-
     logger.debug(LogCategory.WHATSAPP, `Message processing: ${stage}`, {
       stage,
       duration,
       ...data
     })
   }
-
   /**
    * Generate debug report for a message
    */
   async generateMessageReport(messageId: string): Promise<string> {
     const debugInfo = await this.getMessageDebugInfo(messageId)
-
     if (!debugInfo) {
       return `Message ${messageId} not found`
     }
-
     let report = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📱 MESSAGE DEBUG REPORT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 Message ID: ${debugInfo.messageId}
 Phone: ${debugInfo.phone}
 Current Status: ${debugInfo.status}
 Total Duration: ${debugInfo.totalDuration}ms
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 STAGES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 `
-
     if (debugInfo.stages.received) {
       report += `✅ Received: ${debugInfo.stages.received.toISOString()}\n`
     }
@@ -462,14 +403,11 @@ Total Duration: ${debugInfo.totalDuration}ms
     if (debugInfo.stages.failed) {
       report += `❌ Failed: ${debugInfo.stages.failed.toISOString()}\n`
     }
-
     report += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📈 FLOW EVENTS (${debugInfo.flowEvents.length})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 `
-
     debugInfo.flowEvents.forEach((event, index) => {
       report += `${index + 1}. [${event.timestamp.toISOString()}] ${event.stage} → ${event.status}`
       if (event.duration) {
@@ -477,66 +415,51 @@ Total Duration: ${debugInfo.totalDuration}ms
       }
       report += '\n'
     })
-
     if (debugInfo.errorInfo) {
       report += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ❌ ERROR DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 Error Code: ${debugInfo.errorInfo.errorCode}
 Error Message: ${debugInfo.errorInfo.errorMessage}
 Timestamp: ${debugInfo.errorInfo.timestamp.toISOString()}
 `
     }
-
     report += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `
-
     return report
   }
-
   /**
    * Generate conversation report
    */
   async generateConversationReport(phone: string): Promise<string> {
     const debugInfo = await this.getConversationDebugInfo(phone)
-
     if (!debugInfo) {
       return `Conversation for phone ${phone} not found`
     }
-
     let report = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💬 CONVERSATION DEBUG REPORT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 Phone: ${debugInfo.phone}
 Conversation ID: ${debugInfo.conversationId}
 Message Count: ${debugInfo.messageCount}
 Last Message: ${debugInfo.lastMessageAt.toISOString()}
 Average Response Time: ${debugInfo.averageResponseTime.toFixed(0)}ms
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 STATISTICS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 Unique Intents: ${debugInfo.intents.length}
 ${debugInfo.intents.map(i => `  • ${i}`).join('\n')}
-
 Sentiments: ${debugInfo.sentiments.length}
 ${debugInfo.sentiments.map(s => `  • ${s}`).join('\n')}
-
 Escalations: ${debugInfo.escalations}
 Tickets Created: ${debugInfo.tickets}
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 RECENT MESSAGES (${Math.min(10, debugInfo.messages.length)})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 `
-
     debugInfo.messages.slice(0, 10).forEach((msg, index) => {
       const direction = msg.isFromCustomer ? '📥' : '📤'
       const escalated = msg.escalated ? ' 🚨' : ''
@@ -548,14 +471,11 @@ Tickets Created: ${debugInfo.tickets}
         report += `   Sentiment: ${msg.sentiment}\n`
       }
     })
-
     report += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `
-
     return report
   }
 }
-
 // Singleton instance
 export const debugUtilities = new DebugUtilities()

@@ -1,29 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { emailReminderService, type ReminderMessage } from '@/lib/reminders/email-reminder-service'
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { reminder } = body as {
       reminder: ReminderMessage
     }
-
     if (!reminder) {
       return NextResponse.json(
         { error: 'Reminder data is required' },
         { status: 400 }
       )
     }
-
     if (!reminder.email) {
       return NextResponse.json(
         { error: 'Email is required for reminders' },
         { status: 400 }
       )
     }
-
     const success = await emailReminderService.sendReminder(reminder)
-
     if (success) {
       return NextResponse.json({
         success: true,
@@ -47,7 +42,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
 export async function GET() {
   return NextResponse.json({
     message: 'Email Reminder API',

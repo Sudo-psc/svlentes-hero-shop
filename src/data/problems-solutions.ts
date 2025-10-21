@@ -1,5 +1,4 @@
 // Dados para a seção Problema-Solução
-
 export const customerProblems = [
     {
         id: 'running-out',
@@ -32,7 +31,6 @@ export const customerProblems = [
         text: 'Quando perco ou danifica, fico sem solução'
     }
 ]
-
 export const svlentesSolutions = [
     {
         id: 'automatic-delivery',
@@ -71,7 +69,6 @@ export const svlentesSolutions = [
         description: 'Reposição rápida em caso de perda ou dano, com seguro incluído'
     }
 ]
-
 // Estatísticas de impacto
 export const impactStats = [
     {

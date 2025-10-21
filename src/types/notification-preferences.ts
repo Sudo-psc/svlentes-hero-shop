@@ -2,9 +2,7 @@
  * Granular Notification Preferences Schema
  * Allows users to control notifications at channel and event type level
  */
-
 export type NotificationChannel = 'email' | 'whatsapp' | 'sms' | 'push'
-
 export type NotificationEventType =
   | 'plan_change'
   | 'address_update'
@@ -20,14 +18,12 @@ export type NotificationEventType =
   | 'reminder_renewal'
   | 'marketing'
   | 'system_updates'
-
 export interface ChannelPreferences {
   enabled: boolean
   events: {
     [K in NotificationEventType]?: boolean
   }
 }
-
 export interface NotificationPreferences {
   channels: {
     email: ChannelPreferences
@@ -35,7 +31,6 @@ export interface NotificationPreferences {
     sms: ChannelPreferences
     push: ChannelPreferences
   }
-
   // Global settings
   quietHours: {
     enabled: boolean
@@ -43,14 +38,12 @@ export interface NotificationPreferences {
     end: string   // HH:mm format (e.g., "08:00")
     timezone: string // e.g., "America/Sao_Paulo"
   }
-
   // Frequency limits
   frequency: {
     maxPerDay: number
     maxPerWeek: number
     respectQuietHours: boolean
   }
-
   // Fallback configuration
   fallback: {
     enabled: boolean
@@ -58,15 +51,12 @@ export interface NotificationPreferences {
     fallbackChannel: NotificationChannel
     fallbackDelayMinutes: number // Time to wait before fallback
   }
-
   // Language and format
   language: 'pt-BR' | 'en-US'
   format: 'html' | 'plain'
-
   // Last updated
   updatedAt: Date
 }
-
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   channels: {
     email: {
@@ -146,33 +136,27 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
       }
     }
   },
-
   quietHours: {
     enabled: true,
     start: '22:00',
     end: '08:00',
     timezone: 'America/Sao_Paulo'
   },
-
   frequency: {
     maxPerDay: 10,
     maxPerWeek: 50,
     respectQuietHours: true
   },
-
   fallback: {
     enabled: true,
     primaryChannel: 'email',
     fallbackChannel: 'whatsapp',
     fallbackDelayMinutes: 30
   },
-
   language: 'pt-BR',
   format: 'html',
-
   updatedAt: new Date()
 }
-
 /**
  * Event to human-readable label mapping
  */
@@ -248,7 +232,6 @@ export const EVENT_LABELS: Record<NotificationEventType, { pt: string; en: strin
     description: 'Informações sobre manutenção e atualizações'
   }
 }
-
 /**
  * Channel to human-readable label mapping
  */

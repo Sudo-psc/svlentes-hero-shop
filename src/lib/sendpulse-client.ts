@@ -2,7 +2,6 @@
  * SendPulse WhatsApp API Client (Refactored - Phase 3)
  * Bot-based API with contact management, rate limiting, retry logic, and template messages
  */
-
 import { sendPulseAuth } from './sendpulse-auth'
 import { botManager } from './sendpulse/bot-manager'
 import { contactCache } from './sendpulse/contact-cache'
@@ -40,18 +39,15 @@ import {
   ConversationWindowExpiredError,
   createSendPulseError
 } from './sendpulse/errors'
-
 export class SendPulseClient {
   private webhookToken: string
   private baseUrl: string
   private botId: string | null = null
-
   constructor() {
     this.webhookToken = process.env.SENDPULSE_WEBHOOK_TOKEN || ''
     this.baseUrl = 'https://api.sendpulse.com/whatsapp'
     this.botId = process.env.SENDPULSE_BOT_ID || null
   }
-
   /**
    * Get API token from auth service
    */
@@ -61,11 +57,9 @@ export class SendPulseClient {
     if (staticToken) {
       return staticToken
     }
-
     // Generate from OAuth using app_id and app_secret
     return await sendPulseAuth.getAccessToken()
   }
-
   /**
    * Get bot ID (from config or default bot)
    */
@@ -73,12 +67,10 @@ export class SendPulseClient {
     if (this.botId) {
       return this.botId
     }
-
     const defaultBot = await botManager.getDefaultBot()
     this.botId = defaultBot.id
     return this.botId
   }
-
   /**
    * Get or create contact from phone number
    * Uses cache to avoid repeated API calls
@@ -86,7 +78,6 @@ export class SendPulseClient {
   private async getOrCreateContact(phone: string, name?: string): Promise<SendPulseContact> {
     const botId = await this.getBotId()
     const cleanPhone = phone.replace(/\D/g, '')
-
     // Check cache first
     const cachedContactId = contactCache.getContactId(botId, cleanPhone)
     if (cachedContactId) {
@@ -96,17 +87,14 @@ export class SendPulseClient {
         return contact
       }
     }
-
     // Create or get contact from API
     try {
       const apiToken = await this.getApiToken()
-
       const payload: CreateContactRequest = {
         bot_id: botId,
         phone: cleanPhone,
         ...(name && { name })
       }
-
       const response = await fetch(`${this.baseUrl}/contacts`, {
         method: 'POST',
         headers: {
@@ -115,7 +103,6 @@ export class SendPulseClient {
         },
         body: JSON.stringify(payload)
       })
-
       if (!response.ok) {
         // If contact exists, try to find it in the list
         if (response.status === 400) {
@@ -127,14 +114,10 @@ export class SendPulseClient {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       const contact: SendPulseContact = await response.json()
-
       // Cache the contact
       contactCache.set(botId, cleanPhone, contact)
-
       return contact
-
     } catch (error) {
       if (error instanceof SendPulseContactError) {
         throw error
@@ -145,13 +128,11 @@ export class SendPulseClient {
       )
     }
   }
-
   /**
    * Find contact by phone number in contacts list
    */
   private async findContactByPhone(botId: string, phone: string): Promise<SendPulseContact> {
     const apiToken = await this.getApiToken()
-
     const response = await fetch(
       `${this.baseUrl}/contacts?bot_id=${botId}&limit=100`,
       {
@@ -161,14 +142,11 @@ export class SendPulseClient {
         }
       }
     )
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       throw createSendPulseError(response.status, errorData)
     }
-
     const data: SendPulseContactsResponse = await response.json()
-
     // CRITICAL FIX: Use exact phone number match, not substring
     // channel_data.phone is stored as number (without country code prefix in some cases)
     const phoneNum = parseInt(phone)
@@ -177,7 +155,6 @@ export class SendPulseClient {
       c.channel_data.phone.toString() === phone ||
       c.channel_data.phone.toString() === phone.replace(/^55/, '')
     )
-
     if (!contact) {
       console.error(`[SendPulse] Contact not found for phone ${phone}`)
       console.error(`[SendPulse] Available contacts:`, data.data.map(c => ({
@@ -187,27 +164,22 @@ export class SendPulseClient {
       })))
       throw new SendPulseContactError(`Contact with phone ${phone} not found`)
     }
-
     console.log(`[SendPulse] Found contact:`, {
       id: contact.id,
       phone: contact.channel_data.phone,
       name: contact.channel_data.name,
       is_chat_opened: contact.is_chat_opened
     })
-
     // Cache the found contact
     contactCache.set(botId, phone, contact)
-
     return contact
   }
-
   /**
    * Get contact by ID
    */
   private async getContactById(contactId: string): Promise<SendPulseContact | null> {
     try {
       const apiToken = await this.getApiToken()
-
       const response = await fetch(
         `${this.baseUrl}/contacts/${contactId}`,
         {
@@ -217,7 +189,6 @@ export class SendPulseClient {
           }
         }
       )
-
       if (!response.ok) {
         if (response.status === 404) {
           return null
@@ -225,15 +196,57 @@ export class SendPulseClient {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       return await response.json()
-
     } catch (error) {
       console.error('Error getting contact by ID:', error)
       return null
     }
   }
-
+  /**
+   * Get fresh contact data with real-time validation
+   * Bypasses cache for conversation status if data is stale
+   */
+  async getFreshContact(phone: string): Promise<SendPulseContact | null> {
+    const botId = await this.getBotId()
+    const cleanPhone = phone.toString().replace(/\D/g, '')
+    // Check cache first
+    const cachedContactId = contactCache.getContactId(botId, cleanPhone)
+    if (cachedContactId) {
+      // Check if conversation status is fresh
+      if (contactCache.isConversationStatusFresh(botId, cleanPhone)) {
+        const contact = await this.getContactById(cachedContactId)
+        if (contact) {
+          return contact
+        }
+      } else {
+        // Conversation status is stale, get fresh data
+        const freshContact = await this.getContactById(cachedContactId)
+        if (freshContact) {
+          // Update cache with fresh data
+          contactCache.set(botId, cleanPhone, freshContact)
+          return freshContact
+        }
+      }
+    }
+    // No cached contact, search for it
+    return await this.findContactByPhone(phone)
+  }
+  /**
+   * Validate conversation window status in real-time
+   * Use this before sending messages to ensure 24h window is still open
+   */
+  async validateConversationWindow(phone: string): Promise<boolean> {
+    const botId = await this.getBotId()
+    const cleanPhone = phone.toString().replace(/\D/g, '')
+    // Get fresh contact data
+    const contact = await this.getFreshContact(phone)
+    if (!contact) {
+      return false
+    }
+    // Update cache with fresh conversation status
+    contactCache.updateConversationCheckTime(botId, cleanPhone)
+    return contact.is_chat_opened || false
+  }
   /**
    * Check if contact is in 24-hour conversation window
    */
@@ -241,7 +254,6 @@ export class SendPulseClient {
     const contact = await this.getContactById(contactId)
     return contact?.is_chat_opened || false
   }
-
   /**
    * Send message to contact by ID with rate limiting, retry, and template fallback
    *
@@ -260,54 +272,43 @@ export class SendPulseClient {
     try {
       // 1. Rate limiting
       await rateLimiter.acquire()
-
       // 2. Check if contact is in 24-hour window (skip ONLY for template messages)
       if (message.type !== 'template') {
         // CRITICAL: Use override from fresh contact data if available
         // Only fallback to API call if no override provided
         let isActive: boolean
-
         if (isChatOpenedOverride !== undefined) {
           isActive = isChatOpenedOverride
-          console.log(`[SendPulse] Using fresh contact data: is_chat_opened=${isActive}`)
+        } else if (contactPhone) {
+          console.log(`Validating conversation window for phone: ${contactPhone}`)
+          isActive = await this.validateConversationWindow(contactPhone)
         } else {
-          console.log(`[SendPulse] No override - checking via API (contactId: ${contactId})`)
+          console.log(`Checking if contact is active: ${contactId}`)
           isActive = await this.isContactActive(contactId)
         }
-
         if (!isActive) {
-          console.log(`[SendPulse] ❌ Contact window CLOSED - is_chat_opened=false`)
-          console.log(`[SendPulse] ⚠️ Cannot send message - 24h window expired. User must send message first to reopen window.`)
-
           // TEMPORARY FIX: Skip template fallback until templates are approved
           // Template fallback requires approved templates in SendPulse account
           console.warn(`[SendPulse] Template fallback disabled - configure approved templates in SendPulse to enable`)
-
           // Return early without sending - avoids template errors
           throw new ConversationWindowExpiredError(contactId)
         }
-
-        console.log(`[SendPulse] ✅ Contact window OPEN - is_chat_opened=true`)
       }
-
       // 3. Send with retry logic
       const result = await retryManager.execute(async () => {
         const apiToken = await this.getApiToken()
-
         // Use standard endpoint with contact_id
         const endpoint = '/contacts/send'
         const payload = {
           contact_id: contactId,
           message
         }
-
         console.log(`[SendPulse] Sending to API:`, {
           endpoint,
           contactId,
           messageType: message.type,
           payload: JSON.stringify(payload)
         })
-
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
           method: 'POST',
           headers: {
@@ -316,23 +317,18 @@ export class SendPulseClient {
           },
           body: JSON.stringify(payload)
         })
-
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
           console.error(`[SendPulse] API Error ${response.status}:`, JSON.stringify(errorData, null, 2))
           throw createSendPulseError(response.status, errorData)
         }
-
         return await response.json()
       })
-
       // 4. Track analytics
       const botId = await this.getBotId()
       const messageType = message.type as MessageType | 'template'
       analyticsService.trackMessage(contactId, botId, messageType, 'outbound')
-
       return result
-
     } catch (error) {
       if (error instanceof ConversationWindowExpiredError || error instanceof SendPulseMessageError) {
         throw error
@@ -344,7 +340,6 @@ export class SendPulseClient {
       )
     }
   }
-
   /**
    * Template message fallback when 24h window expires
    */
@@ -354,7 +349,6 @@ export class SendPulseClient {
   ): Promise<SendMessageResponse> {
     try {
       const botId = await this.getBotId()
-
       // Get default reengagement template
       const template = await templateManager.getDefaultReengagementTemplate(botId)
       if (!template) {
@@ -363,7 +357,6 @@ export class SendPulseClient {
           'TEMPLATE_NOT_FOUND'
         )
       }
-
       // Extract text from original message for template parameters
       let bodyText = ''
       if (originalMessage.type === 'text') {
@@ -371,17 +364,14 @@ export class SendPulseClient {
       } else if ('caption' in originalMessage && typeof originalMessage.caption === 'string') {
         bodyText = originalMessage.caption
       }
-
       // Build template message (simplified - adjust based on your template structure)
       const templateMessage = templateManager.buildTemplateMessage(
         template.name,
         template.language,
         bodyText ? { body: [bodyText.substring(0, 60)] } : undefined
       )
-
       // Send template without fallback (avoid infinite loop)
       return await this.sendMessageToContact(contactId, templateMessage, false)
-
     } catch (error) {
       console.error('[SendPulse] Template fallback failed:', error)
       throw new SendPulseMessageError(
@@ -391,11 +381,9 @@ export class SendPulseClient {
       )
     }
   }
-
   // ============================================================================
   // Public API Methods (Backward Compatible + New Features)
   // ============================================================================
-
   /**
    * Send text message (backward compatible with auto phone→contact conversion)
    */
@@ -403,21 +391,17 @@ export class SendPulseClient {
     try {
       // Get or create contact from phone
       const contact = await this.getOrCreateContact(params.phone)
-
       // CRITICAL: Use the is_chat_opened from the contact we just fetched
       // The getOrCreateContact uses findContactByPhone which has FRESH data
       // DON'T use getContactById again - it has stale data!
       const isChatOpened = params.isChatOpened !== undefined ? params.isChatOpened : contact.is_chat_opened
-
       console.log(`[SendPulse] Contact status from fresh data:`, {
         contactId: contact.id,
         is_chat_opened: contact.is_chat_opened,
         override: params.isChatOpened
       })
-
       // Build message based on params
       let message: WhatsAppMessage
-
       if (params.buttons && params.buttons.length > 0) {
         // Interactive buttons message
         message = {
@@ -461,15 +445,12 @@ export class SendPulseClient {
           }
         } as TextMessage
       }
-
       return await this.sendMessageToContact(contact.id, message, true, isChatOpened, params.phone)
-
     } catch (error) {
       console.error('Error sending SendPulse message:', error)
       throw error
     }
   }
-
   /**
    * Send message with quick reply buttons
    */
@@ -486,7 +467,6 @@ export class SendPulseClient {
         id: `option_${reply.toLowerCase().replace(/\s+/g, '_').substring(0, 20)}`
       }
     }))
-
     return this.sendMessage({
       phone,
       message,
@@ -494,7 +474,6 @@ export class SendPulseClient {
       isChatOpened: options?.isChatOpened
     })
   }
-
   /**
    * Send interactive list message
    */
@@ -512,7 +491,6 @@ export class SendPulseClient {
     }>
   ): Promise<any> {
     const contact = await this.getOrCreateContact(phone)
-
     const listMessage: InteractiveListMessage = {
       type: 'interactive',
       interactive: {
@@ -527,10 +505,8 @@ export class SendPulseClient {
         }
       }
     }
-
     return await this.sendMessageToContact(contact.id, listMessage)
   }
-
   /**
    * Send image message
    */
@@ -541,7 +517,6 @@ export class SendPulseClient {
       image: imageUrl
     })
   }
-
   /**
    * Send document message
    */
@@ -552,7 +527,6 @@ export class SendPulseClient {
       document: documentUrl
     })
   }
-
   /**
    * Create or update contact
    */
@@ -567,7 +541,6 @@ export class SendPulseClient {
       const botId = await this.getBotId()
       const apiToken = await this.getApiToken()
       const cleanPhone = contact.phone.replace(/\D/g, '')
-
       const payload: CreateContactRequest = {
         bot_id: botId,
         phone: cleanPhone,
@@ -575,7 +548,6 @@ export class SendPulseClient {
         ...(contact.variables && { variables: contact.variables }),
         ...(contact.tags && { tags: contact.tags })
       }
-
       const response = await fetch(`${this.baseUrl}/contacts`, {
         method: 'POST',
         headers: {
@@ -584,25 +556,19 @@ export class SendPulseClient {
         },
         body: JSON.stringify(payload)
       })
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       const contactData: SendPulseContact = await response.json()
-
       // Update cache
       contactCache.set(botId, cleanPhone, contactData)
-
       return contactData
-
     } catch (error) {
       console.error('Error creating/updating SendPulse contact:', error)
       throw error
     }
   }
-
   /**
    * Get contact information by phone
    */
@@ -610,17 +576,14 @@ export class SendPulseClient {
     try {
       const botId = await this.getBotId()
       const cleanPhone = phone.replace(/\D/g, '')
-
       // Check cache first
       const cachedContactId = contactCache.getContactId(botId, cleanPhone)
       if (cachedContactId) {
         const contact = await this.getContactById(cachedContactId)
         if (contact) return contact
       }
-
       // Find in contacts list
       return await this.findContactByPhone(botId, cleanPhone)
-
     } catch (error) {
       console.error('Error getting SendPulse contact:', error)
       if (error instanceof SendPulseContactError) {
@@ -629,20 +592,17 @@ export class SendPulseClient {
       throw error
     }
   }
-
   /**
    * Register webhook for receiving messages
    */
   async registerWebhook(webhookUrl: string): Promise<any> {
     try {
       const apiToken = await this.getApiToken()
-
       const payload = {
         url: webhookUrl,
         events: ['message.new', 'message.status'],
         token: this.webhookToken
       }
-
       const response = await fetch(`${this.baseUrl}/webhooks`, {
         method: 'POST',
         headers: {
@@ -651,29 +611,48 @@ export class SendPulseClient {
         },
         body: JSON.stringify(payload)
       })
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       return await response.json()
-
     } catch (error) {
       console.error('Error registering SendPulse webhook:', error)
       throw error
     }
   }
-
   /**
    * Validate webhook signature
+   * Enhanced validation using HMAC-SHA256 if signature is provided
    */
-  validateWebhook(payload: string, signature: string): boolean {
-    // TODO: Implement webhook signature validation if SendPulse provides it
-    // For now, just check if webhook token is configured
-    return !!this.webhookToken
+  validateWebhook(payload: string, signature?: string): boolean {
+    // Basic token validation
+    if (!this.webhookToken) {
+      console.warn('SendPulse webhook token not configured')
+      return false
+    }
+    // If no signature provided, use basic token validation as fallback
+    if (!signature) {
+      console.warn('Webhook signature not provided - using basic validation')
+      return true // Allow but log warning for SendPulse webhooks
+    }
+    // Verify HMAC signature if provided
+    try {
+      const crypto = require('crypto')
+      const expectedSignature = crypto
+        .createHmac('sha256', this.webhookToken)
+        .update(payload, 'utf8')
+        .digest('hex')
+      // Use timing-safe comparison to prevent timing attacks
+      return crypto.timingSafeEqual(
+        Buffer.from(signature, 'hex'),
+        Buffer.from(expectedSignature, 'hex')
+      )
+    } catch (error) {
+      console.error('Error validating webhook signature:', error)
+      return false
+    }
   }
-
   /**
    * Parse incoming webhook data
    */
@@ -682,71 +661,58 @@ export class SendPulseClient {
       if (!body.event) {
         return null
       }
-
       return {
         event: body.event,
         message: body.message,
         contact: body.contact,
         timestamp: body.timestamp
       }
-
     } catch (error) {
       console.error('Error parsing SendPulse webhook data:', error)
       return null
     }
   }
-
   /**
    * Test API connection
    */
   async testConnection(): Promise<boolean> {
     try {
       const apiToken = await this.getApiToken()
-
       const response = await fetch(`${this.baseUrl}/account/info`, {
         headers: {
           'Authorization': `Bearer ${apiToken}`
         }
       })
-
       return response.ok
-
     } catch (error) {
       console.error('SendPulse API connection test failed:', error)
       return false
     }
   }
-
   /**
    * Get account information
    */
   async getAccountInfo(): Promise<any> {
     try {
       const apiToken = await this.getApiToken()
-
       const response = await fetch(`${this.baseUrl}/account/info`, {
         headers: {
           'Authorization': `Bearer ${apiToken}`
         }
       })
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       return await response.json()
-
     } catch (error) {
       console.error('Error getting SendPulse account info:', error)
       throw error
     }
   }
-
   // ============================================================================
   // New Advanced Methods
   // ============================================================================
-
   /**
    * Get all contacts for current bot (with caching)
    */
@@ -754,7 +720,6 @@ export class SendPulseClient {
     try {
       const botId = await this.getBotId()
       const apiToken = await this.getApiToken()
-
       const response = await fetch(
         `${this.baseUrl}/contacts?bot_id=${botId}&limit=${limit}`,
         {
@@ -764,43 +729,34 @@ export class SendPulseClient {
           }
         }
       )
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw createSendPulseError(response.status, errorData)
       }
-
       const data: SendPulseContactsResponse = await response.json()
-
       // Prefetch contacts into cache
       contactCache.prefetch(botId, data.data)
-
       return data.data
-
     } catch (error) {
       console.error('Error getting contacts:', error)
       throw error
     }
   }
-
   /**
    * Get cache statistics
    */
   getCacheStats() {
     return contactCache.getStats()
   }
-
   /**
    * Clear contact cache
    */
   clearCache(): void {
     contactCache.clear()
   }
-
   // ============================================================================
   // Phase 3 Advanced Methods
   // ============================================================================
-
   /**
    * Send template message (for expired 24h windows)
    */
@@ -817,7 +773,6 @@ export class SendPulseClient {
     try {
       const contact = await this.getOrCreateContact(phone)
       const botId = await this.getBotId()
-
       // Validate template exists and is approved
       const template = await templateManager.getTemplate(botId, templateName)
       if (!template) {
@@ -826,14 +781,12 @@ export class SendPulseClient {
           'TEMPLATE_NOT_FOUND'
         )
       }
-
       if (template.status !== 'APPROVED') {
         throw new SendPulseMessageError(
           `Template "${templateName}" is not approved (status: ${template.status})`,
           'TEMPLATE_NOT_APPROVED'
         )
       }
-
       // Validate parameters
       const validation = templateManager.validateTemplateParameters(template, parameters)
       if (!validation.valid) {
@@ -842,22 +795,18 @@ export class SendPulseClient {
           'TEMPLATE_PARAMS_INVALID'
         )
       }
-
       // Build and send template message
       const templateMessage = templateManager.buildTemplateMessage(
         templateName,
         languageCode,
         parameters
       )
-
       return await this.sendMessageToContact(contact.id, templateMessage, false)
-
     } catch (error) {
       console.error('Error sending template message:', error)
       throw error
     }
   }
-
   /**
    * Get approved templates for current bot
    */
@@ -870,7 +819,6 @@ export class SendPulseClient {
       throw error
     }
   }
-
   /**
    * Get conversation analytics for a contact
    */
@@ -879,42 +827,36 @@ export class SendPulseClient {
     // For now, simplified
     return analyticsService.getConversationMetrics(contactPhone)
   }
-
   /**
    * Get analytics summary
    */
   getAnalyticsSummary(timeframe?: { start: string; end: string; granularity: 'hour' | 'day' | 'week' | 'month' }): any {
     return analyticsService.getSummary(timeframe)
   }
-
   /**
    * Get rate limiter statistics
    */
   getRateLimitStats(): any {
     return rateLimiter.getStats()
   }
-
   /**
    * Get retry manager statistics
    */
   getRetryStats(): any {
     return retryManager.getStats()
   }
-
   /**
    * Get template cache statistics
    */
   getTemplateStats(): any {
     return templateManager.getCacheStats()
   }
-
   /**
    * Get analytics statistics
    */
   getAnalyticsStats(): any {
     return analyticsService.getStats()
   }
-
   /**
    * Get comprehensive system statistics
    */
@@ -927,7 +869,6 @@ export class SendPulseClient {
       analytics: this.getAnalyticsStats()
     }
   }
-
   /**
    * P5: Send long message with progressive streaming
    * Automatically chunks and streams long messages for better UX
@@ -945,7 +886,6 @@ export class SendPulseClient {
     try {
       // Validate message length
       const validation = validateMessageLength(params.message)
-
       // If message doesn't need chunking, send normally
       if (!validation.needsChunking) {
         await this.sendMessage({
@@ -953,22 +893,18 @@ export class SendPulseClient {
           message: params.message,
           isChatOpened: params.isChatOpened
         })
-
         return {
           success: true,
           chunksCount: 1,
           totalLength: params.message.length
         }
       }
-
       // Chunk the message
       let chunks = chunkMessage(params.message, DEFAULT_STREAM_CONFIG)
-
       // Add continuation indicators if enabled
       if (params.enableIndicators !== false) {
         chunks = addChunkIndicators(chunks)
       }
-
       // Stream chunks progressively
       await streamMessageChunks(
         chunks,
@@ -981,19 +917,16 @@ export class SendPulseClient {
         },
         DEFAULT_STREAM_CONFIG
       )
-
       return {
         success: true,
         chunksCount: chunks.length,
         totalLength: params.message.length
       }
-
     } catch (error) {
       console.error('Error sending streamed message:', error)
       throw error
     }
   }
-
   /**
    * P5: Send streamed message with quick replies
    * Quick replies only appear on the last chunk
@@ -1012,7 +945,6 @@ export class SendPulseClient {
     try {
       // Validate message length
       const validation = validateMessageLength(params.message)
-
       // If message doesn't need chunking, send with quick replies
       if (!validation.needsChunking) {
         await this.sendMessageWithQuickReplies(
@@ -1021,17 +953,14 @@ export class SendPulseClient {
           params.quickReplies,
           { isChatOpened: params.isChatOpened }
         )
-
         return {
           success: true,
           chunksCount: 1,
           totalLength: params.message.length
         }
       }
-
       // Chunk the message
       let chunks = chunkMessage(params.message, DEFAULT_STREAM_CONFIG)
-
       // Add continuation indicators (but not on last chunk)
       if (params.enableIndicators !== false) {
         chunks = chunks.map((chunk, index) => {
@@ -1046,7 +975,6 @@ export class SendPulseClient {
           return chunk
         })
       }
-
       // Stream chunks progressively
       await streamMessageChunks(
         chunks,
@@ -1069,19 +997,16 @@ export class SendPulseClient {
         },
         DEFAULT_STREAM_CONFIG
       )
-
       return {
         success: true,
         chunksCount: chunks.length,
         totalLength: params.message.length
       }
-
     } catch (error) {
       console.error('Error sending streamed message with quick replies:', error)
       throw error
     }
   }
 }
-
 // Singleton instance
 export const sendPulseClient = new SendPulseClient()

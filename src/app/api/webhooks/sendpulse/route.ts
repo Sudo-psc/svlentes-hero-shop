@@ -2,10 +2,9 @@
  * SendPulse Webhook Integration
  * Receives WhatsApp messages via SendPulse API and processes them
  */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { langchainSupportProcessor } from '@/lib/langchain-support-processor'
+import { simpleLangChainProcessor } from '@/lib/simple-langchain-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
@@ -20,6 +19,7 @@ import { logger, LogCategory } from '@/lib/logger'
 import { messageStatusTracker, MessageStatus } from '@/lib/message-status-tracker'
 import { debugUtilities, DebugLevel } from '@/lib/debug-utilities'
 import { authenticateByPhone, isUserAuthenticated } from '@/lib/chatbot-auth-handler'
+import { WebhookSecurity } from '@/lib/webhook-security'
 import {
   validateAuthenticatedSession,
   viewSubscriptionCommand,
@@ -27,31 +27,26 @@ import {
   reactivateSubscriptionCommand,
   nextDeliveryCommand
 } from '@/lib/subscription-management-commands'
-
 // C6: Zod schemas for webhook payload validation
 const MessageTextSchema = z.object({
   body: z.string().max(5000).optional()
 })
-
 const InteractiveButtonReplySchema = z.object({
   type: z.literal('button_reply'),
   button_reply: z.object({
     title: z.string().max(200)
   })
 })
-
 const InteractiveListReplySchema = z.object({
   type: z.literal('list_reply'),
   list_reply: z.object({
     title: z.string().max(200)
   })
 })
-
 const InteractiveSchema = z.union([
   InteractiveButtonReplySchema,
   InteractiveListReplySchema
 ])
-
 const MessageChannelDataSchema = z.object({
   message: z.object({
     type: z.string().optional(),
@@ -59,7 +54,6 @@ const MessageChannelDataSchema = z.object({
     interactive: InteractiveSchema.optional()
   }).optional()
 }).optional()
-
 const MessageSchema = z.object({
   id: z.string(),
   type: z.string().optional(),
@@ -67,7 +61,6 @@ const MessageSchema = z.object({
   body: z.string().optional(),
   channel_data: MessageChannelDataSchema
 })
-
 const ContactSchema = z.object({
   id: z.string().optional(),
   phone: z.string().regex(/^\d{10,15}$/, 'Invalid phone number format'),
@@ -75,7 +68,6 @@ const ContactSchema = z.object({
   username: z.string().max(200).optional(),
   is_chat_opened: z.boolean().optional()
 })
-
 const SendPulseNativeEventSchema = z.object({
   title: z.literal('incoming_message'),
   service: z.literal('whatsapp'),
@@ -87,13 +79,10 @@ const SendPulseNativeEventSchema = z.object({
     id: z.string()
   }).optional()
 })
-
 const SendPulseArraySchema = z.array(SendPulseNativeEventSchema)
-
 const SendPulseWebhookVerifySchema = z.object({
   event: z.literal('webhook.verify')
 })
-
 const SendPulseMessageStatusSchema = z.object({
   event: z.literal('message.status'),
   message_id: z.string(),
@@ -103,57 +92,206 @@ const SendPulseMessageStatusSchema = z.object({
   timestamp: z.string().optional(),
   metadata: z.any().optional()
 })
-
 const SendPulseLegacyMessageSchema = z.object({
   event: z.literal('message.new'),
   message: MessageSchema,
   contact: ContactSchema
 })
-
+// SendPulse Brazilian API format (similar to WhatsApp Business API)
+const SendPulseBrazilianAPISchema = z.object({
+  object: z.literal('whatsapp_business_account'),
+  entry: z.array(z.object({
+    id: z.string(),
+    changes: z.array(z.object({
+      value: z.object({
+        messaging_product: z.literal('whatsapp'),
+        metadata: z.object({
+          display_phone_number: z.string(),
+          phone_number_id: z.string()
+        }),
+        contacts: z.array(z.object({
+          profile: z.object({
+            name: z.string()
+          }),
+          wa_id: z.string()
+        })).optional(),
+        messages: z.array(z.object({
+          from: z.string(),
+          id: z.string(),
+          timestamp: z.string(),
+          text: z.object({
+            body: z.string()
+          }).optional(),
+          type: z.string()
+        })).optional()
+      }),
+      field: z.literal('messages')
+    }))
+  }))
+})
+// Rate limiting interfaces and functions
+interface RateLimitResult {
+  limited: boolean
+  remaining: number
+  resetAt: number
+}
+interface RateLimitPreset {
+  maxRequests: number
+  windowMs: number
+}
+const RateLimitPresets = {
+  WEBHOOK_IP: {
+    maxRequests: 100,
+    windowMs: 60 * 1000 // 1 minute
+  },
+  WEBHOOK: {
+    maxRequests: 50,
+    windowMs: 60 * 1000 // 1 minute
+  }
+}
+// Simple in-memory rate limiter
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+function checkRateLimit(config: RateLimitPreset & { identifier: string }): RateLimitResult {
+  const key = config.identifier
+  const now = Date.now()
+  let entry = rateLimitStore.get(key)
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + config.windowMs }
+    rateLimitStore.set(key, entry)
+  }
+  entry.count += 1
+  return {
+    limited: entry.count > config.maxRequests,
+    remaining: Math.max(0, config.maxRequests - entry.count),
+    resetAt: entry.resetAt
+  }
+}
 // Set debug level from environment or default to standard
 // if (process.env.DEBUG_LEVEL) {
 //   debugUtilities.setDebugLevel(process.env.DEBUG_LEVEL as DebugLevel)
 // }
-
 // SendPulse webhook verification (SendPulse doesn't use token verification)
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const challenge = searchParams.get('challenge')
-
   // SendPulse webhook verification - respond with challenge if present
   if (challenge) {
     return new NextResponse(challenge, { status: 200 })
   }
-
   // Return OK for health checks
   return NextResponse.json({ status: 'webhook_active', timestamp: new Date().toISOString() })
 }
-
 // Main webhook handler for SendPulse messages (Brazilian API)
 export async function POST(request: NextRequest) {
   const timer = logger.startTimer()
   const requestId = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
-
   try {
-    // C6: Parse and validate JSON payload
+    // P4: Rate limiting - IP based protection
+    const ipRateLimit = checkRateLimit({
+      ...RateLimitPresets.WEBHOOK_IP,
+      identifier: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
+                   'unknown'
+    })
+    if (ipRateLimit.limited) {
+      logger.warn(LogCategory.WEBHOOK, 'Rate limit exceeded for IP', {
+        requestId,
+        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        resetAt: new Date(ipRateLimit.resetAt).toISOString()
+      })
+      return NextResponse.json(
+        { error: 'RATE_LIMIT_EXCEEDED', requestId },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': String(RateLimitPresets.WEBHOOK_IP.maxRequests),
+            'X-RateLimit-Remaining': String(ipRateLimit.remaining),
+            'X-RateLimit-Reset': new Date(ipRateLimit.resetAt).toISOString()
+          }
+        }
+      )
+    }
+    // C6: Enhanced security validation
     let body: any
+    let rawBody: string
     try {
-      const rawBody = await request.text()
-
-      // Limit body size to prevent DoS
-      if (rawBody.length > 500000) { // 500KB limit
-        logger.warn(LogCategory.WEBHOOK, 'Webhook payload too large', {
+      rawBody = await request.text()
+      // Enhanced security validation
+      const securityValidation = WebhookSecurity.validateRequest(request, rawBody, {
+        maxPayloadSize: 500 * 1024, // 500KB
+        requireUserAgent: true,
+        suspiciousPatterns: [
+          /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+          /javascript:/gi,
+          /on\w+\s*=/gi,
+          /union\s+select/gi,
+          /drop\s+table/gi,
+        ]
+      })
+      if (!securityValidation.valid) {
+        WebhookSecurity.logSecurityEvent('BLOCKED_REQUEST', {
           requestId,
-          size: rawBody.length
+          reason: securityValidation.reason,
+          riskScore: securityValidation.riskScore,
+          ip: request.headers.get('x-forwarded-for') || 'unknown',
+          userAgent: request.headers.get('user-agent') || 'unknown'
         })
         return NextResponse.json(
-          { error: 'Payload too large', requestId },
-          { status: 413 }
+          {
+            error: 'Security validation failed',
+            requestId,
+            reason: securityValidation.reason
+          },
+          { status: 400 }
         )
       }
-
+      // Additional signature validation for SendPulse webhooks
+      const signature = request.headers.get('x-sendpulse-signature') ||
+                        request.headers.get('x-signature') ||
+                        request.headers.get('signature')
+      if (signature) {
+        const { SendPulseClient } = await import('@/lib/sendpulse-client')
+        const sendpulseClient = new SendPulseClient()
+        if (!sendpulseClient.validateWebhook(rawBody, signature)) {
+          WebhookSecurity.logSecurityEvent('BLOCKED_REQUEST', {
+            requestId,
+            reason: 'Invalid webhook signature',
+            signature: signature.substring(0, 20) + '...',
+            ip: request.headers.get('x-forwarded-for') || 'unknown'
+          })
+          return NextResponse.json(
+            {
+              error: 'Invalid webhook signature',
+              requestId
+            },
+            { status: 401 }
+          )
+        }
+        logger.info(LogCategory.SECURITY, 'Webhook signature validated', {
+          requestId,
+          hasSignature: true
+        })
+      } else {
+        logger.warn(LogCategory.SECURITY, 'Webhook received without signature', {
+          requestId
+        })
+      }
+      // Log high-risk requests
+      if (securityValidation.riskScore > 50) {
+        logger.warn(LogCategory.SECURITY, 'High-risk webhook request', {
+          requestId,
+          riskScore: securityValidation.riskScore,
+          ip: request.headers.get('x-forwarded-for') || 'unknown'
+        })
+      }
       body = JSON.parse(rawBody)
     } catch (parseError) {
+      WebhookSecurity.logSecurityEvent('SUSPICIOUS_PATTERN', {
+        requestId,
+        error: parseError instanceof Error ? parseError.message : 'Unknown',
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      })
       logger.error(LogCategory.WEBHOOK, 'Invalid JSON payload', {
         requestId,
         error: parseError instanceof Error ? parseError.message : 'Unknown'
@@ -163,16 +301,30 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
+    // C7: Analyze request patterns for anomalies
+    const clientIP = request.headers.get('x-forwarded-for') || 'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+    const patternAnalysis = WebhookSecurity.analyzeRequestPattern(
+      requestId,
+      clientIP,
+      userAgent
+    )
+    if (patternAnalysis.suspicious) {
+      logger.warn(LogCategory.SECURITY, 'Suspicious request pattern detected', {
+        requestId,
+        clientIP,
+        userAgent,
+        reasons: patternAnalysis.reasons
+      })
+    }
     // Log webhook received with tracing
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceWebhookProcessing(body, 'sendpulse')
     logger.logSendPulseWebhook('received', {
       requestId,
-      bodySize: bodyText.length,
+      bodySize: rawBody.length,
       eventType: body.event || body[0]?.title || 'unknown'
     })
-
     // C6: Handle SendPulse native format (array of events) with validation
     if (Array.isArray(body) && body.length > 0) {
       // Validate array format
@@ -185,15 +337,14 @@ export async function POST(request: NextRequest) {
         // Return 200 to prevent SendPulse retries on malformed data
         return NextResponse.json({ status: 'invalid_format', requestId })
       }
-
       logger.info(LogCategory.SENDPULSE, `Processing ${body.length} events`)
-
+      const validEvents = []
       for (const event of validationResult.data) {
         if (event.title === 'incoming_message' && event.service === 'whatsapp') {
           await processSendPulseNativeMessage(event, requestId)
+          validEvents.push(event)
         }
       }
-
       const duration = timer()
       logger.logPerformance('webhook_processed', {
         requestId,
@@ -201,7 +352,6 @@ export async function POST(request: NextRequest) {
         eventCount: body.length,
         processedCount: validEvents.length
       })
-
       // P4: Add rate limit headers to response
       return NextResponse.json(
         {
@@ -219,7 +369,6 @@ export async function POST(request: NextRequest) {
         }
       )
     }
-
     // Handle SendPulse Brazilian API format
     if (body.entry && body.entry[0]?.changes) {
       // C6: Validate Brazilian API format
@@ -234,15 +383,11 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-
       await processSendPulseWhatsAppMessage(body, requestId)
-
       const duration = timer()
       logger.logPerformance('webhook_processed', { requestId, duration })
-
       return NextResponse.json({ status: 'processed', requestId })
     }
-
     // C6: Handle legacy events for backward compatibility with validation
     if (body.event === 'message.new') {
       const validationResult = SendPulseLegacyMessageSchema.safeParse(body)
@@ -253,15 +398,11 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ status: 'invalid_format', requestId })
       }
-
       await processSendPulseMessage(validationResult.data, requestId)
-
       const duration = timer()
       logger.logPerformance('webhook_processed', { requestId, duration })
-
       return NextResponse.json({ status: 'processed', requestId })
     }
-
     // C6: Handle message status updates with validation
     if (body.event === 'message.status') {
       const validationResult = SendPulseMessageStatusSchema.safeParse(body)
@@ -272,15 +413,11 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ status: 'invalid_format', requestId })
       }
-
       await updateMessageStatus(validationResult.data, requestId)
-
       const duration = timer()
       logger.logPerformance('status_updated', { requestId, duration })
-
       return NextResponse.json({ status: 'updated', requestId })
     }
-
     // C6: Handle webhook verification/test with validation
     if (body.event === 'webhook.verify') {
       const validationResult = SendPulseWebhookVerifySchema.safeParse(body)
@@ -290,34 +427,28 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ status: 'invalid_format', requestId })
       }
-
       logger.info(LogCategory.WEBHOOK, 'Webhook verification request')
       return NextResponse.json({ status: 'verified', requestId })
     }
-
     // Unknown event type
     logger.warn(LogCategory.WEBHOOK, 'Unknown webhook event type', {
       requestId,
       bodyKeys: Object.keys(body),
       event: body.event
     })
-
     return NextResponse.json({ status: 'received', requestId })
-
   } catch (error) {
     const duration = timer()
     logger.logSendPulseError('webhook_processing', error as Error, {
       requestId,
       duration
     })
-
     return NextResponse.json(
       { error: 'Internal server error', requestId },
       { status: 500 }
     )
   }
 }
-
 /**
  * Process SendPulse native format message (array format)
  */
@@ -328,60 +459,45 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
     const message = event.info?.message
     const contact = event.contact
     const bot = event.bot
-
     if (!message || !contact) {
       console.warn('Invalid SendPulse native message structure')
       return
     }
-
     // P4: Rate limiting - per phone number protection
     const customerPhone = contact.phone
     const phoneRateLimit = checkRateLimit({
       ...RateLimitPresets.WEBHOOK,
       identifier: customerPhone
     })
-
     if (phoneRateLimit.limited) {
       logger.warn(LogCategory.WHATSAPP, 'Rate limit exceeded for phone', {
         requestId,
         phone: customerPhone,
         resetAt: new Date(phoneRateLimit.resetAt).toISOString()
       })
-
       // Send rate limit warning to user
       await sendPulseClient.sendMessage({
         phone: customerPhone,
         message: '⏱️ Você está enviando mensagens muito rapidamente. Por favor, aguarde um momento antes de enviar novamente.',
         isChatOpened: true
       })
-
       return
     }
-
     // Debug: Log full message structure to understand format
-    console.log('[DEBUG] Full message object:', JSON.stringify(message, null, 2))
-    console.log('[DEBUG] Contact phone:', contact.phone)
-
+    console.log('Full message structure:', JSON.stringify(message, null, 2))
     // Extract message text from the message object
     // SendPulse sends text in: message.channel_data.message.text.body
     let messageContent: string | null = null
-
     // Check for interactive messages (button replies, list replies)
     if (message.channel_data?.message?.type === 'interactive') {
-      console.log('[DEBUG] Interactive message detected!')
-      console.log('[DEBUG] Interactive type:', message.channel_data.message.interactive?.type)
-      console.log('[DEBUG] Interactive data:', JSON.stringify(message.channel_data.message.interactive, null, 2))
-
+      console.log(`Interactive message detected`)
       const interactive = message.channel_data.message.interactive
       if (interactive?.type === 'button_reply') {
         messageContent = interactive.button_reply.title
-        console.log('[DEBUG] Button reply extracted:', messageContent)
       } else if (interactive?.type === 'list_reply') {
         messageContent = interactive.list_reply.title
-        console.log('[DEBUG] List reply extracted:', messageContent)
       }
     }
-
     // Fallback to text messages
     if (!messageContent) {
       messageContent =
@@ -390,9 +506,6 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
         message.body || // Fallback
         null
     }
-
-    console.log('[DEBUG] Final messageContent:', messageContent)
-
     if (!messageContent || typeof messageContent !== 'string') {
       console.warn('No text content in SendPulse message')
       console.warn('[DEBUG] Message structure keys:', Object.keys(message))
@@ -403,56 +516,66 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       console.warn('[DEBUG] Message.interactive:', message.channel_data?.message?.interactive)
       return
     }
-
     const messageId = message.id || `msg_${Date.now()}`
     const customerName = contact.name || contact.username || 'Cliente'
-
     // Log message received
     logger.logWhatsAppMessageReceived(customerPhone, messageId, messageContent.length, {
       requestId,
       customerName,
       format: 'native'
     })
-
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('message_received', {
     //   messageId,
     //   phone: customerPhone,
     //   contentLength: messageContent.length
     // })
-
     // TODO: Re-enable authentication and menu handling when chatbot-auth-handler is implemented
     // Currently going straight to LangChain for all messages
-
-    // Autenticação automática pelo número de WhatsApp
+    // Autenticação automática robusta pelo número de WhatsApp
+    logger.info(LogCategory.WHATSAPP, 'Iniciando processo de autenticação', {
+      requestId,
+      customerPhone: customerPhone,
+      messageLength: messageContent?.length || 0
+    })
     let authStatus = await isUserAuthenticated(customerPhone)
-
     if (!authStatus.authenticated) {
-      // Tentar autenticar automaticamente
+      // Tentar autenticar automaticamente com validação robusta
+      logger.info(LogCategory.WHATSAPP, 'Usuário não autenticado, tentando autenticação automática', {
+        requestId,
+        phone: customerPhone,
+        contactName: contact.name
+      })
       const authResult = await authenticateByPhone(customerPhone)
-
+      logger.info(LogCategory.WHATSAPP, 'Resultado da autenticação automática', {
+        requestId,
+        phone: customerPhone,
+        success: authResult.success,
+        error: authResult.error,
+        userId: authResult.userId
+      })
       if (authResult.success) {
-        logger.info(LogCategory.WHATSAPP, 'Autenticação automática bem-sucedida', {
+        logger.info(LogCategory.WHATSAPP, 'SUCCESS: Autenticação automática bem-sucedida', {
           requestId,
           phone: customerPhone,
-          userId: authResult.userId
+          userId: authResult.userId,
+          userName: authResult.userName
         })
-
         // Enviar mensagem de boas-vindas personalizada
         if (authResult.requiresResponse && authResult.message) {
-          await sendPulseClient.sendMessage({
-            phone: customerPhone,
-            message: authResult.message
-          })
-
-          logger.info(LogCategory.WHATSAPP, 'Mensagem de boas-vindas enviada', {
-            requestId,
-            phone: customerPhone,
-            userId: authResult.userId
-          })
-
-          // Log welcome message interaction
-          const userProfile = await getOrCreateUserProfile(contact, customerPhone)
+          try {
+            await sendPulseClient.sendMessage({
+              phone: customerPhone,
+              message: authResult.message
+            })
+            logger.info(LogCategory.WHATSAPP, 'SUCCESS: Mensagem de boas-vindas enviada com sucesso', {
+              requestId,
+              phone: customerPhone,
+              userId: authResult.userId,
+              messageLength: authResult.message.length
+            })
+            // Log welcome message interaction
+            const userProfile = await getOrCreateUserProfile(contact, customerPhone)
           await storeInteraction({
             messageId,
             customerPhone,
@@ -463,10 +586,17 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
             ticketCreated: false,
             userProfile
           })
-
           return // Parar processamento após enviar boas-vindas
+          } catch (messageError) {
+            console.error('Failed to send welcome message:', messageError)
+            logger.error(LogCategory.WHATSAPP, 'Erro ao enviar mensagem de boas-vindas', {
+              phone: customerPhone,
+              userId: authResult.userId,
+              error: messageError instanceof Error ? messageError.message : 'Unknown'
+            })
+            // Continue processing even if welcome message fails
+          }
         }
-
         authStatus = {
           authenticated: true,
           sessionToken: authResult.sessionToken,
@@ -479,13 +609,11 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           phone: customerPhone,
           message: authResult.message
         })
-
         logger.info(LogCategory.WHATSAPP, 'Mensagem de falha na autenticação enviada', {
           requestId,
           phone: customerPhone,
           error: authResult.error
         })
-
         // Log auth failure interaction
         const userProfile = await getOrCreateUserProfile(contact, customerPhone)
         await storeInteraction({
@@ -498,11 +626,9 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           ticketCreated: false,
           userProfile
         })
-
         return // Parar processamento para usuários não autenticados
       }
     }
-
     // Verificar se a mensagem é uma opção do menu (1-8)
     const menuOption = await handleMenuOption(messageContent, customerPhone)
     if (menuOption) {
@@ -511,14 +637,12 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           phone: customerPhone,
           message: menuOption.message
         })
-
         logger.info(LogCategory.WHATSAPP, 'Resposta de opção do menu enviada', {
           requestId,
           phone: customerPhone,
           option: messageContent
         })
       }
-
       // Log menu option interaction
       const userProfile = await getOrCreateUserProfile(contact, customerPhone)
       await storeInteraction({
@@ -531,10 +655,8 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
         ticketCreated: false,
         userProfile
       })
-
       return // Pular processamento LangChain para opções do menu
     }
-
     // Verificar se a mensagem é um comando de gestão de assinatura
     const subscriptionCommandResult = await handleSubscriptionCommand(messageContent, customerPhone)
     if (subscriptionCommandResult) {
@@ -543,14 +665,12 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
           phone: customerPhone,
           message: subscriptionCommandResult.message
         })
-
         logger.info(LogCategory.WHATSAPP, 'Resposta de comando de assinatura enviada', {
           requestId,
           phone: customerPhone,
           success: subscriptionCommandResult.success
         })
       }
-
       // Log subscription command interaction
       const userProfile = await getOrCreateUserProfile(contact, customerPhone)
       await storeInteraction({
@@ -563,17 +683,13 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
         ticketCreated: false,
         userProfile
       })
-
       return // Pular processamento LangChain para comandos de assinatura
     }
-
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(contact, customerPhone)
-
     // Get conversation history
     const conversationHistory = await getConversationHistory(customerPhone, 10)
     const userHistory = await getUserSupportHistory(userProfile.id)
-
     // Get current context
     const context = {
       userHistory,
@@ -583,38 +699,68 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       conversationHistory: conversationHistory.map(msg => msg.content),
       lastIntent: userHistory.lastIntent
     }
-
-    // Process message with LangChain
-    const langchainTimer = logger.startTimer()
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
-      messageContent,
-      context
-    )
-    const langchainDuration = langchainTimer()
-
-    // Log intent detection
+    // Helper function to check business hours
+  const isBusinessHours = () => {
+    const now = new Date()
+    const hours = now.getHours()
+    const day = now.getDay()
+    // Monday-Friday, 8am-6pm
+    return day >= 1 && day <= 5 && hours >= 8 && hours < 18
+  }
+  // Process message with Enhanced LangChain
+  const langchainTimer = logger.startTimer()
+  const processingResult = await simpleLangChainProcessor.processMessage(
+    messageContent,
+    {
+      sessionId: authStatus.sessionToken || `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+      userId: authStatus.userId,
+      userProfile: userProfile,
+      conversationHistory: conversationHistory.map(msg => msg.content),
+      previousTickets: userHistory.tickets,
+      systemState: {
+        currentTime: new Date(),
+        businessHours: isBusinessHours(),
+        emergencyContacts: true,
+        maintenanceMode: false
+      }
+    }
+  )
+  const langchainDuration = langchainTimer()
+    // Enhanced logging for the new simple processor
     logger.logWhatsAppIntentDetected(
       processingResult.intent.name,
-      processingResult.intent.confidence || 0.8,
+      processingResult.confidence,
       customerPhone,
-      { requestId, duration: langchainDuration }
+      {
+        requestId,
+        duration: langchainDuration,
+        category: processingResult.intent.category,
+        priority: processingResult.intent.priority,
+        escalationRequired: processingResult.escalationRequired,
+        tokensUsed: processingResult.tokensUsed,
+        estimatedCost: processingResult.estimatedCost
+      }
     )
-
     logger.logLangChainProcessing(
       messageId,
       processingResult.intent.name,
-      processingResult.intent.confidence || 0.8,
+      processingResult.confidence,
       langchainDuration,
-      { requestId }
+      {
+        requestId,
+        enhancedProcessor: true,
+        sessionId: authStatus.sessionToken
+      }
     )
-
+    // Additional detailed logging for the simple processor
+    console.log(`Simple processor completed - Message: ${messageId || 'N/A'}`)
+    console.log(`Processing time: ${langchainDuration}ms`)
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('langchain_processed', {
     //   messageId,
     //   intent: processingResult.intent.name,
     //   confidence: processingResult.intent.confidence
     // }, langchainDuration)
-
     // Store interaction
     await storeInteraction({
       messageId,
@@ -626,24 +772,20 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       ticketCreated: processingResult.ticketCreated,
       userProfile
     })
-
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('interaction_stored', {
     //   messageId,
     //   escalationRequired: processingResult.escalationRequired
     // })
-
     // Send response via SendPulse (pass contact window status from webhook)
     const sendTimer = logger.startTimer()
     await sendSendPulseResponse(customerPhone, processingResult, customerName, contact, requestId)
     const sendDuration = sendTimer()
-
     logger.logSendPulseMessageSent(customerPhone, messageId, processingResult.response.length, {
       requestId,
       duration: sendDuration,
       hasQuickReplies: processingResult.quickReplies && processingResult.quickReplies.length > 0
     })
-
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
       logger.logWhatsAppEscalation(customerPhone, processingResult.intent.name, 'MEDIUM', {
@@ -651,12 +793,10 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
         messageId,
         ticketId: processingResult.ticketId
       })
-
       await handleEscalationIfNeeded(customerPhone, processingResult, context)
     }
-
     const totalDuration = timer()
-    logger.info(LogCategory.WHATSAPP, `✅ Message processing completed`, {
+    logger.info(LogCategory.WHATSAPP, `SUCCESS: Message processing completed`, {
       requestId,
       messageId,
       customerPhone,
@@ -667,7 +807,6 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
         send: sendDuration
       }
     })
-
   } catch (error) {
     const duration = timer()
     logger.logSendPulseError('process_native_message', error as Error, {
@@ -677,7 +816,6 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
     })
   }
 }
-
 /**
  * Process SendPulse WhatsApp message (Brazilian API format)
  */
@@ -685,11 +823,9 @@ async function processSendPulseWhatsAppMessage(webhookData: any, requestId?: str
   try {
     const entry = webhookData.entry?.[0]
     if (!entry?.changes) return
-
     for (const change of entry.changes) {
       const messages = change.value?.messages
       if (!messages) continue
-
       for (const message of messages) {
         await processWhatsAppMessage(message, change.value)
       }
@@ -698,7 +834,6 @@ async function processSendPulseWhatsAppMessage(webhookData: any, requestId?: str
     console.error('Error processing SendPulse WhatsApp message:', error)
   }
 }
-
 /**
  * Process individual WhatsApp message from SendPulse
  */
@@ -708,23 +843,18 @@ async function processWhatsAppMessage(message: any, metadata: any) {
     if (message.from === metadata.metadata?.phone_number_id) {
       return
     }
-
     // Extract message content
     const messageContent = extractMessageContent(message)
     if (!messageContent) return
-
     const customerPhone = message.from
     const messageId = message.id
     const customerName = metadata.contacts?.[0]?.profile?.name || 'Cliente'
     const contact = metadata.contacts?.[0] || {}
-
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(metadata.contacts?.[0] || {}, customerPhone)
-
     // Get conversation history
     const conversationHistory = await getConversationHistory(customerPhone, 10)
     const userHistory = await getUserSupportHistory(userProfile.id)
-
     // Get current context
     const context = {
       userHistory,
@@ -734,13 +864,22 @@ async function processWhatsAppMessage(message: any, metadata: any) {
       conversationHistory: conversationHistory.map(msg => msg.content),
       lastIntent: userHistory.lastIntent
     }
-
     // Process message with LangChain
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await simpleLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory?.map(msg => msg.content) || [],
+        previousTickets: [],
+        systemState: {
+          currentTime: new Date(),
+          businessHours: isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
-
     // Store interaction
     await storeInteraction({
       messageId,
@@ -752,22 +891,16 @@ async function processWhatsAppMessage(message: any, metadata: any) {
       ticketCreated: processingResult.ticketCreated,
       userProfile
     })
-
     // Send response via SendPulse (pass contact window status from webhook)
     await sendSendPulseResponse(customerPhone, processingResult, customerName, contact)
-
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
       await handleEscalationIfNeeded(customerPhone, processingResult, context)
     }
-
-    console.log(`Processed SendPulse WhatsApp message from ${customerPhone}: ${processingResult.intent.name}`)
-
   } catch (error) {
     console.error('Error processing WhatsApp message:', error)
   }
 }
-
 /**
  * Process incoming SendPulse message (legacy format)
  */
@@ -775,27 +908,21 @@ async function processSendPulseMessage(webhookData: any, requestId?: string) {
   try {
     const message = webhookData.message
     const contact = webhookData.contact
-
     if (!message || !contact) {
       console.warn('Invalid message structure from SendPulse')
       return
     }
-
     // Extract message content
     const messageContent = extractMessageContent(message)
     if (!messageContent) return
-
     const customerPhone = contact.phone || contact.identifier
     const messageId = message.id
     const customerName = contact.name || 'Cliente'
-
     // Get or create user profile
     const userProfile = await getOrCreateUserProfile(contact, customerPhone)
-
     // Get conversation history
     const conversationHistory = await getConversationHistory(customerPhone, 10)
     const userHistory = await getUserSupportHistory(userProfile.id)
-
     // Get current context
     const context = {
       userHistory,
@@ -805,13 +932,22 @@ async function processSendPulseMessage(webhookData: any, requestId?: string) {
       conversationHistory: conversationHistory.map(msg => msg.content),
       lastIntent: userHistory.lastIntent
     }
-
     // Process message with LangChain
-    const processingResult = await langchainSupportProcessor.processSupportMessage(
+    const processingResult = await simpleLangChainProcessor.processMessage(
       messageContent,
-      context
+      {
+        sessionId: `temp_${Date.now()}_${customerPhone.slice(-4)}`,
+        userProfile: userProfile,
+        conversationHistory: conversationHistory?.map(msg => msg.content) || [],
+        previousTickets: [],
+        systemState: {
+          currentTime: new Date(),
+          businessHours: isBusinessHours(),
+          emergencyContacts: true,
+          maintenanceMode: false
+        }
+      }
     )
-
     // Store interaction
     await storeInteraction({
       messageId,
@@ -823,22 +959,16 @@ async function processSendPulseMessage(webhookData: any, requestId?: string) {
       ticketCreated: processingResult.ticketCreated,
       userProfile
     })
-
     // Send response via SendPulse (pass contact window status from webhook)
     await sendSendPulseResponse(customerPhone, processingResult, customerName, contact)
-
     // Handle escalation if required
     if (processingResult.escalationRequired && processingResult.ticketCreated) {
       await handleEscalationIfNeeded(customerPhone, processingResult, context)
     }
-
-    console.log(`Processed SendPulse message from ${customerPhone}: ${processingResult.intent.name}`)
-
   } catch (error) {
     console.error('Error processing SendPulse message:', error)
   }
 }
-
 /**
  * Extract message content from SendPulse message
  */
@@ -847,36 +977,28 @@ function extractMessageContent(message: any): string | null {
   if (message.text?.body) {
     return message.text.body.trim()
   }
-
   // Handle interactive replies
   if (message.interactive?.type === 'list_reply') {
     return message.interactive.list_reply.title
   }
-
   if (message.interactive?.type === 'button_reply') {
     return message.interactive.button_reply.title
   }
-
   // Handle media messages
   if (message.audio) {
     return '[Mensagem de áudio]'
   }
-
   if (message.image) {
     return '[Imagem enviada]'
   }
-
   if (message.video) {
     return '[Vídeo enviado]'
   }
-
   if (message.document) {
     return '[Documento enviado]'
   }
-
   return null
 }
-
 /**
  * Send response via SendPulse API with template fallback
  *
@@ -893,9 +1015,6 @@ async function sendSendPulseResponse(
   requestId?: string
 ) {
   try {
-    console.log(`[Webhook] Responding to incoming message from ${customerPhone}`)
-    console.log(`[Webhook] SendPulseClient will verify 24h window status via API`)
-
     // Try direct API first (will auto-fallback to template if window closed)
     try {
       // Send message via SendPulse client
@@ -912,31 +1031,30 @@ async function sendSendPulseResponse(
           message: processingResult.response
         })
       }
-
-      logger.info(LogCategory.SENDPULSE, `✅ Message sent successfully`, {
+      logger.info(LogCategory.SENDPULSE, `SUCCESS: Message sent successfully`, {
         requestId,
         phone: customerPhone,
         method: 'sendpulse_client'
       })
-
       // Log quick replies if available
       if (processingResult.quickReplies && processingResult.quickReplies.length > 0) {
-        console.log(`Quick replies: ${processingResult.quickReplies.join(', ')}`)
+        logger.info(LogCategory.SENDPULSE, 'Quick replies available', {
+          requestId,
+          phone: customerPhone,
+          quickReplyCount: processingResult.quickReplies.length
+        })
       }
-
     } catch (directApiError) {
       // Direct API failed (including template fallback) - try MCP as last resort
-      logger.warn(LogCategory.SENDPULSE, '⚠️ SendPulse client failed (including template fallback), trying MCP', {
+      logger.warn(LogCategory.SENDPULSE, 'WARNING: SendPulse client failed (including template fallback), trying MCP', {
         requestId,
         phone: customerPhone,
         error: directApiError instanceof Error ? directApiError.message : 'Unknown'
       })
-
       const botId = process.env.SENDPULSE_BOT_ID
       if (!botId) {
         throw new Error('SENDPULSE_BOT_ID not configured for MCP fallback')
       }
-
       // Use MCP as absolute last resort
       const fallbackResult = await sendMessageWithFallback(
         sendPulseClient,
@@ -946,9 +1064,8 @@ async function sendSendPulseResponse(
           botId
         }
       )
-
       if (fallbackResult.success) {
-        logger.info(LogCategory.SENDPULSE, `✅ Message sent via ${fallbackResult.method.toUpperCase()} fallback`, {
+        logger.info(LogCategory.SENDPULSE, `SUCCESS: Message sent via ${fallbackResult.method.toUpperCase()} fallback`, {
           requestId,
           phone: customerPhone,
           method: fallbackResult.method
@@ -957,27 +1074,23 @@ async function sendSendPulseResponse(
         throw new Error(`All delivery methods failed: ${fallbackResult.error}`)
       }
     }
-
   } catch (error) {
     logger.logSendPulseError('send_response_all_methods_failed', error as Error, {
       requestId,
       customerPhone,
       responseLength: processingResult.response?.length
     })
-
     // Log critical failure
-    logger.error(LogCategory.SENDPULSE, '🚨 CRITICAL: All message delivery methods failed', {
+    logger.error(LogCategory.SENDPULSE, 'CRITICAL: All message delivery methods failed', {
       requestId,
       phone: customerPhone,
       error: error instanceof Error ? error.message : 'Unknown',
       recommendation: 'Configure approved template message in SendPulse dashboard'
     })
-
     // Don't throw - webhook should return 200 OK even if delivery fails
     // to prevent SendPulse from retrying indefinitely
   }
 }
-
 /**
  * Handle menu options (1-8 from welcome message)
  */
@@ -986,25 +1099,19 @@ async function handleMenuOption(
   phone: string
 ): Promise<any | null> {
   const cleanMessage = message.trim()
-
   // Match only single digits or with emoji prefix
   const menuMatch = cleanMessage.match(/^[1-8]$|^[1-8]️⃣/)
-
   if (!menuMatch) {
     return null
   }
-
   const option = parseInt(cleanMessage.replace(/[^\d]/g, ''))
-
   switch (option) {
     case 1:
       // Ver detalhes da assinatura
       return await viewSubscriptionCommand(phone)
-
     case 2:
       // Rastrear pedido
       return await nextDeliveryCommand(phone)
-
     case 3:
       // Baixar nota fiscal
       return {
@@ -1012,7 +1119,6 @@ async function handleMenuOption(
         requiresResponse: true,
         message: '📄 *Notas Fiscais*\n\nPara acessar suas notas fiscais:\n\n1. Acesse a área do assinante: https://svlentes.shop/area-assinante\n2. Faça login com seu e-mail\n3. Clique em "Minhas Faturas"\n\nSe precisar de ajuda, estou aqui! 😊'
       }
-
     case 4:
       // Atualizar endereço
       return {
@@ -1020,7 +1126,6 @@ async function handleMenuOption(
         requiresResponse: true,
         message: '📍 *Atualizar Endereço*\n\nPara atualizar seu endereço de entrega:\n\n1. Acesse: https://svlentes.shop/area-assinante/configuracoes\n2. Faça login com seu e-mail\n3. Atualize seu endereço\n\nOu me envie o novo endereço completo que atualizo para você! 📬'
       }
-
     case 5:
       // Atualizar forma de pagamento
       return {
@@ -1028,7 +1133,6 @@ async function handleMenuOption(
         requiresResponse: true,
         message: '💳 *Atualizar Forma de Pagamento*\n\nPara atualizar seus dados de pagamento:\n\n1. Acesse: https://svlentes.shop/area-assinante/configuracoes\n2. Faça login\n3. Clique em "Forma de Pagamento"\n\nPrecisa de ajuda? Entre em contato:\n📞 (33) 98606-1427'
       }
-
     case 6:
       // Alterar plano
       return {
@@ -1036,7 +1140,6 @@ async function handleMenuOption(
         requiresResponse: true,
         message: '🔄 *Alterar Plano*\n\nQuer mudar seu plano de assinatura?\n\nNossos planos disponíveis:\n📦 Mensal - Entrega todo mês\n📦 Trimestral - Economia de 10%\n📦 Semestral - Economia de 15%\n📦 Anual - Economia de 20%\n\nMe diga qual plano te interessa ou entre em contato:\n📞 (33) 98606-1427'
       }
-
     case 7:
       // Pausar/Cancelar assinatura
       return {
@@ -1044,7 +1147,6 @@ async function handleMenuOption(
         requiresResponse: true,
         message: '⏸️ *Pausar ou Cancelar Assinatura*\n\n*Pausar assinatura:*\nVocê pode pausar por 30, 60 ou 90 dias.\nEnvie: "pausar assinatura 30 dias"\n\n*Cancelar assinatura:*\nSentiremos sua falta! 😢\nPara cancelar, entre em contato:\n📞 (33) 98606-1427\n\nPosso ajudar com mais alguma coisa?'
       }
-
     case 8:
       // Falar com atendente
       return {
@@ -1052,12 +1154,10 @@ async function handleMenuOption(
         requiresResponse: true,
         message: '💬 *Atendimento Humano*\n\nVou transferir você para nossa equipe!\n\nEntre em contato diretamente:\n📞 WhatsApp: (33) 98606-1427\n📧 Email: saraivavision@gmail.com\n\n*Horário de atendimento:*\nSegunda a Sexta: 8h às 18h\nSábado: 8h às 12h\n\nEm que mais posso ajudar? 😊'
       }
-
     default:
       return null
   }
 }
-
 /**
  * Handle subscription management commands
  */
@@ -1066,12 +1166,10 @@ async function handleSubscriptionCommand(
   phone: string
 ): Promise<any | null> {
   const cleanMessage = message.trim().toLowerCase()
-
   // Comandos de visualização de assinatura
   if (/\b(minha\s+assinatura|ver\s+assinatura|detalhes\s+assinatura|status\s+assinatura)\b/i.test(cleanMessage)) {
     return await viewSubscriptionCommand(phone)
   }
-
   // Comandos de pausa
   if (/\b(pausar\s+assinatura|pausar)\b/i.test(cleanMessage)) {
     // Detectar duração da pausa (30, 60, 90 dias)
@@ -1079,21 +1177,17 @@ async function handleSubscriptionCommand(
     const days = daysMatch ? parseInt(daysMatch[1]) : 30
     return await pauseSubscriptionCommand(phone, days)
   }
-
   // Comandos de reativação
   if (/\b(reativar\s+assinatura|ativar\s+assinatura|voltar\s+assinatura|retomar)\b/i.test(cleanMessage)) {
     return await reactivateSubscriptionCommand(phone)
   }
-
   // Comandos de consulta de entrega
   if (/\b(pr[óo]xima\s+entrega|pr[óo]ximo\s+pedido|quando\s+chega|rastreamento)\b/i.test(cleanMessage)) {
     return await nextDeliveryCommand(phone)
   }
-
   // Não é um comando de assinatura
   return null
 }
-
 /**
  * Handle escalation if needed
  */
@@ -1104,8 +1198,6 @@ async function handleEscalationIfNeeded(
 ) {
   try {
     if (processingResult.escalationRequired) {
-      console.log(`Escalation triggered for ${customerPhone} with intent: ${processingResult.intent.name}`)
-
       // TODO: Integrate with escalation system
       // await supportEscalationSystem.createEscalation({
       //   customerPhone,
@@ -1118,26 +1210,21 @@ async function handleEscalationIfNeeded(
     console.error('Error handling escalation:', error)
   }
 }
-
 /**
  * Update message status
  */
 async function updateMessageStatus(webhookData: any, requestId?: string) {
   const timer = logger.startTimer()
-
   try {
     const { message_id, status, error_code, error_message, timestamp, metadata } = webhookData
-
     logger.info(LogCategory.SENDPULSE, `Message status update received`, {
       requestId,
       messageId: message_id,
       status,
       errorCode: error_code
     })
-
     // Map SendPulse status to our MessageStatus enum
     const mappedStatus = mapSendPulseStatus(status)
-
     // TODO: Re-enable when message-status-tracker is implemented
     // Update status in database
     // const statusRecord = await messageStatusTracker.updateStatus({
@@ -1148,7 +1235,6 @@ async function updateMessageStatus(webhookData: any, requestId?: string) {
     //   errorMessage: error_message,
     //   metadata
     // })
-
     // Log status update (simplified without status tracker)
     const duration = timer()
     logger.logSendPulseMessageStatus(
@@ -1162,14 +1248,12 @@ async function updateMessageStatus(webhookData: any, requestId?: string) {
         readTime: null
       }
     )
-
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('status_update', {
     //   messageId: message_id,
     //   status: mappedStatus,
     //   duration
     // }, duration)
-
     if (false) {  // Temporarily disabled status record handling
       logger.warn(LogCategory.SENDPULSE, `Message not found for status update`, {
         requestId,
@@ -1186,7 +1270,6 @@ async function updateMessageStatus(webhookData: any, requestId?: string) {
     })
   }
 }
-
 /**
  * Map SendPulse status to MessageStatus enum
  */
@@ -1201,10 +1284,8 @@ function mapSendPulseStatus(sendpulseStatus: string): MessageStatus {
     'rejected': MessageStatus.REJECTED,
     'expired': MessageStatus.EXPIRED
   }
-
   return statusMap[sendpulseStatus.toLowerCase()] || MessageStatus.SENT
 }
-
 /**
  * Test endpoint for SendPulse integration
  */
@@ -1212,14 +1293,12 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const { testMessage, customerPhone } = body
-
     if (!testMessage || !customerPhone) {
       return NextResponse.json(
         { error: 'testMessage and customerPhone are required' },
         { status: 400 }
       )
     }
-
     // Test message processing
     const context = {
       userHistory: [],
@@ -1229,18 +1308,15 @@ export async function PUT(request: NextRequest) {
       conversationHistory: [],
       lastIntent: null
     }
-
     const result = await langchainSupportProcessor.processSupportMessage(
       testMessage,
       context
     )
-
     return NextResponse.json({
       success: true,
       processingResult: result,
       timestamp: new Date().toISOString()
     })
-
   } catch (error) {
     console.error('Error in SendPulse test endpoint:', error)
     return NextResponse.json(

@@ -1,14 +1,11 @@
 'use client'
-
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
+import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { X, Check, AlertCircle, CreditCard, Barcode } from 'lucide-react'
-
 type PaymentType = 'CREDIT_CARD' | 'BOLETO' | 'PIX'
-
 interface UpdatePaymentModalProps {
   isOpen: boolean
   onClose: () => void
@@ -18,7 +15,6 @@ interface UpdatePaymentModalProps {
   }
   onPaymentUpdate: (paymentData: any) => Promise<void>
 }
-
 export function UpdatePaymentModal({
   isOpen,
   onClose,
@@ -46,23 +42,18 @@ export function UpdatePaymentModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     try {
       setLoading(true)
       setError(null)
-
       const paymentData: any = {
         billingType: paymentType
       }
-
       if (paymentType === 'CREDIT_CARD') {
         paymentData.creditCard = creditCardData
         paymentData.creditCardHolderInfo = holderInfo
       }
-
       await onPaymentUpdate(paymentData)
       setSuccess(true)
       setTimeout(() => {
@@ -75,7 +66,6 @@ export function UpdatePaymentModal({
       setLoading(false)
     }
   }
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
       <div className="p-6">
@@ -92,7 +82,6 @@ export function UpdatePaymentModal({
             <X className="h-6 w-6" />
           </button>
         </div>
-
         {/* Success Message */}
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -102,7 +91,6 @@ export function UpdatePaymentModal({
             </div>
           </div>
         )}
-
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -112,7 +100,6 @@ export function UpdatePaymentModal({
             </div>
           </div>
         )}
-
         <form onSubmit={handleSubmit}>
           {/* Payment Type Selection */}
           <div className="mb-6">
@@ -134,7 +121,6 @@ export function UpdatePaymentModal({
                   <p className="text-sm font-medium">PIX</p>
                 </div>
               </button>
-
               <button
                 type="button"
                 onClick={() => setPaymentType('BOLETO')}
@@ -151,7 +137,6 @@ export function UpdatePaymentModal({
                   <p className="text-sm font-medium">Boleto</p>
                 </div>
               </button>
-
               <button
                 type="button"
                 onClick={() => setPaymentType('CREDIT_CARD')}
@@ -170,12 +155,10 @@ export function UpdatePaymentModal({
               </button>
             </div>
           </div>
-
           {/* Credit Card Form */}
           {paymentType === 'CREDIT_CARD' && (
             <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-gray-900">Dados do Cartão</h3>
-
               <div>
                 <Label htmlFor="cardNumber">Número do Cartão *</Label>
                 <Input
@@ -187,7 +170,6 @@ export function UpdatePaymentModal({
                   required
                 />
               </div>
-
               <div>
                 <Label htmlFor="holderName">Nome no Cartão *</Label>
                 <Input
@@ -198,7 +180,6 @@ export function UpdatePaymentModal({
                   required
                 />
               </div>
-
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="expiryMonth">Mês *</Label>
@@ -234,9 +215,7 @@ export function UpdatePaymentModal({
                   />
                 </div>
               </div>
-
               <h3 className="font-semibold text-gray-900 pt-4 border-t">Dados do Titular</h3>
-
               <div>
                 <Label htmlFor="holderInfoName">Nome Completo *</Label>
                 <Input
@@ -246,7 +225,6 @@ export function UpdatePaymentModal({
                   required
                 />
               </div>
-
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="cpf">CPF *</Label>
@@ -270,7 +248,6 @@ export function UpdatePaymentModal({
                   />
                 </div>
               </div>
-
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="holderCep">CEP *</Label>
@@ -306,7 +283,6 @@ export function UpdatePaymentModal({
               </div>
             </div>
           )}
-
           {/* Info Messages */}
           {paymentType === 'PIX' && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -316,7 +292,6 @@ export function UpdatePaymentModal({
               </p>
             </div>
           )}
-
           {paymentType === 'BOLETO' && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-900">
@@ -325,7 +300,6 @@ export function UpdatePaymentModal({
               </p>
             </div>
           )}
-
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <Button

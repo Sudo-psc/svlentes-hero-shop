@@ -2,15 +2,12 @@
  * SendPulse OAuth2 Authentication
  * Generates API token from app_id and app_secret using SendPulse OAuth2 flow
  */
-
 import { logger, LogCategory } from './logger'
-
 interface TokenResponse {
   access_token: string
   token_type: string
   expires_in: number
 }
-
 export class SendPulseAuth {
   private appId: string
   private appSecret: string
@@ -22,23 +19,19 @@ export class SendPulseAuth {
   private proactiveRefreshThreshold: number = 300 // Refresh 5min before expiry
   private retryAttempts: number = 3
   private retryDelayMs: number = 1000
-
   constructor() {
     // C2: Validate required credentials at startup
     const appId = process.env.SENDPULSE_APP_ID
     const appSecret = process.env.SENDPULSE_APP_SECRET
-
     if (!appId || !appSecret) {
       throw new Error(
         'SendPulse credentials not configured. Required environment variables: ' +
         'SENDPULSE_APP_ID and SENDPULSE_APP_SECRET'
       )
     }
-
     this.appId = appId
     this.appSecret = appSecret
   }
-
   /**
    * Get access token (cached or fresh)
    * P1: Implements proactive refresh to prevent expiry during use
@@ -46,12 +39,10 @@ export class SendPulseAuth {
   async getAccessToken(): Promise<string> {
     const now = Date.now()
     const timeUntilExpiry = Math.floor((this.tokenExpiry - now) / 1000)
-
     // P1: Return cached token if still valid (not near expiry)
     if (this.cachedToken && timeUntilExpiry > this.proactiveRefreshThreshold) {
       return this.cachedToken
     }
-
     // P1: Proactive refresh - token is close to expiry but still valid
     if (this.cachedToken && timeUntilExpiry > 0 && timeUntilExpiry <= this.proactiveRefreshThreshold) {
       logger.info(LogCategory.SENDPULSE, 'Proactive token refresh', {
@@ -65,11 +56,9 @@ export class SendPulseAuth {
       )
       return this.cachedToken
     }
-
     // P1: Token expired or missing - wait for new token
     return await this.generateTokenWithLock()
   }
-
   /**
    * Generate new access token from SendPulse OAuth2
    */
@@ -78,7 +67,6 @@ export class SendPulseAuth {
       if (!this.appId || !this.appSecret) {
         throw new Error('SendPulse app_id and app_secret not configured')
       }
-
       const response = await fetch(this.tokenUrl, {
         method: 'POST',
         headers: {
@@ -90,7 +78,6 @@ export class SendPulseAuth {
           client_secret: this.appSecret
         })
       })
-
       if (!response.ok) {
         const text = await response.text()
         // Log error without exposing sensitive response data
@@ -98,7 +85,6 @@ export class SendPulseAuth {
           status: response.status,
           statusText: response.statusText
         })
-
         const errorData = JSON.parse(text || '{}')
         throw new Error(
           `SendPulse OAuth error: ${response.status} - ${
@@ -106,14 +92,11 @@ export class SendPulseAuth {
           }`
         )
       }
-
       const text = await response.text()
-
       // C3: Safe JSON parsing with validation
       let data: TokenResponse
       try {
         data = JSON.parse(text)
-
         // Validate token response structure
         if (!data.access_token || typeof data.access_token !== 'string') {
           throw new Error('Invalid token response: missing or invalid access_token')
@@ -128,18 +111,14 @@ export class SendPulseAuth {
           }`
         )
       }
-
       // C1: Log success WITHOUT exposing token
       logger.info(LogCategory.SENDPULSE, 'Token generated successfully', {
         expiresIn: data.expires_in
       })
-
       // Cache token (expires_in is in seconds, subtract 60s for safety margin)
       this.cachedToken = data.access_token
       this.tokenExpiry = Date.now() + (data.expires_in - 60) * 1000
-
       return data.access_token
-
     } catch (error) {
       // C1: Log error without exposing sensitive data
       logger.error(LogCategory.SENDPULSE, 'Token generation failed', {
@@ -149,7 +128,6 @@ export class SendPulseAuth {
       throw error
     }
   }
-
   /**
    * P1: Generate token with concurrency control
    * Prevents multiple simultaneous refresh requests
@@ -160,29 +138,24 @@ export class SendPulseAuth {
       logger.info(LogCategory.SENDPULSE, 'Token refresh already in progress, waiting...')
       return await this.refreshPromise
     }
-
     // Start new refresh and store promise
     this.refreshPromise = this.generateTokenWithRetry()
       .finally(() => {
         // Clear promise when done
         this.refreshPromise = null
       })
-
     return await this.refreshPromise
   }
-
   /**
    * P1: Generate token with exponential backoff retry
    */
   private async generateTokenWithRetry(): Promise<string> {
     let lastError: Error | null = null
-
     for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
       try {
         return await this.generateToken()
       } catch (error) {
         lastError = error as Error
-
         if (attempt < this.retryAttempts) {
           const delayMs = this.retryDelayMs * Math.pow(2, attempt - 1) // Exponential backoff
           logger.warn(LogCategory.SENDPULSE, `Retry ${attempt}/${this.retryAttempts}`, {
@@ -193,10 +166,8 @@ export class SendPulseAuth {
         }
       }
     }
-
     throw lastError || new Error('Token generation failed after retries')
   }
-
   /**
    * Force token refresh
    */
@@ -205,14 +176,12 @@ export class SendPulseAuth {
     this.tokenExpiry = 0
     return await this.generateTokenWithLock()
   }
-
   /**
    * Check if token is valid
    */
   isTokenValid(): boolean {
     return !!(this.cachedToken && Date.now() < this.tokenExpiry)
   }
-
   /**
    * Get token info
    */
@@ -224,6 +193,5 @@ export class SendPulseAuth {
     }
   }
 }
-
 // Singleton instance
 export const sendPulseAuth = new SendPulseAuth()

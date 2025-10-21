@@ -1,37 +1,30 @@
 'use client'
-
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
-import { LogoHeader } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { LogoHeader } from '@/components/ui/logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
-
+import { useConfigValue } from '@/lib/use-config'
 interface HeaderProps {
     className?: string
 }
-
 export function Header({ className }: HeaderProps) {
+    const router = useRouter()
     const { user, loading, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
-
-    // FIXME: Configuração centralizada desabilitada temporariamente
-    // ConfigService requer acesso a fs (Node.js) que não funciona no client
-    // TODO: Implementar servidor de config ou passar como props de server component
-    const useCentralizedConfig = false
-    const headerMenu = null
-
+    // Use centralized configuration for menu items
+    const headerMenu = useConfigValue('menus.header', null)
     // Detectar scroll para adicionar sombra no header
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 10)
         }
-
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
-
     // Fechar menu mobile ao redimensionar
     useEffect(() => {
         const handleResize = () => {
@@ -39,63 +32,51 @@ export function Header({ className }: HeaderProps) {
                 setIsMenuOpen(false)
             }
         }
-
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
     }, [])
-
     const navigation = useMemo(() => {
-        if (useCentralizedConfig && headerMenu) {
+        if (headerMenu && headerMenu.main) {
             return headerMenu.main.map((item: any) => ({
                 name: item.label,
                 href: item.href,
                 isAnchor: item.isAnchor || false,
             }))
         }
-
+        // Fallback to hardcoded menu if config not available
         return [
             { name: 'Calculadora', href: '/calculadora', isAnchor: false },
             { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
             { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
-            { name: 'Blog', href: '/blog', isAnchor: false },
             { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
             { name: 'Contato', href: '#contato', isAnchor: true },
         ]
-    }, [headerMenu, useCentralizedConfig])
-
+    }, [headerMenu])
     const ctaConfig = useMemo(
-        () => (useCentralizedConfig && headerMenu ? headerMenu.cta : null),
-        [headerMenu, useCentralizedConfig]
+        () => (headerMenu ? headerMenu.cta : null),
+        [headerMenu]
     )
-
     const handleNavClick = useCallback((href: string) => {
         const sectionId = href.replace('#', '')
         scrollToSection(sectionId)
         setIsMenuOpen(false)
     }, [])
-
     const handleAgendarConsulta = useCallback(() => {
         const whatsappMessage = `Olá! Gostaria de agendar uma consulta com o Dr. Philipe Saraiva Cruz para avaliar minha necessidade de lentes de contato.
-
 Vim através do site SV Lentes e tenho interesse no serviço de assinatura com acompanhamento médico.`
-
         const whatsappLink = generateWhatsAppLink(
             process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511947038078',
             whatsappMessage
         )
-
         window.open(whatsappLink, '_blank')
     }, [])
-
     const handleLogin = useCallback(() => {
-        window.location.href = '/area-assinante/login'
+        router.push('/area-assinante/login')
     }, [])
-
     const handleLogout = useCallback(async () => {
         await signOut()
-        window.location.href = '/'
+        router.push('/')
     }, [signOut])
-
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
@@ -113,7 +94,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     >
                         <LogoHeader />
                     </a>
-
                     {/* Navigation Desktop */}
                     <nav className="hidden md:flex items-center space-x-8">
                         {navigation.map((item: any) => (
@@ -142,18 +122,17 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                             )
                         ))}
                     </nav>
-
                     {/* CTA Button Desktop */}
                     <div className="hidden md:flex items-center space-x-4">
                         {user ? (
                             <>
                                 <Button
-                                    onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
+                                    onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                     variant="outline"
                                     className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                     size="default"
                                 >
-                                    <LayoutDashboard className="w-4 h-4" />
+                                    <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                 </Button>
                                 <Button
@@ -162,7 +141,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
                                     size="default"
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                 </Button>
                             </>
@@ -173,7 +152,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
                                     size="default"
                                 >
-                                    <Phone className="w-4 h-4" />
+                                    <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                 </Button>
                                 <Button
@@ -182,13 +161,12 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                     size="default"
                                 >
-                                    <User className="w-4 h-4" />
+                                    <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                     <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                 </Button>
                             </>
                         )}
                     </div>
-
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -196,13 +174,12 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                         aria-label="Toggle menu"
                     >
                         {isMenuOpen ? (
-                            <X className="w-6 h-6" />
+                            <X className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
                         ) : (
-                            <Menu className="w-6 h-6" />
+                            <Menu className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
                         )}
                     </button>
                 </div>
-
                 {/* Mobile Menu */}
                 {isMenuOpen && (
                     <div className="md:hidden border-t border-gray-200 bg-white">
@@ -230,18 +207,17 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                     </a>
                                 )
                             ))}
-
                             {/* Mobile CTA */}
                             <div className="px-4 pt-4 border-t border-gray-200 space-y-3">
                                 {user ? (
                                     <>
                                         <Button
-                                            onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
+                                            onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                             variant="outline"
                                             className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                             size="default"
                                         >
-                                            <LayoutDashboard className="w-4 h-4" />
+                                            <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                         </Button>
                                         <Button
@@ -250,7 +226,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800"
                                             size="default"
                                         >
-                                            <LogOut className="w-4 h-4" />
+                                            <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                         </Button>
                                     </>
@@ -261,7 +237,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
                                             size="default"
                                         >
-                                            <Phone className="w-4 h-4" />
+                                            <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                         </Button>
                                         <Button
@@ -270,7 +246,7 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                                             className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                             size="default"
                                         >
-                                            <User className="w-4 h-4" />
+                                            <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                         </Button>
                                     </>
@@ -280,7 +256,6 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                     </div>
                 )}
             </div>
-
             </header>
     )
 }

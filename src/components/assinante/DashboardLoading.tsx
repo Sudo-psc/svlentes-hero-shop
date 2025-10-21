@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-
 export function DashboardLoading() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
@@ -9,7 +8,6 @@ export function DashboardLoading() {
           <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
           <div className="h-4 bg-gray-200 rounded w-96 mt-2 animate-pulse"></div>
         </div>
-
         {/* Subscription Status Loading */}
         <Card className="mb-8">
           <CardHeader>
@@ -31,7 +29,6 @@ export function DashboardLoading() {
             </div>
           </CardContent>
         </Card>
-
         {/* Benefits Loading */}
         <Card className="mb-8">
           <CardHeader>
@@ -52,7 +49,6 @@ export function DashboardLoading() {
             </div>
           </CardContent>
         </Card>
-
         {/* Address and Contact Loading */}
         <div className="grid md:grid-cols-2 gap-8">
           <Card>
@@ -69,7 +65,6 @@ export function DashboardLoading() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
@@ -88,7 +83,6 @@ export function DashboardLoading() {
     </div>
   )
 }
-
 export function SubscriptionStatusLoading() {
   return (
     <Card>
@@ -119,7 +113,6 @@ export function SubscriptionStatusLoading() {
     </Card>
   )
 }
-
 export function BenefitsLoading() {
   return (
     <Card>
@@ -147,7 +140,6 @@ export function BenefitsLoading() {
     </Card>
   )
 }
-
 export function ShippingAddressLoading() {
   return (
     <Card>
@@ -166,5 +158,4 @@ export function ShippingAddressLoading() {
     </Card>
   )
 }
-
 export default DashboardLoading

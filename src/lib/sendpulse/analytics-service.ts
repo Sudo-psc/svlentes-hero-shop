@@ -2,7 +2,6 @@
  * SendPulse Analytics Service
  * Track conversation metrics, message statistics, and performance
  */
-
 import type {
   ConversationMetrics,
   MessageMetrics,
@@ -10,7 +9,6 @@ import type {
   AnalyticsTimeframe,
   MessageType
 } from './types'
-
 export class AnalyticsService {
   private conversations: Map<string, ConversationMetrics> = new Map()
   private messageHistory: Array<{
@@ -21,7 +19,6 @@ export class AnalyticsService {
     direction: 'inbound' | 'outbound'
   }> = []
   private maxHistorySize = 10000
-
   /**
    * Track message sent
    */
@@ -32,19 +29,15 @@ export class AnalyticsService {
     direction: 'inbound' | 'outbound' = 'outbound'
   ): void {
     const metrics = this.getOrCreateMetrics(contactId, botId)
-
     metrics.totalMessages++
     if (direction === 'outbound') {
       metrics.sentByBot++
     } else {
       metrics.sentByUser++
     }
-
     metrics.messagesByType[type] = (metrics.messagesByType[type] || 0) + 1
     metrics.lastActivity = new Date().toISOString()
-
     this.conversations.set(contactId, metrics)
-
     // Add to history
     this.addToHistory({
       contactId,
@@ -54,7 +47,6 @@ export class AnalyticsService {
       direction
     })
   }
-
   /**
    * Update message status
    */
@@ -64,9 +56,7 @@ export class AnalyticsService {
   ): void {
     const metrics = this.conversations.get(contactId)
     if (!metrics) return
-
     const total = metrics.sentByBot
-
     if (status === 'delivered') {
       const delivered = Math.min(total, metrics.sentByBot)
       metrics.deliveryRate = total > 0 ? (delivered / total) * 100 : 0
@@ -77,54 +67,44 @@ export class AnalyticsService {
       const failed = 1
       metrics.failureRate = total > 0 ? (failed / total) * 100 : 0
     }
-
     this.conversations.set(contactId, metrics)
   }
-
   /**
    * Track response time
    */
   trackResponseTime(contactId: string, responseTimeMs: number): void {
     const metrics = this.conversations.get(contactId)
     if (!metrics) return
-
     // Calculate rolling average
     const totalMessages = metrics.sentByBot + metrics.sentByUser
     const currentAvg = metrics.averageResponseTime
     metrics.averageResponseTime =
       (currentAvg * (totalMessages - 1) + responseTimeMs) / totalMessages
-
     this.conversations.set(contactId, metrics)
   }
-
   /**
    * Get metrics for specific contact
    */
   getConversationMetrics(contactId: string): ConversationMetrics | null {
     return this.conversations.get(contactId) || null
   }
-
   /**
    * Get all conversation metrics
    */
   getAllMetrics(): ConversationMetrics[] {
     return Array.from(this.conversations.values())
   }
-
   /**
    * Get summary analytics for timeframe
    */
   getSummary(timeframe?: AnalyticsTimeframe): AnalyticsSummary {
     const start = timeframe?.start || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const end = timeframe?.end || new Date().toISOString()
-
     const filteredHistory = this.messageHistory.filter(msg =>
       msg.timestamp >= start && msg.timestamp <= end
     )
-
     const messageMetrics = this.calculateMessageMetrics(filteredHistory)
     const conversationMetrics = this.calculateConversationMetrics(start, end)
-
     return {
       timeframe: timeframe || {
         start,
@@ -149,7 +129,6 @@ export class AnalyticsService {
       }
     }
   }
-
   /**
    * Calculate message metrics from history
    */
@@ -161,27 +140,20 @@ export class AnalyticsService {
       interactive: 0,
       template: 0
     }
-
     const byHour: Record<string, number> = {}
     const byDay: Record<string, number> = {}
-
     let sent = 0, delivered = 0, read = 0, failed = 0
-
     history.forEach(msg => {
       byType[msg.type] = (byType[msg.type] || 0) + 1
-
       const hour = msg.timestamp.substring(0, 13) // YYYY-MM-DDTHH
       const day = msg.timestamp.substring(0, 10) // YYYY-MM-DD
-
       byHour[hour] = (byHour[hour] || 0) + 1
       byDay[day] = (byDay[day] || 0) + 1
-
       if (msg.status === 'sent') sent++
       else if (msg.status === 'delivered') delivered++
       else if (msg.status === 'read') read++
       else if (msg.status === 'failed') failed++
     })
-
     return {
       total: history.length,
       sent,
@@ -193,7 +165,6 @@ export class AnalyticsService {
       byDay
     }
   }
-
   /**
    * Calculate conversation metrics
    */
@@ -207,12 +178,10 @@ export class AnalyticsService {
     const activeConversations = conversations.filter(
       m => m.lastActivity >= start && m.lastActivity <= end
     )
-
     const totalDuration = conversations.reduce(
       (sum, m) => sum + m.conversationDuration,
       0
     )
-
     return {
       total: conversations.length,
       active: activeConversations.length,
@@ -220,18 +189,15 @@ export class AnalyticsService {
       averageDuration: conversations.length > 0 ? totalDuration / conversations.length : 0
     }
   }
-
   /**
    * Calculate average response time across all conversations
    */
   private calculateAverageResponseTime(): number {
     const metrics = Array.from(this.conversations.values())
     if (metrics.length === 0) return 0
-
     const total = metrics.reduce((sum, m) => sum + m.averageResponseTime, 0)
     return total / metrics.length
   }
-
   /**
    * Calculate average rate (delivery, read, failure) across conversations
    */
@@ -240,17 +206,14 @@ export class AnalyticsService {
   ): number {
     const metrics = Array.from(this.conversations.values())
     if (metrics.length === 0) return 0
-
     const total = metrics.reduce((sum, m) => sum + m[rateType], 0)
     return total / metrics.length
   }
-
   /**
    * Get or create metrics for contact
    */
   private getOrCreateMetrics(contactId: string, botId: string): ConversationMetrics {
     let metrics = this.conversations.get(contactId)
-
     if (!metrics) {
       metrics = {
         contact_id: contactId,
@@ -273,22 +236,18 @@ export class AnalyticsService {
         failureRate: 0
       }
     }
-
     return metrics
   }
-
   /**
    * Add message to history
    */
   private addToHistory(message: typeof this.messageHistory[0]): void {
     this.messageHistory.push(message)
-
     // Limit history size
     if (this.messageHistory.length > this.maxHistorySize) {
       this.messageHistory.shift()
     }
   }
-
   /**
    * Clear all analytics data
    */
@@ -296,7 +255,6 @@ export class AnalyticsService {
     this.conversations.clear()
     this.messageHistory = []
   }
-
   /**
    * Get analytics statistics
    */
@@ -316,6 +274,5 @@ export class AnalyticsService {
     }
   }
 }
-
 // Singleton instance
 export const analyticsService = new AnalyticsService()

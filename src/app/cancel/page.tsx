@@ -1,12 +1,10 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
-
+import { Button } from '@/components/ui/button'
 export const metadata: Metadata = {
     title: 'Pagamento Cancelado - SVlentes',
     description: 'Seu pagamento foi cancelado. Você pode tentar novamente a qualquer momento.',
 }
-
 export default function CancelPage() {
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -27,7 +25,6 @@ export default function CancelPage() {
                         Não se preocupe, você pode tentar novamente a qualquer momento.
                     </p>
                 </div>
-
                 {/* Reasons and Solutions */}
                 <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -60,7 +57,6 @@ export default function CancelPage() {
                         </div>
                     </div>
                 </div>
-
                 {/* Benefits Reminder */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
                     <h3 className="font-semibold text-blue-900 mb-3">Lembre-se dos benefícios da SVlentes:</h3>
@@ -91,7 +87,6 @@ export default function CancelPage() {
                         </div>
                     </div>
                 </div>
-
                 {/* Action Buttons */}
                 <div className="space-y-4">
                     <Link href="/#planos-precos" className="block">
@@ -99,7 +94,6 @@ export default function CancelPage() {
                             Tentar Novamente
                         </Button>
                     </Link>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <a
                             href="https://wa.me/+5533999898026?text=Olá! Estava tentando assinar a SVlentes mas tive um problema no pagamento. Podem me ajudar?"
@@ -114,7 +108,6 @@ export default function CancelPage() {
                                 Falar no WhatsApp
                             </Button>
                         </a>
-
                         <Link href="/" className="block">
                             <Button variant="outline" className="w-full">
                                 Voltar ao Início
@@ -122,7 +115,6 @@ export default function CancelPage() {
                         </Link>
                     </div>
                 </div>
-
                 {/* Help Section */}
                 <div className="text-center mt-8 p-4 bg-gray-100 rounded-lg">
                     <p className="text-sm text-gray-600 mb-2">

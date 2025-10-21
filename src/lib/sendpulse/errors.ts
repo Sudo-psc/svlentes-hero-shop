@@ -2,7 +2,6 @@
  * SendPulse Error Classes
  * Specific error types for better error handling and debugging
  */
-
 export class SendPulseError extends Error {
   constructor(
     message: string,
@@ -14,7 +13,6 @@ export class SendPulseError extends Error {
     Object.setPrototypeOf(this, SendPulseError.prototype)
   }
 }
-
 export class SendPulseAuthError extends SendPulseError {
   constructor(message: string, details?: any) {
     super(message, 'AUTH_ERROR', details)
@@ -22,7 +20,6 @@ export class SendPulseAuthError extends SendPulseError {
     Object.setPrototypeOf(this, SendPulseAuthError.prototype)
   }
 }
-
 export class SendPulseBotError extends SendPulseError {
   constructor(message: string, details?: any) {
     super(message, 'BOT_ERROR', details)
@@ -30,7 +27,6 @@ export class SendPulseBotError extends SendPulseError {
     Object.setPrototypeOf(this, SendPulseBotError.prototype)
   }
 }
-
 export class SendPulseContactError extends SendPulseError {
   constructor(message: string, details?: any) {
     super(message, 'CONTACT_ERROR', details)
@@ -38,7 +34,6 @@ export class SendPulseContactError extends SendPulseError {
     Object.setPrototypeOf(this, SendPulseContactError.prototype)
   }
 }
-
 export class SendPulseMessageError extends SendPulseError {
   constructor(message: string, code?: string | number, details?: any) {
     super(message, code, details)
@@ -46,7 +41,6 @@ export class SendPulseMessageError extends SendPulseError {
     Object.setPrototypeOf(this, SendPulseMessageError.prototype)
   }
 }
-
 /**
  * Specific error for 24-hour conversation window violations
  */
@@ -62,7 +56,6 @@ export class ConversationWindowExpiredError extends SendPulseMessageError {
     Object.setPrototypeOf(this, ConversationWindowExpiredError.prototype)
   }
 }
-
 /**
  * Error for API rate limiting
  */
@@ -77,7 +70,6 @@ export class SendPulseRateLimitError extends SendPulseError {
     Object.setPrototypeOf(this, SendPulseRateLimitError.prototype)
   }
 }
-
 /**
  * Error for network/API communication issues
  */
@@ -88,7 +80,6 @@ export class SendPulseNetworkError extends SendPulseError {
     Object.setPrototypeOf(this, SendPulseNetworkError.prototype)
   }
 }
-
 /**
  * Error factory for parsing API error responses
  */
@@ -99,26 +90,21 @@ export function createSendPulseError(
   const message = errorData.message || errorData.error || 'Unknown error'
   const errors = errorData.errors || {}
   const errorCode = errorData.error_code || statusCode
-
   // Check for specific error patterns
   if (errors.contact_id && errors.contact_id.some((msg: string) => msg.includes('not active in 24hours'))) {
     const contactId = errorData.contact_id || 'unknown'
     return new ConversationWindowExpiredError(contactId)
   }
-
   if (statusCode === 401 || statusCode === 403) {
     return new SendPulseAuthError(message, { statusCode, errors })
   }
-
   if (statusCode === 429) {
     const retryAfter = errorData.retry_after
     return new SendPulseRateLimitError(message, retryAfter, { errors })
   }
-
   if (statusCode === 404) {
     return new SendPulseError(`Resource not found: ${message}`, 404, { errors })
   }
-
   if (statusCode >= 500) {
     return new SendPulseNetworkError(
       `SendPulse server error: ${message}`,
@@ -126,6 +112,5 @@ export function createSendPulseError(
       { errors }
     )
   }
-
   return new SendPulseError(message, errorCode, { statusCode, errors })
 }

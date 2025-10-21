@@ -3,9 +3,7 @@ import { z } from 'zod';
 import { PrismaClient, DataRequestType, DataRequestStatus } from '@prisma/client';
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 import { csrfProtection } from '@/lib/csrf';
-
 const prisma = new PrismaClient();
-
 // Schema de validação para solicitações de dados
 const dataRequestSchema = z.object({
     email: z.string().email('Email inválido'),
@@ -14,14 +12,12 @@ const dataRequestSchema = z.object({
     reason: z.string().optional(),
     cpfCnpj: z.string().optional()
 });
-
 export async function POST(request: NextRequest) {
     // CSRF Protection
     const csrfResult = await csrfProtection(request);
     if (csrfResult) {
         return csrfResult;
     }
-
     // Rate limiting: 10 requisições em 1 hora (solicitações sensíveis de dados)
     const rateLimitResult = await rateLimit(request, {
         windowMs: 60 * 60 * 1000, // 1 hora
@@ -31,17 +27,14 @@ export async function POST(request: NextRequest) {
     if (rateLimitResult) {
         return rateLimitResult;
     }
-
     try {
         const body = await request.json();
         const validatedData = dataRequestSchema.parse(body);
-
         // Capturar informações de auditoria
         const ipAddress = request.headers.get('x-forwarded-for') ||
                          request.headers.get('x-real-ip') ||
                          'unknown';
         const userAgent = request.headers.get('user-agent') || 'unknown';
-
         // Criar solicitação de dados no banco de dados
         const dataRequest = await prisma.dataRequest.create({
             data: {
@@ -56,7 +49,6 @@ export async function POST(request: NextRequest) {
                 }
             }
         });
-
         // Mensagens baseadas no tipo de solicitação
         const requestTypeMessages = {
             ACCESS: {
@@ -80,9 +72,7 @@ export async function POST(request: NextRequest) {
                 estimatedTime: '10 dias úteis'
             }
         };
-
         const { message, estimatedTime } = requestTypeMessages[validatedData.requestType];
-
         return NextResponse.json({
             success: true,
             message,
@@ -95,10 +85,8 @@ export async function POST(request: NextRequest) {
                 `Sua solicitação será processada em até ${estimatedTime}`
             ]
         });
-
     } catch (error) {
         console.error('Erro ao processar solicitação de dados:', error);
-
         if (error instanceof z.ZodError) {
             return NextResponse.json({
                 success: false,
@@ -106,7 +94,6 @@ export async function POST(request: NextRequest) {
                 errors: error.errors
             }, { status: 400 });
         }
-
         return NextResponse.json({
             success: false,
             message: 'Erro interno do servidor'
@@ -115,13 +102,11 @@ export async function POST(request: NextRequest) {
         await prisma.$disconnect();
     }
 }
-
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const requestId = searchParams.get('requestId');
         const email = searchParams.get('email');
-
         // Buscar por ID ou email
         if (!requestId && !email) {
             return NextResponse.json({
@@ -129,22 +114,18 @@ export async function GET(request: NextRequest) {
                 message: 'ID da solicitação ou email é obrigatório'
             }, { status: 400 });
         }
-
         let dataRequests;
-
         if (requestId) {
             // Buscar solicitação específica por ID
             const dataRequest = await prisma.dataRequest.findUnique({
                 where: { id: requestId }
             });
-
             if (!dataRequest) {
                 return NextResponse.json({
                     success: false,
                     message: 'Solicitação não encontrada'
                 }, { status: 404 });
             }
-
             return NextResponse.json({
                 success: true,
                 request: {
@@ -159,7 +140,6 @@ export async function GET(request: NextRequest) {
                 }
             });
         }
-
         if (email) {
             // Buscar todas as solicitações do email
             dataRequests = await prisma.dataRequest.findMany({
@@ -167,7 +147,6 @@ export async function GET(request: NextRequest) {
                 orderBy: { requestedAt: 'desc' },
                 take: 50
             });
-
             return NextResponse.json({
                 success: true,
                 requests: dataRequests.map(req => ({
@@ -180,10 +159,8 @@ export async function GET(request: NextRequest) {
                 total: dataRequests.length
             });
         }
-
     } catch (error) {
         console.error('Erro ao buscar solicitação de dados:', error);
-
         return NextResponse.json({
             success: false,
             message: 'Erro ao buscar solicitação'

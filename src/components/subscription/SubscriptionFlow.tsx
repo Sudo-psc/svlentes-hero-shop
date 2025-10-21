@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { PlanSelector } from './PlanSelector'
 import { LensSelector } from './LensSelector'
@@ -10,10 +9,10 @@ import { FlowData, LensData, ContactData } from '@/types/subscription'
 import { CalculatorResult } from '@/types/calculator'
 import { formatCurrency } from '@/lib/calculator'
 import { useAsaasPayment } from '@/hooks/useAsaasPayment'
-
+import { useSearchParams } from 'next/navigation'
 type FlowStep = 'plan' | 'lens' | 'addons' | 'summary'
-
 export function SubscriptionFlow() {
+    const searchParams = useSearchParams()
     const [currentStep, setCurrentStep] = useState<FlowStep>('plan')
     const [flowData, setFlowData] = useState<FlowData>({
         planId: null,
@@ -24,51 +23,51 @@ export function SubscriptionFlow() {
     const [calculatorData, setCalculatorData] = useState<CalculatorResult | null>(null)
     const [showCalculatorBanner, setShowCalculatorBanner] = useState(false)
     const { processPayment, loading, error, clearError } = useAsaasPayment()
-
-    // Carregar dados da calculadora do localStorage ao montar
+    // Carregar dados da calculadora e AddOns da URL ao montar
     useEffect(() => {
         try {
+            // Carregar dados da calculadora do localStorage
             const savedResult = localStorage.getItem('calculatorResult')
             if (savedResult) {
                 const result: CalculatorResult = JSON.parse(savedResult)
                 setCalculatorData(result)
                 setShowCalculatorBanner(true)
             }
+            // Carregar AddOns pré-selecionados da URL
+            const addonsParam = searchParams.get('addons')
+            if (addonsParam) {
+                const preSelectedAddOns = addonsParam.split(',').filter(Boolean)
+                setFlowData(prev => ({ ...prev, addOns: preSelectedAddOns }))
+                // Se já tem AddOns selecionados, começar pelo step de planos ainda
+                // mas com a indicação de que AddOns já foram escolhidos
+            }
         } catch (error) {
-            console.error('Erro ao carregar dados da calculadora:', error)
+            console.error('Erro ao carregar dados iniciais:', error)
         }
-    }, [])
-
+    }, [searchParams])
     const steps = [
         { id: 'plan', label: 'Plano', number: 1 },
         { id: 'lens', label: 'Lentes', number: 2 },
         { id: 'addons', label: 'Add-ons', number: 3 },
         { id: 'summary', label: 'Resumo', number: 4 }
     ]
-
     const currentStepIndex = steps.findIndex(s => s.id === currentStep)
-
     const handlePlanSelect = (planId: string, billingCycle: 'monthly' | 'annual') => {
         setFlowData(prev => ({ ...prev, planId, billingCycle }))
         setCurrentStep('lens')
     }
-
     const handleLensSelect = (lensData: LensData) => {
         setFlowData(prev => ({ ...prev, lensData }))
         setCurrentStep('addons')
     }
-
     const handleAddOnsSelect = (addOns: string[]) => {
         setFlowData(prev => ({ ...prev, addOns }))
         setCurrentStep('summary')
     }
-
     const handleConfirm = async (contactData: ContactData) => {
         try {
             const response = await processPayment({ flowData, contactData })
-
             localStorage.removeItem('calculatorResult')
-
             if (response.invoiceUrl) {
                 window.location.href = response.invoiceUrl
             } else {
@@ -78,12 +77,10 @@ export function SubscriptionFlow() {
             console.error('Erro ao confirmar pedido:', processingError)
         }
     }
-
     const dismissCalculatorBanner = () => {
         setShowCalculatorBanner(false)
         localStorage.removeItem('calculatorResult')
     }
-
     return (
         <div className="min-h-screen bg-gray-50 py-12">
             <div className="max-w-6xl mx-auto px-4">
@@ -94,7 +91,6 @@ export function SubscriptionFlow() {
                             const isCompleted = index < currentStepIndex
                             const isCurrent = step.id === currentStep
                             const isLast = index === steps.length - 1
-
                             return (
                                 <div key={step.id} className="flex items-center flex-1">
                                     {/* Step Circle */}
@@ -120,7 +116,6 @@ export function SubscriptionFlow() {
                                             {step.label}
                                         </span>
                                     </div>
-
                                     {/* Connector Line */}
                                     {!isLast && (
                                         <div
@@ -133,7 +128,6 @@ export function SubscriptionFlow() {
                         })}
                     </div>
                 </div>
-
                 {/* Calculator Result Banner */}
                 {showCalculatorBanner && calculatorData && calculatorData.totalAnnualSavings && calculatorData.totalAnnualSavings > 0 && (
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 mb-8">
@@ -181,7 +175,6 @@ export function SubscriptionFlow() {
                         </div>
                     </div>
                 )}
-
                 {/* Error Display */}
                 {error && (
                     <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3 mb-8">
@@ -204,7 +197,6 @@ export function SubscriptionFlow() {
                         </button>
                     </div>
                 )}
-
                 {/* Step Content */}
                 <div className="bg-white rounded-2xl shadow-lg p-8 relative">
                     {/* Loading Overlay */}
@@ -217,28 +209,25 @@ export function SubscriptionFlow() {
                             </div>
                         </div>
                     )}
-
                     {currentStep === 'plan' && (
                         <PlanSelector
                             onSelectPlan={handlePlanSelect}
                             initialPlanId={calculatorData?.recommendedPlan}
                         />
                     )}
-
                     {currentStep === 'lens' && (
                         <LensSelector
                             onContinue={handleLensSelect}
                             onBack={() => setCurrentStep('plan')}
                         />
                     )}
-
                     {currentStep === 'addons' && (
                         <AddOnsSelector
                             onContinue={handleAddOnsSelect}
                             onBack={() => setCurrentStep('lens')}
+                            preSelectedAddOns={flowData.addOns}
                         />
                     )}
-
                     {currentStep === 'summary' && flowData.planId && flowData.lensData && (
                         <OrderSummary
                             planId={flowData.planId}

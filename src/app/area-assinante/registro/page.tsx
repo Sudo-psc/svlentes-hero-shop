@@ -1,16 +1,12 @@
 'use client'
-
 import { useState } from 'react'
-
 // Force dynamic rendering to avoid SSG config errors
 export const dynamic = 'force-dynamic'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
-import { Logo } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
-
 export default function RegisterPage() {
   const router = useRouter()
   const { signUp } = useAuth()
@@ -22,39 +18,32 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
     // Validações client-side
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
       setIsLoading(false)
       return
     }
-
     if (password.length < 6) {
       setError('A senha deve ter pelo menos 6 caracteres')
       setIsLoading(false)
       return
     }
-
     if (!acceptTerms) {
       setError('Você deve aceitar os termos de serviço e política de privacidade')
       setIsLoading(false)
       return
     }
-
     try {
       await signUp(email, password, name)
-
       // Sucesso - mostrar mensagem
       setSuccess(true)
     } catch (error: any) {
       console.error('[REGISTER] Firebase error:', error)
-
       // Mapear erros do Firebase para mensagens amigáveis
       switch (error.code) {
         case 'auth/email-already-in-use':
@@ -72,7 +61,6 @@ export default function RegisterPage() {
       setIsLoading(false)
     }
   }
-
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
@@ -111,15 +99,11 @@ export default function RegisterPage() {
       </div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        {/* Logo e Título */}
+        {/* Título */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <Logo />
-          </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Criar Conta
           </h2>
@@ -127,7 +111,6 @@ export default function RegisterPage() {
             Cadastre-se para acessar a área do assinante
           </p>
         </div>
-
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
@@ -135,7 +118,6 @@ export default function RegisterPage() {
               {error}
             </div>
           )}
-
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
               Nome Completo
@@ -146,12 +128,12 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Seu nome completo"
               disabled={isLoading}
             />
           </div>
-
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -162,12 +144,12 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="seu@email.com"
               disabled={isLoading}
             />
           </div>
-
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               Senha
@@ -179,12 +161,12 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Mínimo 6 caracteres"
               disabled={isLoading}
             />
           </div>
-
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
               Confirmar Senha
@@ -196,12 +178,12 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Digite a senha novamente"
               disabled={isLoading}
             />
           </div>
-
           <div className="flex items-start">
             <div className="flex items-center h-5">
               <input
@@ -227,7 +209,6 @@ export default function RegisterPage() {
               </label>
             </div>
           </div>
-
           <Button
             type="submit"
             className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3"
@@ -236,10 +217,8 @@ export default function RegisterPage() {
             {isLoading ? 'Criando conta...' : 'Criar Conta'}
           </Button>
         </form>
-
         {/* Social Login Buttons */}
         <SocialLoginButtons onError={setError} />
-
         {/* Link para Login */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
@@ -249,7 +228,6 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-
         {/* Informações de Suporte */}
         <div className="mt-8 pt-6 border-t border-gray-200">
           <div className="text-center">

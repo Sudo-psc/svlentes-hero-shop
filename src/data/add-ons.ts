@@ -1,5 +1,4 @@
 import { AddOn } from '@/types'
-
 // Serviços adicionais disponíveis
 export const addOnsData: AddOn[] = [
     {
@@ -31,7 +30,6 @@ export const addOnsData: AddOn[] = [
         type: 'vip'
     }
 ]
-
 // Categorias de add-ons para organização
 export const addOnCategories = {
     medical: {
@@ -50,7 +48,6 @@ export const addOnCategories = {
         addOns: addOnsData.filter(addon => addon.type === 'vip')
     }
 }
-
 // Pacotes de add-ons com desconto
 export const addOnBundles = [
     {

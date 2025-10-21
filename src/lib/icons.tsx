@@ -9,10 +9,8 @@
  * - Auto-detecção de novos ícones
  * - Substituição automática de emojis
  */
-
 import React, { useState } from 'react'
 import Image from 'next/image'
-
 export type IconCategory =
   | 'atendimento'
   | 'beneficios'
@@ -22,7 +20,6 @@ export type IconCategory =
   | 'perfil'
   | 'stats'
   | 'calculator';
-
 export interface IconMetadata {
   /** Nome do arquivo do ícone */
   filename: string;
@@ -46,13 +43,11 @@ export interface IconMetadata {
   /** Se o ícone está atualmente em uso */
   isActive?: boolean;
 }
-
 export interface IconProps {
   size?: number;
   className?: string;
   alt?: string;
 }
-
 /**
  * Catálogo completo de ícones disponíveis (Auto-Updated)
  */
@@ -69,7 +64,6 @@ export const ICONS: Record<string, IconMetadata> = {
     emoji: '🧮',
     isActive: true
   },
-
   atendido: {
     filename: 'atendido.png',
     path: '/icones/atendido.png',
@@ -81,7 +75,6 @@ export const ICONS: Record<string, IconMetadata> = {
     emoji: '👥',
     isActive: true
   },
-
   fortyPercent: {
     filename: '40percent.png',
     path: '/icones/40percent.png',
@@ -93,7 +86,6 @@ export const ICONS: Record<string, IconMetadata> = {
     emoji: '📊',
     isActive: true
   },
-
   twelveH: {
     filename: '12h.png',
     path: '/icones/12h.png',
@@ -105,7 +97,6 @@ export const ICONS: Record<string, IconMetadata> = {
     emoji: '⏰',
     isActive: true
   },
-
   piggyBankStats: {
     filename: 'piggy_bank_with_dollar_coin.png',
     path: '/icones/piggy_bank_with_dollar_coin.png',
@@ -117,7 +108,6 @@ export const ICONS: Record<string, IconMetadata> = {
     emoji: '💰',
     isActive: true
   },
-
   // ===== ATENDIMENTO E SUPORTE =====
   customerService: {
     filename: 'customer_service_icon.png',
@@ -129,7 +119,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Atendimento ao cliente SV Lentes',
     emoji: '📞'
   },
-
   atendimento24x7: {
     filename: 'icon_atend24:7.png',
     path: '/icones/icon_atend24:7.png',
@@ -140,7 +129,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Atendimento 24 horas por dia, 7 dias por semana',
     emoji: '🕐'
   },
-
   amorSaude: {
     filename: 'icon_amoresaude.png',
     path: '/icones/icon_amoresaude.png',
@@ -151,7 +139,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Cuidado e amor com sua saúde ocular',
     emoji: '❤️'
   },
-
   // ===== BENEFÍCIOS E VANTAGENS =====
   shieldSecurity: {
     filename: 'blue_shield_checkmark_icon.png',
@@ -163,7 +150,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Segurança e garantia nos serviços',
     emoji: '🛡️'
   },
-
   premiumQuality: {
     filename: 'diamond_and_star_icon.png',
     path: '/icones/diamond_and_star_icon.png',
@@ -174,7 +160,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Qualidade premium garantida',
     emoji: '💎'
   },
-
   piggyBank: {
     filename: 'piggy_bank_with_dollar_coin.png',
     path: '/icones/piggy_bank_with_dollar_coin.png',
@@ -185,7 +170,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Economia com assinatura de lentes',
     emoji: '💰'
   },
-
   calculator: {
     filename: 'colorful_calculator_icon.png',
     path: '/icones/colorful_calculator_icon.png',
@@ -196,7 +180,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Calcule sua economia',
     emoji: '🧮'
   },
-
   // ===== PROCESSOS E ENTREGA =====
   delivery: {
     filename: 'hand_holding_package_icon.png',
@@ -208,7 +191,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Entrega de lentes em domicílio',
     emoji: '📦'
   },
-
   location: {
     filename: 'cartoon-character-location-icon.png',
     path: '/icones/cartoon-character-location-icon.png',
@@ -219,7 +201,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Localização e área de atendimento',
     emoji: '📍'
   },
-
   // ===== MÉDICO E CONSULTAS =====
   eyeCalendar: {
     filename: 'eye-calendar-icon.png',
@@ -231,7 +212,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Agende sua consulta oftalmológica',
     emoji: '👁️'
   },
-
   eyeCheckAward: {
     filename: 'eye_check_award_icon.png',
     path: '/icones/eye_check_award_icon.png',
@@ -242,7 +222,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Exames oftalmológicos certificados',
     emoji: '🏆'
   },
-
   // ===== BADGES E SELOS =====
   popularBadge: {
     filename: 'flaming_crown_popular_badge.png',
@@ -254,7 +233,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Plano mais popular',
     emoji: '👑'
   },
-
   anniversaryBadge: {
     filename: 'ten_year_anniversary_badge.png',
     path: '/icones/ten_year_anniversary_badge.png',
@@ -265,7 +243,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Qualidade e tradição',
     emoji: '🎉'
   },
-
   // ===== PERFIL =====
   drPhilipe: {
     filename: 'drphilipe_perfil.jpeg',
@@ -277,7 +254,6 @@ export const ICONS: Record<string, IconMetadata> = {
     defaultAlt: 'Dr. Philipe Saraiva Cruz - CRM-MG 69.870',
     emoji: '👨‍⚕️'
   },
-
   userPin: {
     filename: 'Pin_icon_menino.png',
     path: '/icones/Pin_icon_menino.png',
@@ -289,33 +265,28 @@ export const ICONS: Record<string, IconMetadata> = {
     emoji: '👤'
   }
 } as const;
-
 /**
  * Tipo auxiliar para garantir uso correto das chaves de ícones
  */
 export type IconKey = keyof typeof ICONS;
-
 /**
  * Helper para obter ícones por categoria
  */
 export function getIconsByCategory(category: IconCategory): IconMetadata[] {
   return Object.values(ICONS).filter(icon => icon.category === category);
 }
-
 /**
  * Helper para obter caminho completo do ícone
  */
 export function getIconPath(iconKey: keyof typeof ICONS): string {
   return ICONS[iconKey].path;
 }
-
 /**
  * Helper para obter alt text padrão
  */
 export function getIconAlt(iconKey: keyof typeof ICONS): string {
   return ICONS[iconKey].defaultAlt;
 }
-
 /**
  * Helper para encontrar ícone por emoji
  */
@@ -325,14 +296,12 @@ export function findIconByEmoji(emoji: string): IconKey | null {
   );
   return iconKey as IconKey || null;
 }
-
 /**
  * Helper para obter ícones ativos (em uso)
  */
 export function getActiveIcons(): IconMetadata[] {
   return Object.values(ICONS).filter(icon => icon.isActive);
 }
-
 /**
  * Generic Icon component with error handling and fallback
  */
@@ -348,12 +317,10 @@ export function Icon({
 }) {
   const [hasError, setHasError] = useState(false);
   const iconData = ICONS[name];
-
   if (!iconData) {
     console.warn(`Icon "${name}" not found in registry`);
     return fallbackEmoji ? <span className={className}>{fallbackEmoji}</span> : null;
   }
-
   // If image failed to load, show emoji fallback
   if (hasError && (fallbackEmoji || iconData.emoji)) {
     return (
@@ -366,7 +333,6 @@ export function Icon({
       </span>
     );
   }
-
   return (
     <div className={`relative inline-block ${className}`} style={{ width: size, height: size }}>
       <Image
@@ -380,7 +346,6 @@ export function Icon({
     </div>
   );
 }
-
 /**
  * Convenience helper functions to get icon paths
  * Use these with Image component directly or with the Icon component above
@@ -388,19 +353,15 @@ export function Icon({
 export function getCalcIcon() {
   return { ...ICONS.calc };
 }
-
 export function getAtendidoIcon() {
   return { ...ICONS.atendido };
 }
-
 export function getFortyPercentIcon() {
   return { ...ICONS.fortyPercent };
 }
-
 export function getTwelveHIcon() {
   return { ...ICONS.twelveH };
 }
-
 export function getPiggyBankIcon() {
   return { ...ICONS.piggyBankStats };
 }/*
@@ -418,7 +379,6 @@ export function CalcIcon({ size = 24, className = '', alt }: IconProps) {
     />
   );
 }
-
 export function AtendidoIcon({ size = 24, className = '', alt }: IconProps) {
   return (
     <Icon
@@ -430,7 +390,6 @@ export function AtendidoIcon({ size = 24, className = '', alt }: IconProps) {
     />
   );
 }
-
 export function FortyPercentIcon({ size = 24, className = '', alt }: IconProps) {
   return (
     <Icon
@@ -442,7 +401,6 @@ export function FortyPercentIcon({ size = 24, className = '', alt }: IconProps) 
     />
   );
 }
-
 export function TwelveHIcon({ size = 24, className = '', alt }: IconProps) {
   return (
     <Icon
@@ -454,7 +412,6 @@ export function TwelveHIcon({ size = 24, className = '', alt }: IconProps) {
     />
   );
 }
-
 export function PiggyBankIcon({ size = 24, className = '', alt }: IconProps) {
   return (
     <Icon

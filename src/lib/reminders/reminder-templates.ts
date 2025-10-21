@@ -1,17 +1,14 @@
 import type { ReminderMessage, ReminderRecipient, ReminderType } from '@/lib/reminders/reminder-types'
-
 interface TemplateAction {
   label: string
   url: string
 }
-
 interface ReminderTemplateDefinition {
   icon: string
   defaultSubject: string
   action: TemplateAction
   whatsappExtras?: string[][]
 }
-
 const reminderTemplateMap: Record<ReminderType, ReminderTemplateDefinition> = {
   subscription_renewal: {
     icon: '🔔',
@@ -55,7 +52,6 @@ const reminderTemplateMap: Record<ReminderType, ReminderTemplateDefinition> = {
     }
   }
 }
-
 const supportContacts = [
   {
     label: 'WhatsApp',
@@ -68,11 +64,9 @@ const supportContacts = [
     href: 'mailto:contato@svlentes.com.br'
   }
 ]
-
 function getTemplateDefinition(type: ReminderType): ReminderTemplateDefinition {
   return reminderTemplateMap[type] ?? reminderTemplateMap.general
 }
-
 const htmlEscapeMap: Record<string, string> = {
   '&': '&amp;',
   '<': '&lt;',
@@ -80,11 +74,9 @@ const htmlEscapeMap: Record<string, string> = {
   '"': '&quot;',
   "'": '&#39;'
 }
-
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => htmlEscapeMap[character] ?? character)
 }
-
 function renderSupportSection(): string {
   const lines: string[] = []
   lines.push('<div style="margin-top: 35px; padding: 20px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">')
@@ -97,7 +89,6 @@ function renderSupportSection(): string {
   lines.push('</div>')
   return lines.join('')
 }
-
 function renderEmailAction(action: TemplateAction): string {
   return [
     '<div style="text-align: center; margin: 30px 0;">',
@@ -107,7 +98,6 @@ function renderEmailAction(action: TemplateAction): string {
     '</div>'
   ].join('')
 }
-
 function renderEmailLayout({
   greetingName,
   icon,
@@ -134,7 +124,6 @@ function renderEmailLayout({
   layout.push('</div>')
   layout.push('<div style="background: white; padding: 40px 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">')
   layout.push(`<p style="font-size: 18px; margin-bottom: 20px; color: #0891b2;">Olá, ${greetingName}!</p>`)
-
   layout.push('<div style="background-color: #f0f9ff; border-left: 4px solid #06b6d4; padding: 20px; margin: 25px 0; border-radius: 4px;">')
   layout.push(`<p style="font-size: 16px; margin: 0; color: #0c4a6e; line-height: 1.6;">${icon} ${messageHtml}</p>`)
   layout.push('</div>')
@@ -150,7 +139,6 @@ function renderEmailLayout({
   layout.push('</html>')
   return layout.join('')
 }
-
 export function buildEmailReminderContent({
   recipient,
   reminder
@@ -172,7 +160,6 @@ export function buildEmailReminderContent({
     html
   }
 }
-
 export function buildWhatsAppReminderContent({
   recipient,
   reminder

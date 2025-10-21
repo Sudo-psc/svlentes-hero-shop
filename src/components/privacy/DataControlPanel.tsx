@@ -1,11 +1,10 @@
 'use client';
-
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import { Select } from '@/components/ui/Select';
-import { Checkbox } from '@/components/ui/Checkbox';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useCsrfProtection } from '@/hooks/useCsrfProtection';
 import {
     Shield,
@@ -18,12 +17,10 @@ import {
     Clock,
     FileText
 } from 'lucide-react';
-
 interface DataControlPanelProps {
     isOpen: boolean;
     onClose: () => void;
 }
-
 export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
     const { withCsrfHeaders } = useCsrfProtection();
     const [activeTab, setActiveTab] = useState<'request' | 'status' | 'logs'>('request');
@@ -35,13 +32,10 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
         details: '',
         userConsent: false
     });
-
     if (!isOpen) return null;
-
     const handleSubmitRequest = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-
         try {
             const response = await fetch('/api/privacy/data-request', {
                 method: 'POST',
@@ -50,9 +44,7 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                 }),
                 body: JSON.stringify(formData),
             });
-
             const result = await response.json();
-
             if (result.success) {
                 setRequestSubmitted(true);
             } else {
@@ -64,14 +56,12 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
             setIsSubmitting(false);
         }
     };
-
     const requestTypes = [
         { value: 'access', label: 'Acessar meus dados', icon: Eye },
         { value: 'deletion', label: 'Excluir meus dados', icon: Trash2 },
         { value: 'portability', label: 'Exportar meus dados', icon: Download },
         { value: 'correction', label: 'Corrigir meus dados', icon: Edit }
     ];
-
     return (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -84,7 +74,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                         ✕
                     </Button>
                 </div>
-
                 {/* Tabs */}
                 <div className="border-b">
                     <nav className="flex space-x-8 px-6">
@@ -107,7 +96,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                         ))}
                     </nav>
                 </div>
-
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
                     {activeTab === 'request' && (
                         <div>
@@ -134,7 +122,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             corrigir, excluir ou exportar seus dados pessoais.
                                         </p>
                                     </div>
-
                                     <div>
                                         <Label htmlFor="email">Email cadastrado</Label>
                                         <Input
@@ -146,7 +133,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             required
                                         />
                                     </div>
-
                                     <div>
                                         <Label htmlFor="requestType">Tipo de solicitação</Label>
                                         <Select
@@ -157,7 +143,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             options={requestTypes.map(type => ({ value: type.value, label: type.label }))}
                                         />
                                     </div>
-
                                     {formData.requestType && (
                                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                             <div className="flex items-start space-x-3">
@@ -180,7 +165,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             </div>
                                         </div>
                                     )}
-
                                     <div>
                                         <Label htmlFor="details">Detalhes adicionais (opcional)</Label>
                                         <textarea
@@ -191,7 +175,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             className="w-full p-3 border border-gray-300 rounded-md resize-none h-24"
                                         />
                                     </div>
-
                                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                         <div className="flex items-start space-x-3">
                                             <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
@@ -206,7 +189,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             </div>
                                         </div>
                                     </div>
-
                                     <div className="flex items-start space-x-2">
                                         <Checkbox
                                             id="userConsent"
@@ -221,7 +203,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                             Entendo que posso ser contatado para verificação de identidade.
                                         </Label>
                                     </div>
-
                                     <Button
                                         type="submit"
                                         disabled={!formData.email || !formData.requestType || !formData.userConsent || isSubmitting}
@@ -233,14 +214,12 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                             )}
                         </div>
                     )}
-
                     {activeTab === 'status' && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Status das Solicitações</h3>
                             <p className="text-gray-600 mb-6">
                                 Acompanhe o andamento das suas solicitações de dados.
                             </p>
-
                             <div className="space-y-4">
                                 <div className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-2">
@@ -256,7 +235,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                         Previsão de conclusão: 30/01/2024
                                     </p>
                                 </div>
-
                                 <div className="text-center py-8 text-gray-500">
                                     <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                     <p>Nenhuma solicitação encontrada</p>
@@ -264,14 +242,12 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                             </div>
                         </div>
                     )}
-
                     {activeTab === 'logs' && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4">Histórico de Consentimentos</h3>
                             <p className="text-gray-600 mb-6">
                                 Visualize o histórico de todas as suas decisões sobre privacidade e consentimentos.
                             </p>
-
                             <div className="space-y-4">
                                 <div className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-2">
@@ -282,7 +258,6 @@ export function DataControlPanel({ isOpen, onClose }: DataControlPanelProps) {
                                         Aceitos: Necessários, Analytics | Rejeitados: Marketing
                                     </p>
                                 </div>
-
                                 <div className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="font-medium">Consentimento de Marketing</span>

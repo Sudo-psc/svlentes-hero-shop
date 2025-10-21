@@ -7,13 +7,9 @@
  * - User profile persistence
  * - Support ticket tracking
  */
-
 import { PrismaClient } from '@prisma/client'
-
 const prisma = new PrismaClient()
-
 // ==================== TYPE DEFINITIONS ====================
-
 export interface WhatsAppUserProfile {
   id: string
   name: string | null
@@ -30,7 +26,6 @@ export interface WhatsAppUserProfile {
   source: string
   metadata?: any
 }
-
 export interface ConversationMessage {
   id: string
   messageId: string
@@ -41,7 +36,6 @@ export interface ConversationMessage {
   response: string | null
   createdAt: Date
 }
-
 export interface UserSupportHistory {
   tickets: Array<{
     id: string
@@ -56,7 +50,6 @@ export interface UserSupportHistory {
   lastInteraction: Date | null
   totalInteractions: number
 }
-
 export interface StoreInteractionData {
   messageId: string
   customerPhone: string
@@ -70,9 +63,7 @@ export interface StoreInteractionData {
   llmModel?: string
   processingTime?: number
 }
-
 // ==================== CONVERSATION MANAGEMENT ====================
-
 /**
  * Get or create a conversation thread for a customer
  */
@@ -86,7 +77,6 @@ export async function getOrCreateConversation(
     let conversation = await prisma.whatsAppConversation.findFirst({
       where: { customerPhone }
     })
-
     if (conversation) {
       // Update last message timestamp
       await prisma.whatsAppConversation.update({
@@ -99,7 +89,6 @@ export async function getOrCreateConversation(
       })
       return { id: conversation.id, isNew: false }
     }
-
     // Create new conversation
     conversation = await prisma.whatsAppConversation.create({
       data: {
@@ -111,14 +100,12 @@ export async function getOrCreateConversation(
         isActive: true
       }
     })
-
     return { id: conversation.id, isNew: true }
   } catch (error) {
     console.error('Error in getOrCreateConversation:', error)
     throw error
   }
 }
-
 /**
  * Update conversation metadata (last intent, sentiment, SendPulse IDs)
  */
@@ -141,9 +128,7 @@ export async function updateConversationMetadata(
     throw error
   }
 }
-
 // ==================== MESSAGE HISTORY ====================
-
 /**
  * Get conversation history for a customer phone number
  * Returns last N messages in chronological order
@@ -173,11 +158,9 @@ export async function getConversationHistory(
         }
       }
     })
-
     if (!conversation) {
       return []
     }
-
     // Return in chronological order (oldest first for context)
     return conversation.messages.reverse()
   } catch (error) {
@@ -185,7 +168,6 @@ export async function getConversationHistory(
     return []
   }
 }
-
 /**
  * Get user support history (tickets and interactions)
  */
@@ -206,7 +188,6 @@ export async function getUserSupportHistory(userId: string): Promise<UserSupport
         createdAt: true
       }
     })
-
     // Get last interaction
     const lastInteraction = await prisma.whatsAppInteraction.findFirst({
       where: { userId },
@@ -216,12 +197,10 @@ export async function getUserSupportHistory(userId: string): Promise<UserSupport
         createdAt: true
       }
     })
-
     // Get total interaction count
     const totalInteractions = await prisma.whatsAppInteraction.count({
       where: { userId }
     })
-
     return {
       tickets,
       lastIntent: lastInteraction?.intent || null,
@@ -238,9 +217,7 @@ export async function getUserSupportHistory(userId: string): Promise<UserSupport
     }
   }
 }
-
 // ==================== USER PROFILE MANAGEMENT ====================
-
 /**
  * Get or create user profile from WhatsApp contact data
  */
@@ -258,7 +235,6 @@ export async function getOrCreateUserProfile(
 ): Promise<WhatsAppUserProfile> {
   try {
     const whatsappFormatted = phone.startsWith('+') ? phone : `+${phone}`
-
     // Try to find existing user by phone/whatsapp
     let user = await prisma.user.findFirst({
       where: {
@@ -277,11 +253,9 @@ export async function getOrCreateUserProfile(
         }
       }
     })
-
     if (!user) {
       // Create new user profile
       const contactName = contact.name || contact.profile?.name || 'Cliente'
-
       user = await prisma.user.create({
         data: {
           name: contactName,
@@ -301,10 +275,8 @@ export async function getOrCreateUserProfile(
         }
       })
     }
-
     // Format subscription data
     const subscription = user.subscriptions?.[0] || null
-
     return {
       id: user.id,
       name: user.name,
@@ -327,7 +299,6 @@ export async function getOrCreateUserProfile(
     }
   } catch (error) {
     console.error('Error in getOrCreateUserProfile:', error)
-
     // Return temporary profile on error
     return {
       id: `sendpulse_${phone}`,
@@ -346,9 +317,7 @@ export async function getOrCreateUserProfile(
     }
   }
 }
-
 // ==================== INTERACTION STORAGE ====================
-
 /**
  * Store a WhatsApp interaction (message + response)
  */
@@ -360,7 +329,6 @@ export async function storeInteraction(data: StoreInteractionData): Promise<void
       data.userProfile.name || undefined,
       data.userProfile.id
     )
-
     // Store the interaction
     await prisma.whatsAppInteraction.create({
       data: {
@@ -381,7 +349,6 @@ export async function storeInteraction(data: StoreInteractionData): Promise<void
         processingTime: data.processingTime || null
       }
     })
-
     // Update conversation message count and last intent
     await prisma.whatsAppConversation.update({
       where: { id: conversationId },
@@ -392,16 +359,13 @@ export async function storeInteraction(data: StoreInteractionData): Promise<void
         lastMessageAt: new Date()
       }
     })
-
-    console.log(`✅ Stored WhatsApp interaction: ${data.content.substring(0, 50)}... → ${data.response.substring(0, 50)}...`)
+    console.log(`Interaction stored: ${data.response.substring(0, 50)}...`)
   } catch (error) {
     console.error('Error storing interaction:', error)
     throw error
   }
 }
-
 // ==================== ANALYTICS & REPORTING ====================
-
 /**
  * Get conversation analytics for a user
  */
@@ -420,16 +384,13 @@ export async function getConversationAnalytics(userId: string) {
         }
       }
     })
-
     const totalMessages = conversations.reduce((sum, conv) => sum + conv.messageCount, 0)
     const totalConversations = conversations.length
-
     // Count escalations
     let escalations = 0
     let tickets = 0
     const intents: Record<string, number> = {}
     const sentiments: Record<string, number> = {}
-
     conversations.forEach(conv => {
       conv.messages.forEach(msg => {
         if (msg.escalationRequired) escalations++
@@ -438,7 +399,6 @@ export async function getConversationAnalytics(userId: string) {
         if (msg.sentiment) sentiments[msg.sentiment] = (sentiments[msg.sentiment] || 0) + 1
       })
     })
-
     return {
       totalConversations,
       totalMessages,
@@ -452,9 +412,7 @@ export async function getConversationAnalytics(userId: string) {
     return null
   }
 }
-
 // ==================== CLEANUP & MAINTENANCE ====================
-
 /**
  * Archive inactive conversations (older than N days)
  */
@@ -462,7 +420,6 @@ export async function archiveInactiveConversations(daysInactive: number = 30): P
   try {
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - daysInactive)
-
     const result = await prisma.whatsAppConversation.updateMany({
       where: {
         lastMessageAt: { lt: cutoffDate },
@@ -472,13 +429,11 @@ export async function archiveInactiveConversations(daysInactive: number = 30): P
         isActive: false
       }
     })
-
     return result.count
   } catch (error) {
     console.error('Error archiving conversations:', error)
     return 0
   }
 }
-
 // Export prisma instance for direct queries if needed
 export { prisma }

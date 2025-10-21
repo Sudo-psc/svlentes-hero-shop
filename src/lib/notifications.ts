@@ -1,8 +1,6 @@
 import { Resend } from 'resend'
 import { prisma } from '@/lib/prisma'
-
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
-
 interface NotificationData {
   userId: string
   subject: string
@@ -10,7 +8,6 @@ interface NotificationData {
   type: 'PLAN_CHANGE' | 'ADDRESS_UPDATE' | 'PAYMENT_METHOD_UPDATE' | 'STATUS_CHANGE'
   metadata?: any
 }
-
 /**
  * Send email notification to user
  */
@@ -24,29 +21,23 @@ export async function sendEmailNotification(data: NotificationData) {
         name: true
       }
     })
-
     if (!user || !user.email) {
       console.error('User not found or no email:', data.userId)
       return { success: false, error: 'User not found or no email' }
     }
-
     // Check if user has email notifications enabled
     const preferences = await prisma.user.findUnique({
       where: { id: data.userId },
       select: { preferences: true }
     })
-
     const userPreferences = preferences?.preferences as any
     if (userPreferences?.notifications?.email === false) {
-      console.log('User has email notifications disabled:', data.userId)
       return { success: false, error: 'User has email notifications disabled' }
     }
-
     if (!resend) {
       console.error('Resend API key not configured')
       return { success: false, error: 'Email service not configured' }
     }
-
     // Send email via Resend
     const emailResponse = await resend.emails.send({
       from: 'SVLentes <noreply@svlentes.shop>',
@@ -59,7 +50,6 @@ export async function sendEmailNotification(data: NotificationData) {
         metadata: data.metadata
       })
     })
-
     // Log notification in database
     await prisma.notification.create({
       data: {
@@ -74,12 +64,9 @@ export async function sendEmailNotification(data: NotificationData) {
         status: 'SENT'
       }
     })
-
-    console.log('Email notification sent successfully:', emailResponse.id)
     return { success: true, id: emailResponse.id }
   } catch (error) {
     console.error('Error sending email notification:', error)
-
     // Log failed notification
     try {
       await prisma.notification.create({
@@ -98,11 +85,9 @@ export async function sendEmailNotification(data: NotificationData) {
     } catch (logError) {
       console.error('Error logging failed notification:', logError)
     }
-
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
-
 /**
  * Send WhatsApp notification to user via SendPulse
  */
@@ -117,39 +102,30 @@ export async function sendWhatsAppNotification(data: NotificationData) {
         name: true
       }
     })
-
     if (!user) {
       console.error('User not found:', data.userId)
       return { success: false, error: 'User not found' }
     }
-
     const phoneNumber = user.whatsapp || user.phone
     if (!phoneNumber) {
       console.error('User has no WhatsApp/phone number:', data.userId)
       return { success: false, error: 'No WhatsApp/phone number' }
     }
-
     // Check if user has WhatsApp notifications enabled
     const preferences = await prisma.user.findUnique({
       where: { id: data.userId },
       select: { preferences: true }
     })
-
     const userPreferences = preferences?.preferences as any
     if (userPreferences?.notifications?.whatsapp === false) {
-      console.log('User has WhatsApp notifications disabled:', data.userId)
       return { success: false, error: 'User has WhatsApp notifications disabled' }
     }
-
     // Import SendPulse client
     const { sendPulseClient } = await import('@/lib/sendpulse-client')
-
     // Format message
     const message = `*${data.subject}*\n\n${data.message}\n\n_Mensagem automática da SVLentes_`
-
     // Send message via SendPulse
     await sendPulseClient.sendMessage(phoneNumber, message)
-
     // Log notification in database
     await prisma.notification.create({
       data: {
@@ -167,12 +143,9 @@ export async function sendWhatsAppNotification(data: NotificationData) {
         status: 'SENT'
       }
     })
-
-    console.log('WhatsApp notification sent successfully to:', phoneNumber)
     return { success: true }
   } catch (error) {
     console.error('Error sending WhatsApp notification:', error)
-
     // Log failed notification
     try {
       await prisma.notification.create({
@@ -191,11 +164,9 @@ export async function sendWhatsAppNotification(data: NotificationData) {
     } catch (logError) {
       console.error('Error logging failed notification:', logError)
     }
-
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
-
 /**
  * Generate HTML email template
  */
@@ -287,19 +258,16 @@ function generateEmailTemplate(data: {
           <div class="logo">SVLentes</div>
           <p style="color: #666; margin: 0;">Lentes de Contato por Assinatura</p>
         </div>
-
         <div class="content">
           <p class="greeting">Olá, ${data.userName}!</p>
           <div class="message">
             ${data.message}
           </div>
-
           <div style="text-align: center;">
             <a href="https://svlentes.shop/area-assinante/dashboard" class="button">
               Acessar Meu Painel
             </a>
           </div>
-
           <div class="contact-info">
             <strong>Precisa de ajuda?</strong><br>
             WhatsApp: (33) 99989-8026<br>
@@ -309,7 +277,6 @@ function generateEmailTemplate(data: {
             Dr. Philipe Saraiva Cruz - CRM-MG 69.870
           </div>
         </div>
-
         <div class="footer">
           <p>Este é um email automático. Por favor, não responda.</p>
           <p>&copy; 2025 SVLentes - Saraiva Vision. Todos os direitos reservados.</p>

@@ -2,13 +2,10 @@
  * Alerts endpoint for monitoring
  * Handles alert notifications and escalations
  */
-
 import { NextRequest, NextResponse } from 'next/server'
-
 export async function POST(request: NextRequest) {
     try {
         const alert = await request.json()
-
         // Add server-side metadata
         const enrichedAlert = {
             ...alert,
@@ -19,34 +16,27 @@ export async function POST(request: NextRequest) {
                 request.headers.get('x-real-ip') ||
                 'unknown'
         }
-
         // Log alert
         console.warn('Alert Triggered:', JSON.stringify(enrichedAlert, null, 2))
-
         // Process alert based on severity
         await processAlert(enrichedAlert)
-
         return NextResponse.json({
             success: true,
             alertId: enrichedAlert.id,
             severity: enrichedAlert.severity
         })
-
     } catch (error) {
         console.error('Failed to process alert:', error)
-
         return NextResponse.json(
             { error: 'Failed to process alert' },
             { status: 500 }
         )
     }
 }
-
 export async function GET(request: NextRequest) {
     try {
         // Return recent alerts
         // In production, this would query your alerts database
-
         const mockAlerts = [
             {
                 id: 'alert_1',
@@ -65,7 +55,6 @@ export async function GET(request: NextRequest) {
                 status: 'active'
             }
         ]
-
         return NextResponse.json({
             alerts: mockAlerts,
             summary: {
@@ -74,69 +63,55 @@ export async function GET(request: NextRequest) {
                 total: mockAlerts.length
             }
         })
-
     } catch (error) {
         console.error('Failed to fetch alerts:', error)
-
         return NextResponse.json(
             { error: 'Failed to fetch alerts' },
             { status: 500 }
         )
     }
 }
-
 // Helper functions
 function determineSeverity(type: string, data: any): 'info' | 'warning' | 'critical' {
     switch (type) {
         case 'error_threshold_exceeded':
             return data.errorCount > 20 ? 'critical' : 'warning'
-
         case 'performance_threshold_exceeded':
             if (data.metric === 'LCP' && data.value > 4000) return 'critical'
             if (data.metric === 'FID' && data.value > 300) return 'critical'
             return 'warning'
-
         case 'uptime_check_failed':
             return 'critical'
-
         case 'conversion_rate_drop':
             return data.dropPercentage > 50 ? 'critical' : 'warning'
-
         default:
             return 'info'
     }
 }
-
 async function processAlert(alert: any) {
     // Send notifications based on severity
     switch (alert.severity) {
         case 'critical':
             await sendCriticalAlert(alert)
             break
-
         case 'warning':
             await sendWarningAlert(alert)
             break
-
         case 'info':
             await logInfoAlert(alert)
             break
     }
-
     // Store alert in database
     // await db.alerts.create({ data: alert })
 }
-
 async function sendCriticalAlert(alert: any) {
     // Send immediate notifications for critical alerts
     console.error('🚨 CRITICAL ALERT:', alert.type, alert.data)
-
     // In production, you would:
     // 1. Send email notifications
     // 2. Send SMS/phone alerts
     // 3. Create PagerDuty incident
     // 4. Send Slack notifications
-
     // Example: Send email
     // await sendEmail({
     //   to: process.env.ALERT_EMAIL_RECIPIENTS?.split(',') || [],
@@ -149,7 +124,6 @@ async function sendCriticalAlert(alert: any) {
     //     Environment: ${alert.environment}
     //   `
     // })
-
     // Example: Send Slack notification
     // if (process.env.SLACK_WEBHOOK_URL) {
     //   await fetch(process.env.SLACK_WEBHOOK_URL, {
@@ -170,22 +144,17 @@ async function sendCriticalAlert(alert: any) {
     //   })
     // }
 }
-
 async function sendWarningAlert(alert: any) {
     // Send notifications for warning alerts (less urgent)
     console.warn('⚠️ WARNING ALERT:', alert.type, alert.data)
-
     // In production, you would:
     // 1. Send email notifications (less frequent)
     // 2. Send Slack notifications
     // 3. Log to monitoring dashboard
 }
-
 async function logInfoAlert(alert: any) {
     // Just log info alerts
-    console.info('ℹ️ INFO ALERT:', alert.type, alert.data)
 }
-
 export async function OPTIONS() {
     return new NextResponse(null, {
         status: 200,

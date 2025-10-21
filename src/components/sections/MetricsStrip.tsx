@@ -1,14 +1,11 @@
 'use client'
-
 import { InlineTrustIndicators } from '@/components/trust/TrustBadges'
 import { socialProofStats } from '@/data/trust-indicators'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/Badge'
-
+import { Badge } from '@/components/ui/badge'
 interface MetricsStripProps {
     className?: string
 }
-
 export function MetricsStrip({ className = '' }: MetricsStripProps) {
     return (
         <section className={`bg-gradient-to-r from-primary-50 via-white to-secondary-50 py-16 sm:py-20 ${className}`}>
@@ -22,7 +19,6 @@ export function MetricsStrip({ className = '' }: MetricsStripProps) {
                             Confiado por milhares de brasileiros
                         </h2>
                     </div>
-
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
                         {socialProofStats.map((stat) => (
                             <Card
@@ -41,7 +37,6 @@ export function MetricsStrip({ className = '' }: MetricsStripProps) {
                             </Card>
                         ))}
                     </div>
-
                     <div className="mt-10 pt-10 border-t-2 border-primary-100">
                         <InlineTrustIndicators className="justify-center" />
                     </div>

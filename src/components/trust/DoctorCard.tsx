@@ -1,7 +1,6 @@
 'use client'
-
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
 import { doctorInfo } from '@/data/doctor-info'
 import { socialProofStats } from '@/data/trust-indicators'
@@ -17,19 +16,16 @@ import {
     MessageCircle,
     Phone
 } from 'lucide-react'
-
 interface DoctorCardProps {
     variant?: 'hero' | 'full' | 'compact'
     showCTA?: boolean
     className?: string
 }
-
 export function DoctorCard({
     variant = 'hero',
     showCTA = true,
     className = ''
 }: DoctorCardProps) {
-
     const handleConsultation = () => {
         openWhatsAppWithContext('consultation', {
             page: 'landing-page',
@@ -39,14 +35,12 @@ export function DoctorCard({
             }
         })
     }
-
     const handleWhatsApp = () => {
         openWhatsAppWithContext('hero', {
             page: 'landing-page',
             section: 'doctor-card-whatsapp'
         })
     }
-
     if (variant === 'compact') {
         return (
             <div className={`bg-white rounded-lg shadow-md border border-gray-100 p-4 ${className}`}>
@@ -62,7 +56,6 @@ export function DoctorCard({
                             className="w-full h-full object-cover"
                         />
                     </div>
-
                     {/* Doctor Info */}
                     <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-gray-900 truncate">
@@ -70,7 +63,6 @@ export function DoctorCard({
                         </h4>
                         <p className="text-sm text-primary-600">{doctorInfo.crm}</p>
                     </div>
-
                     {/* Quick CTA */}
                     {showCTA && (
                         <Button
@@ -86,7 +78,6 @@ export function DoctorCard({
             </div>
         )
     }
-
     if (variant === 'full') {
         return (
             <div className={`bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden ${className}`}>
@@ -104,7 +95,6 @@ export function DoctorCard({
                                 className="w-full h-full object-cover"
                             />
                         </div>
-
                         <div className="flex-1">
                             <h3 className="text-2xl font-bold">{doctorInfo.name}</h3>
                             <p className="text-primary-100 font-medium">{doctorInfo.crm} | {doctorInfo.specialty}</p>
@@ -112,15 +102,12 @@ export function DoctorCard({
                         </div>
                     </div>
                 </div>
-
                 {/* Content */}
                 <div className="p-6 space-y-6">
-
                     {/* Bio */}
                     <div>
                         <p className="text-gray-600 leading-relaxed">{doctorInfo.bio}</p>
                     </div>
-
                     {/* Credentials */}
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
@@ -136,7 +123,6 @@ export function DoctorCard({
                             ))}
                         </div>
                     </div>
-
                     {/* Social Proof */}
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
@@ -152,7 +138,6 @@ export function DoctorCard({
                             ))}
                         </div>
                     </div>
-
                     {/* CTAs */}
                     {showCTA && (
                         <div className="space-y-3 pt-4 border-t border-gray-200">
@@ -163,7 +148,6 @@ export function DoctorCard({
                                 <Phone className="w-4 h-4" />
                                 <span>Agendar consulta com oftalmologista</span>
                             </Button>
-
                             <Button
                                 onClick={handleWhatsApp}
                                 variant="outline"
@@ -178,12 +162,10 @@ export function DoctorCard({
             </div>
         )
     }
-
     // Default: hero variant
     return (
         <div className={`bg-white/95 backdrop-blur-md rounded-3xl shadow-glass-lg border border-white/30 p-6 transform hover:scale-105 hover:shadow-glass-lg transition-all duration-300 ${className}`}>
             <div className="text-center space-y-4">
-
                 {/* Doctor Photo */}
                 <div className="relative">
                     <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-primary-100/50 shadow-lg">
@@ -197,13 +179,11 @@ export function DoctorCard({
                             className="w-full h-full object-cover"
                         />
                     </div>
-
                     {/* Verification Badge */}
                     <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center border-3 border-white shadow-lg shadow-green-500/50 animate-pulse">
                         <Award className="w-5 h-5 text-white drop-shadow-sm" />
                     </div>
                 </div>
-
                 {/* Doctor Info */}
                 <div>
                     <h3 className="text-xl font-bold text-gray-900">
@@ -216,7 +196,6 @@ export function DoctorCard({
                         {doctorInfo.experience}
                     </p>
                 </div>
-
                 {/* Key Credentials */}
                 <div className="space-y-2">
                     <div className="flex flex-wrap justify-center gap-2">
@@ -234,8 +213,6 @@ export function DoctorCard({
                         </Badge>
                     </div>
                 </div>
-
-
                 {/* CTA */}
                 {showCTA && (
                     <div className="space-y-2">
@@ -247,7 +224,6 @@ export function DoctorCard({
                             <Phone className="w-4 h-4" />
                             <span>Agendar consulta com oftalmologista</span>
                         </Button>
-
                         <p className="text-xs text-gray-500">
                             ✓ Primeira consulta sem compromisso
                         </p>

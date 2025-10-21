@@ -22,5 +22,4 @@ export default function AgendarConsultaPage() {
     </div>
   )
 }
-
 export const dynamic = 'force-dynamic'

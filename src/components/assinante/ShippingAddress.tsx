@@ -1,10 +1,8 @@
 'use client'
-
 import { useState } from 'react'
 import { MapPin, Edit2, Save, X } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatZipCode } from '@/lib/formatters'
-
 export interface ShippingAddress {
   street: string
   number: string
@@ -14,13 +12,11 @@ export interface ShippingAddress {
   state: string
   zipCode: string
 }
-
 interface ShippingAddressCardProps {
   address: ShippingAddress | null
   loading?: boolean
   onUpdate?: (address: ShippingAddress) => Promise<void>
 }
-
 export default function ShippingAddressCard({
   address,
   loading = false,
@@ -29,20 +25,16 @@ export default function ShippingAddressCard({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [editedAddress, setEditedAddress] = useState<ShippingAddress | null>(address)
-
   const handleEdit = () => {
     setEditedAddress(address)
     setIsEditing(true)
   }
-
   const handleCancel = () => {
     setEditedAddress(address)
     setIsEditing(false)
   }
-
   const handleSave = async () => {
     if (!editedAddress || !onUpdate) return
-
     try {
       setIsSaving(true)
       await onUpdate(editedAddress)
@@ -53,12 +45,10 @@ export default function ShippingAddressCard({
       setIsSaving(false)
     }
   }
-
   const handleChange = (field: keyof ShippingAddress, value: string) => {
     if (!editedAddress) return
     setEditedAddress({ ...editedAddress, [field]: value })
   }
-
   if (loading) {
     return (
       <div className="bg-white p-6 rounded-xl shadow-sm border">
@@ -74,7 +64,6 @@ export default function ShippingAddressCard({
       </div>
     )
   }
-
   if (!address && !isEditing) {
     return (
       <div className="bg-white p-6 rounded-xl shadow-sm border">
@@ -92,7 +81,6 @@ export default function ShippingAddressCard({
       </div>
     )
   }
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border">
       <div className="flex items-center justify-between mb-4">
@@ -107,7 +95,6 @@ export default function ShippingAddressCard({
           </Button>
         )}
       </div>
-
       {!isEditing && address ? (
         <div className="text-sm space-y-2">
           <p className="font-medium text-gray-900">
@@ -140,7 +127,6 @@ export default function ShippingAddressCard({
                 required
               />
             </div>
-
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Rua
@@ -154,7 +140,6 @@ export default function ShippingAddressCard({
                 required
               />
             </div>
-
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Número
@@ -168,7 +153,6 @@ export default function ShippingAddressCard({
                 required
               />
             </div>
-
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Complemento
@@ -181,7 +165,6 @@ export default function ShippingAddressCard({
                 placeholder="Apto, bloco..."
               />
             </div>
-
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Bairro
@@ -195,7 +178,6 @@ export default function ShippingAddressCard({
                 required
               />
             </div>
-
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Cidade
@@ -209,7 +191,6 @@ export default function ShippingAddressCard({
                 required
               />
             </div>
-
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Estado
@@ -225,7 +206,6 @@ export default function ShippingAddressCard({
               />
             </div>
           </div>
-
           <div className="flex gap-2 pt-2">
             <Button
               type="submit"

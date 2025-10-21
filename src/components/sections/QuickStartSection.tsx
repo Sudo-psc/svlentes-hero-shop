@@ -1,11 +1,9 @@
 'use client'
-
 import Link from 'next/link'
 import { ShoppingCart, ArrowRight, Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { calculateEconomy, formatCurrency } from '@/lib/calculator'
 import { useMemo } from 'react'
-
 export function QuickStartSection() {
     // Calcular economia média baseado em uso típico (20 dias/mês, lentes mensais)
     const averageYearlySavings = useMemo(() => {
@@ -34,7 +32,6 @@ export function QuickStartSection() {
                         4 passos simples para nunca mais ficar sem lentes
                     </p>
                 </div>
-
                 {/* Steps Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12">
                     {[
@@ -52,7 +49,6 @@ export function QuickStartSection() {
                         </div>
                     ))}
                 </div>
-
                 {/* Primary CTA */}
                 <div className="text-center mb-12">
                     <Link href="/assinar">
@@ -71,7 +67,6 @@ export function QuickStartSection() {
                         </Link>
                     </p>
                 </div>
-
               </div>
         </div>
     )

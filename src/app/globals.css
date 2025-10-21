@@ -74,6 +74,20 @@
         /* Purple accent */
         --chart-5: 0 72% 51%;
         /* Destructive red */
+
+        /* Admin theme colors - Light mode */
+        --admin-sidebar: 217.2 32.6% 17.5%;
+        --admin-sidebar-foreground: 210 40% 98%;
+        --admin-sidebar-hover: 215.4 25% 25%;
+        --admin-sidebar-active: 188 91% 42%;
+        --admin-dashboard: 0 0% 100%;
+        --admin-dashboard-card: 0 0% 100%;
+        --admin-metrics-revenue: 142 76% 36%;
+        --admin-metrics-customers: 214 88% 27%;
+        --admin-metrics-orders: 262 83% 58%;
+        --admin-metrics-support: 38 92% 50%;
+        --admin-metrics-growth: 188 91% 42%;
+        --admin-metrics-warning: 0 72% 51%;
     }
 
     .dark {
@@ -139,6 +153,20 @@
         /* Purple accent */
         --chart-5: 0 62.8% 55%;
         /* Destructive red */
+
+        /* Admin theme colors - Dark mode */
+        --admin-sidebar: 217.2 32.6% 17.5%;
+        --admin-sidebar-foreground: 210 40% 98%;
+        --admin-sidebar-hover: 215.4 25% 25%;
+        --admin-sidebar-active: 188 91% 42%;
+        --admin-dashboard: 222.2 84% 4.9%;
+        --admin-dashboard-card: 217.2 32.6% 17.5%;
+        --admin-metrics-revenue: 142 76% 45%;
+        --admin-metrics-customers: 214 88% 65%;
+        --admin-metrics-orders: 262 83% 68%;
+        --admin-metrics-support: 38 92% 60%;
+        --admin-metrics-growth: 188 91% 42%;
+        --admin-metrics-warning: 0 62.8% 55%;
     }
 
     * {

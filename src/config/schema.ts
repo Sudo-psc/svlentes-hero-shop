@@ -7,9 +7,7 @@
  * NOTA: Este é um schema mínimo para MVP.
  * Schemas completos (Plans, SEO, Theme, etc.) serão adicionados nas Fases 2 e 3.
  */
-
 import { z } from 'zod'
-
 // ============================================================================
 // 1. SITE METADATA (Mínimo)
 // ============================================================================
@@ -20,7 +18,6 @@ const SiteConfigSchema = z.object({
   description: z.string(),
   url: z.string().url(),
 })
-
 // ============================================================================
 // 2. I18N CONFIGURATION (Mínimo)
 // ============================================================================
@@ -29,7 +26,6 @@ const I18nConfigSchema = z.object({
   locales: z.array(z.enum(['pt-BR', 'en-US'])),
   fallback: z.enum(['strict', 'soft']),
 })
-
 // ============================================================================
 // 3. MENUS & NAVIGATION
 // ============================================================================
@@ -42,7 +38,6 @@ const MenuItemSchema = z.object({
   download: z.boolean().optional(),
   action: z.string().optional(), // For modal triggers
 })
-
 const MenusSchema = z.object({
   header: z.object({
     main: z.array(MenuItemSchema),
@@ -62,7 +57,6 @@ const MenusSchema = z.object({
     legalLinks: z.array(MenuItemSchema),
   }),
 })
-
 // ============================================================================
 // 4. COPY/CONTENT (I18N) - Fase 2
 // ============================================================================
@@ -81,7 +75,6 @@ const CommonCopySchema = z.object({
     back: z.string(),
   }),
 })
-
 const HeroCopySchema = z.object({
   badge: z.string(),
   title: z.object({
@@ -93,7 +86,6 @@ const HeroCopySchema = z.object({
   ctaPrimary: z.string(),
   ctaSecondary: z.string(),
 })
-
 const HowItWorksStepSchema = z.object({
   title: z.string(),
   description: z.string(),
@@ -102,7 +94,6 @@ const HowItWorksStepSchema = z.object({
   icon: z.string(),
   duration: z.string(),
 })
-
 const HowItWorksCopySchema = z.object({
   title: z.string(),
   subtitle: z.string(),
@@ -115,15 +106,12 @@ const HowItWorksCopySchema = z.object({
   ctaStart: z.string(),
   ctaLearnMore: z.string(),
 })
-
 const CopySchema = z.object({
   common: CommonCopySchema,
   hero: HeroCopySchema,
   howItWorks: HowItWorksCopySchema,
 })
-
 const LocalizedCopySchema = z.record(z.enum(['pt-BR', 'en-US']), CopySchema)
-
 // ============================================================================
 // 5. PRICING & PLANS (Fase 3)
 // ============================================================================
@@ -142,42 +130,36 @@ const PricingPlanSchema = z.object({
   asaasProductId: z.string().optional(),
   ctaText: z.string(),
 })
-
 const FeatureComparisonRowSchema = z.object({
   feature: z.string(),
   basic: z.union([z.string(), z.boolean()]),
   premium: z.union([z.string(), z.boolean()]),
   vip: z.union([z.string(), z.boolean()]),
 })
-
 const FeatureComparisonSchema = z.object({
   features: z.array(z.string()),
   planComparison: z.array(FeatureComparisonRowSchema),
 })
-
 const ServiceBenefitSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
   icon: z.string(),
-  highlight: z.boolean(),
+  highlight: z.boolean().default(false),
 })
-
 const CoverageInfoSchema = z.object({
   id: z.string(),
   icon: z.string(),
   title: z.string(),
   description: z.string(),
   locations: z.array(z.string()).optional(),
-  nationwide: z.boolean(),
+  nationwide: z.boolean().default(false),
 })
-
 const FAQItemSchema = z.object({
   id: z.string(),
   question: z.string(),
   answer: z.string(),
 })
-
 const EconomyCalculatorDataSchema = z.object({
   averagePrices: z.object({
     daily: z.object({
@@ -208,7 +190,6 @@ const EconomyCalculatorDataSchema = z.object({
     }),
   }),
 })
-
 const PricingConfigSchema = z.object({
   plans: z.array(PricingPlanSchema),
   featureComparison: FeatureComparisonSchema,
@@ -217,7 +198,6 @@ const PricingConfigSchema = z.object({
   faq: z.array(FAQItemSchema),
   economyCalculator: EconomyCalculatorDataSchema,
 })
-
 // ============================================================================
 // 6. SEO METADATA (Fase 3 - Basic)
 // ============================================================================
@@ -242,7 +222,6 @@ const SEOConfigSchema = z.object({
     creator: z.string().optional(),
   }),
 })
-
 // ============================================================================
 // 7. MEDICAL DATA (Fase 4)
 // ============================================================================
@@ -251,13 +230,11 @@ const DoctorContactSchema = z.object({
   email: z.string().email(),
   clinicAddress: z.string(),
 })
-
 const DoctorSocialProofSchema = z.object({
   patientsServed: z.string(),
   satisfactionRate: z.string(),
   consultationsPerformed: z.string(),
 })
-
 const DoctorSchema = z.object({
   name: z.string(),
   crm: z.string(),
@@ -270,7 +247,6 @@ const DoctorSchema = z.object({
   contact: DoctorContactSchema,
   socialProof: DoctorSocialProofSchema,
 })
-
 const ClinicAddressSchema = z.object({
   street: z.string(),
   neighborhood: z.string(),
@@ -279,27 +255,23 @@ const ClinicAddressSchema = z.object({
   zipCode: z.string(),
   country: z.string(),
 })
-
 const ClinicContactSchema = z.object({
   phone: z.string(),
   whatsapp: z.string(),
   email: z.string().email(),
   website: z.string().url(),
 })
-
 const ClinicBusinessHoursSchema = z.object({
   weekdays: z.string(),
   saturday: z.string(),
   sunday: z.string(),
   emergency: z.string(),
 })
-
 const ClinicCoverageSchema = z.object({
   area: z.string(),
   shipping: z.string(),
   consultation: z.string(),
 })
-
 const ClinicSchema = z.object({
   name: z.string(),
   fullName: z.string(),
@@ -309,52 +281,45 @@ const ClinicSchema = z.object({
   businessHours: ClinicBusinessHoursSchema,
   coverage: ClinicCoverageSchema,
 })
-
 const TrustBadgeSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
   icon: z.string(),
-  verified: z.boolean(),
+  verified: z.boolean().default(false),
 })
-
 const CertificationSchema = z.object({
   id: z.string(),
   name: z.string(),
   institution: z.string(),
   year: z.string().optional(),
   number: z.string().optional(),
-  verified: z.boolean(),
+  verified: z.boolean().default(false),
 })
-
 const SocialProofStatSchema = z.object({
   id: z.string(),
   value: z.string(),
   label: z.string(),
   icon: z.string(),
 })
-
 const HighlightSchema = z.object({
   id: z.string(),
   text: z.string(),
   description: z.string(),
   icon: z.string(),
-  featured: z.boolean(),
+  featured: z.boolean().default(false),
 })
-
 const TrustSchema = z.object({
   badges: z.array(TrustBadgeSchema),
   certifications: z.array(CertificationSchema),
   socialProofStats: z.array(SocialProofStatSchema),
   highlights: z.array(HighlightSchema),
 })
-
 const MedicalConfigSchema = z.object({
   doctor: DoctorSchema,
   clinic: ClinicSchema,
   trust: TrustSchema,
 })
-
 // ============================================================================
 // 8. ANALYTICS & TRACKING (Fase 4)
 // ============================================================================
@@ -362,92 +327,93 @@ const GAConsentSchema = z.object({
   analytics_storage: z.enum(['granted', 'denied']),
   ad_storage: z.enum(['granted', 'denied']),
 })
-
 const GACustomDimensionsSchema = z.object({
   plan_type: z.string(),
   billing_interval: z.string(),
 })
-
 const GAFeaturesSchema = z.object({
-  pageTracking: z.boolean(),
-  scrollTracking: z.boolean(),
-  sessionRecording: z.boolean(),
-  enhancedEcommerce: z.boolean(),
+  pageTracking: z.boolean().default(false),
+  scrollTracking: z.boolean().default(false),
+  sessionRecording: z.boolean().default(false),
+  enhancedEcommerce: z.boolean().default(false),
 })
-
 const GoogleAnalyticsSchema = z.object({
-  enabled: z.boolean(),
+  enabled: z.boolean().default(false),
   measurementId: z.string(),
   consent: GAConsentSchema,
   customDimensions: GACustomDimensionsSchema,
   features: GAFeaturesSchema,
 })
-
 const ConversionEventSchema = z.object({
   event: z.string(),
   category: z.string(),
   label: z.string(),
   value: z.number(),
 })
-
 const MonitoringThresholdsSchema = z.object({
   pageLoadTime: z.number(),
   interactionDelay: z.number(),
 })
-
 const VitalsSchema = z.object({
   LCP: z.number(),
   FID: z.number(),
   CLS: z.number(),
 })
-
 const MonitoringSchema = z.object({
-  errorTracking: z.boolean(),
-  performanceMetrics: z.boolean(),
+  errorTracking: z.boolean().default(false),
+  performanceMetrics: z.boolean().default(false),
   thresholds: MonitoringThresholdsSchema,
   vitals: VitalsSchema,
 })
-
 const AnalyticsConfigSchema = z.object({
   googleAnalytics: GoogleAnalyticsSchema,
   conversionEvents: z.array(ConversionEventSchema),
   monitoring: MonitoringSchema,
 })
-
 // ============================================================================
 // 9. PRIVACY & COMPLIANCE (Fase 4)
 // ============================================================================
 const CookieConsentSchema = z.object({
-  essential: z.boolean(),
+  essential: z.boolean().default(false),
   analytics: z.string(),
   marketing: z.string(),
 })
-
 const LGPDSchema = z.object({
-  enabled: z.boolean(),
-  consentRequired: z.boolean(),
+  enabled: z.boolean().default(false),
+  consentRequired: z.boolean().default(false),
   dataRetentionDays: z.number(),
   cookieConsent: CookieConsentSchema,
   dataSubjectRights: z.array(z.string()),
 })
-
 const PrivacyConfigSchema = z.object({
   lgpd: LGPDSchema,
 })
-
 // ============================================================================
 // 10. FEATURE FLAGS
 // ============================================================================
 const FeatureFlagsSchema = z.object({
-  useCentralizedConfig: z.boolean(),
-  useCentralizedCopy: z.boolean(),
-  useCentralizedPricing: z.boolean(),
-  useCentralizedSEO: z.boolean(),
-  useCentralizedMedical: z.boolean(),
-  useCentralizedAnalytics: z.boolean(),
-  useCentralizedPrivacy: z.boolean(),
+  useCentralizedConfig: z.boolean().default(false),
+  useCentralizedCopy: z.boolean().default(false),
+  useCentralizedPricing: z.boolean().default(false),
+  useCentralizedSEO: z.boolean().default(false),
+  useCentralizedMedical: z.boolean().default(false),
+  useCentralizedAnalytics: z.boolean().default(false),
+  useCentralizedPrivacy: z.boolean().default(false),
+  usePricingAsfericos: z.boolean().default(false),
+  usePricingToricos: z.boolean().default(false),
 })
-
+// ============================================================================
+// 11. PRICING ASFÉRICOS (Fase 4 - Enhanced)
+// ============================================================================
+const PricingAsfericosSchema = z.object({
+  // Schema flexível para planos asféricos - validação básica
+}).catchall(z.any()) // Permite qualquer estrutura interna por enquanto
+// ============================================================================
+// 12. PRICING TÓRICOS (Fase 4 - Enhanced)
+// ============================================================================
+const PricingToricosSchema = z.object({
+  // Schema flexível para planos tóricos - validação básica
+}).catchall(z.any()) // Permite qualquer estrutura interna por enquanto
 // ============================================================================
 // ROOT CONFIG SCHEMA (MVP + Fase 2 + Fase 3 + Fase 4)
 // ============================================================================
@@ -457,11 +423,12 @@ export const ConfigSchema = z.object({
   menus: MenusSchema,
   copy: LocalizedCopySchema,
   pricing: PricingConfigSchema,
+  pricing_asfericos: PricingAsfericosSchema.optional(),
+  pricing_toricos: PricingToricosSchema.optional(),
   seo: SEOConfigSchema,
   medical: MedicalConfigSchema,
   analytics: AnalyticsConfigSchema,
   privacy: PrivacyConfigSchema,
   featureFlags: FeatureFlagsSchema,
 })
-
 export type AppConfig = z.infer<typeof ConfigSchema>

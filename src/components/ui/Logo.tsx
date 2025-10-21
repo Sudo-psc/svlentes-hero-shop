@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
-
 interface LogoProps {
   variant?: 'full' | 'icon' | 'text'
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -8,14 +7,12 @@ interface LogoProps {
   priority?: boolean
   showSubtitle?: boolean
 }
-
 const SIZE_CONFIG = {
   sm: { width: 112, height: 38, textSize: 'text-lg', src: '/images/logo_transparent.png' },
   md: { width: 160, height: 54, textSize: 'text-2xl', src: '/images/logo_transparent.png' },
   lg: { width: 179, height: 61, textSize: 'text-3xl', src: '/images/logo_transparent.png' },
   xl: { width: 288, height: 96, textSize: 'text-4xl', src: '/images/logo_transparent.png' }
 }
-
 export function Logo({
   variant = 'full',
   size = 'md',
@@ -24,7 +21,6 @@ export function Logo({
   showSubtitle = false
 }: LogoProps) {
   const config = SIZE_CONFIG[size]
-
   // Full logo with image
   if (variant === 'full') {
     return (
@@ -52,7 +48,6 @@ export function Logo({
       </div>
     )
   }
-
   // Icon only (eye graphic from logo)
   if (variant === 'icon') {
     return (
@@ -70,7 +65,6 @@ export function Logo({
       </div>
     )
   }
-
   // Text only variant (fallback for loading or accessibility)
   return (
     <div className={cn('flex flex-col', className)}>
@@ -88,12 +82,10 @@ export function Logo({
     </div>
   )
 }
-
 // Predefined logo variants for common use cases
 export function LogoHeader() {
   return <Logo variant="full" size="lg" priority className="hover:scale-105 transition-transform duration-200" />
 }
-
 export function LogoFooter() {
   return (
     <div className="relative flex-shrink-0 mb-4">
@@ -111,11 +103,9 @@ export function LogoFooter() {
     </div>
   )
 }
-
 export function LogoMobile() {
   return <Logo variant="icon" size="sm" priority />
 }
-
 export function LogoLoading() {
   return <Logo variant="text" size="md" />
 }

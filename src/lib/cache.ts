@@ -1,5 +1,4 @@
 // Cache configuration and utilities for Next.js
-
 // Static data cache configuration
 export const CACHE_CONFIG = {
     // Doctor info - rarely changes
@@ -7,32 +6,27 @@ export const CACHE_CONFIG = {
         revalidate: 86400, // 24 hours
         tags: ['doctor-info']
     },
-
     // Pricing plans - changes occasionally
     pricingPlans: {
         revalidate: 3600, // 1 hour
         tags: ['pricing-plans']
     },
-
     // FAQ data - changes occasionally
     faqData: {
         revalidate: 7200, // 2 hours
         tags: ['faq-data']
     },
-
     // Add-ons data - changes occasionally
     addOnsData: {
         revalidate: 3600, // 1 hour
         tags: ['add-ons-data']
     },
-
     // Trust indicators - rarely changes
     trustIndicators: {
         revalidate: 86400, // 24 hours
         tags: ['trust-indicators']
     }
 }
-
 // Cache headers for API routes
 export const getCacheHeaders = (maxAge: number, sMaxAge?: number) => {
     return {
@@ -41,11 +35,9 @@ export const getCacheHeaders = (maxAge: number, sMaxAge?: number) => {
         'Vercel-CDN-Cache-Control': `public, max-age=${sMaxAge || maxAge}`
     }
 }
-
 // Memory cache for client-side data
 class MemoryCache {
     private cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
-
     set(key: string, data: any, ttl: number = 300000) { // 5 minutes default
         this.cache.set(key, {
             data,
@@ -53,30 +45,23 @@ class MemoryCache {
             ttl
         })
     }
-
     get(key: string) {
         const item = this.cache.get(key)
         if (!item) return null
-
         if (Date.now() - item.timestamp > item.ttl) {
             this.cache.delete(key)
             return null
         }
-
         return item.data
     }
-
     clear() {
         this.cache.clear()
     }
-
     delete(key: string) {
         this.cache.delete(key)
     }
 }
-
 export const memoryCache = new MemoryCache()
-
 // Service Worker cache strategies
 export const SW_CACHE_STRATEGIES = {
     // Cache static assets
@@ -91,7 +76,6 @@ export const SW_CACHE_STRATEGIES = {
             },
         },
     },
-
     // Cache API responses
     apiResponses: {
         urlPattern: /^https:\/\/api\./,
@@ -105,7 +89,6 @@ export const SW_CACHE_STRATEGIES = {
             },
         },
     },
-
     // Cache images
     images: {
         urlPattern: /\.(png|jpg|jpeg|webp|gif|svg)$/,
@@ -119,32 +102,14 @@ export const SW_CACHE_STRATEGIES = {
         },
     },
 }
-
 // Preload critical resources
 export const preloadCriticalResources = () => {
     if (typeof window === 'undefined') return
-
-    // Preload critical fonts
-    const fontPreloads = [
-        '/fonts/inter-var.woff2',
-    ]
-
-    fontPreloads.forEach(font => {
-        const link = document.createElement('link')
-        link.rel = 'preload'
-        link.href = font
-        link.as = 'font'
-        link.type = 'font/woff2'
-        link.crossOrigin = 'anonymous'
-        document.head.appendChild(link)
-    })
-
     // Preload critical images
     const imagePreloads = [
         '/icones/drphilipe_perfil.jpeg',
         '/logo.png',
     ]
-
     imagePreloads.forEach(image => {
         const link = document.createElement('link')
         link.rel = 'preload'
@@ -153,11 +118,9 @@ export const preloadCriticalResources = () => {
         document.head.appendChild(link)
     })
 }
-
 // Resource hints
 export const addResourceHints = () => {
     if (typeof window === 'undefined') return
-
     // DNS prefetch for external domains
     const dnsPrefetchDomains = [
         'https://js.stripe.com',
@@ -166,21 +129,18 @@ export const addResourceHints = () => {
         'https://fonts.googleapis.com',
         'https://fonts.gstatic.com',
     ]
-
     dnsPrefetchDomains.forEach(domain => {
         const link = document.createElement('link')
         link.rel = 'dns-prefetch'
         link.href = domain
         document.head.appendChild(link)
     })
-
     // Preconnect to critical domains
     const preconnectDomains = [
         'https://js.stripe.com',
         'https://fonts.googleapis.com',
         'https://fonts.gstatic.com',
     ]
-
     preconnectDomains.forEach(domain => {
         const link = document.createElement('link')
         link.rel = 'preconnect'

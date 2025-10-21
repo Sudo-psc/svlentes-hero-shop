@@ -1,7 +1,6 @@
 'use client'
-
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { customerProblems, svlentesSolutions, impactStats } from '@/data/problems-solutions'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import {
@@ -13,24 +12,19 @@ import {
     Target,
     TrendingUp
 } from 'lucide-react'
-
 interface ProblemSolutionSectionProps {
     className?: string
 }
-
 export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectionProps) {
-
     const handleSpecialistContact = () => {
         openWhatsAppWithContext('support', {
             page: 'landing-page',
             section: 'problem-solution-cta'
         })
     }
-
     return (
         <section className={`py-16 lg:py-24 bg-white ${className}`}>
             <div className="container-custom">
-
                 {/* Header */}
                 <div className="text-center mb-16">
                     <Badge
@@ -40,22 +34,18 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                         <AlertTriangle className="w-4 h-4 mr-2" />
                         Problemas Comuns
                     </Badge>
-
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
                         Cansado dos{' '}
                         <span className="text-red-600">Problemas</span>{' '}
                         com lentes?
                     </h2>
-
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                         Sabemos exatamente pelo que você passa. Por isso criamos a SV Lentes -
                         para resolver de uma vez por todas esses problemas do dia a dia.
                     </p>
                 </div>
-
                 {/* Problems vs Solutions */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 mb-16">
-
                     {/* Problems Column */}
                     <div className="space-y-8">
                         <div className="text-center lg:text-left">
@@ -69,7 +59,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                                 Reconhece alguma dessas situações? Você não está sozinho!
                             </p>
                         </div>
-
                         <div className="space-y-4">
                             {customerProblems.map((problem, index) => (
                                 <div
@@ -88,7 +77,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                                 </div>
                             ))}
                         </div>
-
                         {/* Problem Stats */}
                         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                             <h4 className="font-semibold text-red-800 mb-4 flex items-center">
@@ -107,7 +95,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                             </div>
                         </div>
                     </div>
-
                     {/* Solutions Column */}
                     <div className="space-y-8">
                         <div className="text-center lg:text-left">
@@ -121,7 +108,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                                 Cada problema tem uma solução inteligente e definitiva!
                             </p>
                         </div>
-
                         <div className="space-y-4">
                             {svlentesSolutions.map((solution, index) => (
                                 <div
@@ -144,7 +130,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                                 </div>
                             ))}
                         </div>
-
                         {/* Solution Stats */}
                         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                             <h4 className="font-semibold text-green-800 mb-4 flex items-center">
@@ -162,14 +147,12 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                         </div>
                     </div>
                 </div>
-
                 {/* Transformation Arrow */}
                 <div className="flex justify-center mb-16">
                     <div className="bg-primary-100 rounded-full p-4">
                         <ArrowRight className="w-8 h-8 text-primary-600" />
                     </div>
                 </div>
-
                 {/* Impact Results */}
                 <div className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl p-8 lg:p-12 mb-16">
                     <div className="text-center mb-8">
@@ -180,7 +163,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                             Veja o impacto real na vida dos nossos clientes
                         </p>
                     </div>
-
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {impactStats.map((stat, index) => (
                             <div
@@ -200,7 +182,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                         ))}
                     </div>
                 </div>
-
                 {/* CTA Section */}
                 <div className="text-center">
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 lg:p-12 max-w-3xl mx-auto">
@@ -211,7 +192,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                             Fale com um especialista e descubra como a SV Lentes pode transformar
                             sua experiência com lentes de contato.
                         </p>
-
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Button
                                 onClick={handleSpecialistContact}
@@ -221,7 +201,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                                 <MessageCircle className="w-5 h-5" />
                                 <span>Falar com Especialista</span>
                             </Button>
-
                             <Button
                                 onClick={() => document.getElementById('calculadora-economia')?.scrollIntoView({ behavior: 'smooth' })}
                                 variant="outline"
@@ -232,7 +211,6 @@ export function ProblemSolutionSection({ className = '' }: ProblemSolutionSectio
                                 <span>Calcular Economia</span>
                             </Button>
                         </div>
-
                         {/* Trust Indicators */}
                         <div className="mt-8 pt-8 border-t border-gray-200">
                             <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">

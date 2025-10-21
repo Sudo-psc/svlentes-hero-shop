@@ -7,9 +7,7 @@
  * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
-
 import { config } from '@/config/loader'
-
 /**
  * Get doctor information from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -18,17 +16,14 @@ function getDoctorInfo() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       return appConfig.medical.doctor
     }
   } catch (error) {
     console.warn('[Medical] Error loading doctor info, using fallback:', error)
   }
-
   return hardcodedDoctorInfo
 }
-
 // Hardcoded fallback data
 const hardcodedDoctorInfo = {
     name: 'Dr. Philipe Saraiva Cruz',
@@ -56,10 +51,8 @@ const hardcodedDoctorInfo = {
         consultationsPerformed: '10000+'
     }
 }
-
 // Export via função para suportar centralização
 export const doctorInfo = getDoctorInfo()
-
 /**
  * Get trust indicators (legacy format for backward compatibility)
  * Falls back to hardcoded data if feature flag is disabled
@@ -68,7 +61,6 @@ function getTrustIndicators() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       // Convert new centralized format to legacy format for backward compatibility
       const badges = appConfig.medical.trust.badges
@@ -109,10 +101,8 @@ function getTrustIndicators() {
   } catch (error) {
     console.warn('[Medical] Error loading trust indicators, using fallback:', error)
   }
-
   return hardcodedTrustIndicators
 }
-
 // Hardcoded fallback data
 const hardcodedTrustIndicators = {
     anvisa: {
@@ -147,7 +137,6 @@ const hardcodedTrustIndicators = {
         verified: true
     }
 }
-
 /**
  * Get clinic information from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -156,17 +145,14 @@ function getClinicInfo() {
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-
     if (useCentralizedMedical) {
       return appConfig.medical.clinic
     }
   } catch (error) {
     console.warn('[Medical] Error loading clinic info, using fallback:', error)
   }
-
   return hardcodedClinicInfo
 }
-
 // Hardcoded fallback data
 const hardcodedClinicInfo = {
     name: 'SV Lentes',
@@ -198,7 +184,6 @@ const hardcodedClinicInfo = {
         consultation: 'Consultas presenciais e telemedicina'
     }
 }
-
 // Export via função para suportar centralização
 export const trustIndicators = getTrustIndicators()
 export const clinicInfo = getClinicInfo()

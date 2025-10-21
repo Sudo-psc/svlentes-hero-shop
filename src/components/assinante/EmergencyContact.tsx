@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import {
   Phone,
   Mail,
@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Clock
 } from 'lucide-react'
-
 interface EmergencyContactProps {
   contact: {
     phone: string
@@ -19,22 +18,18 @@ interface EmergencyContactProps {
     }
   }
 }
-
 export function EmergencyContactCard({ contact }: EmergencyContactProps) {
   const handleWhatsAppClick = () => {
     const phoneNumber = contact.phone.replace(/\D/g, '')
     const message = encodeURIComponent('Olá! Preciso de ajuda com minha assinatura de lentes de contato.')
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
   }
-
   const handlePhoneCall = () => {
     window.open(`tel:${contact.phone}`, '_self')
   }
-
   const handleEmailClick = () => {
     window.open(`mailto:${contact.email}?subject=Assinatura SV Lentes - Ajuda`, '_blank')
   }
-
   const formatPhoneNumber = (phone: string) => {
     // Format phone number for display
     const cleaned = phone.replace(/\D/g, '')
@@ -44,7 +39,6 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
     }
     return phone
   }
-
   return (
     <Card>
       <CardHeader>
@@ -76,11 +70,9 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
             Para questões médicas sobre suas lentes de contato, entre em contato diretamente com nosso especialista.
           </p>
         </div>
-
         {/* Contact Methods */}
         <div className="space-y-4">
           <h4 className="font-medium text-gray-900">Canais de Comunicação</h4>
-
           {/* WhatsApp - Primary */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -109,7 +101,6 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
               </Button>
             </div>
           </div>
-
           {/* Phone Call */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -136,7 +127,6 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
               </Button>
             </div>
           </div>
-
           {/* Email */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -167,7 +157,6 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
             </div>
           </div>
         </div>
-
         {/* Emergency Guidelines */}
         <div className="space-y-3">
           <h4 className="font-medium text-gray-900 flex items-center gap-2">
@@ -201,7 +190,6 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
             </div>
           </div>
         </div>
-
         {/* Location Info */}
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
@@ -218,5 +206,16 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
     </Card>
   )
 }
-
+// Componente简化 sem props para uso direto
+export function EmergencyContact() {
+  const contact = {
+    phone: "5533999898026",
+    email: "contato@svlentes.com.br",
+    doctor: {
+      name: "Dr. Philipe Saraiva Cruz",
+      crm: "CRM-MG 69.870"
+    }
+  }
+  return <EmergencyContactCard contact={contact} />
+}
 export default EmergencyContactCard

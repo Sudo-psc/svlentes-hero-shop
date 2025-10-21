@@ -1,12 +1,9 @@
 'use client'
-
 import { useEffect } from 'react'
-
 interface RedirectClientProps {
   url: string
   delay?: number
 }
-
 /**
  * Componente de redirecionamento client-side
  *
@@ -21,10 +18,8 @@ export default function RedirectClient({ url, delay = 0 }: RedirectClientProps) 
     const timer = setTimeout(() => {
       window.location.href = url
     }, delay)
-
     return () => clearTimeout(timer)
   }, [url, delay])
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center space-y-6">
@@ -47,23 +42,19 @@ export default function RedirectClient({ url, delay = 0 }: RedirectClientProps) 
             </svg>
           </div>
         </div>
-
         {/* Título */}
         <h1 className="text-2xl font-bold text-gray-900">
           Redirecionando...
         </h1>
-
         {/* Descrição */}
         <p className="text-gray-600">
           Você está sendo redirecionado para a página de lentes de contato da{' '}
           <span className="font-semibold text-blue-600">Saraiva Vision</span>.
         </p>
-
         {/* Spinner de loading */}
         <div className="flex justify-center py-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-
         {/* Link manual */}
         <div className="pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-500 mb-3">
@@ -76,7 +67,6 @@ export default function RedirectClient({ url, delay = 0 }: RedirectClientProps) 
             Clique aqui para continuar
           </a>
         </div>
-
         {/* Informações de contato */}
         <div className="pt-4 text-xs text-gray-400">
           <p>Saraiva Vision - Clínica Oftalmológica</p>

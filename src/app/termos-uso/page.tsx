@@ -1,23 +1,19 @@
 import { Metadata } from 'next'
-
 export const metadata: Metadata = {
     title: 'Termos de Uso - SV Lentes | Assinatura de Lentes com Acompanhamento Médico',
     description: 'Termos de uso do serviço de assinatura de lentes de contato da SV Lentes com acompanhamento médico especializado.',
     robots: 'index, follow',
 }
-
 export default function TermosUsoPage() {
     return (
         <div className="min-h-screen bg-gray-50 py-12">
             <div className="container mx-auto px-4 max-w-4xl">
                 <div className="bg-white rounded-lg shadow-lg p-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-8">Termos de Uso</h1>
-
                     <div className="prose prose-lg max-w-none">
                         <p className="text-gray-600 mb-6">
                             <strong>Última atualização:</strong> {new Date().toLocaleDateString('pt-BR')}
                         </p>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Aceitação dos Termos</h2>
                             <p className="text-gray-700 leading-relaxed">
@@ -26,7 +22,6 @@ export default function TermosUsoPage() {
                                 não deve utilizar nossos serviços.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Descrição do Serviço</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
@@ -44,7 +39,6 @@ export default function TermosUsoPage() {
                                 <li>Suporte técnico e orientações</li>
                             </ul>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. Responsabilidade Médica</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
@@ -56,7 +50,6 @@ export default function TermosUsoPage() {
                                 É responsabilidade do usuário seguir todas as orientações médicas fornecidas.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Assinatura e Pagamento</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
@@ -72,7 +65,6 @@ export default function TermosUsoPage() {
                                 Você pode cancelar sua assinatura a qualquer momento sem multas.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Cancelamento e Reembolso</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
@@ -84,7 +76,6 @@ export default function TermosUsoPage() {
                                 especialmente nos casos de arrependimento em até 7 dias da contratação.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Privacidade e Proteção de Dados</h2>
                             <p className="text-gray-700 leading-relaxed">
@@ -95,7 +86,6 @@ export default function TermosUsoPage() {
                                 </a>.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Limitação de Responsabilidade</h2>
                             <p className="text-gray-700 leading-relaxed">
@@ -104,7 +94,6 @@ export default function TermosUsoPage() {
                                 higiene e manutenção fornecidas pelo médico responsável.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Alterações nos Termos</h2>
                             <p className="text-gray-700 leading-relaxed">
@@ -113,7 +102,6 @@ export default function TermosUsoPage() {
                                 O uso continuado dos serviços após as alterações constitui aceitação dos novos termos.
                             </p>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Contato</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
@@ -128,7 +116,6 @@ export default function TermosUsoPage() {
                                 <p className="text-gray-700">Email: <a href="mailto:contato@svlentes.com.br" className="text-blue-600 hover:underline">contato@svlentes.com.br</a></p>
                             </div>
                         </section>
-
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">10. Lei Aplicável</h2>
                             <p className="text-gray-700 leading-relaxed">

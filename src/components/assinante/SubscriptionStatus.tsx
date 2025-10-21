@@ -1,10 +1,8 @@
 'use client'
-
 import { Package, Calendar, RefreshCcw, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateLong } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel, type SubscriptionStatus } from '@/lib/subscription-helpers'
-
 interface SubscriptionStatusCardProps {
   status: SubscriptionStatus
   planName: string
@@ -14,7 +12,6 @@ interface SubscriptionStatusCardProps {
   onRefresh?: () => void
   onReactivate?: () => void
 }
-
 export default function SubscriptionStatusCard({
   status,
   planName,
@@ -25,7 +22,6 @@ export default function SubscriptionStatusCard({
   onReactivate
 }: SubscriptionStatusCardProps) {
   const billingCycleLabel = billingCycle === 'monthly' ? 'mensal' : 'anual'
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border">
       <div className="flex items-center justify-between mb-4">
@@ -37,7 +33,6 @@ export default function SubscriptionStatusCard({
           {getSubscriptionStatusLabel(status)}
         </span>
       </div>
-
       {/* Status Messages */}
       {status === 'pending' && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
@@ -50,7 +45,6 @@ export default function SubscriptionStatusCard({
           </div>
         </div>
       )}
-
       {status === 'cancelled' && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
           <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -62,7 +56,6 @@ export default function SubscriptionStatusCard({
           </div>
         </div>
       )}
-
       {status === 'paused' && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
           <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
@@ -74,21 +67,18 @@ export default function SubscriptionStatusCard({
           </div>
         </div>
       )}
-
       {/* Subscription Details */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-gray-600">Plano:</span>
           <span className="font-medium">{planName}</span>
         </div>
-
         <div className="flex items-center justify-between">
           <span className="text-gray-600">Valor {billingCycleLabel}:</span>
           <span className="font-bold text-cyan-600 text-lg">
             {formatCurrency(price)}
           </span>
         </div>
-
         {status === 'active' && (
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Próxima cobrança:</span>
@@ -98,7 +88,6 @@ export default function SubscriptionStatusCard({
             </span>
           </div>
         )}
-
         {/* Actions */}
         <div className="pt-3 border-t flex gap-2">
           {status === 'active' && onRefresh && (
@@ -112,7 +101,6 @@ export default function SubscriptionStatusCard({
               Atualizar
             </Button>
           )}
-
           {(status === 'cancelled' || status === 'paused') && onReactivate && (
             <Button
               size="sm"

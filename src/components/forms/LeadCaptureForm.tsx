@@ -1,11 +1,10 @@
 'use client'
-
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Checkbox } from '@/components/ui/Checkbox'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { leadFormSchema, type LeadFormData, formatPhone } from '@/lib/validations'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import { trackEvent } from '@/lib/analytics'
@@ -14,13 +13,11 @@ import { MarketingOptIn } from '@/components/privacy/MarketingOptIn'
 import { setMarketingConsent } from '@/lib/privacy'
 import { Calculator, Phone, MessageCircle, Shield, CheckCircle } from 'lucide-react'
 import { logger, LogCategory } from '@/lib/logger'
-
 interface LeadCaptureFormProps {
     variant?: 'hero' | 'calculator' | 'inline'
     onSubmit?: (data: LeadFormData) => void
     className?: string
 }
-
 export function LeadCaptureForm({
     variant = 'hero',
     onSubmit,
@@ -29,7 +26,6 @@ export function LeadCaptureForm({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSubmitted, setIsSubmitted] = useState(false)
     const [marketingOptIn, setMarketingOptIn] = useState(false)
-
     const {
         register,
         handleSubmit,
@@ -45,22 +41,17 @@ export function LeadCaptureForm({
             lgpdConsent: false
         }
     })
-
     const watchedPhone = watch('whatsapp')
-
     // Formatar telefone em tempo real
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const formatted = formatPhone(e.target.value)
         setValue('whatsapp', formatted)
     }
-
     const handleFormSubmit = async (data: LeadFormData) => {
         setIsSubmitting(true)
-
         try {
             // Simular envio (aqui você integraria com sua API)
             await new Promise(resolve => setTimeout(resolve, 1000))
-
             // Save marketing consent
             if (marketingOptIn) {
                 setMarketingConsent(true, {
@@ -69,7 +60,6 @@ export function LeadCaptureForm({
                     sms: false
                 })
             }
-
             // Callback personalizado se fornecido
             if (onSubmit) {
                 onSubmit(data)
@@ -85,9 +75,7 @@ export function LeadCaptureForm({
                     }
                 })
             }
-
             setIsSubmitted(true)
-
             // Analytics tracking
             trackLeadCapture({
                 nome: data.nome,
@@ -95,7 +83,6 @@ export function LeadCaptureForm({
                 whatsapp: data.whatsapp,
                 source: variant || 'hero_form'
             })
-
         } catch (error) {
             logger.error(LogCategory.BUSINESS, 'Failed to submit lead form', error as Error, {
                 variant
@@ -104,7 +91,6 @@ export function LeadCaptureForm({
             setIsSubmitting(false)
         }
     }
-
     const handleCalculateEconomy = () => {
         const formData = watch()
         if (formData.nome && formData.whatsapp && formData.email && formData.lgpdConsent) {
@@ -116,7 +102,6 @@ export function LeadCaptureForm({
             firstEmptyField?.focus()
         }
     }
-
     if (isSubmitted) {
         return (
             <div className={`bg-green-50 border border-green-200 rounded-lg p-6 text-center ${className}`}>
@@ -139,7 +124,6 @@ export function LeadCaptureForm({
             </div>
         )
     }
-
     if (variant === 'inline') {
         return (
             <form onSubmit={handleSubmit(handleFormSubmit)} className={`space-y-4 ${className}`}>
@@ -162,7 +146,6 @@ export function LeadCaptureForm({
                         error={errors.email?.message}
                     />
                 </div>
-
                 <div className="flex items-center justify-between">
                     <Checkbox
                         {...register('lgpdConsent')}
@@ -175,7 +158,6 @@ export function LeadCaptureForm({
                             </a>
                         </span>
                     </Checkbox>
-
                     <Button
                         type="submit"
                         disabled={!watch('lgpdConsent') || isSubmitting}
@@ -188,7 +170,6 @@ export function LeadCaptureForm({
             </form>
         )
     }
-
     return (
         <div className={`bg-white rounded-lg shadow-lg border border-gray-200 p-6 ${className}`}>
             <div className="text-center mb-6">
@@ -202,7 +183,6 @@ export function LeadCaptureForm({
                     Descubra quanto você pode economizar com nossa assinatura
                 </p>
             </div>
-
             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
                 <Input
                     {...register('nome')}
@@ -212,7 +192,6 @@ export function LeadCaptureForm({
                     error={errors.nome?.message}
                     required
                 />
-
                 <Input
                     {...register('whatsapp')}
                     id="lead-whatsapp"
@@ -223,7 +202,6 @@ export function LeadCaptureForm({
                     helperText="Usaremos para enviar o resultado da calculadora"
                     required
                 />
-
                 <Input
                     {...register('email')}
                     id="lead-email"
@@ -233,7 +211,6 @@ export function LeadCaptureForm({
                     error={errors.email?.message}
                     required
                 />
-
                 <Checkbox
                     {...register('lgpdConsent')}
                     id="lead-lgpd-consent"
@@ -253,12 +230,10 @@ export function LeadCaptureForm({
                         .
                     </span>
                 </Checkbox>
-
                 <MarketingOptIn
                     onOptInChange={setMarketingOptIn}
                     className="pt-2 border-t border-gray-100"
                 />
-
                 <div className="space-y-3">
                     <Button
                         onClick={handleCalculateEconomy}
@@ -270,7 +245,6 @@ export function LeadCaptureForm({
                         <Calculator className="w-5 h-5" aria-hidden="true" />
                         <span>Calcular Economia</span>
                     </Button>
-
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-200"></div>
@@ -279,7 +253,6 @@ export function LeadCaptureForm({
                             <span className="px-2 bg-white text-gray-500">ou</span>
                         </div>
                     </div>
-
                     <Button
                         type="submit"
                         variant="outline"
@@ -291,7 +264,6 @@ export function LeadCaptureForm({
                         <span>{isSubmitting ? 'Agendando...' : 'Agendar Consulta Direta'}</span>
                     </Button>
                 </div>
-
                 {/* Trust indicators */}
                 <div className="pt-4 border-t border-gray-200">
                     <div className="flex items-center justify-center space-x-6 text-xs">

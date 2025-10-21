@@ -1,28 +1,22 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { MessageCircle, X, Clock, CheckCircle } from 'lucide-react'
 import { openWhatsAppWithContext, getAttendanceStatus, isBusinessHours } from '@/lib/whatsapp'
 import { cn } from '@/lib/utils'
-
 interface WhatsAppFloatProps {
     className?: string
 }
-
 export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [attendanceStatus, setAttendanceStatus] = useState(getAttendanceStatus())
     const [showNotification, setShowNotification] = useState(false)
-
     // Atualizar status de atendimento a cada minuto
     useEffect(() => {
         const interval = setInterval(() => {
             setAttendanceStatus(getAttendanceStatus())
         }, 60000) // 1 minuto
-
         return () => clearInterval(interval)
     }, [])
-
     // Mostrar notificação após alguns segundos na página
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -32,10 +26,8 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
                 setTimeout(() => setShowNotification(false), 5000)
             }
         }, 10000) // 10 segundos
-
         return () => clearTimeout(timer)
     }, [isOpen])
-
     const quickActions = [
         {
             id: 'consultation',
@@ -66,7 +58,6 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
             context: 'emergency' as const
         }
     ]
-
     const handleQuickAction = (context: 'consultation' | 'pricing' | 'support' | 'emergency') => {
         openWhatsAppWithContext(context, {
             page: 'landing-page',
@@ -75,7 +66,6 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
         setIsOpen(false)
         setShowNotification(false)
     }
-
     const handleDirectContact = () => {
         openWhatsAppWithContext('hero', {
             page: 'landing-page',
@@ -84,7 +74,6 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
         setIsOpen(false)
         setShowNotification(false)
     }
-
     return (
         <>
             {/* Notification Bubble */}
@@ -113,12 +102,10 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
                     </div>
                 </div>
             )}
-
             {/* Quick Actions Menu */}
             {isOpen && (
                 <div className="fixed bottom-24 right-6 z-40 animate-slide-up">
                     <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-80 max-w-[calc(100vw-3rem)]">
-
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200">
                             <div className="flex items-center justify-between">
@@ -148,13 +135,11 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
                                 </button>
                             </div>
                         </div>
-
                         {/* Quick Actions */}
                         <div className="p-4">
                             <p className="text-sm text-gray-600 mb-4">
                                 Como podemos ajudar você hoje?
                             </p>
-
                             <div className="space-y-2">
                                 {quickActions.map((action) => (
                                     <button
@@ -174,7 +159,6 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
                                     </button>
                                 ))}
                             </div>
-
                             {/* Direct Contact Button */}
                             <button
                                 onClick={handleDirectContact}
@@ -187,7 +171,6 @@ export function WhatsAppFloat({ className }: WhatsAppFloatProps) {
                     </div>
                 </div>
             )}
-
             {/* Floating Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}

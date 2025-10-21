@@ -1,12 +1,10 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { X, Package, Truck, Calendar, ExternalLink } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getOrderStatusColor, getOrderStatusLabel } from '@/lib/subscription-helpers'
-
 interface Order {
   id: string
   subscriptionId: string
@@ -19,12 +17,10 @@ interface Order {
   createdAt: string
   updatedAt: string
 }
-
 interface OrdersModalProps {
   isOpen: boolean
   onClose: () => void
 }
-
 export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
   const { user } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
@@ -32,33 +28,26 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-
   useEffect(() => {
     if (isOpen && user) {
       fetchOrders()
     }
   }, [isOpen, user, page])
-
   const fetchOrders = async () => {
     if (!user) return
-
     try {
       setLoading(true)
       setError(null)
-
       const token = await user.getIdToken()
-
       const response = await fetch(`/api/assinante/orders?page=${page}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       })
-
       if (!response.ok) {
         throw new Error('Erro ao carregar pedidos')
       }
-
       const data = await response.json()
       setOrders(data.orders)
       setTotalPages(data.pagination.totalPages)
@@ -68,9 +57,7 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
       setLoading(false)
     }
   }
-
   if (!isOpen) return null
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen p-4">
@@ -79,7 +66,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
           onClick={onClose}
         />
-
         {/* Modal */}
         <div className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
           {/* Header */}
@@ -95,7 +81,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
               <X className="h-5 w-5" />
             </button>
           </div>
-
           {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
             {loading && (
@@ -103,7 +88,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
               </div>
             )}
-
             {error && (
               <div className="text-center py-12">
                 <p className="text-red-600 mb-4">{error}</p>
@@ -112,14 +96,12 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
                 </Button>
               </div>
             )}
-
             {!loading && !error && orders.length === 0 && (
               <div className="text-center py-12">
                 <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">Nenhum pedido encontrado</p>
               </div>
             )}
-
             {!loading && !error && orders.length > 0 && (
               <div className="space-y-4">
                 {orders.map((order) => (
@@ -140,7 +122,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
                         {getOrderStatusLabel(order.status)}
                       </span>
                     </div>
-
                     <div className="grid md:grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-gray-600 flex items-center gap-1">
@@ -149,7 +130,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
                         </p>
                         <p className="font-medium">{formatDate(order.createdAt)}</p>
                       </div>
-
                       {order.shippingDate && (
                         <div>
                           <p className="text-gray-600 flex items-center gap-1">
@@ -159,20 +139,17 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
                           <p className="font-medium">{formatDate(order.shippingDate)}</p>
                         </div>
                       )}
-
                       {order.deliveryDate && (
                         <div>
                           <p className="text-gray-600">Data de entrega:</p>
                           <p className="font-medium">{formatDate(order.deliveryDate)}</p>
                         </div>
                       )}
-
                       <div>
                         <p className="text-gray-600">Valor:</p>
                         <p className="font-bold text-cyan-600">{formatCurrency(order.amount)}</p>
                       </div>
                     </div>
-
                     {order.trackingCode && (
                       <div className="mt-3 pt-3 border-t">
                         <div className="flex items-center justify-between">
@@ -196,7 +173,6 @@ export function OrdersModal({ isOpen, onClose }: OrdersModalProps) {
               </div>
             )}
           </div>
-
           {/* Pagination */}
           {!loading && !error && totalPages > 1 && (
             <div className="flex items-center justify-between p-6 border-t">

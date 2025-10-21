@@ -1,21 +1,13 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
-import { Button } from '@/components/ui/Button'
-import {
-  Package,
-  AlertTriangle,
-  Calendar,
-  CreditCard,
-  MapPin,
-  FileText,
-  RefreshCcw,
-  Settings,
-  Edit
-} from 'lucide-react'
+// import { useResilientSubscription } from '@/hooks/useResilientSubscription'
+// import { ResilientDashboardWrapper } from '@/components/assinante/ResilientDashboardWrapper'
+import { AccessibleDashboard } from '@/components/assinante/AccessibleDashboard'
+import { ToastContainer } from '@/components/assinante/ToastFeedback'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
 import { DashboardError } from '@/components/assinante/DashboardError'
 import { OrdersModal } from '@/components/assinante/OrdersModal'
@@ -24,127 +16,247 @@ import { ChangePlanModal } from '@/components/assinante/ChangePlanModal'
 import { UpdateAddressModal } from '@/components/assinante/UpdateAddressModal'
 import { UpdatePaymentModal } from '@/components/assinante/UpdatePaymentModal'
 import { SubscriptionHistoryTimeline } from '@/components/assinante/SubscriptionHistoryTimeline'
+import { EmergencyContact } from '@/components/assinante/EmergencyContact'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
-
-export default function DashboardPage() {
+import { motion } from 'framer-motion'
+import { useToast } from '@/components/assinante/ToastFeedback'
+import { Button } from '@/components/ui/button'
+import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings } from 'lucide-react'
+import { Logo } from '@/components/ui/logo'
+function DashboardContent() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
   const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
+  const { toasts, removeToast } = useToast()
+  // Modal states
   const [showOrdersModal, setShowOrdersModal] = useState(false)
   const [showInvoicesModal, setShowInvoicesModal] = useState(false)
   const [showChangePlanModal, setShowChangePlanModal] = useState(false)
   const [showUpdateAddressModal, setShowUpdateAddressModal] = useState(false)
   const [showUpdatePaymentModal, setShowUpdatePaymentModal] = useState(false)
   const [availablePlans, setAvailablePlans] = useState<any[]>([])
-
+  // Enhanced features state
+  const [useEnhancedUI, setUseEnhancedUI] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   // Load pricing plans
   useEffect(() => {
     const loadPlans = async () => {
       try {
+        setIsLoading(true)
         const { default: plansData } = await import('@/data/pricing-plans')
         setAvailablePlans(plansData)
       } catch (error) {
         console.error('Error loading plans:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
     loadPlans()
   }, [])
-
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/area-assinante/login')
     }
   }, [authUser, authLoading, router])
-
-  // Handler functions for modals
+  // Enhanced handler functions with better error handling
   const handlePlanChange = async (newPlanId: string) => {
-    const response = await fetch('/api/subscription/change-plan', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': authUser?.uid || ''
-      },
-      body: JSON.stringify({ newPlanId })
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Erro ao alterar plano')
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/subscription/change-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': authUser?.uid || ''
+        },
+        body: JSON.stringify({ newPlanId })
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao alterar plano')
+      }
+      await refetch()
+      return response.json()
+    } catch (err) {
+      throw err
+    } finally {
+      setIsLoading(false)
     }
-
-    await refetch()
   }
-
   const handleAddressUpdate = async (addressData: any) => {
-    const response = await fetch('/api/subscription/update-address', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': authUser?.uid || ''
-      },
-      body: JSON.stringify(addressData)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Erro ao atualizar endereço')
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/subscription/update-address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': authUser?.uid || ''
+        },
+        body: JSON.stringify(addressData)
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao atualizar endereço')
+      }
+      await refetch()
+      return response.json()
+    } catch (err) {
+      throw err
+    } finally {
+      setIsLoading(false)
     }
-
-    await refetch()
   }
-
   const handlePaymentUpdate = async (paymentData: any) => {
-    const response = await fetch('/api/subscription/update-payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': authUser?.uid || ''
-      },
-      body: JSON.stringify(paymentData)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Erro ao atualizar forma de pagamento')
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/subscription/update-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': authUser?.uid || ''
+        },
+        body: JSON.stringify(paymentData)
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao atualizar forma de pagamento')
+      }
+      await refetch()
+      return response.json()
+    } catch (err) {
+      throw err
+    } finally {
+      setIsLoading(false)
     }
-
-    await refetch()
   }
-
+  // Toggle enhanced UI for fallback
+  const toggleEnhancedUI = () => {
+    setUseEnhancedUI(!useEnhancedUI)
+  }
   if (authLoading || subLoading) {
     return <DashboardLoading />
   }
-
   if (!authUser) {
     return null
   }
-
   if (error) {
     return (
-      <DashboardError
-        message={error}
-        onRetry={refetch}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center">
+        <div className="max-w-md w-full mx-4">
+          <DashboardError
+            message={error}
+            onRetry={refetch}
+          />
+          <div className="mt-4 text-center">
+            <Button
+              variant="outline"
+              onClick={toggleEnhancedUI}
+              className="text-sm"
+            >
+              {useEnhancedUI ? 'Usar Interface Simplificada' : 'Usar Interface Avançada'}
+            </Button>
+          </div>
+        </div>
+      </div>
     )
   }
-
+  // Use Enhanced Dashboard when available, fallback to original
+  if (useEnhancedUI) {
+    return (
+      <>
+        <AccessibleDashboard />
+        {/* Toast Notifications */}
+        <ToastContainer
+          toasts={toasts}
+          onRemove={removeToast}
+        />
+        {/* Global Loading Overlay */}
+        {isLoading && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto"></div>
+              <p className="text-sm text-gray-600 mt-2">Processando...</p>
+            </div>
+          </div>
+        )}
+        {/* Debug Toggle */}
+        <div className="fixed bottom-4 left-4 z-40">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleEnhancedUI}
+            className="text-xs opacity-50 hover:opacity-100"
+          >
+            Debug UI
+          </Button>
+        </div>
+      </>
+    )
+  }
+  // Enhanced Original Dashboard (kept as fallback)
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
+      {/* Enhanced Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center">
+                <div className="h-10 w-10 relative">
+                  <Logo size="md" variant="header" />
+                </div>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Painel do Assinante
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Gerencie sua assinatura de lentes de contato
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleEnhancedUI}
+              >
+                Interface Avançada
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => signOut()}
+              >
+                Sair
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Bem-vindo(a), {user?.name || authUser.displayName}!
           </h2>
-          <p className="text-gray-600">
+          <p className="text-lg text-gray-600">
             Aqui você pode acompanhar sua assinatura de lentes de contato e gerenciar seus dados.
           </p>
-        </div>
-
+        </motion.div>
         {/* No Subscription State */}
         {!subscription && (
-          <div className="bg-white p-8 rounded-xl shadow-sm border text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white p-8 rounded-xl shadow-sm border text-center"
+          >
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Você ainda não possui uma assinatura ativa
@@ -152,24 +264,28 @@ export default function DashboardPage() {
             <p className="text-gray-600 mb-6">
               Comece agora a economizar com o plano de lentes de contato ideal para você!
             </p>
-            <Button onClick={() => router.push('/assinar')}>
+            <Button onClick={() => router.push('/assinar')} size="lg">
               Ver Planos Disponíveis
             </Button>
-          </div>
+          </motion.div>
         )}
-
         {/* Dashboard with Subscription */}
         {subscription && (
           <>
-            {/* Subscription Status */}
+            {/* Enhanced Subscription Status Cards */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                     <Package className="h-5 w-5 text-cyan-600" />
                     Status da Assinatura
                   </h3>
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${getSubscriptionStatusColor(subscription.status)}`}>
+                  <span className={`px-3 py-1 text-xs rounded-full font-medium ${getSubscriptionStatusColor(subscription.status)}`}>
                     {getSubscriptionStatusLabel(subscription.status)}
                   </span>
                 </div>
@@ -180,7 +296,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Valor mensal:</span>
-                    <span className="font-bold text-cyan-600">
+                    <span className="font-bold text-cyan-600 text-lg">
                       {formatCurrency(subscription.plan.price)}
                     </span>
                   </div>
@@ -197,6 +313,7 @@ export default function DashboardPage() {
                       size="sm"
                       onClick={() => setShowChangePlanModal(true)}
                       className="w-full"
+                      disabled={isLoading}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Mudar Plano
@@ -206,16 +323,21 @@ export default function DashboardPage() {
                       size="sm"
                       onClick={refetch}
                       className="w-full"
+                      disabled={isLoading}
                     >
-                      <RefreshCcw className="h-4 w-4 mr-2" />
+                      <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                       Atualizar
                     </Button>
                   </div>
                 </div>
-              </div>
-
+              </motion.div>
               {/* Payment & Delivery Info */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow"
+              >
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-cyan-600" />
                   Pagamento e Entrega
@@ -254,31 +376,43 @@ export default function DashboardPage() {
                       size="sm"
                       onClick={() => setShowUpdatePaymentModal(true)}
                       className="w-full"
+                      disabled={isLoading}
                     >
                       <CreditCard className="h-4 w-4 mr-2" />
-                      Forma Pagamento
+                      Pagamento
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowUpdateAddressModal(true)}
                       className="w-full"
+                      disabled={isLoading}
                     >
                       <MapPin className="h-4 w-4 mr-2" />
                       Endereço
                     </Button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-
-            {/* Benefits */}
+            {/* Enhanced Benefits Section */}
             {subscription.benefits && subscription.benefits.length > 0 && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white p-6 rounded-xl shadow-sm border mb-8"
+              >
                 <h3 className="font-semibold text-gray-900 mb-4">Benefícios da Assinatura</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {subscription.benefits.map((benefit) => (
-                    <div key={benefit.id} className="p-4 bg-gray-50 rounded-lg">
+                  {subscription.benefits.map((benefit, index) => (
+                    <motion.div
+                      key={benefit.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                      className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
                       <div className="flex items-start gap-3">
                         {benefit.icon && (
                           <span className="text-2xl">{benefit.icon}</span>
@@ -292,93 +426,75 @@ export default function DashboardPage() {
                             <div className="mt-2">
                               <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                                 <span>Utilizado: {benefit.quantityUsed || 0}/{benefit.quantityTotal}</span>
+                                <span>{Math.round(((benefit.quantityUsed || 0) / benefit.quantityTotal) * 100)}%</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                <div
-                                  className="bg-cyan-600 h-1.5 rounded-full"
-                                  style={{
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <motion.div
+                                  className="bg-cyan-600 h-2 rounded-full"
+                                  initial={{ width: 0 }}
+                                  animate={{
                                     width: `${((benefit.quantityUsed || 0) / benefit.quantityTotal) * 100}%`
                                   }}
+                                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
                                 />
                               </div>
                             </div>
                           )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
-
-            {/* Quick Actions */}
-            <div className="flex flex-wrap gap-4 mb-8">
-              <Button onClick={() => setShowOrdersModal(true)}>
+            {/* Enhanced Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-wrap gap-4 mb-8"
+            >
+              <Button onClick={() => setShowOrdersModal(true)} size="lg">
                 <Package className="h-4 w-4 mr-2" />
                 Ver Histórico de Pedidos
               </Button>
-              <Button variant="outline" onClick={() => setShowInvoicesModal(true)}>
+              <Button variant="outline" onClick={() => setShowInvoicesModal(true)} size="lg">
                 <FileText className="h-4 w-4 mr-2" />
                 Baixar Fatura
               </Button>
-              <Button variant="outline" onClick={() => router.push('/area-assinante/configuracoes')}>
+              <Button variant="outline" onClick={() => router.push('/area-assinante/configuracoes')} size="lg">
                 <Settings className="h-4 w-4 mr-2" />
                 Configurações
               </Button>
-            </div>
-
+            </motion.div>
             {/* Subscription History Timeline */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-white p-6 rounded-xl shadow-sm border mb-8"
+            >
               <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
                 <RefreshCcw className="h-5 w-5 text-cyan-600" />
                 Histórico de Alterações
               </h3>
               <SubscriptionHistoryTimeline userId={authUser.uid} />
-            </div>
+            </motion.div>
           </>
         )}
-
-        {/* Emergency Contact */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-cyan-600" />
-            Contato de Emergência
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">WhatsApp:</p>
-              <a
-                href="https://wa.me/5533999898026"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-cyan-600 hover:underline font-medium text-lg"
-              >
-                +55 33 99989-8026
-              </a>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Email:</p>
-              <a
-                href="mailto:contato@svlentes.com.br"
-                className="text-cyan-600 hover:underline font-medium"
-              >
-                contato@svlentes.com.br
-              </a>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-sm font-medium text-gray-900">Médico Responsável:</p>
-            <p className="text-sm text-gray-700">
-              <strong>Dr. Philipe Saraiva Cruz</strong> - CRM-MG 69.870
-            </p>
-          </div>
-        </div>
+        {/* Enhanced Emergency Contact */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-white p-6 rounded-xl shadow-sm border"
+        >
+          <EmergencyContact />
+        </motion.div>
       </main>
-
-      {/* Modals */}
+      {/* Enhanced Modals */}
       <OrdersModal isOpen={showOrdersModal} onClose={() => setShowOrdersModal(false)} />
       <InvoicesModal isOpen={showInvoicesModal} onClose={() => setShowInvoicesModal(false)} />
-
       {subscription && (
         <>
           <ChangePlanModal
@@ -392,14 +508,12 @@ export default function DashboardPage() {
             availablePlans={availablePlans}
             onPlanChange={handlePlanChange}
           />
-
           <UpdateAddressModal
             isOpen={showUpdateAddressModal}
             onClose={() => setShowUpdateAddressModal(false)}
             currentAddress={subscription.shippingAddress}
             onAddressUpdate={handleAddressUpdate}
           />
-
           <UpdatePaymentModal
             isOpen={showUpdatePaymentModal}
             onClose={() => setShowUpdatePaymentModal(false)}
@@ -411,9 +525,26 @@ export default function DashboardPage() {
           />
         </>
       )}
+      {/* Toast Notifications */}
+      <ToastContainer
+        toasts={toasts}
+        onRemove={removeToast}
+      />
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto"></div>
+            <p className="text-sm text-gray-600 mt-2">Processando...</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
+// Wrapper principal simplificado
+export default function DashboardPage() {
+  return <DashboardContent />
+}
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic'
