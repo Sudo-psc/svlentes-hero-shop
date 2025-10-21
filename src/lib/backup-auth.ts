@@ -524,5 +524,9 @@ class BackupAuthManager {
     }
   }
 }
+
+// Export the class for testing
+export { BackupAuthManager }
+
 // Exportar instância singleton
 export const backupAuth = BackupAuthManager.getInstance()
