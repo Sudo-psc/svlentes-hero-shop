@@ -72,8 +72,11 @@ export const CHUNK_NAMES = {
   FORMS: 'forms'
 } as const
 
+// Type alias para os valores dos chunks
+type ChunkName = typeof CHUNK_NAMES[keyof typeof CHUNK_NAMES]
+
 // Utilitário para determinar qual chunk carregar baseado na rota
-export const getChunkForRoute = (route: string): keyof typeof CHUNK_NAMES => {
+export const getChunkForRoute = (route: string): ChunkName => {
   if (route.startsWith('/area-assinante')) return CHUNK_NAMES.DASHBOARD
   if (route.startsWith('/assinar') || route.startsWith('/payment')) return CHUNK_NAMES.PAYMENT
   if (route.startsWith('/auth') || route.startsWith('/area-assinante/login')) return CHUNK_NAMES.AUTH
@@ -107,10 +110,10 @@ export const SmartRouteLoader = ({
             await import('../auth/SocialLoginButtons')
             break
           case CHUNK_NAMES.ADMIN:
-            await import('../admin/AdminPanel')
+            await import('../admin/MonitoringDashboard')
             break
           case CHUNK_NAMES.FORMS:
-            await import('../forms/ContactForm')
+            await import('../forms/LeadCaptureForm')
             break
         }
       } catch (error) {
