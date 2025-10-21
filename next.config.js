@@ -58,6 +58,13 @@ const nextConfig = {
     headers: async () => {
         const isDev = process.env.NODE_ENV === 'development'
 
+        // Generate nonce for CSP
+        const generateNonce = () => {
+            const { randomBytes } = require('crypto');
+            return randomBytes(16).toString('base64');
+        }
+        const nonce = generateNonce();
+
         return [
             {
                 source: '/(.*)',
@@ -89,8 +96,12 @@ const nextConfig = {
                     {
                         key: 'Content-Security-Policy',
                         value: isDev
-                            ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' 'unsafe-hashes' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net; style-src 'self' 'unsafe-inline' https://r2cdn.perplexity.ai; img-src 'self' data: https: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com *.facebook.com *.facebook.net www.facebook.com; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com;"
-                            : "default-src 'self'; script-src 'self' 'unsafe-hashes' 'sha256-nWqj0bBvyl1OJ8pRNF9JQ+5UaKsZcZJi7+5a2WcD8=' 'sha256-5U4iF9qZJqO8pRNF9JQ+5UaKsZcZJi7+5a2WcD8=' 'sha256-+SgcJQ5KNGzqq6KmPXW6GVJsFGW7DkVw8G0W1X1J2k=' 'sha256-faWbKrtLqNzO+D2k4Q8YKqLrXJvGJ5sHqK9Wm8z2L0=' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net; style-src 'self' 'unsafe-inline' https://r2cdn.perplexity.ai; img-src 'self' data: https: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com *.facebook.com *.facebook.net www.facebook.com; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com;"
+                            ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' 'unsafe-hashes' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com; style-src 'self' 'unsafe-inline' https://r2cdn.perplexity.ai *.googleapis.com; img-src 'self' data: https: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com *.googleapis.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com *.facebook.com *.facebook.net www.facebook.com; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com; object-src 'none'; base-uri 'self';"
+                            : "default-src 'self'; script-src 'self' 'unsafe-hashes' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com; style-src 'self' 'unsafe-inline' https://r2cdn.perplexity.ai *.googleapis.com; img-src 'self' data: https: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com *.googleapis.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com *.facebook.com *.facebook.net www.facebook.com; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com; object-src 'none'; base-uri 'self';"
+                    },
+                    {
+                        key: 'X-CSP-Nonce',
+                        value: nonce,
                     },
                 ],
             },

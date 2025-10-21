@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/admin/auth'
+import { withAdminAuth } from '@/lib/admin/auth'
 import { PlanoAssinatura } from '@/types/pricing-calculator'
 
 // Simulação de banco de dados (em produção, usar PostgreSQL)
@@ -138,109 +138,97 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    // Verificar autenticação
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  return withAdminAuth(async (req, { session }) => {
+    try {
+      const id = params.id
+
+      // Buscar plano
+      const plano = planosDB.find(p => p.id === id)
+      if (!plano) {
+        return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
+      }
+
+      return NextResponse.json(plano)
+    } catch (error) {
+      console.error('Erro ao buscar plano:', error)
+      return NextResponse.json(
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
     }
-
-    const id = params.id
-
-    // Buscar plano
-    const plano = planosDB.find(p => p.id === id)
-    if (!plano) {
-      return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
-    }
-
-    return NextResponse.json(plano)
-  } catch (error) {
-    console.error('Erro ao buscar plano:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
+  })
 }
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    // Verificar autenticação
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  return withAdminAuth(async (req, { session }) => {
+    try {
+      const id = params.id
+      const body = await request.json()
+      const planoData: Partial<PlanoAssinatura> = body
+
+      // Buscar plano
+      const planoIndex = planosDB.findIndex(p => p.id === id)
+      if (planoIndex === -1) {
+        return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
+      }
+
+      // Atualizar plano
+      planosDB[planoIndex] = {
+        ...planosDB[planoIndex],
+        ...planoData,
+        id, // Garantir que o ID não mude
+        updatedAt: new Date()
+      }
+
+      return NextResponse.json(planosDB[planoIndex])
+    } catch (error) {
+      console.error('Erro ao atualizar plano:', error)
+      return NextResponse.json(
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
     }
-
-    const id = params.id
-    const body = await request.json()
-    const planoData: Partial<PlanoAssinatura> = body
-
-    // Buscar plano
-    const planoIndex = planosDB.findIndex(p => p.id === id)
-    if (planoIndex === -1) {
-      return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
-    }
-
-    // Atualizar plano
-    planosDB[planoIndex] = {
-      ...planosDB[planoIndex],
-      ...planoData,
-      id, // Garantir que o ID não mude
-      updatedAt: new Date()
-    }
-
-    return NextResponse.json(planosDB[planoIndex])
-  } catch (error) {
-    console.error('Erro ao atualizar plano:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
+  })
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    // Verificar autenticação
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
+  return withAdminAuth(async (req, { session }) => {
+    try {
+      const id = params.id
 
-    const id = params.id
+      // Buscar plano
+      const planoIndex = planosDB.findIndex(p => p.id === id)
+      if (planoIndex === -1) {
+        return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
+      }
 
-    // Buscar plano
-    const planoIndex = planosDB.findIndex(p => p.id === id)
-    if (planoIndex === -1) {
-      return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
-    }
+      // Verificar se há assinaturas ativas
+      // Em produção, verificar no banco de dados
+      const temAssinaturasAtivas = false // Simulação
 
-    // Verificar se há assinaturas ativas
-    // Em produção, verificar no banco de dados
-    const temAssinaturasAtivas = false // Simulação
+      if (temAssinaturasAtivas) {
+        return NextResponse.json(
+          { error: 'Não é possível excluir um plano com assinaturas ativas' },
+          { status: 400 }
+        )
+      }
 
-    if (temAssinaturasAtivas) {
+      // Remover plano
+      planosDB.splice(planoIndex, 1)
+
+      return NextResponse.json({ message: 'Plano excluído com sucesso' })
+    } catch (error) {
+      console.error('Erro ao excluir plano:', error)
       return NextResponse.json(
-        { error: 'Não é possível excluir um plano com assinaturas ativas' },
-        { status: 400 }
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
       )
     }
-
-    // Remover plano
-    planosDB.splice(planoIndex, 1)
-
-    return NextResponse.json({ message: 'Plano excluído com sucesso' })
-  } catch (error) {
-    console.error('Erro ao excluir plano:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
+  })
 }

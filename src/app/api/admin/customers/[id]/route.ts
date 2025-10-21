@@ -68,8 +68,9 @@ import { customerUpdateSchema } from '@/lib/admin-validations'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:view')(request)
@@ -303,8 +304,9 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:update')(request)
@@ -405,8 +407,9 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params
   try {
     // Verificar permissão
     const { user, error } = await requirePermission('customers:delete')(request)

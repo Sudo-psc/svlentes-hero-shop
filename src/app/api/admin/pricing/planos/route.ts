@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/admin/auth'
+import { withAdminAuth } from '@/lib/admin/auth'
 import { PlanoAssinatura } from '@/types/pricing-calculator'
 
 // Simulação de banco de dados
@@ -134,65 +134,57 @@ let planosDB: PlanoAssinatura[] = [
 ]
 
 export async function GET(request: NextRequest) {
-  try {
-    // Verificar autenticação
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  return withAdminAuth(async (req, { session }) => {
+    try {
+      // Retornar planos
+      return NextResponse.json({
+        planos: planosDB,
+        total: planosDB.length,
+        ativos: planosDB.filter(p => p.ativo).length
+      })
+    } catch (error) {
+      console.error('Erro ao buscar planos:', error)
+      return NextResponse.json(
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
     }
-
-    // Retornar planos
-    return NextResponse.json({
-      planos: planosDB,
-      total: planosDB.length,
-      ativos: planosDB.filter(p => p.ativo).length
-    })
-  } catch (error) {
-    console.error('Erro ao buscar planos:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
+  })
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    // Verificar autenticação
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
+  return withAdminAuth(async (req, { session }) => {
+    try {
+      // Obter dados do corpo
+      const body = await request.json()
+      const planoData: PlanoAssinatura = body
 
-    // Obter dados do corpo
-    const body = await request.json()
-    const planoData: PlanoAssinatura = body
+      // Validações básicas
+      if (!planoData.nome || !planoData.precoBase || planoData.precoBase <= 0) {
+        return NextResponse.json(
+          { error: 'Dados inválidos' },
+          { status: 400 }
+        )
+      }
 
-    // Validações básicas
-    if (!planoData.nome || !planoData.precoBase || planoData.precoBase <= 0) {
+      // Criar novo plano
+      const novoPlano: PlanoAssinatura = {
+        ...planoData,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      // Adicionar ao "banco"
+      planosDB.push(novoPlano)
+
+      return NextResponse.json(novoPlano, { status: 201 })
+    } catch (error) {
+      console.error('Erro ao criar plano:', error)
       return NextResponse.json(
-        { error: 'Dados inválidos' },
-        { status: 400 }
+        { error: 'Erro interno do servidor' },
+        { status: 500 }
       )
     }
-
-    // Criar novo plano
-    const novoPlano: PlanoAssinatura = {
-      ...planoData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-
-    // Adicionar ao "banco"
-    planosDB.push(novoPlano)
-
-    return NextResponse.json(novoPlano, { status: 201 })
-  } catch (error) {
-    console.error('Erro ao criar plano:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
+  })
 }
