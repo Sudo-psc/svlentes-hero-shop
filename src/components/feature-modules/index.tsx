@@ -107,10 +107,10 @@ export const SmartRouteLoader = ({
             await import('../auth/SocialLoginButtons')
             break
           case CHUNK_NAMES.ADMIN:
-            await import('../admin/AdminPanel')
+            await import('../admin/MonitoringDashboard')
             break
           case CHUNK_NAMES.FORMS:
-            await import('../forms/ContactForm')
+            await import('../forms/LeadCaptureForm')
             break
         }
       } catch (error) {
