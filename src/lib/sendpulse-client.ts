@@ -230,7 +230,7 @@ export class SendPulseClient {
       }
     }
     // No cached contact, search for it
-    return await this.findContactByPhone(phone)
+    return await this.findContactByPhone(botId, cleanPhone)
   }
   /**
    * Validate conversation window status in real-time

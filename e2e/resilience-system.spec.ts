@@ -4,7 +4,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
-import { setupMockServer, mockResponses } from '../mocks/server'
+import { setupMockServer, mockResponses } from '../src/__tests__/mocks/server'
 
 // Mock do service worker para simular offline
 test.describe('Sistema de Resiliência - E2E', () => {

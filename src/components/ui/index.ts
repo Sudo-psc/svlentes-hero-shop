@@ -20,7 +20,7 @@ export * from "./skeleton"
 export * from "./progress"
 // Custom components
 export * from "./Icon"
-export * from "./Logo"
+export * from "./logo"
 export * from "./OptimizedImage"
 export * from "./LazySection"
 export * from "./SmoothScroll"
