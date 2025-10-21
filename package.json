@@ -34,7 +34,8 @@
         "icons:analyze": "node scripts/analyze-icons.js",
         "db:seed": "npx ts-node --esm prisma/seed.ts",
         "test:mcp": "ts-node scripts/test-mcp-integration.ts",
-        "test:send": "ts-node scripts/test-send-to-phone.ts"
+        "test:send": "ts-node scripts/test-send-to-phone.ts",
+        "kluster_code_review_auto": "node ./scripts/kluster_code_review_auto.mjs"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
@@ -99,5 +100,8 @@
         "tailwindcss": "^3.4.17",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3"
+    },
+    "bin": {
+        "kluster_code_review_auto": "./scripts/kluster_code_review_auto.mjs"
     }
 }
