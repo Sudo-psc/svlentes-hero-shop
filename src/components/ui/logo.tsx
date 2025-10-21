@@ -17,10 +17,10 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   }
   const variantClasses = {
     default: "",
-    header: "filter brightness-0 hover:brightness-110 transition-all",
-    footer: "filter brightness-0 hover:brightness-110 transition-all"
+    header: "hover:opacity-90 transition-all",
+    footer: "hover:opacity-90 transition-all"
   }
-  // Use regular img for SVG to avoid optimization issues
+  // Use Next.js Image component for better optimization
   if (!error) {
     return (
       <div
@@ -33,13 +33,13 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
         )}
         {...props}
       >
-        <img
-          src="/images/logo-svlentes.svg"
+        <Image
+          src="/images/logo.jpeg"
           alt="SV Lentes"
-          className={cn(
-            "w-full h-full object-contain",
-            size === "sm" ? "p-1" : size === "md" ? "p-1" : "p-2"
-          )}
+          width={size === "sm" ? 32 : size === "md" ? 40 : 48}
+          height={size === "sm" ? 32 : size === "md" ? 40 : 48}
+          className="w-full h-full object-contain"
+          priority
           onError={() => setError(true)}
         />
       </div>
