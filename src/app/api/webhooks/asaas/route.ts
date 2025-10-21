@@ -88,7 +88,7 @@ async function handlePaymentReceived(payment: any) {
                 externalReference: payment.externalReference,
             }
         })
-        console.log('CONVERSION_EVENT:', {
+        logger.info(LogCategory.WEBHOOK, 'Payment received - conversion event', {
             event: 'payment_confirmed',
             paymentId: payment.id,
             customerId: payment.customer,
@@ -97,7 +97,9 @@ async function handlePaymentReceived(payment: any) {
             externalReference: payment.externalReference,
         })
     } catch (error) {
-        console.error('Error handling payment received:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment received', error as Error, {
+            paymentId: payment.id,
+        })
         throw error
     }
 }
@@ -116,13 +118,15 @@ async function handlePaymentConfirmed(payment: any) {
                 netValue: payment.netValue,
             }
         })
-        console.log('PAYMENT_CONFIRMED:', {
+        logger.info(LogCategory.WEBHOOK, 'Payment confirmed', {
             paymentId: payment.id,
             customer: payment.customer,
             value: payment.value,
         })
     } catch (error) {
-        console.error('Error handling payment confirmed:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment confirmed', error as Error, {
+            paymentId: payment.id,
+        })
         throw error
     }
 }
@@ -141,13 +145,15 @@ async function handlePaymentOverdue(payment: any) {
                 originalDueDate: payment.originalDueDate,
             }
         })
-        console.log('PAYMENT_OVERDUE:', {
+        logger.warn(LogCategory.WEBHOOK, 'Payment overdue', {
             paymentId: payment.id,
             customer: payment.customer,
             dueDate: payment.dueDate,
         })
     } catch (error) {
-        console.error('Error handling payment overdue:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment overdue', error as Error, {
+            paymentId: payment.id,
+        })
         throw error
     }
 }
@@ -165,13 +171,15 @@ async function handlePaymentRefunded(payment: any) {
                 refundDate: new Date().toISOString(),
             }
         })
-        console.log('PAYMENT_REFUNDED:', {
+        logger.info(LogCategory.WEBHOOK, 'Payment refunded', {
             paymentId: payment.id,
             customer: payment.customer,
             value: payment.value,
         })
     } catch (error) {
-        console.error('Error handling payment refunded:', error)
+        logger.error(LogCategory.WEBHOOK, 'Error handling payment refunded', error as Error, {
+            paymentId: payment.id,
+        })
         throw error
     }
 }
@@ -181,7 +189,9 @@ async function handleAsaasWebhook(request: NextRequest): Promise<NextResponse> {
         const asaasToken = request.headers.get('asaas-access-token')
         const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN
         if (expectedToken && asaasToken !== expectedToken) {
-            console.error('ASAAS_WEBHOOK_AUTH_FAILED: Invalid token')
+            logger.warn(LogCategory.WEBHOOK, 'ASAAS webhook authentication failed', {
+                reason: 'Invalid token',
+            })
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
@@ -234,13 +244,14 @@ async function handleAsaasWebhook(request: NextRequest): Promise<NextResponse> {
             default:
         }
         return NextResponse.json({ received: true }, { status: 200 })
-    } catch (error: any) {
-        console.error('Error processing ASAAS webhook:', error)
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        logger.error(LogCategory.WEBHOOK, 'Error processing ASAAS webhook', error as Error)
         logWebhookEvent({
             eventType: 'WEBHOOK_ERROR',
             timestamp: new Date().toISOString(),
             status: 'error',
-            error: error.message,
+            error: errorMessage,
             details: error,
         })
         return NextResponse.json(
