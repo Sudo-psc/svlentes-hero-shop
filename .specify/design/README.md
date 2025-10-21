@@ -16,11 +16,13 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ## 📖 Document Index
 
 ### 1. **Executive Summary**
+
 **File**: `DESIGN_SYSTEM_SUMMARY.md`
 **Purpose**: High-level overview for stakeholders
 **Read Time**: 10-15 minutes
 
 **Contents**:
+
 - What we're improving
 - Key deliverables
 - Expected improvements
@@ -33,11 +35,13 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ---
 
 ### 2. **Detailed Specifications**
+
 **File**: `design-system-improvements.md`
 **Purpose**: Comprehensive design specifications
 **Read Time**: 60-90 minutes
 
 **Contents**:
+
 - Current state analysis (strengths + gaps)
 - Design token system (spacing, elevation, colors, motion, typography)
 - Component architecture improvements
@@ -55,11 +59,13 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ---
 
 ### 3. **Implementation Plan**
+
 **File**: `design-system-implementation-plan.md`
 **Purpose**: Step-by-step implementation guide
 **Read Time**: 40-60 minutes
 
 **Contents**:
+
 - 6-phase implementation plan
 - Phase 1: Token System (Week 1)
 - Phase 2: Enhanced Components (Week 2-3)
@@ -76,11 +82,13 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ---
 
 ### 4. **Architecture Diagram**
+
 **File**: `design-system-architecture.md`
 **Purpose**: Visual system architecture
 **Read Time**: 20-30 minutes
 
 **Contents**:
+
 - System architecture overview
 - Token system layer
 - Component architecture
@@ -100,11 +108,13 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ---
 
 ### 5. **This README**
+
 **File**: `README.md` ← You are here
 **Purpose**: Documentation navigation and quick reference
 **Read Time**: 5 minutes
 
 **Contents**:
+
 - Document index
 - Quick start guide
 - Key features summary
@@ -118,12 +128,14 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ## 🚀 Quick Start Guide
 
 ### For Stakeholders (Non-Technical)
+
 1. Read **Executive Summary** (`DESIGN_SYSTEM_SUMMARY.md`)
 2. Review timeline and budget
 3. Approve implementation
 4. Monitor progress via weekly check-ins
 
 ### For Frontend Developers
+
 1. Read **Implementation Plan** (`design-system-implementation-plan.md`)
 2. Review **Detailed Specifications** (`design-system-improvements.md`)
 3. Understand **Architecture** (`design-system-architecture.md`)
@@ -131,6 +143,7 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 5. Follow phased implementation
 
 ### For UX Designers
+
 1. Review **Executive Summary** for design direction
 2. Study **Detailed Specifications** for component variants
 3. Review healthcare color palette
@@ -138,6 +151,7 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 5. Provide feedback on accessibility
 
 ### For QA Engineers
+
 1. Read **Implementation Plan** (Phase 6: Testing)
 2. Review accessibility requirements
 3. Study test architecture in **Architecture Diagram**
@@ -149,6 +163,7 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 ## 🎯 Key Features Summary
 
 ### Design Token System
+
 - ✅ Semantic spacing scale (4px base unit)
 - ✅ Elevation system (medical variants)
 - ✅ Healthcare color palette
@@ -157,20 +172,24 @@ This directory contains comprehensive documentation for the SV Lentes Design Sys
 - ✅ Responsive breakpoints
 
 ### Enhanced Components
+
 - ✅ Button: 9 variants (medical, whatsapp, pix, emergency)
 - ✅ Card: 8 variants (medical, interactive, glass, gradient)
 - ✅ Brazilian inputs: CPF, Phone, Currency, Date
 - ✅ Unified skeleton system
 
 ### Medical Components
+
 - ✅ PrescriptionCard (status-aware display)
 - ✅ DoctorBadge (CRM credibility indicator)
 
 ### LGPD Components
+
 - ✅ ConsentBadge (visual consent status)
 - ✅ DataUsageIndicator (data transparency)
 
 ### Accessibility
+
 - ✅ Skip links
 - ✅ Focus trap
 - ✅ Reduced motion support
@@ -193,6 +212,7 @@ Total: 6 weeks (120-180 hours)
 ```
 
 ### Gradual Rollout (Weeks 7-12)
+
 ```
 Week 7:  Token system deployment (invisible to users)
 Week 8:  /calculadora (test page)
@@ -219,6 +239,7 @@ Week 12: Full rollout, deprecate old components
 ### Component Examples
 
 #### Enhanced Button
+
 ```tsx
 // Medical variant with loading state
 <Button
@@ -244,6 +265,7 @@ Week 12: Full rollout, deprecate old components
 ```
 
 #### Brazilian Inputs
+
 ```tsx
 // CPF with automatic formatting
 <CPFInput
@@ -275,27 +297,29 @@ Week 12: Full rollout, deprecate old components
 ```
 
 #### PrescriptionCard
+
 ```tsx
 <PrescriptionCard
-  status="valid"
-  doctorName="Dr. Philipe Saraiva Cruz"
-  doctorCRM="CRM-MG 69.870"
-  issueDate="15/10/2025"
-  expiryDate="15/10/2026"
+  status='valid'
+  doctorName='Dr. Philipe Saraiva Cruz'
+  doctorCRM='CRM-MG 69.870'
+  issueDate='15/10/2025'
+  expiryDate='15/10/2026'
   prescriptionDetails={{
-    rightEye: "-2.50 -0.75 x 180",
-    leftEye: "-2.75 -1.00 x 170",
-    lensType: "Lentes de Contato Diárias"
+    rightEye: '-2.50 -0.75 x 180',
+    leftEye: '-2.75 -1.00 x 170',
+    lensType: 'Lentes de Contato Diárias'
   }}
 />
 ```
 
 #### ConsentBadge
+
 ```tsx
 <ConsentBadge
-  status="granted"
-  purpose="Agendamento de consultas e envio de prescrições"
-  date="15/10/2025"
+  status='granted'
+  purpose='Agendamento de consultas e envio de prescrições'
+  date='15/10/2025'
 />
 ```
 
@@ -306,6 +330,7 @@ Week 12: Full rollout, deprecate old components
 ### When to Use Which Component?
 
 #### Buttons
+
 - **default**: General actions
 - **medical**: Medical-related actions (consultations, prescriptions)
 - **whatsapp**: WhatsApp contact actions
@@ -316,6 +341,7 @@ Week 12: Full rollout, deprecate old components
 - **link**: Text-only links
 
 #### Cards
+
 - **default**: Standard content containers
 - **medical**: Medical information (prescriptions, doctor info)
 - **elevated**: Important highlighted content
@@ -325,6 +351,7 @@ Week 12: Full rollout, deprecate old components
 - **success/warning/error**: Status-specific content
 
 #### Inputs
+
 - **CPFInput**: Brazilian CPF (tax ID)
 - **PhoneInput**: Brazilian mobile/landline
 - **CurrencyInput**: Monetary values in Brazilian Real
@@ -336,6 +363,7 @@ Week 12: Full rollout, deprecate old components
 ## ✅ Success Criteria Checklist
 
 ### Functional Requirements
+
 - [ ] All components support light/dark modes
 - [ ] Brazilian input masks work correctly
 - [ ] Medical components display data accurately
@@ -344,6 +372,7 @@ Week 12: Full rollout, deprecate old components
 - [ ] Accessibility features work (skip links, focus trap)
 
 ### Non-Functional Requirements
+
 - [ ] WCAG 2.1 AA compliance (Lighthouse ≥ 90)
 - [ ] Performance: LCP < 2.5s, FID < 100ms, CLS < 0.1
 - [ ] Mobile responsive: 375px - 1920px
@@ -352,6 +381,7 @@ Week 12: Full rollout, deprecate old components
 - [ ] Test coverage: ≥ 80%
 
 ### Compliance Requirements
+
 - [ ] LGPD visual indicators functional
 - [ ] Medical credibility preserved (CRM visible)
 - [ ] Brazilian localization maintained
@@ -362,6 +392,7 @@ Week 12: Full rollout, deprecate old components
 ## 📦 Dependencies
 
 ### New Packages (2 total)
+
 ```json
 {
   "react-imask": "^7.1.3",
@@ -370,6 +401,7 @@ Week 12: Full rollout, deprecate old components
 ```
 
 ### Existing Packages (No Changes)
+
 - `class-variance-authority` - Component variants
 - `tailwindcss-animate` - Animations
 - `@radix-ui/*` - UI primitives (shadcn/ui foundation)
@@ -379,6 +411,7 @@ Week 12: Full rollout, deprecate old components
 ## 🧪 Testing Strategy
 
 ### Automated Testing
+
 ```bash
 # Unit tests (Jest + RTL)
 npm run test
@@ -397,6 +430,7 @@ npm run test:all
 ```
 
 ### Accessibility Testing
+
 ```bash
 # Lighthouse CI
 npm run lighthouse
@@ -407,6 +441,7 @@ npm run lighthouse
 ```
 
 ### Cross-Browser Testing
+
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
@@ -419,12 +454,14 @@ npm run lighthouse
 ## 📈 Monitoring & Maintenance
 
 ### Post-Implementation Monitoring
+
 - **Lighthouse CI**: Every PR
 - **Bundle Size**: Automated monitoring with bundlesize
 - **Error Tracking**: Sentry integration
 - **User Feedback**: Collection and analysis
 
 ### Maintenance Schedule
+
 - **Monthly**: Component usage analytics, performance review
 - **Quarterly**: Design system review, dependency updates
 - **Semi-Annual**: Accessibility audit, comprehensive testing
@@ -451,7 +488,9 @@ Required approvals before implementation:
 **Documentation Location**: `.specify/design/`
 
 ### Questions or Clarifications?
+
 Refer to the appropriate document:
+
 - **Business questions**: `DESIGN_SYSTEM_SUMMARY.md`
 - **Technical questions**: `design-system-improvements.md`
 - **Implementation questions**: `design-system-implementation-plan.md`
@@ -462,30 +501,32 @@ Refer to the appropriate document:
 ## 🔗 Related Resources
 
 ### Project Documentation
+
 - **Project Constitution**: `.specify/memory/constitution.md`
 - **Project Guidance**: `CLAUDE.md`
 - **Tailwind Config**: `tailwind.config.js`
 - **Global Styles**: `src/app/globals.css`
 
 ### External Resources
-- **shadcn/ui**: https://ui.shadcn.com/
-- **Radix UI**: https://www.radix-ui.com/
-- **Tailwind CSS**: https://tailwindcss.com/
-- **React IMask**: https://imask.js.org/guide.html
-- **WCAG 2.1**: https://www.w3.org/WAI/WCAG21/quickref/
-- **LGPD**: https://www.gov.br/cidadania/pt-br/acesso-a-informacao/lgpd
+
+- **shadcn/ui**: [https://ui.shadcn.com/](https://ui.shadcn.com/)
+- **Radix UI**: [https://www.radix-ui.com/](https://www.radix-ui.com/)
+- **Tailwind CSS**: [https://tailwindcss.com/](https://tailwindcss.com/)
+- **React IMask**: [https://imask.js.org/guide.html](https://imask.js.org/guide.html)
+- **WCAG 2.1**: [https://www.w3.org/WAI/WCAG21/quickref/](https://www.w3.org/WAI/WCAG21/quickref/)
+- **LGPD**: [https://www.gov.br/cidadania/pt-br/acesso-a-informacao/lgpd](https://www.gov.br/cidadania/pt-br/acesso-a-informacao/lgpd)
 
 ---
 
 ## 📄 Document Versions
 
-| Document | Version | Last Updated | Status |
-|----------|---------|--------------|--------|
-| Executive Summary | 1.0.0 | 2025-10-21 | ✅ Complete |
-| Detailed Specifications | 2.0.0 | 2025-10-21 | ✅ Complete |
-| Implementation Plan | 1.0.0 | 2025-10-21 | ✅ Complete |
-| Architecture Diagram | 1.0.0 | 2025-10-21 | ✅ Complete |
-| README (this file) | 1.0.0 | 2025-10-21 | ✅ Complete |
+| Document                | Version | Last Updated | Status      |
+| ----------------------- | ------- | ------------ | ----------- |
+| Executive Summary       | 1.0.0   | 2025-10-21   | ✅ Complete |
+| Detailed Specifications | 2.0.0   | 2025-10-21   | ✅ Complete |
+| Implementation Plan     | 1.0.0   | 2025-10-21   | ✅ Complete |
+| Architecture Diagram    | 1.0.0   | 2025-10-21   | ✅ Complete |
+| README (this file)      | 1.0.0   | 2025-10-21   | ✅ Complete |
 
 ---
 
