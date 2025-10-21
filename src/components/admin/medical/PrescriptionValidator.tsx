@@ -112,6 +112,9 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const filteredPrescriptions = prescriptions.filter(prescription => {
     const matchesCustomer = !customerId || prescription.customerId === customerId
     const matchesSearch = prescription.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -142,12 +145,42 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
   const handleViewPrescription = (prescription: Prescription) => {
     setSelectedPrescription(prescription)
   }
-  const handleValidatePrescription = (prescription: Prescription) => {
-    // Aqui iria a lógica de validação
+  const handleValidatePrescription = async (prescription: Prescription) => {
+    setValidationError(null)
+    setIsLoading(true)
+    try {
+      // Simulate API call to validate prescription
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      // TODO: Implementar validação real com API
+      console.log('Validating prescription:', prescription.id)
+
+      // Simulate validation error for demo
+      if (prescription.status === 'pending') {
+        // Simulate successful validation
+        alert('Prescrição validada com sucesso!')
+      }
+    } catch (error) {
+      setValidationError('Não foi possível validar a prescrição. Tente novamente.')
+      console.error('Validation error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-  const handleDownloadPrescription = (prescription: Prescription) => {
-    if (prescription.prescriptionUrl) {
+
+  const handleDownloadPrescription = async (prescription: Prescription) => {
+    setValidationError(null)
+    try {
+      if (!prescription.prescriptionUrl) {
+        throw new Error('Arquivo da prescrição não disponível')
+      }
+
+      // Validate URL format
+      new URL(prescription.prescriptionUrl)
       window.open(prescription.prescriptionUrl, '_blank')
+    } catch (error) {
+      setValidationError('Não foi possível baixar o arquivo da prescrição. Verifique o link.')
+      console.error('Download error:', error)
     }
   }
   const isExpiringSoon = (expiryDate: Date) => {
@@ -163,6 +196,27 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
   }
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {validationError && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">Erro de Processamento</p>
+              <p className="text-red-700 text-sm">{validationError}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setValidationError(null)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
@@ -336,8 +390,16 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                     <Button
                       size="sm"
                       onClick={() => handleValidatePrescription(prescription)}
+                      disabled={isLoading}
                     >
-                      Validar
+                      {isLoading ? (
+                        <>
+                          <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          Validando...
+                        </>
+                      ) : (
+                        'Validar'
+                      )}
                     </Button>
                   )}
                 </div>
@@ -472,8 +534,15 @@ export function PrescriptionValidator({ customerId, customerName, onValidationCo
                 Fechar
               </Button>
               {selectedPrescription.status === 'pending' && (
-                <Button onClick={() => handleValidatePrescription(selectedPrescription)}>
-                  Validar Prescrição
+                <Button onClick={() => handleValidatePrescription(selectedPrescription)} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Validando...
+                    </>
+                  ) : (
+                    'Validar Prescrição'
+                  )}
                 </Button>
               )}
             </div>

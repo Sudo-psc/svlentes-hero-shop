@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAdminAuth } from '@/lib/admin/auth'
 import { ConfigPainelCustos } from '@/types/pricing-calculator'
 import { getCustosPadrao, getDescontosPadrao } from '@/lib/pricing-calculator'
+import { withCache, cacheUtils } from '@/lib/api-cache'
 
 // Simulação de banco de dados
 let configDB: ConfigPainelCustos = {
@@ -28,18 +29,25 @@ let configDB: ConfigPainelCustos = {
   usuarioAtualizacao: 'admin'
 }
 
-export async function GET(request: NextRequest) {
+export function GET(request: NextRequest) {
   return withAdminAuth(async (req, { session }) => {
-    try {
-      // Retornar configuração
-      return NextResponse.json(configDB)
-    } catch (error) {
-      console.error('Erro ao buscar configuração:', error)
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
+    return withCache(async (req) => {
+      try {
+        // Retornar configuração
+        return NextResponse.json(configDB)
+      } catch (error) {
+        console.error('Erro ao buscar configuração:', error)
+        return NextResponse.json(
+          { error: 'Erro interno do servidor' },
+          { status: 500 }
+        )
+      }
+    }, {
+      maxAge: 180, // 3 minutes cache for cost configuration
+      sMaxAge: 900, // 15 minutes CDN cache
+      tags: ['pricing-costs', 'admin'],
+      deduplicate: true
+    })(request)
   })
 }
 
@@ -107,6 +115,10 @@ export async function POST(request: NextRequest) {
         ultimoAtualizacao: new Date(),
         usuarioAtualizacao: session.user?.email || 'admin'
       }
+
+      // Invalidar caches relacionados a pricing e costs
+      cacheUtils.invalidateByTag('pricing-costs')
+      cacheUtils.invalidateByTag('pricing-plans')
 
       // Log para auditoria
       console.log('Configuração de custos atualizada:', {

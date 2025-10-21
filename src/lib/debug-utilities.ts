@@ -285,10 +285,45 @@ export class DebugUtilities {
         alerts.push('Database connection failed')
         logger.error(LogCategory.DATABASE, 'Database health check failed', error as Error)
       }
-      // Check SendPulse (basic check)
-      const sendpulseHealthy = true // TODO: Implement actual SendPulse health check
-      // Check LangChain (basic check)
-      const langchainHealthy = true // TODO: Implement actual LangChain health check
+      // Check SendPulse (actual health check)
+      let sendpulseHealthy = false
+      try {
+        const sendpulseResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/admin/sendpulse-health?bot_id=${process.env.SENDPULSE_BOT_ID}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.ADMIN_JWT_SECRET || 'dev-token'}`
+          },
+          signal: AbortSignal.timeout(10000) // 10 second timeout
+        })
+        if (sendpulseResponse.ok) {
+          const sendpulseData = await sendpulseResponse.json()
+          sendpulseHealthy = sendpulseData.success && sendpulseData.health?.status === 'healthy'
+        } else {
+          logger.warn(LogCategory.SENDPULSE, 'SendPulse health check failed', {
+            status: sendpulseResponse.status,
+            statusText: sendpulseResponse.statusText
+          })
+        }
+      } catch (error) {
+        logger.error(LogCategory.SENDPULSE, 'SendPulse health check error', error as Error)
+        sendpulseHealthy = false
+      }
+
+      // Check LangChain (basic implementation - could be enhanced with actual LangChain health check)
+      let langchainHealthy = true
+      try {
+        // Simple check - verify OpenAI API key is configured and accessible
+        const openaiApiKey = process.env.OPENAI_API_KEY
+        langchainHealthy = !!(openaiApiKey && openaiApiKey.startsWith('sk-'))
+
+        if (!langchainHealthy) {
+          logger.warn(LogCategory.LANGCHAIN, 'LangChain health check failed - invalid or missing OpenAI API key')
+        }
+      } catch (error) {
+        logger.error(LogCategory.LANGCHAIN, 'LangChain health check error', error as Error)
+        langchainHealthy = false
+      }
       // Get metrics from last 24 hours
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)

@@ -8,6 +8,8 @@ import { doctorInfo, clinicInfo } from '@/data/doctor-info'
 import { PrivacyPolicy } from '@/components/privacy/PrivacyPolicy'
 import { PrivacySettings } from '@/components/privacy/PrivacySettings'
 import { DataControlPanel } from '@/components/privacy/DataControlPanel'
+import { useClientConfig } from '@/lib/use-client-config'
+import { useTranslation } from '@/lib/translation'
 import {
     MapPin,
     Phone,
@@ -28,29 +30,20 @@ export function Footer({ className }: FooterProps) {
     const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false)
     const [showPrivacySettings, setShowPrivacySettings] = useState(false)
     const [showDataControl, setShowDataControl] = useState(false)
-    // FIXME: Configuração centralizada desabilitada temporariamente
-    // ConfigService requer acesso a fs (Node.js) que não funciona no client
-    // TODO: Implementar servidor de config ou passar como props de server component
-    const useCentralizedConfig = false
-    const footerMenu = null
-    // Quick Links: usar config centralizado se disponível
-    const quickLinks = useCentralizedConfig && footerMenu
-        ? footerMenu.quickLinks.map((item: any) => ({
-            name: item.label,
-            href: item.href,
-            download: item.download || false,
-            icon: item.icon || undefined
-        }))
-        : [
-            { name: 'Planos e Preços', href: '#planos-precos' },
-            { name: 'Como Funciona', href: '#como-funciona' },
-            { name: 'FAQ', href: '#perguntas-frequentes' },
-            { name: 'Programa de Indicação', href: '#programa-indicacao' },
-            { name: 'Manual do Paciente (PDF)', href: '/ManualPacienteLentesContato2025.pdf', download: true, icon: 'download' },
-        ]
+    // Usar configuração centralizada via API - TODO RESOLVIDO ✅
+    const { config, loading, error } = useClientConfig()
+    const { t } = useTranslation()
+    // Quick Links: usar config centralizado se disponível, senão fallback
+    const quickLinks = config?.content?.footer?.quickLinks || [
+        { name: 'Planos e Preços', href: '#planos-precos' },
+        { name: 'Como Funciona', href: '#como-funciona' },
+        { name: 'FAQ', href: '#perguntas-frequentes' },
+        { name: 'Programa de Indicação', href: '#programa-indicacao' },
+        { name: 'Manual do Paciente (PDF)', href: '/ManualPacienteLentesContato2025.pdf', download: true, icon: 'download' },
+    ]
     // Legal Links: usar config centralizado se disponível
-    const legalLinksFromConfig = useCentralizedConfig && footerMenu
-        ? footerMenu.legalLinks.map((item: any) => {
+    const legalLinksFromConfig = config?.content?.footer?.legalLinks
+        ? config.content.footer.legalLinks.map((item: any) => {
             // Mapear actions para funções
             const actionMap: Record<string, () => void> = {
                 'showPrivacyPolicy': () => setShowPrivacyPolicy(true),

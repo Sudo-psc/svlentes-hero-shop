@@ -6,6 +6,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useUserDisplayName } from '@/lib/use-admin-user'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,6 +49,7 @@ export function CostPanel({ config, onSave, onRestoreDefault }: CostPanelProps) 
   const [errors, setErrors] = useState<string[]>([])
   const [hasChanges, setHasChanges] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const currentUser = useUserDisplayName()
   const [calculating, setCalculating] = useState(false)
 
   useEffect(() => {
@@ -97,14 +99,14 @@ export function CostPanel({ config, onSave, onRestoreDefault }: CostPanelProps) 
       const updatedConfig = {
         ...localConfig,
         ultimoAtualizacao: new Date(),
-        usuarioAtualizacao: 'admin' // TODO: pegar usuário logado
+        usuarioAtualizacao: currentUser
       }
 
       // Adicionar ao histórico
       const historicoEntry = {
         id: Date.now().toString(),
         timestamp: new Date(),
-        usuario: 'admin',
+        usuario: currentUser,
         campo: 'config_geral',
         valorAnterior: JSON.stringify(config),
         valorNovo: JSON.stringify(localConfig),

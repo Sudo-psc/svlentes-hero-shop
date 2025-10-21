@@ -10,7 +10,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendPulseAdminTools } from '@/lib/sendpulse-admin-tools'
 import { logger, LogCategory } from '@/lib/logger'
+import { requirePermission } from '@/lib/admin-auth'
 export async function POST(request: NextRequest) {
+  // Require admin authentication with system administration permission
+  const { user, error } = await requirePermission('admin:system')(request)
+  if (error) {
+    return error
+  }
+
   const timer = logger.startTimer()
   try {
     const body = await request.json()

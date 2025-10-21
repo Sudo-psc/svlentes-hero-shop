@@ -90,7 +90,7 @@ export function generateMedicalBusinessStructuredData() {
         alternateName: clinicInfo.fullName,
         description: 'Serviço pioneiro no Brasil de assinatura de lentes de contato com acompanhamento médico especializado',
         url: 'https://svlentes.com.br',
-        logo: 'https://svlentes.com.br/images/logo.png',
+        logo: 'https://svlentes.com.br/logosv-md.png',
         image: 'https://svlentes.com.br/images/og-image.jpg',
         telephone: clinicInfo.contact.phone,
         email: clinicInfo.contact.email,
@@ -249,7 +249,7 @@ export function generateOrganizationStructuredData() {
         name: clinicInfo.name,
         alternateName: clinicInfo.fullName,
         url: 'https://svlentes.com.br',
-        logo: 'https://svlentes.com.br/images/logo.png',
+        logo: 'https://svlentes.com.br/logosv-md.png',
         contactPoint: {
             '@type': 'ContactPoint',
             telephone: clinicInfo.contact.phone,

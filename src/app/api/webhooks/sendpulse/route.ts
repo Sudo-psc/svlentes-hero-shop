@@ -318,8 +318,13 @@ export async function POST(request: NextRequest) {
       })
     }
     // Log webhook received with tracing
-    // TODO: Re-enable when debug-utilities is implemented
-    // await debugUtilities.traceWebhookProcessing(body, 'sendpulse')
+    try {
+      await debugUtilities.traceWebhookProcessing(body, 'sendpulse')
+    } catch (debugError) {
+      logger.warn(LogCategory.SENDPULSE, 'Debug tracing failed, continuing processing', {
+        error: debugError instanceof Error ? debugError.message : 'Unknown debug error'
+      })
+    }
     logger.logSendPulseWebhook('received', {
       requestId,
       bodySize: rawBody.length,
@@ -524,12 +529,19 @@ async function processSendPulseNativeMessage(event: any, requestId?: string) {
       customerName,
       format: 'native'
     })
-    // TODO: Re-enable when debug-utilities is implemented
-    // await debugUtilities.traceMessageProcessing('message_received', {
-    //   messageId,
-    //   phone: customerPhone,
-    //   contentLength: messageContent.length
-    // })
+    // Trace message processing
+    try {
+      await debugUtilities.traceMessageProcessing('message_received', {
+        messageId,
+        phone: customerPhone,
+        contentLength: messageContent.length
+      })
+    } catch (debugError) {
+      logger.warn(LogCategory.SENDPULSE, 'Message processing tracing failed, continuing processing', {
+        error: debugError instanceof Error ? debugError.message : 'Unknown debug error',
+        messageId
+      })
+    }
     // TODO: Re-enable authentication and menu handling when chatbot-auth-handler is implemented
     // Currently going straight to LangChain for all messages
     // Autenticação automática robusta pelo número de WhatsApp

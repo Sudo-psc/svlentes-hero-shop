@@ -259,7 +259,11 @@ export async function GET(request: NextRequest) {
           },
           _count: {
             select: {
-              // TODO: Adicionar contagem de interações quando implementado
+              interactions: {
+                select: {
+                  id: true
+                }
+              }
             }
           }
         },
@@ -313,7 +317,8 @@ export async function GET(request: NextRequest) {
           resolutionTime,
           daysSinceCreation,
           isOverdue,
-          hasEscalation: !!ticket.escalation
+          hasEscalation: !!ticket.escalation,
+          interactionCount: (ticket._count as any)?.interactions || 0
         }
       }
     })

@@ -6,6 +6,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useUserDisplayName } from '@/lib/use-admin-user'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,6 +67,7 @@ interface ReportConfig {
 }
 
 export function ReportsSection({ planos, configCustos }: ReportsSectionProps) {
+  const currentUser = useUserDisplayName()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     tipo: 'rentabilidade_por_plano',
     periodoInicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -124,7 +126,7 @@ export function ReportsSection({ planos, configCustos }: ReportsSectionProps) {
         titulo: reportTypes.find(r => r.id === reportConfig.tipo)?.name || '',
         dados,
         geradoEm: new Date(),
-        geradoPor: 'admin', // TODO: pegar usuário logado
+        geradoPor: currentUser,
         arquivoUrl: '#' // TODO: gerar URL real do arquivo
       }
 

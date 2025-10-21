@@ -9,7 +9,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendPulseAdminTools } from '@/lib/sendpulse-admin-tools'
 import { logger, LogCategory } from '@/lib/logger'
+import { requirePermission } from '@/lib/admin-auth'
 export async function GET(request: NextRequest) {
+  // Require admin authentication with system administration permission
+  const { user, error } = await requirePermission('admin:system')(request)
+  if (error) {
+    return error
+  }
+
   const timer = logger.startTimer()
   try {
     // Get bot ID from query params or env

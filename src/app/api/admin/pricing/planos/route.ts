@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { withAdminAuth } from '@/lib/admin/auth'
+import { withCache, cacheUtils } from '@/lib/api-cache'
 import { PlanoAssinatura } from '@/types/pricing-calculator'
 
 // Simulação de banco de dados
@@ -133,22 +134,29 @@ let planosDB: PlanoAssinatura[] = [
   }
 ]
 
-export async function GET(request: NextRequest) {
+export function GET(request: NextRequest) {
   return withAdminAuth(async (req, { session }) => {
-    try {
-      // Retornar planos
-      return NextResponse.json({
-        planos: planosDB,
-        total: planosDB.length,
-        ativos: planosDB.filter(p => p.ativo).length
-      })
-    } catch (error) {
-      console.error('Erro ao buscar planos:', error)
-      return NextResponse.json(
-        { error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
+    return withCache(async (req) => {
+      try {
+        // Retornar planos
+        return NextResponse.json({
+          planos: planosDB,
+          total: planosDB.length,
+          ativos: planosDB.filter(p => p.ativo).length
+        })
+      } catch (error) {
+        console.error('Erro ao buscar planos:', error)
+        return NextResponse.json(
+          { error: 'Erro interno do servidor' },
+          { status: 500 }
+        )
+      }
+    }, {
+      maxAge: 300, // 5 minutes cache
+      sMaxAge: 1800, // 30 minutes CDN cache
+      tags: ['pricing-plans', 'admin'],
+      deduplicate: true
+    })(request)
   })
 }
 
@@ -177,6 +185,9 @@ export async function POST(request: NextRequest) {
 
       // Adicionar ao "banco"
       planosDB.push(novoPlano)
+
+      // Invalidar cache relacionado aos planos
+      cacheUtils.invalidateByTag('pricing-plans')
 
       return NextResponse.json(novoPlano, { status: 201 })
     } catch (error) {

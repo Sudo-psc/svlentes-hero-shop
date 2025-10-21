@@ -6,8 +6,10 @@ import {
   AlertCircle,
   MessageCircle,
   ExternalLink,
-  Clock
+  Clock,
+  X
 } from 'lucide-react'
+import React, { useState } from 'react'
 interface EmergencyContactProps {
   contact: {
     phone: string
@@ -19,16 +21,57 @@ interface EmergencyContactProps {
   }
 }
 export function EmergencyContactCard({ contact }: EmergencyContactProps) {
-  const handleWhatsAppClick = () => {
-    const phoneNumber = contact.phone.replace(/\D/g, '')
-    const message = encodeURIComponent('Olá! Preciso de ajuda com minha assinatura de lentes de contato.')
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
+  const [contactError, setContactError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleWhatsAppClick = async () => {
+    setContactError(null)
+    setIsLoading(true)
+    try {
+      const phoneNumber = contact.phone.replace(/\D/g, '')
+      if (!phoneNumber || phoneNumber.length < 10) {
+        throw new Error('Número de WhatsApp inválido')
+      }
+      const message = encodeURIComponent('Olá! Preciso de ajuda com minha assinatura de lentes de contato.')
+      window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
+    } catch (error) {
+      setContactError('Não foi possível abrir o WhatsApp. Verifique o número e tente novamente.')
+      console.error('WhatsApp error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-  const handlePhoneCall = () => {
-    window.open(`tel:${contact.phone}`, '_self')
+
+  const handlePhoneCall = async () => {
+    setContactError(null)
+    setIsLoading(true)
+    try {
+      if (!contact.phone) {
+        throw new Error('Número de telefone não disponível')
+      }
+      window.open(`tel:${contact.phone}`, '_self')
+    } catch (error) {
+      setContactError('Não foi possível realizar a chamada. Verifique o número e tente novamente.')
+      console.error('Phone call error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-  const handleEmailClick = () => {
-    window.open(`mailto:${contact.email}?subject=Assinatura SV Lentes - Ajuda`, '_blank')
+
+  const handleEmailClick = async () => {
+    setContactError(null)
+    setIsLoading(true)
+    try {
+      if (!contact.email) {
+        throw new Error('Endereço de e-mail não disponível')
+      }
+      window.open(`mailto:${contact.email}?subject=Assinatura SV Lentes - Ajuda`, '_blank')
+    } catch (error) {
+      setContactError('Não foi possível abrir o cliente de e-mail. Verifique o endereço e tente novamente.')
+      console.error('Email error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
   const formatPhoneNumber = (phone: string) => {
     // Format phone number for display
@@ -47,6 +90,25 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
           Contato de Emergência
         </CardTitle>
       </CardHeader>
+      {contactError && (
+        <div className="mx-6 mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 text-sm font-medium">Erro</p>
+              <p className="text-red-700 text-xs">{contactError}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setContactError(null)}
+              className="text-red-600 hover:text-red-800 h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
       <CardContent className="space-y-6">
         {/* Doctor Information */}
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -95,9 +157,19 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
                 onClick={handleWhatsAppClick}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={isLoading}
               >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                WhatsApp
+                {isLoading ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Abrindo...
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -121,9 +193,19 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
                 variant="outline"
                 size="sm"
                 className="border-cyan-200 text-cyan-700 hover:bg-cyan-100"
+                disabled={isLoading}
               >
-                <Phone className="h-4 w-4 mr-2" />
-                Ligar
+                {isLoading ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent" />
+                    Discando...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="h-4 w-4 mr-2" />
+                    Ligar
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -150,9 +232,19 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
                 variant="outline"
                 size="sm"
                 className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                disabled={isLoading}
               >
-                <Mail className="h-4 w-4 mr-2" />
-                Enviar
+                {isLoading ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                    Abrindo...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Enviar
+                  </>
+                )}
               </Button>
             </div>
           </div>

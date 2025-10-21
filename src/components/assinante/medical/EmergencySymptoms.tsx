@@ -273,6 +273,8 @@ export function EmergencySymptoms() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showEmergencyModal, setShowEmergencyModal] = useState(false)
+  const [contactError, setContactError] = useState<string | null>(null)
+  const [isLoadingContact, setIsLoadingContact] = useState(false)
   const severities = [
     { value: 'all', label: 'Todos', color: 'bg-gray-100 text-gray-800' },
     { value: 'critical', label: 'Crítico', color: 'bg-red-100 text-red-800' },
@@ -320,20 +322,93 @@ export function EmergencySymptoms() {
       case 'observe': return 'Observar e buscar ajuda se piorar'
     }
   }
-  const handleCallDoctor = () => {
-    window.open(`tel:${emergencyContacts.doctor.phone.replace(/\D/g, '')}`)
+  const handleCallDoctor = async () => {
+    setContactError(null)
+    setIsLoadingContact(true)
+    try {
+      const phoneNumber = emergencyContacts.doctor.phone.replace(/\D/g, '')
+      if (!phoneNumber) {
+        throw new Error('Número de telefone não disponível')
+      }
+      window.open(`tel:${phoneNumber}`)
+    } catch (error) {
+      setContactError('Não foi possível iniciar a chamada. Tente novamente.')
+      console.error('Error calling doctor:', error)
+    } finally {
+      setIsLoadingContact(false)
+    }
   }
-  const handleWhatsAppDoctor = () => {
-    window.open(`https://wa.me/${emergencyContacts.doctor.whatsapp.replace(/\D/g, '')}`, '_blank')
+
+  const handleWhatsAppDoctor = async () => {
+    setContactError(null)
+    setIsLoadingContact(true)
+    try {
+      const phoneNumber = emergencyContacts.doctor.whatsapp.replace(/\D/g, '')
+      if (!phoneNumber) {
+        throw new Error('Número do WhatsApp não disponível')
+      }
+      window.open(`https://wa.me/${phoneNumber}`, '_blank')
+    } catch (error) {
+      setContactError('Não foi possível abrir o WhatsApp. Tente novamente.')
+      console.error('Error opening WhatsApp:', error)
+    } finally {
+      setIsLoadingContact(false)
+    }
   }
-  const handleEmergencyCall = () => {
-    window.open(`tel:${emergencyContacts.emergency.phone}`)
+
+  const handleEmergencyCall = async () => {
+    setContactError(null)
+    setIsLoadingContact(true)
+    try {
+      const emergencyNumber = emergencyContacts.emergency.phone
+      if (!emergencyNumber) {
+        throw new Error('Número de emergência não disponível')
+      }
+      window.open(`tel:${emergencyNumber}`)
+    } catch (error) {
+      setContactError('Não foi possível ligar para emergência. Use seu telefone para discar 192.')
+      console.error('Error calling emergency:', error)
+    } finally {
+      setIsLoadingContact(false)
+    }
   }
-  const handleVideoCall = () => {
-    // Implementar telemedicina
+
+  const handleVideoCall = async () => {
+    setContactError(null)
+    setIsLoadingContact(true)
+    try {
+      // TODO: Implementar telemedicina quando disponível
+      throw new Error('Telemedicina não disponível no momento')
+    } catch (error) {
+      setContactError('Telemedicina em desenvolvimento. Por favor, ligue para o médico.')
+      console.error('Video call error:', error)
+    } finally {
+      setIsLoadingContact(false)
+    }
   }
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {contactError && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">Erro de Conexão</p>
+              <p className="text-red-700 text-sm">{contactError}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setContactError(null)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Alerta de Emergência */}
       <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
         <div className="flex items-start gap-3">
@@ -413,13 +488,31 @@ export function EmergencySymptoms() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button size="sm" onClick={handleCallDoctor}>
-              <Phone className="h-4 w-4 mr-2" />
-              Ligar
+            <Button size="sm" onClick={handleCallDoctor} disabled={isLoadingContact}>
+              {isLoadingContact ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <Phone className="h-4 w-4 mr-2" />
+                  Ligar
+                </>
+              )}
             </Button>
-            <Button size="sm" variant="outline" onClick={handleVideoCall}>
-              <Video className="h-4 w-4 mr-2" />
-              Teleconsulta
+            <Button size="sm" variant="outline" onClick={handleVideoCall} disabled={isLoadingContact}>
+              {isLoadingContact ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-gray-600 border-t-transparent" />
+                  Carregando...
+                </>
+              ) : (
+                <>
+                  <Video className="h-4 w-4 mr-2" />
+                  Teleconsulta
+                </>
+              )}
             </Button>
           </div>
         </div>

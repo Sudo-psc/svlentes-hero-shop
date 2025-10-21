@@ -21,13 +21,12 @@ export function calculateEconomy(input: CalculatorInput): CalculatorResult {
   const annualContactLensCost = input.annualContactLensCost || yearlyAvulso
   const annualConsultationCost = input.annualConsultationCost || (consultationPrices.market.consultation * 2)
   const totalCurrentAnnualCost = annualContactLensCost + annualConsultationCost
-  // Com SV Lentes: paga apenas o plano mensal (que já inclui consultas)
-  // E as lentes saem pelo preço com desconto (já calculado em yearlySubscription)
-  // Então o custo total é: mensalidade do plano + custo das lentes com desconto
-  // Mas isso está duplicando! Na verdade, o cliente paga:
-  // - Mensalidade do plano (que inclui consultas médicas)
-  // - Lentes pelo preço com desconto (yearlySubscription)
-  const totalSVLentesAnnualCost = (recommendedPlan.monthlyPrice * 12) + yearlySubscription
+  // Com SV Lentes: o plano mensal já inclui:
+  // - Consultas médicas (número variável por plano)
+  // - Lentes pelo preço com desconto (já incluído na mensalidade)
+  // Então o cliente paga apenas a mensalidade do plano
+  // Não há custo adicional de lentes ou consultas separadas
+  const totalSVLentesAnnualCost = recommendedPlan.monthlyPrice * 12
   const totalAnnualSavings = totalCurrentAnnualCost - totalSVLentesAnnualCost
   return {
     monthlyAvulso,

@@ -58,7 +58,7 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
       {...props}
     >
       <Image
-        src="/images/logo_transparent.png"
+        src="/logosv-md.png"
         alt="SV Lentes"
         fill
         className={cn(

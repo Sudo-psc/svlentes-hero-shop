@@ -29,10 +29,14 @@ npm run lint            # ESLint checking
 npm run test            # Run Jest unit tests
 npm run test:watch      # Jest in watch mode
 npm run test:coverage   # Jest with coverage report
+npm run test:resilience # Run Vitest resilience tests
+npm run test:integration # Run Vitest integration tests
 npm run test:e2e        # Run Playwright E2E tests
 npm run test:e2e:ui     # Playwright with UI
 npm run test:e2e:headed # Playwright headed mode
 npm run test:e2e:debug  # Playwright debug mode
+npm run test:e2e:resilience # Playwright resilience tests
+npm run test:all        # Run all test suites (resilience + E2E)
 ```
 
 ### Production Service Management (Systemd)
@@ -70,12 +74,15 @@ npm run db:seed          # Seed database with initial data
 npx prisma generate      # Generate Prisma Client
 npx prisma migrate dev   # Run migrations in development
 npx prisma studio        # Open Prisma Studio GUI
+npx prisma db push       # Push schema to database
+npx prisma migrate reset # Reset database (destructive)
 ```
 
 ### Health Monitoring
 ```bash
 npm run health-check     # Check application health
 curl -f http://localhost:3000/api/health-check  # Manual health check
+npm run lighthouse       # Run Lighthouse CI performance audit
 ```
 
 ## Architecture
@@ -140,7 +147,9 @@ src/
 - **LangChain + OpenAI** for AI-powered customer support
 - **Prisma** for database ORM (PostgreSQL)
 - **Jest** for unit testing
+- **Vitest** for resilience and integration testing
 - **Playwright** for E2E testing
+- **Lighthouse CI** for performance monitoring
 
 ### Payment Integration
 
@@ -301,14 +310,17 @@ NEXTAUTH_URL=https://svlentes.shop
 
 ### Testing Strategy
 - **Unit Tests**: Jest for business logic (calculator, validation, utilities)
+- **Resilience Tests**: Vitest for offline functionality, backup systems, error recovery
+- **Integration Tests**: Vitest for API endpoint testing and database operations
 - **E2E Tests**: Playwright covering critical user flows
   - Subscription flow
   - Calculator interaction
   - Form validation
   - Payment integration
   - Consultation scheduling
+  - WhatsApp chatbot interaction
 - **Component Tests**: UI components and sections
-- **Performance**: Lighthouse CI for web vitals monitoring
+- **Performance**: Lighthouse CI for web vitals monitoring with automated audits
 
 ### Critical Business Logic
 
@@ -354,14 +366,19 @@ NEXTAUTH_URL=https://svlentes.shop
 3. Configure Asaas sandbox keys in `.env.local`
 4. Configure database: Set `DATABASE_URL` in `.env.local`
 5. Run migrations: `npx prisma migrate dev`
-6. Start development server: `npm run dev`
-7. Access at http://localhost:3000
+6. Generate Prisma client: `npx prisma generate`
+7. Start development server: `npm run dev`
+8. Access at http://localhost:3000
+9. Optional: Seed database with sample data: `npm run db:seed`
 
 ### Testing Before Deploy
 1. Run unit tests: `npm run test`
-2. Run E2E tests: `npm run test:e2e`
-3. Build production: `npm run build`
-4. Health check: `npm run health-check`
+2. Run resilience tests: `npm run test:resilience`
+3. Run integration tests: `npm run test:integration`
+4. Run E2E tests: `npm run test:e2e`
+5. Build production: `npm run build`
+6. Health check: `npm run health-check`
+7. Performance audit: `npm run lighthouse`
 
 ### Production Deployment
 ```bash
@@ -380,7 +397,7 @@ curl https://svlentes.com.br/api/health-check
 ```
 
 ### Deployment Checklist
-- [ ] All tests passing (`npm run test && npm run test:e2e`)
+- [ ] All tests passing (`npm run test && npm run test:resilience && npm run test:e2e`)
 - [ ] Production build successful (`npm run build`)
 - [ ] Environment variables configured
 - [ ] Asaas production keys active
@@ -389,6 +406,8 @@ curl https://svlentes.com.br/api/health-check
 - [ ] Nginx configuration tested (`nginx -t`)
 - [ ] Health check endpoint responding
 - [ ] Database migrations applied
+- [ ] Prisma client generated (`npx prisma generate`)
+- [ ] Performance audit passing (`npm run lighthouse`)
 - [ ] Monitoring alerts configured
 - [ ] Clear Next.js build cache if needed (`rm -rf .next`)
 
@@ -572,12 +591,67 @@ openssl x509 -in /etc/letsencrypt/live/svlentes.com.br/fullchain.pem -text -noou
 4. Reload Nginx: `systemctl reload nginx`
 5. Clear browser cache: Ctrl+F5 (hard refresh)
 
+## Development Tools & Debugging
+
+### Code Quality Tools
+```bash
+# ESLint configuration
+npm run lint            # Check for linting issues
+npm run lint:fix        # Auto-fix linting issues
+npm run lint:strict     # Strict linting (zero warnings)
+
+# TypeScript checking
+npx tsc --noEmit        # Type check without compilation
+```
+
+### Debug Commands
+```bash
+# Test MCP integration
+npm run test:mcp        # Test MCP server connectivity
+
+# Test WhatsApp functionality
+npm run test:send       # Send test WhatsApp message
+
+# Database debugging
+npx prisma studio        # Visual database browser
+npm run db:seed         # Populate with test data
+```
+
+### Performance Monitoring
+```bash
+# Application performance
+curl http://localhost:3000/api/monitoring/performance
+
+# Error logs
+curl http://localhost:3000/api/monitoring/errors
+
+# System health
+curl http://localhost:3000/api/health-check
+```
+
+## Resilience & Backup Systems
+
+### Offline Functionality
+- **Resilient Data Fetcher**: Handles network failures with graceful degradation
+- **Offline Storage**: Local storage backup for critical user data
+- **Backup Authentication**: Session persistence during network outages
+- **Error Recovery**: Automatic retry mechanisms with exponential backoff
+
+### Resilience Testing
+```bash
+npm run test:resilience          # Core resilience tests
+npm run test:e2e:resilience     # E2E resilience scenarios
+npm run test:all                # Complete resilience test suite
+```
+
 ## Troubleshooting
 
 ### Build Failures
 - Check TypeScript errors: `npm run lint`
 - Verify all environment variables are set
 - Ensure Prisma client is generated: `npx prisma generate`
+- Clear Next.js cache: `rm -rf .next`
+- Check Node.js version (requires 20+): `node --version`
 
 ### Payment Integration Issues
 - Verify Asaas API keys in environment variables
@@ -601,5 +675,100 @@ openssl x509 -in /etc/letsencrypt/live/svlentes.com.br/fullchain.pem -text -noou
 ### Database Issues
 - Check DATABASE_URL connection string
 - Run migrations: `npx prisma migrate dev`
-- Verify PostgreSQL is running
+- Verify PostgreSQL is running: `docker ps | grep postgres`
 - Check Prisma Studio for data: `npx prisma studio`
+- Reset database if needed: `npx prisma migrate reset`
+- Check database connection: `npx prisma db pull`
+
+### Performance Issues
+- Check monitoring endpoints: `/api/monitoring/performance`
+- Review Lighthouse CI reports: `npm run lighthouse`
+- Verify image optimization settings in `next.config.js`
+- Check Next.js build output for large bundles: `analyze .next`
+- Monitor memory usage: `curl /api/monitoring/performance`
+
+### Resilience System Issues
+- Test offline functionality: `npm run test:resilience`
+- Check backup storage: localStorage in browser dev tools
+- Verify error recovery: test network disconnection scenarios
+- Check MCP integration: `npm run test:mcp`
+
+### WhatsApp/SendPulse Issues
+- Verify SendPulse credentials in `.env.sendpulse`
+- Check webhook endpoint is publicly accessible
+- Monitor webhook logs for incoming messages
+- Test AI response generation locally
+- Verify database has WhatsApp tables: `npx prisma studio`
+- Check chatbot authentication: test with registered phone number
+
+## Key File Locations & Patterns
+
+### Configuration Files
+- **Next.js**: `next.config.js` - Build optimization, security headers, image config
+- **TypeScript**: `tsconfig.json` - Path aliases, strict type checking
+- **Tailwind**: `tailwind.config.js` - Custom theme, colors, animations
+- **Prisma**: `prisma/schema.prisma` - Database schema and relations
+- **Environment**: `.env.local` - Local development variables
+
+### Key Business Logic Files
+- **Calculator**: `src/lib/calculator.ts` - Savings calculation algorithms
+- **Payments**: `src/lib/asaas.ts` - Asaas API integration
+- **WhatsApp**: `src/lib/sendpulse-client.ts` - SendPulse API client
+- **AI Support**: `src/lib/langchain-support-processor.ts` - NLP processing
+- **Authentication**: `src/lib/chatbot-auth-handler.ts` - WhatsApp chatbot auth
+
+### Data Configuration
+- **Pricing Plans**: `src/data/pricing-plans.ts` - Subscription tiers and pricing
+- **Calculator Data**: `src/data/calculator-data.ts` - Lens cost presets
+- **Medical Info**: `src/data/doctor-info.ts` - Dr. Philipe's credentials
+- **FAQ Content**: `src/data/faq-data.ts` - Support questions and answers
+
+### Component Architecture
+- **UI Components**: `src/components/ui/` - shadcn/ui base components
+- **Layout**: `src/components/layout/` - Header, Footer, Navigation
+- **Forms**: `src/components/forms/` - Validation-enabled form components
+- **Sections**: `src/components/sections/` - Landing page sections
+- **Subscriber Area**: `src/components/assinante/` - Dashboard components
+
+### API Route Patterns
+- **CRUD Operations**: RESTful patterns in `/api/v1/`
+- **Webhooks**: `/api/webhooks/{provider}` for external integrations
+- **Admin**: `/api/admin/` for management operations
+- **Health**: `/api/health-check` and `/api/monitoring/` for system status
+
+### Import Aliases (configured in tsconfig.json)
+```typescript
+@/components/*  → src/components/*
+@/lib/*         → src/lib/*
+@/types/*       → src/types/*
+@/data/*        → src/data/*
+@/hooks/*       → src/hooks/*
+```
+
+## Code Patterns & Conventions
+
+### Form Validation
+- **Library**: React Hook Form + Zod schemas
+- **Pattern**: Define Zod schema first, then pass to React Hook Form resolver
+- **Files**: Look for `*-schema.ts` files for validation definitions
+
+### Error Handling
+- **API Errors**: Structured error responses with proper HTTP status codes
+- **Client Errors**: User-friendly error messages with actionable next steps
+- **Logging**: Centralized error logging for debugging and monitoring
+
+### Database Patterns
+- **Prisma Client**: Singleton instance in `src/lib/prisma.ts`
+- **Migrations**: Version-controlled schema changes
+- **Seeding**: Test data generation via `prisma/seed.ts`
+
+### Styling Patterns
+- **Component-First**: Each component has its own styles using Tailwind classes
+- **Design System**: Consistent color palette and spacing via Tailwind config
+- **Responsive**: Mobile-first design with breakpoint utilities
+
+### Security Patterns
+- **Environment Variables**: Sensitive data never hardcoded
+- **Input Validation**: All user inputs validated on both client and server
+- **CSP Headers**: Content Security Policy configured in Next.js
+- **API Authentication**: Token-based authentication for sensitive endpoints
