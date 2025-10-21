@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { LogoHeader } from '@/components/ui/Logo'
@@ -11,8 +12,14 @@ interface HeaderProps {
     className?: string
 }
 
+interface NavigationItem {
+    name: string
+    href: string
+    isAnchor?: boolean
+}
+
 export function Header({ className }: HeaderProps) {
-    const { user, loading, signOut } = useAuth()
+    const { user, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
@@ -44,7 +51,7 @@ export function Header({ className }: HeaderProps) {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
-    const navigation = useMemo(() => {
+    const navigation = useMemo<NavigationItem[]>(() => {
         if (useCentralizedConfig && headerMenu) {
             return headerMenu.main.map((item: any) => ({
                 name: item.label,
@@ -98,71 +105,71 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
-                    : 'bg-white shadow-sm'
-                } ${className}`}
+            className={`fixed inset-x-0 top-0 z-50 bg-transparent transition-all duration-500 ${className ?? ''}`}
         >
-            <div className="container-custom">
-                <div className="flex items-center justify-between h-16 lg:h-20">
-                    {/* Logo */}
-                    <a
+            <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+                <div
+                    className={`relative flex h-16 items-center justify-between py-3 lg:h-20 lg:py-4 ${isScrolled ? 'translate-y-0' : 'lg:translate-y-1'}`}
+                >
+                    <div
+                        className={`absolute inset-0 -z-10 rounded-[32px] border border-white/50 bg-white/80 shadow-glass backdrop-blur-lg transition-all duration-500 ${isScrolled ? 'opacity-100' : 'opacity-95'} ${isScrolled ? '' : 'lg:shadow-glass-lg'}`}
+                    />
+                    <Link
                         href="/"
-                        className="hover:opacity-90 transition-opacity"
+                        className="relative flex items-center gap-3 rounded-full px-2 py-1 transition hover:scale-[1.01] hover:opacity-90"
                         aria-label="SV Lentes - Voltar para a página inicial"
                     >
                         <LogoHeader />
-                    </a>
-
-                    {/* Navigation Desktop */}
-                    <nav className="hidden md:flex items-center space-x-8">
-                        {navigation.map((item: any) => (
-                            item.isAnchor ? (
-                                <a
+                    </Link>
+                    <nav className="hidden items-center gap-6 lg:gap-8 md:flex">
+        {navigation.map((item) => {
+                            const baseClasses = 'relative font-medium text-slate-600 transition-colors duration-200 hover:text-primary-600';
+                            return item.isAnchor ? (
+                                <Link
                                     key={item.name}
                                     href={item.href}
                                     onClick={(e) => {
                                         e.preventDefault()
                                         handleNavClick(item.href)
                                     }}
-                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                    className={`${baseClasses} group`}
                                 >
-                                    {item.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
-                                </a>
+                                    <span className="rounded-full px-1.5 py-0.5 text-sm">
+                                        {item.name}
+                                    </span>
+                                    <span className="pointer-events-none absolute inset-x-0 -bottom-1 h-0.5 origin-center scale-x-0 rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600 transition-transform duration-300 group-hover:scale-x-100" />
+                                </Link>
                             ) : (
-                                <a
+                                <Link
                                     key={item.name}
                                     href={item.href}
-                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                    className={`${baseClasses} group`}
                                 >
-                                    {item.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
-                                </a>
+                                    <span className="rounded-full px-1.5 py-0.5 text-sm">
+                                        {item.name}
+                                    </span>
+                                    <span className="pointer-events-none absolute inset-x-0 -bottom-1 h-0.5 origin-center scale-x-0 rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-600 transition-transform duration-300 group-hover:scale-x-100" />
+                                </Link>
                             )
-                        ))}
+                        })}
                     </nav>
-
-                    {/* CTA Button Desktop */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="hidden items-center gap-3 md:flex">
                         {user ? (
                             <>
                                 <Button
                                     onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
                                     variant="outline"
-                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                                    size="default"
+                                    className="group flex items-center gap-2 rounded-full border-primary/30 bg-white/60 px-5 py-2 text-primary-700 transition hover:border-primary/60 hover:bg-primary/10"
                                 >
-                                    <LayoutDashboard className="w-4 h-4" />
+                                    <LayoutDashboard className="h-4 w-4" />
                                     <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogout}
                                     variant="ghost"
-                                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
-                                    size="default"
+                                    className="flex items-center gap-2 rounded-full px-4 py-2 text-slate-500 transition hover:text-slate-700"
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <LogOut className="h-4 w-4" />
                                     <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                 </Button>
                             </>
@@ -170,117 +177,108 @@ Vim através do site SV Lentes e tenho interesse no serviço de assinatura com a
                             <>
                                 <Button
                                     onClick={handleAgendarConsulta}
-                                    className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
-                                    size="default"
+                                    className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-primary-700 px-6 py-2 font-semibold shadow-lg shadow-primary-500/30 transition hover:shadow-primary-500/40"
                                 >
-                                    <Phone className="w-4 h-4" />
+                                    <Phone className="h-4 w-4" />
                                     <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogin}
                                     variant="outline"
-                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                                    size="default"
+                                    className="flex items-center gap-2 rounded-full border-primary/30 bg-white/60 px-5 py-2 text-primary-700 transition hover:border-primary/60 hover:bg-primary/10"
                                 >
-                                    <User className="w-4 h-4" />
+                                    <User className="h-4 w-4" />
                                     <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                 </Button>
                             </>
                         )}
                     </div>
-
-                    {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                        aria-label="Toggle menu"
+                        className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-slate-600 shadow-sm shadow-primary/10 transition hover:border-primary/40 hover:text-primary-600 md:hidden"
+                        aria-label="Alternar menu"
                     >
                         {isMenuOpen ? (
-                            <X className="w-6 h-6" />
+                            <X className="h-5 w-5" />
                         ) : (
-                            <Menu className="w-6 h-6" />
+                            <Menu className="h-5 w-5" />
                         )}
                     </button>
                 </div>
-
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                    <div className="md:hidden border-t border-gray-200 bg-white">
-                        <div className="py-4 space-y-4">
-                            {navigation.map((item: any) => (
+            </div>
+            {isMenuOpen && (
+                <div className="md:hidden">
+                    <div className="mx-4 rounded-3xl border border-white/60 bg-white/90 shadow-xl backdrop-blur-lg">
+                        <div className="space-y-4 px-4 py-6">
+                            {navigation.map((item) => (
                                 item.isAnchor ? (
-                                    <a
+                                    <Link
                                         key={item.name}
                                         href={item.href}
                                         onClick={(e) => {
                                             e.preventDefault()
                                             handleNavClick(item.href)
                                         }}
-                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        className="block rounded-2xl px-4 py-3 text-base font-medium text-slate-600 transition hover:bg-primary/10 hover:text-primary-700"
                                     >
                                         {item.name}
-                                    </a>
+                                    </Link>
                                 ) : (
-                                    <a
+                                    <Link
                                         key={item.name}
                                         href={item.href}
-                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        className="block rounded-2xl px-4 py-3 text-base font-medium text-slate-600 transition hover:bg-primary/10 hover:text-primary-700"
                                     >
                                         {item.name}
-                                    </a>
+                                    </Link>
                                 )
                             ))}
-
-                            {/* Mobile CTA */}
-                            <div className="px-4 pt-4 border-t border-gray-200 space-y-3">
-                                {user ? (
-                                    <>
-                                        <Button
-                                            onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
-                                            variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                                            size="default"
-                                        >
-                                            <LayoutDashboard className="w-4 h-4" />
-                                            <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
-                                        </Button>
-                                        <Button
-                                            onClick={handleLogout}
-                                            variant="ghost"
-                                            className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800"
-                                            size="default"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Button
-                                            onClick={handleAgendarConsulta}
-                                            className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
-                                            size="default"
-                                        >
-                                            <Phone className="w-4 h-4" />
-                                            <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
-                                        </Button>
-                                        <Button
-                                            onClick={handleLogin}
-                                            variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                                            size="default"
-                                        >
-                                            <User className="w-4 h-4" />
-                                            <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
-                                        </Button>
-                                    </>
-                                )}
+                            <div className="border-t border-white/60 pt-4">
+                                <div className="space-y-3">
+                                    {user ? (
+                                        <>
+                                            <Button
+                                                onClick={() => window.location.href = ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard'}
+                                                variant="outline"
+                                                className="w-full flex items-center justify-center gap-2 rounded-full border-primary/30 bg-white/80 py-3 text-primary-700 hover:border-primary/60 hover:bg-primary/10"
+                                            >
+                                                <LayoutDashboard className="h-4 w-4" />
+                                                <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
+                                            </Button>
+                                            <Button
+                                                onClick={handleLogout}
+                                                variant="ghost"
+                                                className="w-full flex items-center justify-center gap-2 rounded-full py-3 text-slate-500 hover:text-slate-700"
+                                            >
+                                                <LogOut className="h-4 w-4" />
+                                                <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                onClick={handleAgendarConsulta}
+                                                className="w-full flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 via-primary-500 to-primary-700 py-3 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40"
+                                            >
+                                                <Phone className="h-4 w-4" />
+                                                <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
+                                            </Button>
+                                            <Button
+                                                onClick={handleLogin}
+                                                variant="outline"
+                                                className="w-full flex items-center justify-center gap-2 rounded-full border-primary/30 bg-white/80 py-3 text-primary-700 hover:border-primary/60 hover:bg-primary/10"
+                                            >
+                                                <User className="h-4 w-4" />
+                                                <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
-
-            </header>
+                </div>
+            )}
+        </header>
     )
 }

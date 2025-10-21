@@ -73,11 +73,20 @@ export default function RootLayout({
                         <PerformanceMonitor />
                         <ResourcePreloader />
                         {/* <StructuredData data={[organizationData, websiteData]} /> */}
-                        <Header />
-                        <main className="pt-16 lg:pt-20">
-                            {children}
-                        </main>
-                        <Footer />
+                        <div className="relative flex min-h-screen flex-col overflow-hidden">
+                            <div className="pointer-events-none absolute inset-0 -z-10">
+                                <div className="absolute left-1/2 top-[-20%] h-[40rem] w-[70rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-primary-200/50 via-white to-transparent blur-3xl" />
+                                <div className="absolute -bottom-32 right-[-10%] h-[32rem] w-[32rem] rounded-full bg-gradient-to-tr from-primary-300/40 via-primary-100/60 to-transparent blur-[120px]" />
+                                <div className="absolute -left-24 top-1/4 h-[26rem] w-[26rem] rounded-full bg-gradient-to-tr from-success-200/40 via-primary-100/60 to-transparent blur-[120px]" />
+                            </div>
+                            <Header className="relative z-20" />
+                            <main className="relative z-10 flex-1 pt-20 lg:pt-24 pb-16">
+                                <div className="relative z-10 flex-1">
+                                    {children}
+                                </div>
+                            </main>
+                            <Footer className="relative z-10" />
+                        </div>
                         <CookieConsent />
                         <WhatsAppFloat />
                         <SmoothScroll />

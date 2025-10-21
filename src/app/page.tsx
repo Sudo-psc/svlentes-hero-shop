@@ -27,20 +27,17 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
     return (
-        <div className="min-h-screen">
-            {/* Hero Section - Vídeo em largura total */}
-            <section id="hero">
+        <div className="relative flex min-h-[calc(100vh-6rem)] flex-col">
+            <section id="hero" className="relative isolate">
                 <VideoHeroSection />
             </section>
-
-            {/* Trust Strip - Logo após o Hero */}
-            <section className="bg-white py-6 border-y border-gray-100">
-                <div className="container-custom">
-                    <TrustStrip />
+            <section className="page-shell page-shell--compact">
+                <div className="page-shell-container">
+                    <div className="rounded-3xl border border-white/60 bg-white/90 px-6 py-8 shadow-glass backdrop-blur-xl sm:px-8">
+                        <TrustStrip />
+                    </div>
                 </div>
             </section>
-
-            {/* Seção com opções de calculadora e assinatura direta */}
             <HomeLazySections />
         </div>
     )

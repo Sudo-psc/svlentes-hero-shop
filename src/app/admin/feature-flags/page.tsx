@@ -223,31 +223,32 @@ export default function FeatureFlagsAdmin() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-8">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading feature flags...</p>
+      <div className="page-shell page-shell--centered page-shell--muted">
+        <div className="page-shell-container page-shell-container--narrow">
+          <div className="surface-panel text-center">
+            <p className="text-sm text-slate-500">Carregando recursos dinâmicos...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Feature Flags</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage feature rollouts and A/B testing
-          </p>
+    <div className="page-shell page-shell--emphasis">
+      <div className="page-shell-container">
+        <div className="flex flex-col gap-6 rounded-3xl border border-white/60 bg-white/80 p-6 shadow-glass-lg backdrop-blur-lg md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-slate-900">Feature Flags</h1>
+            <p className="text-sm text-slate-600">Gerencie liberações graduais e experimentos com segurança.</p>
+          </div>
+          <Button onClick={() => setShowCreateDialog(true)} className="rounded-full px-6">
+            Create Feature Flag
+          </Button>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          Create Feature Flag
-        </Button>
-      </div>
 
-      <div className="grid gap-4">
-        {flags.map(flag => (
-          <Card key={flag.id}>
+        <div className="grid gap-4">
+          {flags.map(flag => (
+            <Card key={flag.id}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -508,7 +509,8 @@ export default function FeatureFlagsAdmin() {
             <Button onClick={() => setShowStatsDialog(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      </div>
     </div>
   );
 }
