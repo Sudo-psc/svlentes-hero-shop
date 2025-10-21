@@ -13,7 +13,9 @@ export default function PlanosPage() {
   React.useEffect(() => {
     document.title = 'Planos de Assinatura de Lentes de Contato | SV Lentes';
   }, []);
-  const handleSaibaMais = (planId: string) => {
+  const presencialCoverage = coverageInfo.find((item) => item.id === 'presencial');
+  const presencialLocations = Array.isArray(presencialCoverage?.locations) ? presencialCoverage.locations : [];
+  const handleSaibaMais = () => {
     // Scroll to FAQ or open modal with plan details
     const faqSection = document.getElementById('faq');
     if (faqSection) {
@@ -88,10 +90,48 @@ export default function PlanosPage() {
                 installments={12}
                 features={plan.features}
                 highlighted={plan.recommended || false}
-                onSaibaMais={() => handleSaibaMais(plan.id)}
+                onSaibaMais={handleSaibaMais}
                 onAssinar={() => handleAssinar(plan.id)}
               />
             ))}
+          </div>
+          <div className="mt-12 rounded-3xl border border-silver-200 bg-silver-50/60 p-8 shadow-lg shadow-silver-200/40">
+            <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-4 md:max-w-2xl">
+                <h2 className="text-2xl font-semibold text-silver-900">Prefere atendimento presencial?</h2>
+                <p className="text-base text-silver-600">
+                  Conheça os planos presenciais com consulta de adaptação e acompanhamento em nossas clínicas parceiras. Escolha a cidade mais próxima e garanta um cuidado completo com sua visão.
+                </p>
+                {presencialLocations.length > 0 && (
+                  <ul className="flex flex-wrap gap-3">
+                    {presencialLocations.map((location) => (
+                      <li
+                        key={location}
+                        className="rounded-full bg-white px-4 py-2 text-sm font-medium text-silver-600 shadow-sm"
+                      >
+                        {location}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="flex w-full flex-col gap-3 md:w-auto">
+                <a
+                  href="/agendar-consulta?modalidade=presencial"
+                  className="inline-flex items-center justify-center rounded-lg bg-cyan-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-cyan-600/30 transition-colors hover:bg-cyan-700"
+                >
+                  Ver planos presenciais
+                </a>
+                <a
+                  href="https://wa.me/5533999898026"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg border border-silver-300 px-6 py-3 text-base font-semibold text-cyan-600 transition-colors hover:border-cyan-200 hover:bg-cyan-50"
+                >
+                  Falar com especialista
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
