@@ -12,25 +12,24 @@ const sizes = [
   { size: 512, name: 'android-chrome-512x512.png' },
 ];
 
-const svgPath = path.join(__dirname, '../public/favicon.svg');
+const imagePath = path.join(__dirname, '../public/images/favicon-compacted.jpeg');
 const publicPath = path.join(__dirname, '../public');
 
 async function generateFavicons() {
   console.log('🎨 Gerando favicons profissionais da SV Lentes...\n');
 
-  const svgBuffer = fs.readFileSync(svgPath);
+  const imageBuffer = fs.readFileSync(imagePath);
 
   for (const { size, name } of sizes) {
     try {
-      await sharp(svgBuffer)
+      await sharp(imageBuffer)
         .resize(size, size, {
           fit: 'contain',
-          background: { r: 255, g: 255, b: 255, alpha: 0 }
+          background: { r: 255, g: 255, b: 255, alpha: 1 }
         })
         .png({
           quality: 100,
-          compressionLevel: 9,
-          palette: true
+          compressionLevel: 9
         })
         .toFile(path.join(publicPath, name));
 
@@ -43,10 +42,10 @@ async function generateFavicons() {
 
   // Gerar favicon.ico usando a versão 32x32
   try {
-    await sharp(svgBuffer)
+    await sharp(imageBuffer)
       .resize(32, 32, {
         fit: 'contain',
-        background: { r: 255, g: 255, b: 255, alpha: 0 }
+        background: { r: 255, g: 255, b: 255, alpha: 1 }
       })
       .toFormat('png')
       .toFile(path.join(publicPath, 'favicon.ico'));

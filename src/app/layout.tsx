@@ -54,12 +54,14 @@ export default function RootLayout({
                 <CriticalCSS />
                 {/* Facebook Domain Verification */}
                 <meta name="facebook-domain-verification" content="x8z1y4rfe0q22puqwl053agwm7y5w4" />
-                <link rel="icon" href="/images/favicon.png" type="image/png" />
-                <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.png" />
+                <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+                <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+                <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+                <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
                 <link rel="manifest" href="/site.webmanifest" />
                   <link rel="dns-prefetch" href="https://api.whatsapp.com" />
                 <link rel="dns-prefetch" href="https://js.stripe.com" />
-                <meta name="theme-color" content="#0066cc" />
+                <meta name="theme-color" content="#0f4c75" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
                 <meta name="format-detection" content="telephone=no" />
