@@ -18,18 +18,83 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState<{
+    score: number
+    message: string
+    color: string
+  }>({ score: 0, message: '', color: '' })
+
+  const validatePasswordStrength = (pwd: string) => {
+    let score = 0
+    let message = ''
+    let color = ''
+
+    if (pwd.length >= 8) score++
+    if (pwd.length >= 12) score++
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++
+    if (/\d/.test(pwd)) score++
+    if (/[^a-zA-Z0-9]/.test(pwd)) score++
+
+    if (score <= 2) {
+      message = 'Senha fraca'
+      color = 'text-red-600'
+    } else if (score === 3) {
+      message = 'Senha média'
+      color = 'text-yellow-600'
+    } else if (score === 4) {
+      message = 'Senha boa'
+      color = 'text-blue-600'
+    } else {
+      message = 'Senha forte'
+      color = 'text-green-600'
+    }
+
+    return { score, message, color }
+  }
+
+  const handlePasswordChange = (pwd: string) => {
+    setPassword(pwd)
+    setPasswordStrength(validatePasswordStrength(pwd))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-    // Validações client-side
+
+    // Validações client-side aprimoradas
     if (password !== confirmPassword) {
       setError('As senhas não coincidem')
       setIsLoading(false)
       return
     }
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres')
+
+    if (password.length < 8) {
+      setError('A senha deve ter pelo menos 8 caracteres')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      setError('A senha deve conter pelo menos uma letra maiúscula')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[a-z]/.test(password)) {
+      setError('A senha deve conter pelo menos uma letra minúscula')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/\d/.test(password)) {
+      setError('A senha deve conter pelo menos um número')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      setError('A senha deve conter pelo menos um caractere especial (!@#$%^&*)')
       setIsLoading(false)
       return
     }
@@ -158,14 +223,54 @@ export default function RegisterPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => handlePasswordChange(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               disabled={isLoading}
             />
+            {password && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className={passwordStrength.color}>
+                    {passwordStrength.message}
+                  </span>
+                  <span className="text-gray-500">
+                    {passwordStrength.score}/5
+                  </span>
+                </div>
+                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      passwordStrength.score <= 2 ? 'bg-red-500' :
+                      passwordStrength.score === 3 ? 'bg-yellow-500' :
+                      passwordStrength.score === 4 ? 'bg-blue-500' :
+                      'bg-green-500'
+                    }`}
+                    style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                  />
+                </div>
+                <ul className="mt-2 space-y-1 text-xs text-gray-600">
+                  <li className={password.length >= 8 ? 'text-green-600' : ''}>
+                    ✓ Mínimo 8 caracteres
+                  </li>
+                  <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>
+                    ✓ Uma letra maiúscula
+                  </li>
+                  <li className={/[a-z]/.test(password) ? 'text-green-600' : ''}>
+                    ✓ Uma letra minúscula
+                  </li>
+                  <li className={/\d/.test(password) ? 'text-green-600' : ''}>
+                    ✓ Um número
+                  </li>
+                  <li className={/[^a-zA-Z0-9]/.test(password) ? 'text-green-600' : ''}>
+                    ✓ Um caractere especial (!@#$%^&*)
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
@@ -177,7 +282,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
               placeholder="Digite a senha novamente"
