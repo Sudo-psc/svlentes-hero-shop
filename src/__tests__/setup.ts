@@ -386,10 +386,3 @@ export const mockPerformanceConditions = {
 
 // Configuração padrão para testes de resiliência
 setupResilienceTestEnvironment()
-
-// Exportar helpers para uso nos testes
-export {
-  mockNetworkConditions,
-  mockStorageConditions,
-  mockPerformanceConditions
-}
