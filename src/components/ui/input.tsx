@@ -38,10 +38,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           ref={ref}
           aria-invalid={error ? "true" : "false"}
-          aria-describedby={cn(
-            errorId,
-            helperId
-          )}
+          aria-describedby={[errorId, helperId].filter(Boolean).join(' ') || undefined}
           aria-required={required}
           {...props}
         />
