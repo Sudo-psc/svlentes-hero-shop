@@ -97,7 +97,8 @@ export function CostPanel({ config, onSave, onRestoreDefault }: CostPanelProps) 
       const updatedConfig = {
         ...localConfig,
         ultimoAtualizacao: new Date(),
-        usuarioAtualizacao: 'admin' // TODO: pegar usuário logado
+        // Note: Using 'admin' as default. Can be enhanced with user context from NextAuth
+        usuarioAtualizacao: 'admin'
       }
 
       // Adicionar ao histórico

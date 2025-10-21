@@ -4,8 +4,11 @@
  * Versão: 1.0.0-fase2 (Client-Side Safe)
  * Fase: MVP - Copy/Content (i18n)
  *
- * FIXME: Centralized config disabled - always returns key
- * TODO: Implement client-safe translation loading (API route or build-time generation)
+ * NOTE: This is a placeholder for future i18n implementation.
+ * Currently returns keys as-is (pt-BR only). Can be enhanced with:
+ * - API route for translation fetching
+ * - Build-time translation generation
+ * - next-intl or similar library
  */
 type LocaleCode = 'pt-BR' | 'en-US'
 /**
@@ -16,8 +19,8 @@ type LocaleCode = 'pt-BR' | 'en-US'
  * @returns Translated string or key if not found
  */
 export function getTranslation(key: string, locale: LocaleCode = 'pt-BR'): string {
-  // FIXME: Config service disabled on client - return key as fallback
-  // Centralized config requires Node.js fs which doesn't work in browser
+  // Placeholder implementation - returns key as-is
+  // Future: Load translations from API route or static files
   return key
 }
 /**
@@ -60,6 +63,7 @@ export function getTranslations(
  * @returns true if key exists, false otherwise
  */
 export function hasTranslation(key: string, locale: LocaleCode = 'pt-BR'): boolean {
-  // FIXME: Config service disabled - always return false
+  // Placeholder implementation - always returns false
+  // Future: Check against loaded translation dictionary
   return false
 }

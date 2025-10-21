@@ -46,12 +46,13 @@ export async function POST(request: NextRequest) {
                 externalReference: metadata.externalReference || `customer_${Date.now()}`,
                 notificationDisabled: false,
             })
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error creating ASAAS customer:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
             return NextResponse.json(
-                { 
+                {
                     error: 'Erro ao criar cliente',
-                    details: error.message 
+                    details: errorMessage
                 },
                 { status: 500 }
             )
@@ -84,12 +85,13 @@ export async function POST(request: NextRequest) {
                     dueDate: dueDateStr,
                     billingType: billingType,
                 })
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error('Error creating ASAAS subscription:', error)
+                const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
                 return NextResponse.json(
-                    { 
+                    {
                         error: 'Erro ao criar assinatura',
-                        details: error.message 
+                        details: errorMessage
                     },
                     { status: 500 }
                 )
@@ -123,32 +125,34 @@ export async function POST(request: NextRequest) {
                     billingType: billingType,
                     pixQrCode: pixQrCode,
                 })
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error('Error creating ASAAS payment:', error)
+                const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
                 return NextResponse.json(
-                    { 
+                    {
                         error: 'Erro ao criar pagamento',
-                        details: error.message 
+                        details: errorMessage
                     },
                     { status: 500 }
                 )
             }
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (error instanceof z.ZodError) {
             return NextResponse.json(
-                { 
+                {
                     error: 'Dados inválidos',
-                    details: error.errors 
+                    details: error.errors
                 },
                 { status: 400 }
             )
         }
         console.error('Unexpected error in create-payment route:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
         return NextResponse.json(
-            { 
+            {
                 error: 'Erro interno do servidor',
-                details: error.message 
+                details: errorMessage
             },
             { status: 500 }
         )

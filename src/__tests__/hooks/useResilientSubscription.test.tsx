@@ -6,14 +6,14 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { useResilientSubscription } from '@/hooks/useResilientSubscription'
-import { resilientDataFetcher } from '@/lib/resilient-data-fetcher'
+import { resilientFetcher } from '@/lib/resilient-data-fetcher'
 import { offlineStorage } from '@/lib/offline-storage'
 
 // Mock dos módulos
 vi.mock('@/lib/resilient-data-fetcher')
 vi.mock('@/lib/offline-storage')
 
-const mockResilientDataFetcher = vi.mocked(resilientDataFetcher)
+const mockResilientFetcher = vi.mocked(resilientFetcher)
 const mockOfflineStorage = vi.mocked(offlineStorage)
 
 // Mock dados
@@ -38,15 +38,11 @@ describe('useResilientSubscription', () => {
     vi.clearAllMocks()
 
     // Setup padrão para mocks
-    mockResilientDataFetcher.fetch = vi.fn()
+    mockResilientFetcher.fetch = vi.fn()
     mockOfflineStorage.init = vi.fn().mockResolvedValue(true)
     mockOfflineStorage.get = vi.fn().mockResolvedValue(null)
     mockOfflineStorage.set = vi.fn().mockResolvedValue(true)
-    mockOfflineStorage.getMetrics = vi.fn().mockReturnValue({
-      totalOperations: 0,
-      successfulOperations: 0,
-      averageOperationTime: 0
-    })
+    mockOfflineStorage.delete = vi.fn().mockResolvedValue(true)
 
     // Mock de navegadores online/offline
     Object.defineProperty(navigator, 'onLine', {

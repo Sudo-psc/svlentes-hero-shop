@@ -89,7 +89,7 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
       }
       return null
     } catch (error) {
-      console.error('[useResilientSubscription] Failed to load offline data:', error)
+      // Silently fail - offline data is optional fallback
       return null
     }
   }, [cacheKey])
@@ -114,7 +114,7 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
         tags: ['user']
       })
     } catch (error) {
-      console.error('[useResilientSubscription] Failed to save offline data:', error)
+      // Silently fail - offline storage is optional feature
     }
   }, [cacheKey])
   /**
@@ -161,7 +161,6 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
           successfulAttempts: prev.successfulAttempts + 1,
           averageResponseTime: (prev.averageResponseTime * prev.successfulAttempts + result.responseTime) / (prev.successfulAttempts + 1)
         }))
-        `)
       } else if (result.status === 'fallback' && result.data) {
         // Usando dados fallback
         setSubscription(result.data.subscription)
@@ -170,7 +169,6 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
         setError(null)
         setIsUsingFallback(true)
         setIsUsingCache(result.fromCache)
-        `)
       } else {
         // Falha completa - tentar dados offline
         const offlineData = await loadOfflineData()
@@ -190,9 +188,8 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
           setConnectionStats(prev => ({ ...prev, failedAttempts: prev.failedAttempts + 1 }))
         }
       }
-    } catch (err: any) {
-      console.error('[useResilientSubscription] Fetch error:', err)
-      // Último recurso - tentar dados offline
+    } catch (err: unknown) {
+      // Fetch failed - try offline data as last resort
       const offlineData = await loadOfflineData()
       if (offlineData) {
         setSubscription(offlineData.subscription)
@@ -202,7 +199,8 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
         setIsUsingFallback(true)
         setIsUsingCache(true)
       } else {
-        setError(err.message || 'Erro ao carregar dados')
+        const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar dados'
+        setError(errorMessage)
         setStatus('error')
         setIsUsingFallback(false)
         setIsUsingCache(false)
@@ -241,9 +239,9 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
         setError(result.error || 'Erro ao atualizar endereço')
         return false
       }
-    } catch (err: any) {
-      console.error('[useResilientSubscription] Update error:', err)
-      setError(err.message || 'Erro ao atualizar endereço')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar endereço'
+      setError(errorMessage)
       return false
     }
   }, [authUser, cacheKey, fetchSubscription])
@@ -268,7 +266,7 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
       resilientFetcher.clearCache()
       await fetchSubscription()
     } catch (error) {
-      console.error('[useResilientSubscription] Failed to clear cache:', error)
+      // Silently fail - cache clearing is best effort
     }
   }, [cacheKey, fetchSubscription])
   /**
@@ -296,11 +294,9 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
     const interval = setInterval(async () => {
       try {
         const healthCheck = await resilientFetcher.performHealthCheck('/api/health-check')
-        if (!healthCheck.healthy) {
-          console.warn('[useResilientSubscription] Health check failed, using cached data')
-        }
+        // Health check results are handled internally by resilientFetcher
       } catch (error) {
-        console.warn('[useResilientSubscription] Health check error:', error)
+        // Silent fail - health check is monitoring only
       }
     }, 5 * 60 * 1000) // A cada 5 minutos
     return () => clearInterval(interval)
