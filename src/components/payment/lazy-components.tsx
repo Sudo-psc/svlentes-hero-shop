@@ -40,56 +40,32 @@ const PaymentError = ({ error }: { error: Error }) => (
 )
 
 // Lazy Components de pagamento com loading e error states
-export const LazyPaymentForm = dynamic(
-  () => import('./PaymentForm').then(mod => ({ default: mod.PaymentForm })),
+export const LazyPaymentMethodSelector = dynamic(
+  () => import('./PaymentMethodSelector').then(mod => ({ default: mod.PaymentMethodSelector })),
   {
     loading: PaymentLoader,
     ssr: false
   }
 )
 
-export const LazyStripeCheckout = dynamic(
-  () => import('./StripeCheckout').then(mod => ({ default: mod.StripeCheckout })),
+export const LazyPaymentTestModal = dynamic(
+  () => import('./PaymentTestModal').then(mod => ({ default: mod.PaymentTestModal })),
   {
     loading: PaymentLoader,
     ssr: false
   }
 )
 
-export const LazyAsaasPayment = dynamic(
-  () => import('./AsaasPayment').then(mod => ({ default: mod.AsaasPayment })),
+export const LazyStripePricingTable = dynamic(
+  () => import('./StripePricingTable').then(mod => ({ default: mod.StripePricingTable })),
   {
     loading: PaymentLoader,
     ssr: false
   }
 )
 
-export const LazyPaymentMethods = dynamic(
-  () => import('./PaymentMethods').then(mod => ({ default: mod.PaymentMethods })),
-  {
-    loading: PaymentLoader,
-    ssr: false
-  }
-)
-
-export const LazyPaymentSummary = dynamic(
-  () => import('./PaymentSummary').then(mod => ({ default: mod.PaymentSummary })),
-  {
-    loading: PaymentLoader,
-    ssr: false
-  }
-)
-
-export const LazyBillingForm = dynamic(
-  () => import('./BillingForm').then(mod => ({ default: mod.BillingForm })),
-  {
-    loading: PaymentLoader,
-    ssr: false
-  }
-)
-
-export const LazyCouponForm = dynamic(
-  () => import('./CouponForm').then(mod => ({ default: mod.CouponForm })),
+export const LazyStripeScript = dynamic(
+  () => import('./StripeScript').then(mod => ({ default: mod.StripeScript })),
   {
     loading: PaymentLoader,
     ssr: false
