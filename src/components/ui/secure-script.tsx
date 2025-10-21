@@ -1,7 +1,6 @@
 'use client'
 
 import Script from 'next/script'
-import { useNonce } from '@/hooks/use-nonce'
 
 interface SecureScriptProps {
     id?: string
@@ -20,14 +19,19 @@ export function SecureScript({
 }: SecureScriptProps) {
     const nonce = useNonce()
 
+    // Adicionar atributo de nonce para scripts inline
+    const scriptProps: any = {
+        id,
+        nonce,
+        ...props
+    }
+
     if (src) {
         return (
             <Script
-                id={id}
+                {...scriptProps}
                 src={src}
                 strategy={strategy}
-                nonce={nonce}
-                {...props}
             />
         )
     }
@@ -35,13 +39,19 @@ export function SecureScript({
     if (dangerouslySetInnerHTML) {
         return (
             <script
-                id={id}
-                nonce={nonce}
+                {...scriptProps}
                 dangerouslySetInnerHTML={dangerouslySetInnerHTML}
-                {...props}
             />
         )
     }
 
-    return <script id={id} nonce={nonce} {...props} />
+    return <script {...scriptProps} />
+}
+
+// Hook para obter nonce do meta tag ou headers
+export function useNonce() {
+    if (typeof window === 'undefined') return ''
+
+    const metaTag = document.querySelector('meta[name="csp-nonce"]')
+    return metaTag?.getAttribute('content') || ''
 }
