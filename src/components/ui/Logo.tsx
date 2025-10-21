@@ -1,111 +1,89 @@
-import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import * as React from "react"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
 interface LogoProps {
-  variant?: 'full' | 'icon' | 'text'
-  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
-  priority?: boolean
-  showSubtitle?: boolean
+  size?: "sm" | "md" | "lg"
+  variant?: "default" | "header" | "footer"
 }
-const SIZE_CONFIG = {
-  sm: { width: 112, height: 38, textSize: 'text-lg', src: '/images/logo_transparent.png' },
-  md: { width: 160, height: 54, textSize: 'text-2xl', src: '/images/logo_transparent.png' },
-  lg: { width: 179, height: 61, textSize: 'text-3xl', src: '/images/logo_transparent.png' },
-  xl: { width: 288, height: 96, textSize: 'text-4xl', src: '/images/logo_transparent.png' }
-}
-export function Logo({
-  variant = 'full',
-  size = 'md',
-  className,
-  priority = false,
-  showSubtitle = false
-}: LogoProps) {
-  const config = SIZE_CONFIG[size]
-  // Full logo with image
-  if (variant === 'full') {
-    return (
-      <div className={cn('flex items-center space-x-3', className)}>
-        <div className="relative flex-shrink-0">
-          <Image
-            src={config.src}
-            alt="SV Lentes - Saraiva Vision Oftalmologia"
-            width={config.width}
-            height={config.height}
-            priority={priority}
-            className="object-contain drop-shadow-sm contrast-110 brightness-105"
-            quality={100}
-            sizes={`(max-width: 768px) ${config.width}px, ${config.width}px`}
-          />
-        </div>
-        {showSubtitle && (
-          <div className="hidden lg:flex flex-col text-sm text-gray-800 dark:text-gray-200">
-            <span className="font-semibold text-gray-900 dark:text-white drop-shadow-sm">Saraiva Vision</span>
-            <span className="text-primary-700 dark:text-primary-300 font-bold drop-shadow-sm">
-              Dr. Philipe Saraiva Cruz
-            </span>
-          </div>
-        )}
-      </div>
-    )
+const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
+  ({ className, size = "md", variant = "default", ...props }, ref
+) => {
+  const [error, setError] = React.useState(false)
+  const sizeClasses = {
+    sm: "h-8 w-8",
+    md: "h-10 w-10",
+    lg: "h-12 w-12"
   }
-  // Icon only (eye graphic from logo)
-  if (variant === 'icon') {
+  const variantClasses = {
+    default: "",
+    header: "hover:opacity-90 transition-all",
+    footer: "hover:opacity-90 transition-all"
+  }
+  // Use Next.js Image component for better optimization
+  if (!error) {
     return (
-      <div className={cn('relative flex-shrink-0', className)}>
+      <div
+        ref={ref}
+        className={cn(
+          "relative flex items-center justify-center",
+          sizeClasses[size],
+          variantClasses[variant],
+          className
+        )}
+        {...props}
+      >
         <Image
-          src={config.src}
+          src="/images/logo.jpeg"
           alt="SV Lentes"
-          width={config.height} // Square for icon
-          height={config.height}
-          priority={priority}
-          className="object-contain"
-          quality={95}
-          sizes={`${config.height}px`}
+          width={size === "sm" ? 32 : size === "md" ? 40 : 48}
+          height={size === "sm" ? 32 : size === "md" ? 40 : 48}
+          className="w-full h-full object-contain"
+          priority
+          onError={() => setError(true)}
         />
       </div>
     )
   }
-  // Text only variant (fallback for loading or accessibility)
+  // Fallback to WebP with PNG using Next.js Image optimization
   return (
-    <div className={cn('flex flex-col', className)}>
-      <span className={cn(
-        config.textSize,
-        'font-bold bg-gradient-to-r from-primary-700 to-secondary-700 bg-clip-text text-transparent drop-shadow-sm'
-      )}>
-        SV Lentes
-      </span>
-      {showSubtitle && (
-        <span className="text-sm text-gray-800 dark:text-gray-300 font-semibold drop-shadow-sm">
-          Saraiva Vision Oftalmologia
-        </span>
+    <div
+      ref={ref}
+      className={cn(
+        "relative flex items-center justify-center",
+        sizeClasses[size],
+        variantClasses[variant],
+        className
       )}
+      {...props}
+    >
+      <picture>
+        <source
+          srcSet="/logosv-md.webp"
+          type="image/webp"
+        />
+        <Image
+          src="/logosv-md.png"
+          alt="SV Lentes"
+          fill
+          className={cn(
+            "object-contain",
+            size === "sm" ? "p-1" : size === "md" ? "p-1" : "p-2"
+          )}
+          priority
+        />
+      </picture>
     </div>
   )
-}
-// Predefined logo variants for common use cases
-export function LogoHeader() {
-  return <Logo variant="full" size="lg" priority className="hover:scale-105 transition-transform duration-200" />
-}
-export function LogoFooter() {
-  return (
-    <div className="relative flex-shrink-0 mb-4">
-      <Image
-        src="/images/logo_animado_backup.gif"
-        alt="SV Lentes - Saraiva Vision Oftalmologia"
-        width={270} // 224 * 1.2 = 268.8 ≈ 270
-        height={91} // 76 * 1.2 = 91.2 ≈ 91
-        priority={false}
-        className="object-contain drop-shadow-sm contrast-110 brightness-105"
-        quality={100}
-        sizes="(max-width: 768px) 270px, 270px"
-        unoptimized={true}
-      />
-    </div>
-  )
-}
-export function LogoMobile() {
-  return <Logo variant="icon" size="sm" priority />
-}
-export function LogoLoading() {
-  return <Logo variant="text" size="md" />
-}
+})
+Logo.displayName = "Logo"
+// Exportar componentes específicos para diferentes contextos
+export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>(
+  (props, ref) => <Logo ref={ref} size="md" variant="header" {...props} />
+)
+LogoHeader.displayName = "LogoHeader"
+export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>(
+  (props, ref) => <Logo ref={ref} size="sm" variant="footer" {...props} />
+)
+LogoFooter.displayName = "LogoFooter"
+export { Logo }
