@@ -178,6 +178,7 @@ export function createQuickActions({
   onInvoicesClick,
   onSettingsClick,
   onScheduleClick,
+  onMedicalRecordsClick,
   onPaymentClick,
   onAddressClick,
   onSupportClick,
@@ -189,6 +190,7 @@ export function createQuickActions({
   onInvoicesClick: () => void
   onSettingsClick: () => void
   onScheduleClick: () => void
+  onMedicalRecordsClick: () => void
   onPaymentClick: () => void
   onAddressClick: () => void
   onSupportClick: () => void
@@ -207,21 +209,30 @@ export function createQuickActions({
       badge: pendingOrders > 0 ? pendingOrders.toString() : undefined
     },
     {
+      id: 'schedule',
+      label: 'Minhas Consultas',
+      description: 'Agendar e ver consultas',
+      icon: <Calendar className="h-6 w-6" />,
+      variant: 'default',
+      onClick: onScheduleClick,
+      color: 'bg-green-50 hover:bg-green-100 border-green-200 text-green-800'
+    },
+    {
+      id: 'medicalRecords',
+      label: 'Histórico Médico',
+      description: 'Receitas, exames e diagnósticos',
+      icon: <FileText className="h-6 w-6" />,
+      variant: 'default',
+      onClick: onMedicalRecordsClick,
+      color: 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800'
+    },
+    {
       id: 'invoices',
       label: 'Faturas',
       description: 'Baixar notas fiscais',
       icon: <FileText className="h-6 w-6" />,
       variant: 'outline',
       onClick: onInvoicesClick
-    },
-    {
-      id: 'schedule',
-      label: 'Agendar Consulta',
-      description: 'Marcar consulta médica',
-      icon: <Calendar className="h-6 w-6" />,
-      variant: 'outline',
-      onClick: onScheduleClick,
-      color: 'bg-green-50 hover:bg-green-100 border-green-200 text-green-800'
     },
     {
       id: 'payment',
@@ -256,7 +267,7 @@ export function createQuickActions({
       variant: 'outline',
       onClick: onSupportClick,
       badge: unreadMessages > 0 ? unreadMessages.toString() : undefined,
-      color: 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800'
+      color: 'bg-cyan-50 hover:bg-cyan-100 border-cyan-200 text-cyan-800'
     },
     {
       id: 'settings',

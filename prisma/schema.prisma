@@ -194,6 +194,8 @@ model User {
   chatbotAuthCodes     ChatbotAuthCode[]
   chatbotSessions      ChatbotSession[]
   subscriptionHistory  SubscriptionHistory[]
+  appointments         Appointment[]
+  medicalRecords       MedicalRecord[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -1020,4 +1022,127 @@ model SubscriptionHistory {
   @@index([changeType], name: "idx_subscription_history_change_type")
   @@index([createdAt(sort: Desc)], name: "idx_subscription_history_created_at")
   @@map("subscription_history")
+}
+
+// ==================== APPOINTMENT & MEDICAL RECORDS SYSTEM ====================
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum AppointmentType {
+  INITIAL_CONSULTATION
+  FOLLOW_UP
+  EMERGENCY
+  ROUTINE_CHECK
+  PRESCRIPTION_RENEWAL
+}
+
+enum MedicalRecordType {
+  PRESCRIPTION
+  CONSULTATION_NOTES
+  EXAM_RESULTS
+  DIAGNOSIS
+  TREATMENT_PLAN
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  userId            String            @map("user_id")
+  
+  // Appointment details
+  appointmentNumber String            @unique @map("appointment_number")
+  type              AppointmentType   @map("type")
+  status            AppointmentStatus @default(SCHEDULED)
+  
+  // Scheduling
+  scheduledDate     DateTime          @map("scheduled_date") @db.Timestamp(6)
+  duration          Int               @default(30) @map("duration") // minutes
+  
+  // Medical professional
+  doctorName        String            @map("doctor_name") @db.VarChar(255)
+  doctorCRM         String?           @map("doctor_crm") @db.VarChar(50)
+  
+  // Location
+  location          String?           @db.VarChar(255)
+  isVirtual         Boolean           @default(false) @map("is_virtual")
+  meetingLink       String?           @map("meeting_link") @db.Text
+  
+  // Notes
+  patientNotes      String?           @map("patient_notes") @db.Text
+  internalNotes     String?           @map("internal_notes") @db.Text
+  
+  // Cancellation
+  cancelledAt       DateTime?         @map("cancelled_at") @db.Timestamp(6)
+  cancellationReason String?          @map("cancellation_reason") @db.Text
+  
+  // Completion
+  completedAt       DateTime?         @map("completed_at") @db.Timestamp(6)
+  
+  // Reminders
+  reminderSent      Boolean           @default(false) @map("reminder_sent")
+  reminderSentAt    DateTime?         @map("reminder_sent_at") @db.Timestamp(6)
+  
+  // Audit
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  // Relations
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicalRecords    MedicalRecord[]
+  
+  @@index([userId], name: "idx_appointments_user")
+  @@index([status], name: "idx_appointments_status")
+  @@index([scheduledDate], name: "idx_appointments_scheduled_date")
+  @@index([appointmentNumber], name: "idx_appointments_number")
+  @@map("appointments")
+}
+
+model MedicalRecord {
+  id              String            @id @default(cuid())
+  userId          String            @map("user_id")
+  appointmentId   String?           @map("appointment_id")
+  
+  // Record details
+  recordType      MedicalRecordType @map("record_type")
+  title           String            @db.VarChar(255)
+  description     String            @db.Text
+  
+  // Medical data (stored as JSON for flexibility)
+  data            Json              @db.JsonB
+  
+  // Document
+  documentUrl     String?           @map("document_url") @db.Text
+  documentType    String?           @map("document_type") @db.VarChar(50)
+  
+  // Medical professional
+  issuedBy        String?           @map("issued_by") @db.VarChar(255)
+  issuedByCRM     String?           @map("issued_by_crm") @db.VarChar(50)
+  issuedAt        DateTime?         @map("issued_at") @db.Date
+  
+  // Validity
+  expiresAt       DateTime?         @map("expires_at") @db.Date
+  isActive        Boolean           @default(true) @map("is_active")
+  
+  // Privacy
+  isConfidential  Boolean           @default(false) @map("is_confidential")
+  
+  // Audit
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
+  
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointment     Appointment?      @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  
+  @@index([userId], name: "idx_medical_records_user")
+  @@index([appointmentId], name: "idx_medical_records_appointment")
+  @@index([recordType], name: "idx_medical_records_type")
+  @@index([isActive], name: "idx_medical_records_active")
+  @@map("medical_records")
 }
