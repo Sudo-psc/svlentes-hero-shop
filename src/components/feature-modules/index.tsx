@@ -56,15 +56,10 @@ export const useFeaturePreloader = () => {
     Object.values(PaymentFeatures).forEach(loader => preloadFeature(loader))
   }, [preloadFeature])
 
-  const preloadAuth = React.useCallback(() => {
-    Object.values(AuthFeatures).forEach(loader => preloadFeature(loader))
-  }, [preloadFeature])
-
   return {
     preloadFeature,
     preloadDashboard,
-    preloadPayment,
-    preloadAuth
+    preloadPayment
   }
 }
 
@@ -88,35 +83,42 @@ export const getChunkForRoute = (route: string): keyof typeof CHUNK_NAMES => {
 }
 
 // Componente de roteamento inteligente que carrega chunks por feature
-export const SmartRouteLoader = ({ 
-  route, 
-  children 
-}: { 
+export const SmartRouteLoader = ({
+  route,
+  children
+}: {
   route: string
-  children: React.ReactNode 
+  children: React.ReactNode
 }) => {
   const chunkName = getChunkForRoute(route)
-  const { preloadFeature } = useFeaturePreloader()
 
   React.useEffect(() => {
-    // Pré-carrega o chunk baseado na rota atual
-    switch (chunkName) {
-      case CHUNK_NAMES.DASHBOARD:
-        import('../dashboard/lazy-components')
-        break
-      case CHUNK_NAMES.PAYMENT:
-        import('../payment/lazy-components')
-        break
-      case CHUNK_NAMES.AUTH:
-        import('../auth/LoginForm')
-        break
-      case CHUNK_NAMES.ADMIN:
-        import('../admin/AdminPanel')
-        break
-      case CHUNK_NAMES.FORMS:
-        import('../forms/ContactForm')
-        break
+    // Pré-carrega o chunk baseado na rota atual com tratamento de erro
+    const loadChunk = async () => {
+      try {
+        switch (chunkName) {
+          case CHUNK_NAMES.DASHBOARD:
+            await import('../dashboard/lazy-components')
+            break
+          case CHUNK_NAMES.PAYMENT:
+            await import('../payment/lazy-components')
+            break
+          case CHUNK_NAMES.AUTH:
+            await import('../auth/SocialLoginButtons')
+            break
+          case CHUNK_NAMES.ADMIN:
+            await import('../admin/AdminPanel')
+            break
+          case CHUNK_NAMES.FORMS:
+            await import('../forms/ContactForm')
+            break
+        }
+      } catch (error) {
+        console.warn(`Failed to preload chunk ${chunkName}:`, error)
+      }
     }
+
+    loadChunk()
   }, [chunkName])
 
   return <>{children}</>
