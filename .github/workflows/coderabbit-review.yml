@@ -12,7 +12,7 @@ permissions:
   issues: write
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
 
 jobs:
   coderabbit-review:
@@ -24,13 +24,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for better context
+          fetch-depth: 0 # Full history for better context
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -54,7 +54,7 @@ jobs:
             !*.log
           language: en-US
           openai_light_model: gpt-4o-mini
-          openai_heavy_model: gpt-4o
+          openai_heavy_model: gpt-5
           openai_timeout_ms: 900000
           bot_icon: 🤖
           enable_release_notes: true
@@ -117,7 +117,7 @@ jobs:
         with:
           debug: false
           openai_light_model: gpt-4o-mini
-          openai_heavy_model: gpt-4o
+          openai_heavy_model: gpt-5
 
   integration-status:
     name: CodeRabbit Integration Status

@@ -99,7 +99,7 @@
 
 ### Variáveis de Ambiente Atualizadas
 ```env
-NEXT_PUBLIC_WHATSAPP_NUMBER="5511947038078"
+NEXT_PUBLIC_WHATSAPP_NUMBER="553399898026"
 ```
 
 ### Dados Corrigidos
