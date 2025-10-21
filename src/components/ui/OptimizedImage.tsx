@@ -13,6 +13,7 @@ interface OptimizedImageProps {
     fill?: boolean
     sizes?: string
     onLoad?: () => void
+    useWebP?: boolean
 }
 export function OptimizedImage({
     src,
@@ -24,7 +25,8 @@ export function OptimizedImage({
     className = '',
     fill = false,
     sizes,
-    onLoad
+    onLoad,
+    useWebP = true
 }: OptimizedImageProps) {
     const [isLoading, setIsLoading] = useState(true)
     const [hasError, setHasError] = useState(false)
@@ -37,6 +39,16 @@ export function OptimizedImage({
         setIsLoading(false)
         setHasError(true)
     }
+    // Generate WebP version of the image
+    const getWebPSrc = (originalSrc: string) => {
+        if (!useWebP) return null
+        // Convert common image formats to WebP
+        if (originalSrc.match(/\.(jpeg|jpg|png)$/i)) {
+            return originalSrc.replace(/\.(jpeg|jpg|png)$/i, '.webp')
+        }
+        return null
+    }
+    const webpSrc = getWebPSrc(src)
     if (hasError) {
         return (
             <div
@@ -67,17 +79,36 @@ export function OptimizedImage({
                     style={{ width, height }}
                 />
             )}
-            <Image
-                {...imageProps}
-                alt={alt}
-                priority={priority}
-                fill={fill}
-                sizes={sizes}
-                className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'
-                    } ${className}`}
-                onLoad={handleLoad}
-                onError={handleError}
-            />
+            {webpSrc ? (
+                // Use picture element for WebP with fallback
+                <picture>
+                    <source srcSet={webpSrc} type="image/webp" />
+                    <Image
+                        {...imageProps}
+                        alt={alt}
+                        priority={priority}
+                        fill={fill}
+                        sizes={sizes}
+                        className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'
+                            } ${className}`}
+                        onLoad={handleLoad}
+                        onError={handleError}
+                    />
+                </picture>
+            ) : (
+                // Use regular Image for non-convertible formats
+                <Image
+                    {...imageProps}
+                    alt={alt}
+                    priority={priority}
+                    fill={fill}
+                    sizes={sizes}
+                    className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'
+                        } ${className}`}
+                    onLoad={handleLoad}
+                    onError={handleError}
+                />
+            )}
         </div>
     )
 }

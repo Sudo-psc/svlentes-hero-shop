@@ -61,18 +61,14 @@ export function Header({ className }: HeaderProps) {
         scrollToSection(sectionId)
         setIsMenuOpen(false)
     }, [])
-    const handleAgendarConsulta = useCallback(() => {
-        const whatsappMessage = `Olá! Gostaria de agendar uma consulta com o Dr. Philipe Saraiva Cruz para avaliar minha necessidade de lentes de contato.
-Vim através do site SV Lentes e tenho interesse no serviço de assinatura com acompanhamento médico.`
-        const whatsappLink = generateWhatsAppLink(
-            process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511947038078',
-            whatsappMessage
-        )
-        window.open(whatsappLink, '_blank')
-    }, [])
-    const handleLogin = useCallback(() => {
-        router.push('/area-assinante/login')
-    }, [])
+    const handleAgendarConsulta = () => {
+        router.push('/agendar-consulta')
+        setIsMenuOpen(false)
+    }
+    const handleLogin = () => {
+        router.push('/area-assinante')
+        setIsMenuOpen(false)
+    }
     const handleLogout = useCallback(async () => {
         await signOut()
         router.push('/')

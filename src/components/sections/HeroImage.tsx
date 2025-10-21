@@ -9,9 +9,9 @@ interface HeroImageProps {
 export function HeroImage({ className = '', imageVariant = 'hero1' }: HeroImageProps) {
     const [isLoaded, setIsLoaded] = useState(false)
     const imageMap = {
-        hero1: '/HEro.png',
-        hero2: '/Hero2.png',
-        hero3: '/Hero3.png'
+        hero1: { webp: '/Hero2.webp', png: '/Hero2.png' }, // Using Hero2 as fallback for hero1 since HEro.png is missing
+        hero2: { webp: '/Hero2.webp', png: '/Hero2.png' },
+        hero3: { webp: '/Hero3.webp', png: '/Hero3.png' }
     }
     const imageSrc = imageMap[imageVariant]
     return (
@@ -25,11 +25,11 @@ export function HeroImage({ className = '', imageVariant = 'hero1' }: HeroImageP
                 {/* Hero Image */}
                 <picture>
                     <source
-                        srcSet={imageSrc}
-                        type="image/png"
+                        srcSet={imageSrc.webp}
+                        type="image/webp"
                     />
                     <Image
-                        src={imageSrc}
+                        src={imageSrc.png}
                         alt="Paciente usando lentes com acompanhamento do Dr. Philipe em Itaim Bibi, São Paulo"
                         fill
                         priority={false}

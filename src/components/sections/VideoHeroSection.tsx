@@ -30,7 +30,7 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
                 muted
                 loop
                 playsInline
-                poster="/HEro.png"
+                poster="/Hero2.webp"
             >
                 <source src="/Videos/hero-full-width.mp4" type="video/mp4" />
                 Seu navegador não suporta vídeos HTML5.

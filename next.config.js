@@ -60,18 +60,8 @@ const nextConfig = {
 
         // Generate nonce for CSP (development friendly)
         const generateNonce = () => {
-            if (typeof window !== 'undefined') {
-                // Browser fallback
-                return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            }
-            try {
-                // Try Node.js crypto module
-                const { randomBytes } = require('crypto');
-                return randomBytes(16).toString('base64');
-            } catch (e) {
-                // Fallback for environments without crypto
-                return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            }
+            // Simple fallback for all environments to avoid crypto issues
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         }
         const nonce = generateNonce();
 

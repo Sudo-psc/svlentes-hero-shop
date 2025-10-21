@@ -45,7 +45,7 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
       </div>
     )
   }
-  // Fallback to PNG with Next.js Image optimization
+  // Fallback to WebP with PNG using Next.js Image optimization
   return (
     <div
       ref={ref}
@@ -57,16 +57,22 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
       )}
       {...props}
     >
-      <Image
-        src="/logosv-md.png"
-        alt="SV Lentes"
-        fill
-        className={cn(
-          "object-contain",
-          size === "sm" ? "p-1" : size === "md" ? "p-1" : "p-2"
-        )}
-        priority
-      />
+      <picture>
+        <source
+          srcSet="/logosv-md.webp"
+          type="image/webp"
+        />
+        <Image
+          src="/logosv-md.png"
+          alt="SV Lentes"
+          fill
+          className={cn(
+            "object-contain",
+            size === "sm" ? "p-1" : size === "md" ? "p-1" : "p-2"
+          )}
+          priority
+        />
+      </picture>
     </div>
   )
 })
