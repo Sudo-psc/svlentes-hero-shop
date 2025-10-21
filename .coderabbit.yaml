@@ -2,7 +2,7 @@
 # Documentation: https://docs.coderabbit.ai/guides/configure-coderabbit
 
 # Language and localization
-language: en-US
+language: pt-BR
 tone_instructions: "Be professional, constructive, and focus on actionable improvements. Consider this is a healthcare e-commerce application requiring high security and compliance standards."
 
 # Review behavior
