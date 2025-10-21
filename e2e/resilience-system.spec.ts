@@ -121,7 +121,7 @@ test.describe('Sistema de Resiliência - E2E', () => {
 
   test('deve sincronizar dados quando voltar online', async () => {
     // Simular modo offline
-    await page.setOffline(true)
+    await page.context().setOffline(true)
     await page.goto('/area-assinante/dashboard')
 
     // Deve mostrar modo offline
@@ -141,7 +141,7 @@ test.describe('Sistema de Resiliência - E2E', () => {
     }
 
     // Voltar online
-    await page.setOffline(false)
+    await page.context().setOffline(false)
 
     // Disparar evento online
     await page.evaluate(() => {
@@ -394,7 +394,7 @@ test.describe('Sistema de Resiliência - E2E', () => {
 
   test('deve validar segurança dos dados offline', async () => {
     // Simular modo offline
-    await page.setOffline(true)
+    await page.context().setOffline(true)
 
     // Mock dados sensíveis
     await page.route('**/api/assinante/subscription', (route) => {
@@ -414,9 +414,9 @@ test.describe('Sistema de Resiliência - E2E', () => {
 
     // Verificar se dados sensíveis não estão disponíveis offline
     const pageContent = await page.content()
-    expect(pageContent).not.toContain('creditCard')
+    expect(pageContent).not.toContain('credit-card')
     expect(pageContent).not.toContain('cvv')
-    expect(pageContent).not.toContain('fullAddress')
+    expect(pageContent).not.toContain('full-address')
 
     // Verificar se dados essenciais estão disponíveis
     await expect(page.locator('[data-testid="subscription-status"]')).toBeVisible()
@@ -432,14 +432,14 @@ test.describe('Resiliência - Cenários de Borda', () => {
     await page.click('[data-testid="update-subscription"]')
 
     // Desconectar no meio da operação
-    await page.setOffline(true)
+    await page.context().setOffline(true)
 
     // Deve mostrar indicador de operação pendente
     await expect(page.locator('[data-testid="operation-pending"]')).toBeVisible()
     await expect(page.locator('[data-testid="offline-indicator"]')).toBeVisible()
 
     // Reconectar
-    await page.setOffline(false)
+    await page.context().setOffline(false)
     await page.evaluate(() => window.dispatchEvent(new Event('online')))
 
     // Deve completar operação automaticamente
