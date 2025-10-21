@@ -2,6 +2,7 @@
  * SendPulse WhatsApp API Client (Refactored - Phase 3)
  * Bot-based API with contact management, rate limiting, retry logic, and template messages
  */
+import crypto from 'crypto'
 import { sendPulseAuth } from './sendpulse-auth'
 import { botManager } from './sendpulse/bot-manager'
 import { contactCache } from './sendpulse/contact-cache'
@@ -638,7 +639,6 @@ export class SendPulseClient {
     }
     // Verify HMAC signature if provided
     try {
-      const crypto = require('crypto')
       const expectedSignature = crypto
         .createHmac('sha256', this.webhookToken)
         .update(payload, 'utf8')

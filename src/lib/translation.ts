@@ -13,7 +13,7 @@ import { DEFAULT_CLIENT_CONFIG } from './use-server-config'
 type LocaleCode = 'pt-BR' | 'en-US'
 
 // Cache translations in memory
-let translationsCache: Record<string, Record<string, string>> = {}
+const translationsCache: Record<string, Record<string, string>> = {}
 let translationsPromise: Promise<Record<string, string>> | null = null
 
 /**

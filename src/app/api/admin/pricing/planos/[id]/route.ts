@@ -10,7 +10,7 @@ import { withAdminAuth } from '@/lib/admin/auth'
 import { PlanoAssinatura } from '@/types/pricing-calculator'
 
 // Simulação de banco de dados (em produção, usar PostgreSQL)
-let planosDB: PlanoAssinatura[] = [
+const planosDB: PlanoAssinatura[] = [
   {
     id: '1',
     nome: 'Plano Básico Mensal',

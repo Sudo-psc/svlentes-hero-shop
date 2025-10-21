@@ -5,27 +5,27 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { jest } from '@jest/globals'
+import { vi } from 'vitest'
 
 // Mock Next.js router
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
     useRouter: () => ({
-        push: jest.fn(),
-        replace: jest.fn(),
-        prefetch: jest.fn()
+        push: vi.fn(),
+        replace: vi.fn(),
+        prefetch: vi.fn()
     }),
     useSearchParams: () => new URLSearchParams(),
     usePathname: () => '/'
 }))
 
 // Mock analytics
-jest.mock('@/lib/analytics', () => ({
-    trackEvent: jest.fn(),
-    trackConversion: jest.fn()
+vi.mock('@/lib/analytics', () => ({
+    trackEvent: vi.fn(),
+    trackConversion: vi.fn()
 }))
 
 // Mock fetch for API calls
-global.fetch = jest.fn()
+global.fetch = vi.fn()
 
 // Simple mock components for testing
 const MockLeadCaptureForm = ({ onLeadCapture }: { onLeadCapture: (data: any) => void }) => {
@@ -110,13 +110,13 @@ describe('Complete Conversion Flow Integration', () => {
     const user = userEvent.setup()
 
     beforeEach(() => {
-        jest.clearAllMocks()
-            ; (global.fetch as jest.Mock).mockClear()
+        vi.clearAllMocks()
+            ; (global.fetch as vi.Mock).mockClear()
     })
 
     describe('Lead Capture to Calculator Flow', () => {
         it('should capture lead and proceed to economy calculator', async () => {
-            const mockOnLeadCapture = jest.fn()
+            const mockOnLeadCapture = vi.fn()
 
             render(<MockLeadCaptureForm onLeadCapture={mockOnLeadCapture} />)
 
@@ -169,7 +169,7 @@ describe('Complete Conversion Flow Integration', () => {
     describe('Pricing Selection to Checkout Flow', () => {
         it('should select plan and call checkout API', async () => {
             // Mock successful checkout session creation
-            ; (global.fetch as jest.Mock).mockResolvedValueOnce({
+            ; (global.fetch as vi.Mock).mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
                     sessionId: 'cs_test_123',
@@ -196,7 +196,7 @@ describe('Complete Conversion Flow Integration', () => {
 
         it('should handle checkout creation errors gracefully', async () => {
             // Mock failed checkout session creation
-            ; (global.fetch as jest.Mock).mockResolvedValueOnce({
+            ; (global.fetch as vi.Mock).mockResolvedValueOnce({
                 ok: false,
                 json: async () => ({
                     error: 'Payment processing unavailable'
@@ -216,7 +216,7 @@ describe('Complete Conversion Flow Integration', () => {
 
     describe('Form Validation Integration', () => {
         it('should validate all required fields', async () => {
-            render(<MockLeadCaptureForm onLeadCapture={jest.fn()} />)
+            render(<MockLeadCaptureForm onLeadCapture={vi.fn()} />)
 
             // Try to submit without filling required fields
             await user.click(screen.getByRole('button', { name: /calcule sua economia/i }))
@@ -228,7 +228,7 @@ describe('Complete Conversion Flow Integration', () => {
         })
 
         it('should validate email format', async () => {
-            render(<MockLeadCaptureForm onLeadCapture={jest.fn()} />)
+            render(<MockLeadCaptureForm onLeadCapture={vi.fn()} />)
 
             const emailInput = screen.getByLabelText(/email/i)
             await user.type(emailInput, 'invalid-email')
@@ -238,7 +238,7 @@ describe('Complete Conversion Flow Integration', () => {
         })
 
         it('should validate WhatsApp format', async () => {
-            render(<MockLeadCaptureForm onLeadCapture={jest.fn()} />)
+            render(<MockLeadCaptureForm onLeadCapture={vi.fn()} />)
 
             const whatsappInput = screen.getByLabelText(/whatsapp/i)
             await user.type(whatsappInput, '123')
@@ -257,7 +257,7 @@ describe('Complete Conversion Flow Integration', () => {
             }
 
             // Step 1: Lead capture
-            const { rerender } = render(<MockLeadCaptureForm onLeadCapture={jest.fn()} />)
+            const { rerender } = render(<MockLeadCaptureForm onLeadCapture={vi.fn()} />)
 
             await user.type(screen.getByLabelText(/nome/i), leadData.nome)
             await user.type(screen.getByLabelText(/whatsapp/i), leadData.whatsapp)
@@ -276,7 +276,7 @@ describe('Complete Conversion Flow Integration', () => {
             })
 
                 // Step 3: Pricing selection
-                ; (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ; (global.fetch as vi.Mock).mockResolvedValueOnce({
                     ok: true,
                     json: async () => ({ sessionId: 'cs_test_123' })
                 })
@@ -296,9 +296,9 @@ describe('Complete Conversion Flow Integration', () => {
             const { trackEvent } = require('@/lib/analytics')
 
             // Mock analytics tracking
-            const mockTrackEvent = trackEvent as jest.Mock
+            const mockTrackEvent = trackEvent as vi.Mock
 
-            render(<MockLeadCaptureForm onLeadCapture={jest.fn()} />)
+            render(<MockLeadCaptureForm onLeadCapture={vi.fn()} />)
 
             // Fill and submit lead form
             await user.type(screen.getByLabelText(/nome/i), 'João Silva')
@@ -314,7 +314,7 @@ describe('Complete Conversion Flow Integration', () => {
 
     describe('Error Handling', () => {
         it('should handle network errors gracefully', async () => {
-            ; (global.fetch as jest.Mock).mockRejectedValueOnce(
+            ; (global.fetch as vi.Mock).mockRejectedValueOnce(
                 new Error('Network error')
             )
 

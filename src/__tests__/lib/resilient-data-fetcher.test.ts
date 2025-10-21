@@ -302,7 +302,7 @@ describe('ResilientDataFetcher', () => {
     })
 
     it('deve tentar múltiplos fallbacks em ordem', async () => {
-      let callOrder = []
+      const callOrder = []
       mockFetch.mockImplementation((url) => {
         callOrder.push(url)
         if (url === '/api/fallback1') {

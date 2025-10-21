@@ -1,4 +1,9 @@
 import '@testing-library/jest-dom'
+import { config as dotenvConfig } from 'dotenv'
+import { resolve } from 'path'
+
+// Load test environment variables
+dotenvConfig({ path: resolve(__dirname, '.env.test') })
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({

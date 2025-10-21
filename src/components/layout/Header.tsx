@@ -167,7 +167,9 @@ export function Header({ className }: HeaderProps) {
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                        aria-label="Toggle menu"
+                        aria-label={isMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
+                        aria-expanded={isMenuOpen}
+                        aria-controls="mobile-menu"
                     >
                         {isMenuOpen ? (
                             <X className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
@@ -178,7 +180,12 @@ export function Header({ className }: HeaderProps) {
                 </div>
                 {/* Mobile Menu */}
                 {isMenuOpen && (
-                    <div className="md:hidden border-t border-gray-200 bg-white">
+                    <div 
+                        id="mobile-menu"
+                        className="md:hidden border-t border-gray-200 bg-white"
+                        role="navigation"
+                        aria-label="Menu de navegação mobile"
+                    >
                         <div className="py-4 space-y-4">
                             {navigation.map((item: any) => (
                                 item.isAnchor ? (
@@ -190,6 +197,7 @@ export function Header({ className }: HeaderProps) {
                                             handleNavClick(item.href)
                                         }}
                                         className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        role="menuitem"
                                     >
                                         {item.name}
                                     </a>
@@ -198,13 +206,14 @@ export function Header({ className }: HeaderProps) {
                                         key={item.name}
                                         href={item.href}
                                         className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        role="menuitem"
                                     >
                                         {item.name}
                                     </a>
                                 )
                             ))}
                             {/* Mobile CTA */}
-                            <div className="px-4 pt-4 border-t border-gray-200 space-y-3">
+                            <div className="px-4 pt-4 border-t border-gray-200 space-y-3" role="menu">
                                 {user ? (
                                     <>
                                         <Button

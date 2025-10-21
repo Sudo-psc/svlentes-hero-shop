@@ -283,7 +283,7 @@ describe('Console Logs Cleanup Script', () => {
     })
 
     it('should handle mixed content efficiently', () => {
-      let mixedContent = `
+      const mixedContent = `
         import React from 'react';
 
         const Component = () => {

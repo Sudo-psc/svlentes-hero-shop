@@ -1,7 +1,39 @@
+<!--
+═══════════════════════════════════════════════════════════════════════
+SYNC IMPACT REPORT
+═══════════════════════════════════════════════════════════════════════
+
+Version Change: 1.0.0 → 1.0.1 (PATCH)
+Date: 2025-10-21
+
+Rationale:
+- Minor documentation synchronization with CLAUDE.md
+- No principle additions, removals, or redefinitions
+- Last amended date updated to reflect documentation review
+- All principles remain unchanged and fully compatible
+
+Modified Principles: None (documentation update only)
+Added Sections: None
+Removed Sections: None
+
+Templates Requiring Updates:
+✅ plan-template.md - Constitution Check section aligned (no changes needed)
+✅ spec-template.md - No constitution references (no changes needed)
+⚠️  tasks-template.md - File does not exist (no action required)
+✅ commands/*.md - Directory empty (no action required)
+
+Follow-up TODOs: None
+
+Compliance Status: ✅ All principles remain testable and declarative
+Documentation Status: ✅ Synchronized with CLAUDE.md project guidance
+Validation Status: ✅ No remaining placeholder tokens
+═══════════════════════════════════════════════════════════════════════
+-->
+
 # SV Lentes Project Constitution
 
-**Last Updated**: 2025-10-16
-**Version**: 1.0.0
+**Last Updated**: 2025-10-21
+**Version**: 1.0.1
 
 This document establishes the **non-negotiable principles** that govern all development, design, and implementation decisions for the SV Lentes contact lens subscription platform.
 
@@ -223,11 +255,38 @@ Build a **secure, accessible, and LGPD-compliant** healthcare platform that deli
 
 ---
 
+## Governance
+
+### Amendment Procedure
+1. Proposed changes must be documented with rationale
+2. Changes require approval from project owner and technical lead
+3. Version number must be incremented according to semantic versioning:
+   - **MAJOR**: Backward incompatible governance/principle removals or redefinitions
+   - **MINOR**: New principle/section added or materially expanded guidance
+   - **PATCH**: Clarifications, wording, typo fixes, non-semantic refinements
+4. All dependent templates and documentation must be updated within 7 days
+5. Team notification required for any constitutional amendments
+
+### Versioning Policy
+- All changes tracked in Revision History table below
+- Constitution version referenced in all plan-template.md documents
+- Breaking changes (MAJOR version) require team-wide discussion
+- Constitution reviewed quarterly for relevance and accuracy
+
+### Compliance Review
+- Monthly automated compliance checks against principles
+- Quarterly manual review of principle adherence
+- Annual comprehensive constitution review and update
+- Violations logged and addressed within 14 days
+
+---
+
 ## Revision History
 
 | Version | Date       | Changes                                    |
 |---------|------------|--------------------------------------------|
 | 1.0.0   | 2025-10-16 | Initial constitution established           |
+| 1.0.1   | 2025-10-21 | Documentation sync, governance section added |
 
 ---
 

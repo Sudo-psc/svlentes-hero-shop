@@ -174,6 +174,23 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Hooks precisam estar sempre antes de qualquer return condicional
+  const handleViewCustomer = useCallback((customer: Customer) => {
+    setSelectedCustomer(customer)
+  }, [])
+  
+  const handleEditCustomer = useCallback((customer: Customer) => {
+  }, [])
+  
+  const handleExportData = useCallback(() => {
+  }, [])
+  
+  const handleRefresh = useCallback(() => {
+    setIsLoading(true)
+    setTimeout(() => setIsLoading(false), 1000)
+  }, [])
+
   // Verificação de permissão
   if (!hasPermission('VIEW_CUSTOMERS')) {
     return (
@@ -222,17 +239,7 @@ export default function CustomersPage() {
       case 'revoked': return 'bg-red-100 text-red-800 border-red-200'
     }
   }
-  const handleViewCustomer = useCallback((customer: Customer) => {
-    setSelectedCustomer(customer)
-  }, [])
-  const handleEditCustomer = useCallback((customer: Customer) => {
-  }, [])
-  const handleExportData = useCallback(() => {
-  }, [])
-  const handleRefresh = useCallback(() => {
-    setIsLoading(true)
-    setTimeout(() => setIsLoading(false), 1000)
-  }, [])
+
   const columns = [
     {
       key: 'name',

@@ -161,7 +161,6 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
           successfulAttempts: prev.successfulAttempts + 1,
           averageResponseTime: (prev.averageResponseTime * prev.successfulAttempts + result.responseTime) / (prev.successfulAttempts + 1)
         }))
-        `)
       } else if (result.status === 'fallback' && result.data) {
         // Usando dados fallback
         setSubscription(result.data.subscription)
@@ -170,7 +169,6 @@ export function useResilientSubscription(): UseResilientSubscriptionReturn {
         setError(null)
         setIsUsingFallback(true)
         setIsUsingCache(result.fromCache)
-        `)
       } else {
         // Falha completa - tentar dados offline
         const offlineData = await loadOfflineData()

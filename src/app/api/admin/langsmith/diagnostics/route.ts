@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Test basic connectivity
     let connectionStatus = 'not_configured'
     let apiTestResult = null
-    let lastTraces = []
+    const lastTraces = []
     if (isConfigured) {
       try {
         // Test API connection

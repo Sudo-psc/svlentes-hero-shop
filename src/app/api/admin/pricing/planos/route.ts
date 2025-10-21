@@ -10,7 +10,7 @@ import { withCache, cacheUtils } from '@/lib/api-cache'
 import { PlanoAssinatura } from '@/types/pricing-calculator'
 
 // Simulação de banco de dados
-let planosDB: PlanoAssinatura[] = [
+const planosDB: PlanoAssinatura[] = [
   {
     id: '1',
     nome: 'Plano Básico Mensal',

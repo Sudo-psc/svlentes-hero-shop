@@ -5,15 +5,15 @@
 
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { jest } from '@jest/globals'
+import { vi } from 'vitest'
 import React from 'react'
 
 // Mock Next.js router
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
     useRouter: () => ({
-        push: jest.fn(),
-        replace: jest.fn(),
-        prefetch: jest.fn()
+        push: vi.fn(),
+        replace: vi.fn(),
+        prefetch: vi.fn()
     }),
     useSearchParams: () => new URLSearchParams(),
     usePathname: () => '/'
@@ -22,23 +22,23 @@ jest.mock('next/navigation', () => ({
 // Mock window.matchMedia for responsive tests
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: jest.fn().mockImplementation(query => ({
+    value: vi.fn().mockImplementation(query => ({
         matches: false,
         media: query,
         onchange: null,
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
-        dispatchEvent: jest.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
     })),
 })
 
 // Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-    disconnect: jest.fn(),
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
 }))
 
 // Simple mock components for testing responsive behavior
@@ -144,7 +144,7 @@ describe('Responsive Design Integration Tests', () => {
         })
 
         // Update matchMedia mock based on viewport
-        window.matchMedia = jest.fn().mockImplementation(query => {
+        window.matchMedia = vi.fn().mockImplementation(query => {
             const matches: Record<string, boolean> = {
                 '(max-width: 640px)': width <= 640,
                 '(max-width: 768px)': width <= 768,
@@ -158,11 +158,11 @@ describe('Responsive Design Integration Tests', () => {
                 matches: matches[query] || false,
                 media: query,
                 onchange: null,
-                addListener: jest.fn(),
-                removeListener: jest.fn(),
-                addEventListener: jest.fn(),
-                removeEventListener: jest.fn(),
-                dispatchEvent: jest.fn(),
+                addListener: vi.fn(),
+                removeListener: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                dispatchEvent: vi.fn(),
             }
         })
 
@@ -170,7 +170,7 @@ describe('Responsive Design Integration Tests', () => {
     }
 
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
     })
 
     describe('Mobile Viewport (320px - 640px)', () => {

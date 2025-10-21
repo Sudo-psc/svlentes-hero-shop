@@ -25,7 +25,10 @@ import {
   MoreHorizontal,
   CreditCard as CreditCardIcon,
   FileText,
-  BarChart3
+  BarChart3,
+  ExternalLink,
+  Activity,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -317,6 +320,15 @@ export default function SubscriptionsManager() {
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+
+  // Hooks precisam estar sempre antes de qualquer return condicional
+  const refreshData = useCallback(() => {
+    setIsLoading(true)
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 1000)
+  }, [])
+
   // Verificação de permissão
   if (!hasPermission('VIEW_SUBSCRIPTIONS')) {
     return (
@@ -411,13 +423,7 @@ export default function SubscriptionsManager() {
       default: return cycle
     }
   }
-  const refreshData = useCallback(() => {
-    setIsLoading(true)
-    setTimeout(() => {
-      setLastRefresh(new Date())
-      setIsLoading(false)
-    }, 1000)
-  }, [])
+
   const handleViewInAsaas = (asaasId: string) => {
     window.open(`https://asaas.com.br/assinaturas/${asaasId}`, '_blank')
   }

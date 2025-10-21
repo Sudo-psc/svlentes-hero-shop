@@ -4,7 +4,7 @@
  */
 
 import { setupServer } from 'msw/node'
-import { rest } from 'msw'
+import { http, HttpResponse } from 'msw'
 
 export const mockResponses = {
   subscription: {
@@ -268,7 +268,7 @@ export const mockResponses = {
 
 export const handlers = [
   // Subscription API
-  rest.get('/api/assinante/subscription', (req, res, ctx) => {
+  http.get('/api/assinante/subscription', (req, res, ctx) => {
     const status = req.url.searchParams.get('status') || 'success'
 
     switch (status) {
@@ -301,7 +301,7 @@ export const handlers = [
     }
   }),
 
-  rest.post('/api/assinante/subscription', (req, res, ctx) => {
+  http.post('/api/assinante/subscription', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({ success: true, updated: true })
@@ -309,7 +309,7 @@ export const handlers = [
   }),
 
   // Orders API
-  rest.get('/api/assinante/orders', (req, res, ctx) => {
+  http.get('/api/assinante/orders', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json(mockResponses.orders.success)
@@ -317,7 +317,7 @@ export const handlers = [
   }),
 
   // Health Check API
-  rest.get('/api/health-check', (req, res, ctx) => {
+  http.get('/api/health-check', (req, res, ctx) => {
     const health = req.url.searchParams.get('health') || 'healthy'
 
     switch (health) {
@@ -345,7 +345,7 @@ export const handlers = [
   }),
 
   // Authentication APIs
-  rest.post('/api/auth/verify-firebase-token', (req, res, ctx) => {
+  http.post('/api/auth/verify-firebase-token', (req, res, ctx) => {
     const status = req.url.searchParams.get('status') || 'success'
 
     switch (status) {
@@ -367,35 +367,35 @@ export const handlers = [
     }
   }),
 
-  rest.post('/api/auth/send-phone-code', (req, res, ctx) => {
+  http.post('/api/auth/send-phone-code', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json(mockResponses.auth.phoneSuccess)
     )
   }),
 
-  rest.post('/api/auth/verify-phone-code', (req, res, ctx) => {
+  http.post('/api/auth/verify-phone-code', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json(mockResponses.auth.phoneVerifySuccess)
     )
   }),
 
-  rest.post('/api/auth/send-email-code', (req, res, ctx) => {
+  http.post('/api/auth/send-email-code', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json(mockResponses.auth.emailSuccess)
     )
   }),
 
-  rest.post('/api/auth/verify-email-code', (req, res, ctx) => {
+  http.post('/api/auth/verify-email-code', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json(mockResponses.auth.emailVerifySuccess)
     )
   }),
 
-  rest.post('/api/auth/verify-access-token', (req, res, ctx) => {
+  http.post('/api/auth/verify-access-token', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json(mockResponses.auth.tokenSuccess)
@@ -403,7 +403,7 @@ export const handlers = [
   }),
 
   // Monitoring APIs
-  rest.get('/api/monitoring/performance', (req, res, ctx) => {
+  http.get('/api/monitoring/performance', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({
@@ -418,7 +418,7 @@ export const handlers = [
     )
   }),
 
-  rest.get('/api/monitoring/errors', (req, res, ctx) => {
+  http.get('/api/monitoring/errors', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({
@@ -436,7 +436,7 @@ export const handlers = [
     )
   }),
 
-  rest.get('/api/monitoring/alerts', (req, res, ctx) => {
+  http.get('/api/monitoring/alerts', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({
@@ -455,7 +455,7 @@ export const handlers = [
   }),
 
   // Mock para APIs que podem falhar
-  rest.get('/api/unreliable-endpoint', (req, res, ctx) => {
+  http.get('/api/unreliable-endpoint', (req, res, ctx) => {
     const random = Math.random()
     if (random < 0.3) {
       return res(
@@ -498,7 +498,7 @@ export const setupMockServer = () => {
 // Helper para simular diferentes condições
 export const mockServerConditions = {
   slowAPI: (delay: number = 2000) => {
-    return rest.get('/api/assinante/subscription', (req, res, ctx) => {
+    return http.get('/api/assinante/subscription', (req, res, ctx) => {
       return res(
         ctx.delay(delay),
         ctx.status(200),
@@ -508,7 +508,7 @@ export const mockServerConditions = {
   },
 
   failingAPI: (statusCode: number = 500) => {
-    return rest.get('/api/assinante/subscription', (req, res, ctx) => {
+    return http.get('/api/assinante/subscription', (req, res, ctx) => {
       return res(
         ctx.status(statusCode),
         ctx.json({ error: 'API Error', code: 'INTERNAL_ERROR' })
@@ -517,7 +517,7 @@ export const mockServerConditions = {
   },
 
   timeoutAPI: (timeout: number = 30000) => {
-    return rest.get('/api/assinante/subscription', (req, res, ctx) => {
+    return http.get('/api/assinante/subscription', (req, res, ctx) => {
       return res(
         ctx.delay(timeout),
         ctx.status(200),
@@ -527,7 +527,7 @@ export const mockServerConditions = {
   },
 
   intermittentFailure: (failureRate: number = 0.5) => {
-    return rest.get('/api/assinante/subscription', (req, res, ctx) => {
+    return http.get('/api/assinante/subscription', (req, res, ctx) => {
       if (Math.random() < failureRate) {
         return res(
           ctx.status(500),
