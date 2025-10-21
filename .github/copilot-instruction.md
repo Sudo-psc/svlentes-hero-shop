@@ -1,0 +1,13 @@
+- Use Next.js App Router with React and TypeScript across the project.
+- Use pnpm for all package management commands (not npm or yarn).
+- Use Tailwind CSS v4 with a mobile-first approach; enhance with sm:/md:/lg:/xl: as needed.
+- Prefer shadcn/ui components before creating new UI; place shadcn/ui in src/components/ui and shared components in src/components/shared.
+- Always use next/link for internal navigation and next/image for images.
+- Prefer server components by default; add "use client" only when needed (event handlers, browser APIs).
+- Implement server actions where appropriate; place them in src/lib/actions.
+- Put utilities in src/utils and Supabase utilities in src/utils/supabase; define shared types in src/types.
+- Write tests with Vitest for critical business logic and components; place tests in __tests__ directories.
+- Follow Next.js performance best practices and implement proper error boundaries and error handling.
+- Use environment variables (NEXT_PUBLIC_ for client exposure); keep secrets server-side only.
+- Use GitHub Actions for CI/CD with pnpm scripts (pnpm dev/build/test).
+- Keep code idiomatic: functional components + hooks, async/await for async, and idiomatic Next.js/React patterns.
