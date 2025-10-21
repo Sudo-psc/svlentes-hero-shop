@@ -312,8 +312,14 @@ test.describe('Sistema de Resiliência - E2E', () => {
       observer.observe({ entryTypes: ['measure'] })
 
       // Medir uso de memória
-      if ((performance as any).memory) {
-        metrics.jsHeapSize = (performance as any).memory.usedJSHeapSize
+      const perf = performance as unknown
+      if (
+        typeof perf === 'object' &&
+        perf !== null &&
+        'memory' in perf &&
+        typeof (perf as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize === 'number'
+      ) {
+        metrics.jsHeapSize = (perf as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize
       }
 
       return metrics
@@ -327,8 +333,14 @@ test.describe('Sistema de Resiliência - E2E', () => {
 
     // Medir performance final
     const finalMetrics = await page.evaluate(() => {
-      if ((performance as any).memory) {
-        return (performance as any).memory.usedJSHeapSize
+      const perf = performance as unknown
+      if (
+        typeof perf === 'object' &&
+        perf !== null &&
+        'memory' in perf &&
+        typeof (perf as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize === 'number'
+      ) {
+        return (perf as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize
       }
       return 0
     })
@@ -402,9 +414,9 @@ test.describe('Sistema de Resiliência - E2E', () => {
 
     // Verificar se dados sensíveis não estão disponíveis offline
     const pageContent = await page.content()
-    expect(pageContent).not.toContain('credit-card')
+    expect(pageContent).not.toContain('creditCard')
     expect(pageContent).not.toContain('cvv')
-    expect(pageContent).not.toContain('full-address')
+    expect(pageContent).not.toContain('fullAddress')
 
     // Verificar se dados essenciais estão disponíveis
     await expect(page.locator('[data-testid="subscription-status"]')).toBeVisible()
