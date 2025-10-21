@@ -72,7 +72,7 @@ export function MyComponent({ prop }: ComponentProps) {
 3. **Security**: No API keys in client code, validate webhook signatures
 4. **Asaas payment gateway** (Brazilian) - primary, Stripe is legacy backup
 5. **Run tests after changes**: `npm run test && npm run build` before considering done
-6. **kluster verification**: Run `kluster_code_review_auto` after ANY file change
+6. **kluster verification**: Run `npx kluster_code_review_auto` (or `npm run kluster_code_review_auto`) after ANY file change
 
 ## LangChain & LangSmith Observability
 
