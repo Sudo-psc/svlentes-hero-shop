@@ -6,6 +6,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
+import { trackEvent, trackConversion } from '@/lib/analytics'
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -293,10 +294,8 @@ describe('Complete Conversion Flow Integration', () => {
 
     describe('Analytics Integration', () => {
         it('should track conversion events throughout the flow', async () => {
-            const { trackEvent } = require('@/lib/analytics')
-
-            // Mock analytics tracking
-            const mockTrackEvent = trackEvent as vi.Mock
+            // Mock analytics tracking (trackEvent is already imported and mocked at top)
+            const mockTrackEvent = trackEvent as unknown as vi.Mock
 
             render(<MockLeadCaptureForm onLeadCapture={vi.fn()} />)
 

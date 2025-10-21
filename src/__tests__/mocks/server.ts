@@ -1,10 +1,11 @@
 /**
  * Mock Server para testes
  * Simula respostas da API para testes isolados
+ * Updated for MSW v2.x
  */
 
 import { setupServer } from 'msw/node'
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse, delay } from 'msw'
 
 export const mockResponses = {
   subscription: {
@@ -268,212 +269,140 @@ export const mockResponses = {
 
 export const handlers = [
   // Subscription API
-  http.get('/api/assinante/subscription', (req, res, ctx) => {
-    const status = req.url.searchParams.get('status') || 'success'
+  http.get('/api/assinante/subscription', async ({ request }) => {
+    const url = new URL(request.url)
+    const status = url.searchParams.get('status') || 'success'
 
     switch (status) {
       case 'success':
-        return res(
-          ctx.status(200),
-          ctx.json(mockResponses.subscription.success)
-        )
+        return HttpResponse.json(mockResponses.subscription.success, { status: 200 })
       case 'error':
-        return res(
-          ctx.status(404),
-          ctx.json(mockResponses.subscription.error)
-        )
+        return HttpResponse.json(mockResponses.subscription.error, { status: 404 })
       case 'degraded':
-        return res(
-          ctx.status(200),
-          ctx.json(mockResponses.subscription.degraded)
-        )
+        return HttpResponse.json(mockResponses.subscription.degraded, { status: 200 })
       case 'timeout':
-        return res(
-          ctx.delay(10000), // 10 segundos timeout
-          ctx.status(200),
-          ctx.json(mockResponses.subscription.success)
-        )
+        await delay(10000) // 10 segundos timeout
+        return HttpResponse.json(mockResponses.subscription.success, { status: 200 })
       default:
-        return res(
-          ctx.status(500),
-          ctx.json({ error: 'Internal Server Error' })
-        )
+        return HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })
     }
   }),
 
-  http.post('/api/assinante/subscription', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({ success: true, updated: true })
-    )
+  http.post('/api/assinante/subscription', () => {
+    return HttpResponse.json({ success: true, updated: true }, { status: 200 })
   }),
 
   // Orders API
-  http.get('/api/assinante/orders', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(mockResponses.orders.success)
-    )
+  http.get('/api/assinante/orders', () => {
+    return HttpResponse.json(mockResponses.orders.success, { status: 200 })
   }),
 
   // Health Check API
-  http.get('/api/health-check', (req, res, ctx) => {
-    const health = req.url.searchParams.get('health') || 'healthy'
+  http.get('/api/health-check', ({ request }) => {
+    const url = new URL(request.url)
+    const health = url.searchParams.get('health') || 'healthy'
 
     switch (health) {
       case 'healthy':
-        return res(
-          ctx.status(200),
-          ctx.json(mockResponses.health.healthy)
-        )
+        return HttpResponse.json(mockResponses.health.healthy, { status: 200 })
       case 'degraded':
-        return res(
-          ctx.status(200),
-          ctx.json(mockResponses.health.degraded)
-        )
+        return HttpResponse.json(mockResponses.health.degraded, { status: 200 })
       case 'unhealthy':
-        return res(
-          ctx.status(500),
-          ctx.json(mockResponses.health.unhealthy)
-        )
+        return HttpResponse.json(mockResponses.health.unhealthy, { status: 500 })
       default:
-        return res(
-          ctx.status(500),
-          ctx.json({ error: 'Health check failed' })
-        )
+        return HttpResponse.json({ error: 'Health check failed' }, { status: 500 })
     }
   }),
 
   // Authentication APIs
-  http.post('/api/auth/verify-firebase-token', (req, res, ctx) => {
-    const status = req.url.searchParams.get('status') || 'success'
+  http.post('/api/auth/verify-firebase-token', ({ request }) => {
+    const url = new URL(request.url)
+    const status = url.searchParams.get('status') || 'success'
 
     switch (status) {
       case 'success':
-        return res(
-          ctx.status(200),
-          ctx.json(mockResponses.auth.firebaseSuccess)
-        )
+        return HttpResponse.json(mockResponses.auth.firebaseSuccess, { status: 200 })
       case 'error':
-        return res(
-          ctx.status(401),
-          ctx.json(mockResponses.auth.firebaseError)
-        )
+        return HttpResponse.json(mockResponses.auth.firebaseError, { status: 401 })
       default:
-        return res(
-          ctx.status(401),
-          ctx.json({ error: 'Authentication failed' })
-        )
+        return HttpResponse.json({ error: 'Authentication failed' }, { status: 401 })
     }
   }),
 
-  http.post('/api/auth/send-phone-code', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(mockResponses.auth.phoneSuccess)
-    )
+  http.post('/api/auth/send-phone-code', () => {
+    return HttpResponse.json(mockResponses.auth.phoneSuccess, { status: 200 })
   }),
 
-  http.post('/api/auth/verify-phone-code', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(mockResponses.auth.phoneVerifySuccess)
-    )
+  http.post('/api/auth/verify-phone-code', () => {
+    return HttpResponse.json(mockResponses.auth.phoneVerifySuccess, { status: 200 })
   }),
 
-  http.post('/api/auth/send-email-code', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(mockResponses.auth.emailSuccess)
-    )
+  http.post('/api/auth/send-email-code', () => {
+    return HttpResponse.json(mockResponses.auth.emailSuccess, { status: 200 })
   }),
 
-  http.post('/api/auth/verify-email-code', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(mockResponses.auth.emailVerifySuccess)
-    )
+  http.post('/api/auth/verify-email-code', () => {
+    return HttpResponse.json(mockResponses.auth.emailVerifySuccess, { status: 200 })
   }),
 
-  http.post('/api/auth/verify-access-token', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json(mockResponses.auth.tokenSuccess)
-    )
+  http.post('/api/auth/verify-access-token', () => {
+    return HttpResponse.json(mockResponses.auth.tokenSuccess, { status: 200 })
   }),
 
   // Monitoring APIs
-  http.get('/api/monitoring/performance', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        metrics: {
-          responseTime: 120,
-          throughput: 1000,
-          errorRate: 0.02,
-          cacheHitRate: 0.85
-        },
-        timestamp: Date.now()
-      })
-    )
+  http.get('/api/monitoring/performance', () => {
+    return HttpResponse.json({
+      metrics: {
+        responseTime: 120,
+        throughput: 1000,
+        errorRate: 0.02,
+        cacheHitRate: 0.85
+      },
+      timestamp: Date.now()
+    }, { status: 200 })
   }),
 
-  http.get('/api/monitoring/errors', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        errors: [
-          {
-            id: 'error_1',
-            message: 'Database connection timeout',
-            stack: 'Error: Database connection timeout...',
-            timestamp: Date.now() - 3600000,
-            severity: 'medium'
-          }
-        ],
-        total: 1
-      })
-    )
+  http.get('/api/monitoring/errors', () => {
+    return HttpResponse.json({
+      errors: [
+        {
+          id: 'error_1',
+          message: 'Database connection timeout',
+          stack: 'Error: Database connection timeout...',
+          timestamp: Date.now() - 3600000,
+          severity: 'medium'
+        }
+      ],
+      total: 1
+    }, { status: 200 })
   }),
 
-  http.get('/api/monitoring/alerts', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        alerts: [
-          {
-            id: 'alert_1',
-            type: 'performance',
-            message: 'High response time detected',
-            severity: 'warning',
-            timestamp: Date.now() - 1800000
-          }
-        ],
-        active: 1
-      })
-    )
+  http.get('/api/monitoring/alerts', () => {
+    return HttpResponse.json({
+      alerts: [
+        {
+          id: 'alert_1',
+          type: 'performance',
+          message: 'High response time detected',
+          severity: 'warning',
+          timestamp: Date.now() - 1800000
+        }
+      ],
+      active: 1
+    }, { status: 200 })
   }),
 
   // Mock para APIs que podem falhar
-  http.get('/api/unreliable-endpoint', (req, res, ctx) => {
+  http.get('/api/unreliable-endpoint', async () => {
     const random = Math.random()
     if (random < 0.3) {
-      return res(
-        ctx.status(500),
-        ctx.json({ error: 'Random failure' })
-      )
+      return HttpResponse.json({ error: 'Random failure' }, { status: 500 })
     }
     if (random < 0.1) {
-      return res(
-        ctx.delay(5000), // Timeout lento
-        ctx.status(200),
-        ctx.json({ data: 'slow response' })
-      )
+      await delay(5000) // Timeout lento
+      return HttpResponse.json({ data: 'slow response' }, { status: 200 })
     }
-    return res(
-      ctx.status(200),
-      ctx.json({ data: 'success', timestamp: Date.now() })
-    )
+    return HttpResponse.json({ data: 'success', timestamp: Date.now() }, { status: 200 })
   })
 ]
 
@@ -497,49 +426,35 @@ export const setupMockServer = () => {
 
 // Helper para simular diferentes condições
 export const mockServerConditions = {
-  slowAPI: (delay: number = 2000) => {
-    return http.get('/api/assinante/subscription', (req, res, ctx) => {
-      return res(
-        ctx.delay(delay),
-        ctx.status(200),
-        ctx.json(mockResponses.subscription.success)
-      )
+  slowAPI: (delayMs: number = 2000) => {
+    return http.get('/api/assinante/subscription', async () => {
+      await delay(delayMs)
+      return HttpResponse.json(mockResponses.subscription.success, { status: 200 })
     })
   },
 
   failingAPI: (statusCode: number = 500) => {
-    return http.get('/api/assinante/subscription', (req, res, ctx) => {
-      return res(
-        ctx.status(statusCode),
-        ctx.json({ error: 'API Error', code: 'INTERNAL_ERROR' })
+    return http.get('/api/assinante/subscription', () => {
+      return HttpResponse.json(
+        { error: 'API Error', code: 'INTERNAL_ERROR' },
+        { status: statusCode }
       )
     })
   },
 
   timeoutAPI: (timeout: number = 30000) => {
-    return http.get('/api/assinante/subscription', (req, res, ctx) => {
-      return res(
-        ctx.delay(timeout),
-        ctx.status(200),
-        ctx.json(mockResponses.subscription.success)
-      )
+    return http.get('/api/assinante/subscription', async () => {
+      await delay(timeout)
+      return HttpResponse.json(mockResponses.subscription.success, { status: 200 })
     })
   },
 
   intermittentFailure: (failureRate: number = 0.5) => {
-    return http.get('/api/assinante/subscription', (req, res, ctx) => {
+    return http.get('/api/assinante/subscription', () => {
       if (Math.random() < failureRate) {
-        return res(
-          ctx.status(500),
-          ctx.json({ error: 'Intermittent failure' })
-        )
+        return HttpResponse.json({ error: 'Intermittent failure' }, { status: 500 })
       }
-      return res(
-        ctx.status(200),
-        ctx.json(mockResponses.subscription.success)
-      )
+      return HttpResponse.json(mockResponses.subscription.success, { status: 200 })
     })
   }
 }
-
-export { rest }
