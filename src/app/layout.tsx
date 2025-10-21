@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { headers } from 'next/headers'
+// CSP headers gerenciado pelo next.config.js - sem import necessário
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/layout/Header'
@@ -40,16 +40,7 @@ export default function RootLayout({
 }: {
     children: React.ReactNode
 }) {
-    // Get headers for CSP nonce
-    const headersList = headers()
-    const cspNonce = headersList.get('x-csp-nonce') || ''
-
-    // Generate nonce if not provided by server
-    const generateNonce = () => {
-        const { randomBytes } = require('crypto');
-        return randomBytes(16).toString('base64');
-    }
-    const nonce = cspNonce || generateNonce()
+    // Simplificado - CSP gerenciado pelo next.config.js sem nonce
 
     // const organizationData = generateOrganizationStructuredData()
     // const websiteData = generateWebSiteStructuredData()
@@ -72,8 +63,7 @@ export default function RootLayout({
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
                 <meta name="format-detection" content="telephone=no" />
-                {/* CSP Nonce for dynamic scripts */}
-                <meta name="csp-nonce" content={nonce} />
+                {/* CSP gerenciado pelo next.config.js - sem nonce necessário */}
             </head>
             <body className="antialiased">
                 <AuthProvider>
