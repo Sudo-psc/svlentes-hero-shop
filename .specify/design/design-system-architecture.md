@@ -8,7 +8,7 @@
 
 ## System Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    SV Lentes Design System 2.0                  │
 │                     Healthcare Platform Layer                    │
@@ -41,7 +41,7 @@
 
 ## Token System Layer
 
-```
+```text
 src/tokens/
 │
 ├─ spacing.ts                   → Tailwind spacing scale
@@ -93,7 +93,7 @@ src/tokens/
 
 ## Component Architecture
 
-```
+```text
 src/components/
 │
 ├─ ui/ (Base Components - shadcn/ui + Radix)
@@ -189,7 +189,7 @@ src/components/
 
 ## Component Relationship Diagram
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                    Application Pages                         │
 │  (/, /calculadora, /assinar, /area-assinante, etc.)         │
@@ -232,7 +232,7 @@ src/components/
 
 ## Data Flow Architecture
 
-```
+```text
 User Interaction
        ↓
 ┌──────────────────┐
@@ -302,7 +302,7 @@ User Interaction
 
 ## Token Application Flow
 
-```
+```text
 Design Token → Tailwind Config → Component Styles → Rendered Output
 
 Example 1: Spacing
@@ -352,7 +352,7 @@ Rendered CSS
 
 ## Accessibility Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────────────┐
 │                     Accessibility Layer                    │
 └────────────────────┬───────────────────────────────────────┘
@@ -389,7 +389,7 @@ Rendered CSS
 
 ## Brazilian Localization Flow
 
-```
+```text
 User Input → Brazilian Input Component → Mask Applied → Validation → Formatted Value
 
 Example: CPF Input
@@ -430,7 +430,7 @@ API/Database
 
 ## Component Enhancement Pattern
 
-```
+```text
 Base Component → Enhanced Component → Application
 
 Example: Button Evolution
@@ -467,7 +467,7 @@ Application Page
 
 ## Loading State Architecture
 
-```
+```text
 Component Rendering Lifecycle
         ↓
 ┌───────────────────┐
@@ -518,7 +518,7 @@ Loaded State:
 
 ## Testing Architecture
 
-```
+```text
 Component → Unit Tests → Integration Tests → E2E Tests → Manual Testing
 
 Unit Tests (Jest + RTL)
@@ -574,7 +574,7 @@ NVDA Screen Reader
 
 ## Deployment Architecture
 
-```
+```text
 Development → Staging → Production
 
 Development Environment
@@ -627,7 +627,7 @@ Monitoring
 
 ## Maintenance & Evolution
 
-```
+```text
 Design System Lifecycle
 
 Initial Release (v2.0.0)
@@ -655,7 +655,7 @@ Annual Major Release (v3.0.0)
 
 ## Integration with Existing Systems
 
-```
+```text
 Design System 2.0
         │
         ├─ Tailwind CSS v4
