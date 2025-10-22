@@ -54,10 +54,12 @@ export default function RootLayout({
                 <CriticalCSS />
                 {/* Facebook Domain Verification */}
                 <meta name="facebook-domain-verification" content="x8z1y4rfe0q22puqwl053agwm7y5w4" />
-                <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-                <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
-                <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
-                <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+                <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+                <link rel="icon" href="/images/favicon-16x16.png" sizes="16x16" type="image/png" />
+                <link rel="icon" href="/images/favicon-32x32.png" sizes="32x32" type="image/png" />
+                <link rel="icon" href="/images/favicon-192.png" sizes="192x192" type="image/png" />
+                <link rel="icon" href="/images/favicon-512.png" sizes="512x512" type="image/png" />
+                <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
                 <link rel="manifest" href="/site.webmanifest" />
                   <link rel="dns-prefetch" href="https://api.whatsapp.com" />
                 <link rel="dns-prefetch" href="https://js.stripe.com" />

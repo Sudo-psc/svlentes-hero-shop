@@ -11,9 +11,9 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
 ) => {
   const [error, setError] = React.useState(false)
   const sizeClasses = {
-    sm: "h-8 w-8",
-    md: "h-10 w-10",
-    lg: "h-12 w-12"
+    sm: "h-10 w-10",
+    md: "h-14 w-14",
+    lg: "h-16 w-16"
   }
   const variantClasses = {
     default: "",
@@ -36,9 +36,9 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
         <Image
           src="/images/logo.jpeg"
           alt="SV Lentes"
-          width={size === "sm" ? 32 : size === "md" ? 40 : 48}
-          height={size === "sm" ? 32 : size === "md" ? 40 : 48}
-          className="w-full h-full object-contain"
+          width={size === "sm" ? 40 : size === "md" ? 56 : 64}
+          height={size === "sm" ? 40 : size === "md" ? 56 : 64}
+          className="w-full h-full object-contain rounded-lg"
           priority
           onError={() => setError(true)}
         />
@@ -79,7 +79,7 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
 Logo.displayName = "Logo"
 // Exportar componentes específicos para diferentes contextos
 export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>(
-  (props, ref) => <Logo ref={ref} size="md" variant="header" {...props} />
+  (props, ref) => <Logo ref={ref} size="lg" variant="header" {...props} />
 )
 LogoHeader.displayName = "LogoHeader"
 export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>(

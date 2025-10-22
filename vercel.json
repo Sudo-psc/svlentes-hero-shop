@@ -47,7 +47,7 @@
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://svlentes.shop"
+                    "value": "https://svlentes.com.br"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",
@@ -66,10 +66,10 @@
             "has": [
                 {
                     "type": "host",
-                    "value": "svlentes.com.br"
+                    "value": "www.svlentes.com.br"
                 }
             ],
-            "destination": "https://saraivavision.com.br/lentes",
+            "destination": "https://svlentes.com.br/:path*",
             "permanent": true
         },
         {
@@ -77,10 +77,21 @@
             "has": [
                 {
                     "type": "host",
-                    "value": "www.svlentes.com.br"
+                    "value": "svlentes.shop"
                 }
             ],
-            "destination": "https://saraivavision.com.br/lentes",
+            "destination": "https://svlentes.com.br/:path*",
+            "permanent": true
+        },
+        {
+            "source": "/:path*",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "www.svlentes.shop"
+                }
+            ],
+            "destination": "https://svlentes.com.br/:path*",
             "permanent": true
         },
         {
