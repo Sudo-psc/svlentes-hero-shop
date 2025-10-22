@@ -95,12 +95,12 @@ path_instructions:
       - Data integrity constraints
       - LGPD compliance (data retention, deletion)
 
-  # Knowledge base for domain-specific context
-  knowledge_base:
-    code_guidelines:
-      enabled: true
-      filePatterns:
-        - "docs/CODERABBIT_KNOWLEDGE_BASE.md"
+# Knowledge base for domain-specific context
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "docs/CODERABBIT_KNOWLEDGE_BASE.md"
 
 # Enable specific review features
 enable:
