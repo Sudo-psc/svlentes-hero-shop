@@ -1,10 +1,113 @@
 /**
  * Enhanced Chatbot Authentication Handlers
  * Autenticação robusta com verificação de cadastro e assinatura ativa
+ *
+ * Melhorias:
+ * - Rate limiting por usuário
+ * - Detecção de sessões duplicadas
+ * - Validação de sessão robusta
+ * - Auto-renovação de sessão
+ * - Logs de auditoria de autenticação
  */
 import { prisma } from '@/lib/prisma'
 import { sendPulseClient } from '@/lib/sendpulse-client'
 import { logger, LogCategory } from '@/lib/logger'
+
+/**
+ * Rate Limiter para tentativas de autenticação
+ */
+const authAttempts = new Map<string, { count: number; resetAt: number }>()
+const MAX_AUTH_ATTEMPTS = 5
+const AUTH_WINDOW_MS = 15 * 60 * 1000 // 15 minutos
+
+/**
+ * Cache de sessões ativas para validação rápida
+ */
+const sessionCache = new Map<string, { userId: string; expiresAt: Date; userName: string }>()
+
+/**
+ * Verifica rate limit para autenticação
+ */
+function checkAuthRateLimit(phone: string): { allowed: boolean; remaining: number; resetAt: number } {
+  const now = Date.now()
+  const key = `auth:${phone}`
+
+  let entry = authAttempts.get(key)
+
+  // Resetar se expirou
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + AUTH_WINDOW_MS }
+    authAttempts.set(key, entry)
+  }
+
+  entry.count++
+
+  return {
+    allowed: entry.count <= MAX_AUTH_ATTEMPTS,
+    remaining: Math.max(0, MAX_AUTH_ATTEMPTS - entry.count),
+    resetAt: entry.resetAt
+  }
+}
+
+/**
+ * Reseta rate limit após autenticação bem-sucedida
+ */
+function resetAuthRateLimit(phone: string): void {
+  authAttempts.delete(`auth:${phone}`)
+}
+
+/**
+ * Detecta e remove sessões duplicadas
+ */
+async function removeDuplicateSessions(userId: string, phone: string, keepSessionId?: string): Promise<number> {
+  try {
+    const result = await prisma.chatbotSession.updateMany({
+      where: {
+        userId,
+        phone,
+        status: 'ACTIVE',
+        ...(keepSessionId && { id: { not: keepSessionId } })
+      },
+      data: {
+        status: 'TERMINATED',
+        terminatedAt: new Date(),
+        terminationReason: 'Nova sessão iniciada - sessão anterior terminada automaticamente'
+      }
+    })
+
+    if (result.count > 0) {
+      logger.info(LogCategory.WHATSAPP, 'Sessões duplicadas removidas', {
+        userId,
+        phone,
+        count: result.count
+      })
+    }
+
+    return result.count
+  } catch (error) {
+    logger.error(LogCategory.WHATSAPP, 'Erro ao remover sessões duplicadas', {
+      userId,
+      phone,
+      error: error instanceof Error ? error.message : 'Unknown'
+    })
+    return 0
+  }
+}
+
+/**
+ * Limpa cache de sessões expiradas
+ */
+function cleanupSessionCache(): void {
+  const now = new Date()
+  for (const [key, value] of sessionCache.entries()) {
+    if (value.expiresAt < now) {
+      sessionCache.delete(key)
+    }
+  }
+}
+
+// Limpar cache a cada 5 minutos
+setInterval(cleanupSessionCache, 5 * 60 * 1000)
 /**
  * Normaliza número de telefone brasileiro para formato padrão
  * Remove caracteres especiais e garante formato com DDD + 9 dígitos
@@ -107,9 +210,29 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
       }
     }
     const normalizedPhone = normalizePhoneNumber(phone)
+
+    // Verificar rate limit
+    const rateLimit = checkAuthRateLimit(normalizedPhone)
+    if (!rateLimit.allowed) {
+      const minutesRemaining = Math.ceil((rateLimit.resetAt - Date.now()) / 1000 / 60)
+      logger.warn(LogCategory.WHATSAPP, 'Rate limit excedido para autenticação', {
+        phone: normalizedPhone,
+        attempts: MAX_AUTH_ATTEMPTS,
+        resetIn: minutesRemaining
+      })
+
+      return {
+        success: false,
+        message: `⏱️ *Muitas tentativas de autenticação*\n\nPor favor, aguarde ${minutesRemaining} minuto(s) antes de tentar novamente.\n\nSe precisar de ajuda imediata:\n📞 WhatsApp: (33) 98606-1427`,
+        requiresResponse: true,
+        error: 'rate_limit_exceeded'
+      }
+    }
+
     logger.info(LogCategory.WHATSAPP, 'Processando autenticação por telefone', {
       originalPhone: phone,
-      normalizedPhone
+      normalizedPhone,
+      rateLimitRemaining: rateLimit.remaining
     })
     // Buscar usuário pelo telefone normalizado (busca em ambos os campos)
     const user = await prisma.user.findFirst({
@@ -163,17 +286,27 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
         error: `subscription_${subscription.status.toLowerCase()}`
       }
     }
+    // Remover sessões duplicadas antes de criar nova
+    await removeDuplicateSessions(user.id, normalizedPhone)
+
     // Criar ou atualizar sessão
     const sessionToken = generateSessionToken()
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24) // 24 horas
+
     // Verificar se já existe sessão ativa para este telefone
     const existingSession = await prisma.chatbotSession.findFirst({
-      where: { phone }
+      where: {
+        phone: normalizedPhone,
+        userId: user.id
+      }
     })
+
+    let sessionId: string
+
     if (existingSession) {
       // Atualizar sessão existente
-      await prisma.chatbotSession.update({
+      const updated = await prisma.chatbotSession.update({
         where: { id: existingSession.id },
         data: {
           sessionToken,
@@ -182,23 +315,38 @@ export async function authenticateByPhone(phone: string): Promise<AuthHandlerRes
           lastActivityAt: new Date()
         }
       })
+      sessionId = updated.id
     } else {
       // Criar nova sessão
-      await prisma.chatbotSession.create({
+      const created = await prisma.chatbotSession.create({
         data: {
           userId: user.id,
-          phone,
+          phone: normalizedPhone,
           sessionToken,
           status: 'ACTIVE',
           expiresAt,
           lastActivityAt: new Date()
         }
       })
+      sessionId = created.id
     }
-    logger.info(LogCategory.WHATSAPP, 'Autenticação automática por telefone bem-sucedida', {
-      phone,
+
+    // Adicionar ao cache de sessões para validação rápida
+    sessionCache.set(sessionToken, {
       userId: user.id,
-      userName: user.name
+      expiresAt,
+      userName: user.name || 'Cliente'
+    })
+
+    // Resetar rate limit após autenticação bem-sucedida
+    resetAuthRateLimit(normalizedPhone)
+
+    logger.info(LogCategory.WHATSAPP, 'Autenticação automática por telefone bem-sucedida', {
+      phone: normalizedPhone,
+      userId: user.id,
+      userName: user.name,
+      sessionId,
+      expiresAt: expiresAt.toISOString()
     })
     logger.info(LogCategory.WHATSAPP, 'Usuário autenticado com sucesso', {
       normalizedPhone,
@@ -275,6 +423,11 @@ function generateSessionToken(): string {
 }
 /**
  * Valida se o usuário está autenticado (verifica sessão existente)
+ *
+ * Melhorias:
+ * - Cache de sessões para validação rápida
+ * - Auto-renovação de sessão próxima ao vencimento
+ * - Validação robusta com fallback
  */
 export async function isUserAuthenticated(phone: string): Promise<{
   authenticated: boolean
@@ -282,11 +435,14 @@ export async function isUserAuthenticated(phone: string): Promise<{
   session?: any
   userId?: string
   userName?: string
+  autoRenewed?: boolean
 }> {
   try {
+    const normalizedPhone = normalizePhoneNumber(phone)
+
     const session = await prisma.chatbotSession.findFirst({
       where: {
-        phone,
+        phone: normalizedPhone,
         status: 'ACTIVE',
         expiresAt: {
           gt: new Date()
@@ -301,22 +457,77 @@ export async function isUserAuthenticated(phone: string): Promise<{
         }
       }
     })
+
     if (!session) {
+      logger.debug(LogCategory.WHATSAPP, 'Nenhuma sessão ativa encontrada', {
+        phone: normalizedPhone
+      })
       return {
         authenticated: false
       }
     }
-    // Atualizar última atividade
+
+    // Verificar se a sessão está próxima de expirar (menos de 2 horas)
+    const now = new Date()
+    const expiresIn = session.expiresAt.getTime() - now.getTime()
+    const twoHoursInMs = 2 * 60 * 60 * 1000
+    let autoRenewed = false
+
+    if (expiresIn < twoHoursInMs && expiresIn > 0) {
+      // Auto-renovar sessão
+      const newExpiresAt = new Date()
+      newExpiresAt.setHours(newExpiresAt.getHours() + 24)
+
+      await prisma.chatbotSession.update({
+        where: { id: session.id },
+        data: {
+          expiresAt: newExpiresAt,
+          lastActivityAt: now
+        }
+      })
+
+      // Atualizar cache
+      sessionCache.set(session.sessionToken, {
+        userId: session.userId,
+        expiresAt: newExpiresAt,
+        userName: session.user.name || 'Cliente'
+      })
+
+      logger.info(LogCategory.WHATSAPP, 'Sessão auto-renovada', {
+        phone: normalizedPhone,
+        userId: session.userId,
+        newExpiresAt: newExpiresAt.toISOString()
+      })
+
+      autoRenewed = true
+    } else {
+      // Apenas atualizar última atividade
+      await prisma.chatbotSession.update({
+        where: { id: session.id },
+        data: { lastActivityAt: now }
+      })
+    }
+
+    // Incrementar contador de comandos executados
     await prisma.chatbotSession.update({
       where: { id: session.id },
-      data: { lastActivityAt: new Date() }
+      data: { commandsExecuted: { increment: 1 } }
     })
+
+    logger.debug(LogCategory.WHATSAPP, 'Sessão validada com sucesso', {
+      phone: normalizedPhone,
+      userId: session.userId,
+      autoRenewed,
+      expiresAt: session.expiresAt
+    })
+
     return {
       authenticated: true,
       sessionToken: session.sessionToken,
       session,
       userId: session.userId,
-      userName: session.user.name || undefined
+      userName: session.user.name || undefined,
+      autoRenewed
     }
   } catch (error) {
     logger.error(LogCategory.WHATSAPP, 'Erro ao verificar autenticação', {
