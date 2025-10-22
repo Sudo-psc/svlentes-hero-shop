@@ -2,27 +2,39 @@ import { Metadata } from 'next'
 import { HowItWorksSection } from '@/components/sections/HowItWorksSection'
 import { TrustStrip } from '@/components/trust/TrustStrip'
 import { FinalCTA } from '@/components/sections/FinalCTA'
+import { StructuredData } from '@/components/seo/StructuredData'
+import { generateBreadcrumbStructuredData } from '@/lib/seo'
 import Link from 'next/link'
 import { ArrowLeft, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
 export const metadata: Metadata = {
-    title: 'Como Funciona - SV Lentes | Processo de Assinatura Passo a Passo',
-    description: 'Entenda como funciona o serviço de assinatura de lentes de contato da SV Lentes. Processo simples em 4 passos: consulta médica, prescrição, entrega automática e acompanhamento contínuo.',
+    title: 'Como Funciona a Assinatura de Lentes | Processo Passo a Passo | SV Lentes',
+    description: 'Entenda como funciona o serviço de assinatura de lentes de contato da SV Lentes em Caratinga/MG. Processo simples em 4 passos: consulta médica com Dr. Philipe Saraiva Cruz, prescrição personalizada, entrega automática mensal e acompanhamento médico contínuo.',
     keywords: [
         'como funciona assinatura lentes',
         'processo assinatura lentes contato',
         'passo a passo lentes contato',
         'serviço assinatura lentes',
         'entrega automática lentes',
-        'acompanhamento médico lentes'
+        'acompanhamento médico lentes',
+        'consulta oftalmológica online',
+        'receita lentes de contato'
     ],
     alternates: {
         canonical: 'https://svlentes.com.br/como-funciona',
     },
 }
+
 export default function ComoFuncionaPage() {
+    const breadcrumbData = generateBreadcrumbStructuredData([
+        { name: 'Início', url: 'https://svlentes.com.br' },
+        { name: 'Como Funciona', url: 'https://svlentes.com.br/como-funciona' }
+    ])
+    
     return (
         <div className="min-h-screen">
+            <StructuredData data={breadcrumbData} />
             {/* Breadcrumb/Back Navigation */}
             <section className="bg-gray-50 border-b border-gray-200">
                 <div className="container-custom py-4">
