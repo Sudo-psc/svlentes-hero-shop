@@ -1,89 +1,77 @@
 import * as React from "react"
 import Image from "next/image"
+
 import { cn } from "@/lib/utils"
+
 interface LogoProps {
   className?: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl" | "footer"
   variant?: "default" | "header" | "footer"
 }
+
+const SIZE_CONFIG = {
+  sm: { wrapper: "h-10 w-10", dimension: 40, sizes: "40px" },
+  md: { wrapper: "h-14 w-14", dimension: 56, sizes: "56px" },
+  lg: { wrapper: "h-16 w-16", dimension: 64, sizes: "64px" },
+  xl: { wrapper: "h-[200px] w-[200px]", dimension: 200, sizes: "200px" },
+  footer: {
+    wrapper: "h-16 w-16 md:h-[200px] md:w-[200px]",
+    dimension: 200,
+    sizes: "(min-width: 768px) 200px, 64px"
+  }
+} as const
+
+type SizeKey = keyof typeof SIZE_CONFIG
+
 const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
-  ({ className, size = "md", variant = "default", ...props }, ref
-) => {
-  const [error, setError] = React.useState(false)
-  const sizeClasses = {
-    sm: "h-10 w-10",
-    md: "h-14 w-14",
-    lg: "h-16 w-16"
-  }
-  const variantClasses = {
-    default: "",
-    header: "hover:opacity-90 transition-all",
-    footer: "hover:opacity-90 transition-all"
-  }
-  // Use Next.js Image component for better optimization
-  if (!error) {
+  ({ className, size = "md", variant = "default", ...props }, forwardedRef) => {
+    const hasSize = Object.prototype.hasOwnProperty.call(SIZE_CONFIG, size)
+    const sizeKey = (hasSize ? size : "md") as SizeKey
+    const { wrapper, dimension, sizes } = SIZE_CONFIG[sizeKey]
+    const variantClasses = {
+      default: "",
+      header: "hover:opacity-90 transition-all",
+      footer: "hover:opacity-90 transition-all"
+    }
+
     return (
       <div
-        ref={ref}
+        ref={forwardedRef}
         className={cn(
-          "relative flex items-center justify-center",
-          sizeClasses[size],
+          "relative flex items-center justify-center overflow-hidden flex-shrink-0 motion-safe:animate-logo-glow motion-reduce:animate-none",
+          wrapper,
           variantClasses[variant],
           className
         )}
         {...props}
       >
         <Image
-          src="/images/logo.jpeg"
+          src="/images/logo_transparent.png"
           alt="SV Lentes"
-          width={size === "sm" ? 40 : size === "md" ? 56 : 64}
-          height={size === "sm" ? 40 : size === "md" ? 56 : 64}
-          className="w-full h-full object-contain rounded-lg"
-          priority
-          onError={() => setError(true)}
+          width={dimension}
+          height={dimension}
+          className={cn(
+            "object-contain transition-transform duration-500",
+            sizeKey === "sm" || sizeKey === "md" ? "p-1" : "p-2"
+          )}
+          priority={variant !== "footer"}
+          loading={variant === "footer" ? "lazy" : undefined}
+          sizes={sizes}
         />
       </div>
     )
   }
-  // Fallback to WebP with PNG using Next.js Image optimization
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "relative flex items-center justify-center",
-        sizeClasses[size],
-        variantClasses[variant],
-        className
-      )}
-      {...props}
-    >
-      <picture>
-        <source
-          srcSet="/logosv-md.webp"
-          type="image/webp"
-        />
-        <Image
-          src="/logosv-md.png"
-          alt="SV Lentes"
-          fill
-          className={cn(
-            "object-contain",
-            size === "sm" ? "p-1" : size === "md" ? "p-1" : "p-2"
-          )}
-          priority
-        />
-      </picture>
-    </div>
-  )
-})
+)
 Logo.displayName = "Logo"
-// Exportar componentes específicos para diferentes contextos
+
 export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>(
   (props, ref) => <Logo ref={ref} size="lg" variant="header" {...props} />
 )
 LogoHeader.displayName = "LogoHeader"
+
 export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>(
-  (props, ref) => <Logo ref={ref} size="sm" variant="footer" {...props} />
+  (props, ref) => <Logo ref={ref} size="footer" variant="footer" {...props} />
 )
 LogoFooter.displayName = "LogoFooter"
+
 export { Logo }

@@ -85,10 +85,10 @@ export function Header({ className }: HeaderProps) {
                     {/* Logo */}
                     <a
                         href="/"
-                        className="hover:opacity-90 transition-opacity"
+                        className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl transition-opacity hover:opacity-90 flex-shrink-0"
                         aria-label="SV Lentes - Voltar para a página inicial"
                     >
-                        <LogoHeader />
+                        <LogoHeader className="h-full w-full" />
                     </a>
                     {/* Navigation Desktop */}
                     <nav className="hidden md:flex items-center space-x-8">
