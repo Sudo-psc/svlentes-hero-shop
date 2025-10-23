@@ -264,7 +264,7 @@ function DashboardContent() {
             <p className="text-gray-600 mb-6">
               Comece agora a economizar com o plano de lentes de contato ideal para você!
             </p>
-            <Button onClick={() => router.push('/assinar')} size="lg">
+            <Button onClick={() => router.push('/planos')} size="lg">
               Ver Planos Disponíveis
             </Button>
           </motion.div>

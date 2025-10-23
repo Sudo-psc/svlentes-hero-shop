@@ -13,6 +13,11 @@ import { config } from '@/config/loader'
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getTrustBadges() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedTrustBadges
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
@@ -64,6 +69,11 @@ export const trustBadges = getTrustBadges()
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getSocialProofStats() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedSocialProofStats
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
@@ -112,6 +122,11 @@ export const socialProofStats = getSocialProofStats()
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getCertifications() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedCertifications
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
@@ -159,6 +174,11 @@ const hardcodedCertifications = [
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getTestimonialHighlights() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedTestimonialHighlights
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
