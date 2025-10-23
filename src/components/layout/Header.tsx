@@ -85,7 +85,7 @@ export function Header({ className }: HeaderProps) {
                     {/* Logo */}
                     <a
                         href="/"
-                        className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl transition-opacity hover:opacity-90 flex-shrink-0"
+                        className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl transition-opacity hover:opacity-90 flex-shrink-0"
                         aria-label="SV Lentes - Voltar para a página inicial"
                     >
                         <LogoHeader className="h-full w-full" />

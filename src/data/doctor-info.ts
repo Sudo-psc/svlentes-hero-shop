@@ -13,6 +13,11 @@ import { config } from '@/config/loader'
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getDoctorInfo() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedDoctorInfo
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
@@ -58,6 +63,11 @@ export const doctorInfo = getDoctorInfo()
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getTrustIndicators() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedTrustIndicators
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
@@ -142,6 +152,11 @@ const hardcodedTrustIndicators = {
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getClinicInfo() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedClinicInfo
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')

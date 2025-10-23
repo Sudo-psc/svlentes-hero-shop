@@ -82,7 +82,7 @@ export function Footer({ className }: FooterProps) {
                         <div className="flex flex-col items-center text-center md:items-start md:text-left">
                             {/* Logo */}
                             <div className="mb-6">
-                                <LogoFooter className="mx-auto h-16 w-16 md:mx-0 md:h-[200px] md:w-[200px]" />
+                                <LogoFooter className="mx-auto md:mx-0" />
                             </div>
                             <p className="text-lg text-gray-700 font-medium mb-3">
                                 Pioneiro no Brasil em Assinatura de Lentes de Contato

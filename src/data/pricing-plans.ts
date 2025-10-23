@@ -14,6 +14,11 @@ import { config } from '@/config/loader'
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getPricingPlans(): PricingPlan[] {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedPlans
+  }
+
   try {
     const appConfig = config.load()
     const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
@@ -116,6 +121,11 @@ function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
  * Get pricing plans grouped by lens type (new system)
  */
 function getPricingPlanGroups(): PricingPlanGroup[] {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return []
+  }
+
   try {
     const appConfig = config.load()
     const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
@@ -356,6 +366,11 @@ const hardcodedPlans: PricingPlan[] = [
 // HELPER FUNCTIONS - Must be defined BEFORE exports to avoid TDZ
 // ============================================================================
 function getFeatureComparison() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedFeatureComparison
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
@@ -368,6 +383,11 @@ function getFeatureComparison() {
   return hardcodedFeatureComparison
 }
 function getServiceBenefits() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedServiceBenefits
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
@@ -380,6 +400,11 @@ function getServiceBenefits() {
   return hardcodedServiceBenefits
 }
 function getCoverageInfo() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedCoverageInfo
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
@@ -392,6 +417,11 @@ function getCoverageInfo() {
   return hardcodedCoverageInfo
 }
 function getPricingFAQ() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedPricingFAQ
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
@@ -404,6 +434,11 @@ function getPricingFAQ() {
   return hardcodedPricingFAQ
 }
 function getEconomyCalculatorData() {
+  // Guard: only try to load config on server-side
+  if (typeof window !== 'undefined') {
+    return hardcodedEconomyCalculatorData
+  }
+
   try {
     const appConfig = config.load()
     const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
