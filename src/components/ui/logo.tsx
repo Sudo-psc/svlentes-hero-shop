@@ -1,6 +1,8 @@
 import * as React from "react"
 import Image from "next/image"
+
 import { cn } from "@/lib/utils"
+
 interface LogoProps {
   className?: string
   size?: "sm" | "md" | "lg" | "xl"
@@ -27,11 +29,24 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
     header: "hover:opacity-90 transition-all",
     footer: "hover:opacity-90 transition-all"
   }
-  // Use Next.js Image component for better optimization
-  if (!error) {
+} as const
+
+type SizeKey = keyof typeof SIZE_CONFIG
+
+const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
+  ({ className, size = "md", variant = "default", ...props }, forwardedRef) => {
+    const hasSize = Object.prototype.hasOwnProperty.call(SIZE_CONFIG, size)
+    const sizeKey = (hasSize ? size : "md") as SizeKey
+    const { wrapper, dimension, sizes } = SIZE_CONFIG[sizeKey]
+    const variantClasses = {
+      default: "",
+      header: "hover:opacity-90 transition-all",
+      footer: "hover:opacity-90 transition-all"
+    }
+
     return (
       <div
-        ref={ref}
+        ref={forwardedRef}
         className={cn(
           "relative flex items-center justify-center overflow-hidden flex-shrink-0",
           wrapper,
@@ -86,13 +101,15 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   )
 })
 Logo.displayName = "Logo"
-// Exportar componentes específicos para diferentes contextos
+
 export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>(
   (props, ref) => <Logo ref={ref} size="xl" variant="header" {...props} />
 )
 LogoHeader.displayName = "LogoHeader"
+
 export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>(
   (props, ref) => <Logo ref={ref} size="xl" variant="footer" {...props} />
 )
 LogoFooter.displayName = "LogoFooter"
+
 export { Logo }

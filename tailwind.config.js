@@ -175,6 +175,7 @@ module.exports = {
                 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                 'float': 'float 6s ease-in-out infinite',
                 'glow': 'glow 2s ease-in-out infinite alternate',
+                'logo-glow': 'logoGlow 6s ease-in-out infinite',
             },
             backdropBlur: {
                 xs: '2px',
@@ -209,6 +210,16 @@ module.exports = {
                 glow: {
                     '0%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.5)' },
                     '100%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.8)' },
+                },
+                logoGlow: {
+                    '0%, 100%': {
+                        transform: 'scale(1)',
+                        filter: 'drop-shadow(0 0 0 rgba(6, 182, 212, 0.0))',
+                    },
+                    '50%': {
+                        transform: 'scale(1.04)',
+                        filter: 'drop-shadow(0 0 18px rgba(6, 182, 212, 0.45))',
+                    },
                 },
             },
         },
