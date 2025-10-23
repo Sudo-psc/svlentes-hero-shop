@@ -88,7 +88,7 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
 Logo.displayName = "Logo"
 // Exportar componentes específicos para diferentes contextos
 export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>(
-  (props, ref) => <Logo ref={ref} size="lg" variant="header" {...props} />
+  (props, ref) => <Logo ref={ref} size="xl" variant="header" {...props} />
 )
 LogoHeader.displayName = "LogoHeader"
 export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>(
