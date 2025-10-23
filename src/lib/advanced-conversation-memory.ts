@@ -80,7 +80,7 @@ export interface ConversationContext {
   isAuthenticated: boolean
   currentState: 'onboarding' | 'authenticated' | 'support' | 'transaction' | 'feedback'
   activeTasks: string[]
-  unresolved Issues: string[]
+  unresolvedIssues: string[]
 }
 
 export interface UserPreferences {

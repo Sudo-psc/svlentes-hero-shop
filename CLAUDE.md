@@ -87,6 +87,34 @@ npm run lighthouse       # Run Lighthouse CI performance audit
 
 ## Architecture
 
+### Subscriber Dashboard Phase 1 (Issue #31)
+
+**Enhanced Features** (2025-10-23):
+- 🎨 **AccessibleDashboard**: WCAG 2.1 AA compliant interface with ARIA landmarks
+- 📊 **EnhancedSubscriptionCard**: Real-time billing countdown, expandable sections
+- 🔔 **ToastFeedback**: Non-intrusive notification system with 4 types
+- 📦 **OrdersModal**: Complete order history with tracking integration
+- 📄 **InvoicesModal**: Invoice download and payment history
+- 🔄 **ChangePlanModal**: Visual plan comparison and instant switching
+- 📍 **UpdateAddressModal**: CEP lookup and address validation
+- 💳 **UpdatePaymentModal**: Secure payment updates via Asaas
+- 🚨 **EmergencyContact**: Healthcare compliance with Dr. Philipe's info
+- 📅 **SubscriptionHistoryTimeline**: Visual event timeline
+
+**New APIs**:
+- `GET /api/assinante/subscription` - Fetch active subscription
+- `PUT /api/assinante/subscription` - Update shipping address
+- `GET /api/assinante/orders` - List order history
+- `GET /api/assinante/invoices` - List invoices/receipts
+- `POST /api/assinante/register` - User registration
+
+**Documentation**:
+- 📡 [API Documentation](./claudedocs/SUBSCRIBER_DASHBOARD_PHASE1_APIS.md)
+- 🎨 [Component Guide](./claudedocs/SUBSCRIBER_DASHBOARD_PHASE1_COMPONENTS.md)
+- 🏗️ [Architecture](./claudedocs/SUBSCRIBER_DASHBOARD_ARCHITECTURE.md)
+- 🔧 [Troubleshooting](./claudedocs/SUBSCRIBER_DASHBOARD_TROUBLESHOOTING.md)
+- 📋 [Changelog](./claudedocs/CHANGELOG.md)
+
 ### Next.js 15 App Router Structure
 ```
 src/
@@ -95,6 +123,11 @@ src/
 │   ├── layout.tsx         # Root layout with metadata
 │   ├── globals.css        # Global styles and CSS variables
 │   ├── api/               # API routes
+│   │   ├── assinante/     # Subscriber dashboard APIs (NEW - Phase 1)
+│   │   │   ├── subscription/ # Subscription management
+│   │   │   ├── orders/    # Order history
+│   │   │   ├── invoices/  # Invoice download
+│   │   │   └── register/  # User registration
 │   │   ├── webhooks/      # Webhook handlers
 │   │   │   ├── asaas/     # Asaas payment webhooks
 │   │   │   └── sendpulse/ # SendPulse WhatsApp webhooks
