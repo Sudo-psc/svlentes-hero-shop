@@ -3,18 +3,25 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 interface LogoProps {
   className?: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
   variant?: "default" | "header" | "footer"
 }
+
+const SIZE_CONFIG = {
+  sm: { wrapper: "h-10 w-10", dimension: 40 },
+  md: { wrapper: "h-14 w-14", dimension: 56 },
+  lg: { wrapper: "h-16 w-16", dimension: 64 },
+  xl: { wrapper: "h-[200px] w-[200px]", dimension: 200 }
+} as const
+
+type SizeKey = keyof typeof SIZE_CONFIG
+
 const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   ({ className, size = "md", variant = "default", ...props }, ref
 ) => {
   const [error, setError] = React.useState(false)
-  const sizeClasses = {
-    sm: "h-10 w-10",
-    md: "h-14 w-14",
-    lg: "h-16 w-16"
-  }
+  const sizeKey: SizeKey = size in SIZE_CONFIG ? size : "md"
+  const { wrapper, dimension } = SIZE_CONFIG[sizeKey]
   const variantClasses = {
     default: "",
     header: "hover:opacity-90 transition-all",
@@ -26,20 +33,21 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
       <div
         ref={ref}
         className={cn(
-          "relative flex items-center justify-center",
-          sizeClasses[size],
+          "relative flex items-center justify-center overflow-hidden flex-shrink-0",
+          wrapper,
           variantClasses[variant],
           className
         )}
         {...props}
       >
         <Image
-          src="/images/logo.jpeg"
+          src="/images/logo_animado.gif"
           alt="SV Lentes"
-          width={size === "sm" ? 40 : size === "md" ? 56 : 64}
-          height={size === "sm" ? 40 : size === "md" ? 56 : 64}
+          width={dimension}
+          height={dimension}
           className="w-full h-full object-contain rounded-lg"
           priority
+          unoptimized
           onError={() => setError(true)}
         />
       </div>
@@ -50,8 +58,8 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
     <div
       ref={ref}
       className={cn(
-        "relative flex items-center justify-center",
-        sizeClasses[size],
+        "relative flex items-center justify-center overflow-hidden flex-shrink-0",
+        wrapper,
         variantClasses[variant],
         className
       )}
@@ -65,10 +73,11 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
         <Image
           src="/logosv-md.png"
           alt="SV Lentes"
-          fill
+          width={dimension}
+          height={dimension}
           className={cn(
             "object-contain",
-            size === "sm" ? "p-1" : size === "md" ? "p-1" : "p-2"
+            sizeKey === "sm" || sizeKey === "md" ? "p-1" : "p-2"
           )}
           priority
         />
@@ -83,7 +92,7 @@ export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>(
 )
 LogoHeader.displayName = "LogoHeader"
 export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>(
-  (props, ref) => <Logo ref={ref} size="sm" variant="footer" {...props} />
+  (props, ref) => <Logo ref={ref} size="xl" variant="footer" {...props} />
 )
 LogoFooter.displayName = "LogoFooter"
 export { Logo }
