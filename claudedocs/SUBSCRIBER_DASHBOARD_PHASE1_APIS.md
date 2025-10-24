@@ -820,5 +820,443 @@ For API issues or questions:
 
 ---
 
+---
+
+## Phase 2 APIs
+
+### Real-Time Delivery Tracking
+
+#### GET /api/assinante/delivery-status
+
+**Description**: Retrieve real-time delivery status for active orders with tracking updates.
+
+**Authentication**: Required (Firebase Bearer token)
+
+**Rate Limit**: 200 requests / 15 minutes
+
+**Request Headers**:
+```http
+Authorization: Bearer <firebase-token>
+```
+
+**Query Parameters**:
+- `orderId` (optional): Specific order ID to track
+- `subscriptionId` (optional): Filter by subscription
+
+**Success Response** (200 OK):
+```json
+{
+  "currentDelivery": {
+    "orderId": "ord_123",
+    "status": "in_transit",
+    "orderNumber": "SV-2025-001234",
+    "estimatedDelivery": "2025-10-28T00:00:00.000Z",
+    "trackingCode": "BR123456789MG",
+    "trackingUrl": "https://rastreamento.correios.com.br/app/index.php?objeto=BR123456789MG",
+    "progress": {
+      "percentage": 65,
+      "currentStep": 2,
+      "totalSteps": 4,
+      "steps": [
+        {
+          "id": 1,
+          "label": "Pedido confirmado",
+          "status": "completed",
+          "timestamp": "2025-10-22T10:00:00.000Z"
+        },
+        {
+          "id": 2,
+          "label": "Em trânsito",
+          "status": "active",
+          "timestamp": "2025-10-24T14:30:00.000Z",
+          "location": "Centro de Distribuição - BH/MG"
+        },
+        {
+          "id": 3,
+          "label": "Saiu para entrega",
+          "status": "pending",
+          "timestamp": null
+        },
+        {
+          "id": 4,
+          "label": "Entregue",
+          "status": "pending",
+          "timestamp": null
+        }
+      ]
+    },
+    "shippingAddress": {
+      "street": "Rua das Flores",
+      "number": "123",
+      "city": "Caratinga",
+      "state": "MG",
+      "zipCode": "35300-000"
+    },
+    "items": [
+      {
+        "productName": "Lentes Diárias - 30 unidades",
+        "quantity": 2
+      }
+    ]
+  },
+  "upcomingDeliveries": [
+    {
+      "orderId": "ord_124",
+      "status": "processing",
+      "estimatedShipping": "2025-11-15T00:00:00.000Z"
+    }
+  ],
+  "recentDeliveries": [
+    {
+      "orderId": "ord_122",
+      "status": "delivered",
+      "deliveredAt": "2025-09-28T15:20:00.000Z"
+    }
+  ],
+  "metadata": {
+    "lastUpdate": "2025-10-24T16:45:00.000Z",
+    "refreshInterval": 300000
+  }
+}
+```
+
+**No Active Delivery** (200 OK):
+```json
+{
+  "currentDelivery": null,
+  "upcomingDeliveries": [],
+  "recentDeliveries": [],
+  "message": "Nenhuma entrega em andamento no momento"
+}
+```
+
+**Error Responses**:
+
+**404 Not Found** - No subscription or orders:
+```json
+{
+  "error": "NOT_FOUND",
+  "message": "Nenhum pedido encontrado"
+}
+```
+
+**cURL Example**:
+```bash
+curl -X GET "https://svlentes.shop/api/assinante/delivery-status?subscriptionId=sub_abc123" \
+  -H "Authorization: Bearer <firebase-token>"
+```
+
+**fetch Example**:
+```typescript
+const getDeliveryStatus = async (token: string, subscriptionId?: string) => {
+  const url = new URL('/api/assinante/delivery-status', window.location.origin)
+
+  if (subscriptionId) {
+    url.searchParams.append('subscriptionId', subscriptionId)
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch delivery status')
+  }
+
+  return response.json()
+}
+
+// Usage with auto-refresh
+useEffect(() => {
+  const fetchStatus = async () => {
+    const status = await getDeliveryStatus(token, subscriptionId)
+    setDeliveryStatus(status)
+  }
+
+  fetchStatus()
+
+  // Auto-refresh every 5 minutes
+  const interval = setInterval(fetchStatus, 5 * 60 * 1000)
+
+  return () => clearInterval(interval)
+}, [token, subscriptionId])
+```
+
+---
+
+#### GET /api/assinante/contextual-actions
+
+**Description**: Retrieve contextual quick actions based on subscription and delivery status.
+
+**Authentication**: Required (Firebase Bearer token)
+
+**Rate Limit**: 200 requests / 15 minutes
+
+**Request Headers**:
+```http
+Authorization: Bearer <firebase-token>
+```
+
+**Success Response** (200 OK):
+```json
+{
+  "actions": [
+    {
+      "id": "track_delivery",
+      "label": "Rastrear Entrega",
+      "description": "Sua entrega está a caminho",
+      "icon": "package",
+      "priority": "high",
+      "actionType": "modal",
+      "actionData": {
+        "modalType": "delivery_tracking",
+        "orderId": "ord_123"
+      },
+      "badge": {
+        "text": "Em trânsito",
+        "color": "blue"
+      }
+    },
+    {
+      "id": "contact_whatsapp",
+      "label": "Falar com Suporte",
+      "description": "Dúvidas sobre sua assinatura?",
+      "icon": "message-circle",
+      "priority": "medium",
+      "actionType": "whatsapp",
+      "actionData": {
+        "context": "support",
+        "prefilledMessage": "Olá! Gostaria de tirar uma dúvida sobre minha assinatura."
+      }
+    },
+    {
+      "id": "renew_subscription",
+      "label": "Renovar Assinatura",
+      "description": "Sua assinatura vence em 5 dias",
+      "icon": "refresh-cw",
+      "priority": "high",
+      "actionType": "navigation",
+      "actionData": {
+        "route": "/area-assinante/renovar"
+      },
+      "badge": {
+        "text": "Urgente",
+        "color": "red"
+      }
+    },
+    {
+      "id": "view_invoices",
+      "label": "Ver Faturas",
+      "description": "Baixe suas notas fiscais",
+      "icon": "file-text",
+      "priority": "low",
+      "actionType": "modal",
+      "actionData": {
+        "modalType": "invoices"
+      }
+    }
+  ],
+  "context": {
+    "subscriptionStatus": "active",
+    "hasActiveDelivery": true,
+    "daysUntilRenewal": 5,
+    "hasOverduePayment": false
+  },
+  "metadata": {
+    "timestamp": "2025-10-24T16:50:00.000Z",
+    "totalActions": 4
+  }
+}
+```
+
+**TypeScript Interface**:
+```typescript
+interface ContextualAction {
+  id: string
+  label: string
+  description: string
+  icon: string
+  priority: 'high' | 'medium' | 'low'
+  actionType: 'modal' | 'whatsapp' | 'navigation' | 'external'
+  actionData: {
+    modalType?: string
+    orderId?: string
+    context?: string
+    prefilledMessage?: string
+    route?: string
+    url?: string
+  }
+  badge?: {
+    text: string
+    color: 'red' | 'yellow' | 'green' | 'blue' | 'gray'
+  }
+}
+
+interface ContextualActionsResponse {
+  actions: ContextualAction[]
+  context: {
+    subscriptionStatus: string
+    hasActiveDelivery: boolean
+    daysUntilRenewal?: number
+    hasOverduePayment: boolean
+  }
+  metadata: {
+    timestamp: string
+    totalActions: number
+  }
+}
+```
+
+**cURL Example**:
+```bash
+curl -X GET https://svlentes.shop/api/assinante/contextual-actions \
+  -H "Authorization: Bearer <firebase-token>"
+```
+
+**React Hook Example**:
+```typescript
+const useContextualActions = () => {
+  const { user } = useAuth()
+  const [actions, setActions] = useState<ContextualAction[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchActions = async () => {
+      if (!user) return
+
+      const token = await user.getIdToken()
+
+      const response = await fetch('/api/assinante/contextual-actions', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+      setActions(data.actions)
+      setLoading(false)
+    }
+
+    fetchActions()
+  }, [user])
+
+  return { actions, loading }
+}
+```
+
+---
+
+### WhatsApp Integration (Enhanced)
+
+#### GET /api/whatsapp-redirect
+
+**Description**: Generate contextual WhatsApp link with pre-filled message based on user context.
+
+**Authentication**: Not required (public endpoint with optional user data)
+
+**Rate Limit**: 100 requests / 15 minutes
+
+**Query Parameters**:
+- `context`: Context type (`renewal` | `support` | `delivery` | `payment` | `general`)
+- `userId` (optional): User ID for personalized message
+- `orderId` (optional): Order ID for delivery context
+- `subscriptionId` (optional): Subscription ID for renewal context
+
+**Success Response** (200 OK):
+```json
+{
+  "whatsappLink": "https://wa.me/5533999898026?text=Ol%C3%A1%21%20Gostaria%20de%20renovar%20minha%20assinatura.",
+  "message": "Olá! Gostaria de renovar minha assinatura.",
+  "context": "renewal",
+  "attendanceStatus": {
+    "isBusinessHours": true,
+    "nextAvailableTime": null,
+    "message": "Atendimento disponível agora"
+  }
+}
+```
+
+**Context Message Examples**:
+
+**Renewal Context**:
+```
+Olá! Gostaria de renovar minha assinatura.
+
+*Dados da Assinatura:*
+Plano: Mensal Premium
+Vencimento: 01/11/2025
+Assinante: Maria Silva
+```
+
+**Delivery Context**:
+```
+Olá! Gostaria de informações sobre minha entrega.
+
+*Rastreamento:*
+Código: BR123456789MG
+Pedido: SV-2025-001234
+Status: Em trânsito
+```
+
+**Support Context**:
+```
+Olá! Preciso de ajuda com minha assinatura.
+
+Como posso ajudar você hoje?
+```
+
+**Payment Context**:
+```
+Olá! Tenho uma dúvida sobre pagamento.
+
+*Fatura:*
+Valor: R$ 89,90
+Vencimento: 01/11/2025
+Método: Cartão de crédito
+```
+
+**cURL Example**:
+```bash
+# General support
+curl -X GET "https://svlentes.shop/api/whatsapp-redirect?context=support"
+
+# Renewal with user data
+curl -X GET "https://svlentes.shop/api/whatsapp-redirect?context=renewal&userId=usr_123"
+
+# Delivery tracking
+curl -X GET "https://svlentes.shop/api/whatsapp-redirect?context=delivery&orderId=ord_456"
+```
+
+**TypeScript Example**:
+```typescript
+const generateWhatsAppLink = async (
+  context: 'renewal' | 'support' | 'delivery' | 'payment',
+  options?: {
+    userId?: string
+    orderId?: string
+    subscriptionId?: string
+  }
+): Promise<string> => {
+  const params = new URLSearchParams({ context })
+
+  if (options?.userId) params.append('userId', options.userId)
+  if (options?.orderId) params.append('orderId', options.orderId)
+  if (options?.subscriptionId) params.append('subscriptionId', options.subscriptionId)
+
+  const response = await fetch(`/api/whatsapp-redirect?${params}`)
+  const data = await response.json()
+
+  return data.whatsappLink
+}
+
+// Usage
+const handleContactSupport = async () => {
+  const link = await generateWhatsAppLink('support', { userId: user.id })
+  window.open(link, '_blank')
+}
+```
+
+---
+
 **Author**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
-**Last Updated**: 2025-10-23
+**Last Updated**: 2025-10-24

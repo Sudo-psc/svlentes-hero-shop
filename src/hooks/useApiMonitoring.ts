@@ -333,3 +333,91 @@ export function useEndpointHealth(endpoints: string[], intervalMs = 60000) {
  * Exportar singleton para uso direto
  */
 export { apiMonitor }
+
+/**
+ * Hook para monitorar métricas específicas da Fase 2
+ *
+ * Tracking adicional:
+ * - Delivery status response times
+ * - Contextual actions cache hit rate
+ * - WhatsApp redirect count por context
+ * - Alertas se delivery-status > 5s
+ */
+export function usePhase2Monitoring() {
+  const { monitoredFetch, getMetricsByEndpoint } = useApiMonitoring()
+
+  /**
+   * Obter estatísticas do delivery-status
+   */
+  const getDeliveryStatusStats = useCallback(() => {
+    const metrics = getMetricsByEndpoint('/api/assinante/delivery-status')
+
+    if (metrics.length === 0) {
+      return null
+    }
+
+    const avgResponseTime = Math.round(
+      metrics.reduce((sum, m) => sum + m.responseTime, 0) / metrics.length
+    )
+
+    const slowRequests = metrics.filter(m => m.responseTime > 5000).length
+    const errorRate = metrics.filter(m => m.status === 'error').length / metrics.length
+
+    return {
+      totalRequests: metrics.length,
+      avgResponseTime,
+      slowRequests,
+      errorRate,
+      lastRequest: metrics[metrics.length - 1],
+    }
+  }, [getMetricsByEndpoint])
+
+  /**
+   * Obter estatísticas do contextual-actions
+   */
+  const getContextualActionsStats = useCallback(() => {
+    const metrics = getMetricsByEndpoint('/api/assinante/contextual-actions')
+
+    if (metrics.length === 0) {
+      return null
+    }
+
+    // Cache hit rate baseado em response time (< 100ms provavelmente é cache)
+    const cacheHits = metrics.filter(m => m.responseTime < 100).length
+    const cacheHitRate = cacheHits / metrics.length
+
+    return {
+      totalRequests: metrics.length,
+      cacheHits,
+      cacheHitRate,
+      avgResponseTime: Math.round(
+        metrics.reduce((sum, m) => sum + m.responseTime, 0) / metrics.length
+      ),
+    }
+  }, [getMetricsByEndpoint])
+
+  /**
+   * Alertar se delivery-status muito lento
+   */
+  useEffect(() => {
+    const checkDeliveryPerformance = () => {
+      const stats = getDeliveryStatusStats()
+
+      if (stats && stats.avgResponseTime > 5000) {
+        console.warn(
+          `[Phase2Monitoring] Delivery-status slow: ${stats.avgResponseTime}ms average`
+        )
+      }
+    }
+
+    const interval = setInterval(checkDeliveryPerformance, 60000) // A cada 1 minuto
+
+    return () => clearInterval(interval)
+  }, [getDeliveryStatusStats])
+
+  return {
+    monitoredFetch,
+    getDeliveryStatusStats,
+    getContextualActionsStats,
+  }
+}

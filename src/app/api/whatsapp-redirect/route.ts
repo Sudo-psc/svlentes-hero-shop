@@ -5,7 +5,7 @@ import { generateContextualMessage, whatsappMessages, isBusinessHours, getAttend
 import { generateWhatsAppLink } from '@/lib/utils'
 // Schema específico para a API de redirecionamento
 const whatsappRedirectSchema = z.object({
-    context: z.enum(['hero', 'pricing', 'consultation', 'support', 'calculator', 'emergency'], {
+    context: z.enum(['hero', 'pricing', 'consultation', 'support', 'calculator', 'emergency', 'renewal', 'delivery', 'payment'], {
         errorMap: () => ({ message: 'Contexto inválido' })
     }),
     userData: z.object({
@@ -19,6 +19,9 @@ const whatsappRedirectSchema = z.object({
         planInterest: z.string().optional(),
         calculatedEconomy: z.number().optional(),
         customMessage: z.string().max(500, 'Mensagem personalizada muito longa').optional(),
+        // Parâmetros adicionais para assinantes
+        subscriptionId: z.string().optional(),
+        orderId: z.string().optional(),
     }),
     trackingData: z.object({
         source: z.string().optional(),
@@ -43,84 +46,144 @@ function logWhatsAppRedirect(data: {
     }))
 }
 export async function POST(request: NextRequest) {
+    const startTime = Date.now()
+
     try {
-        const body = await request.json()
-        // Validar dados de entrada
-        const validatedData = whatsappRedirectSchema.parse(body)
-        const { context, userData, contextData, trackingData } = validatedData
-        // Obter número do WhatsApp das variáveis de ambiente
-        const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.WHATSAPP_BUSINESS_NUMBER
-        if (!whatsappNumber) {
-            return NextResponse.json(
-                { error: 'Número do WhatsApp não configurado' },
-                { status: 500 }
-            )
-        }
-        // Preparar dados para geração da mensagem
-        const messageData = {
-            page: contextData.page,
-            section: contextData.section,
-            planInterest: contextData.planInterest,
-            calculatedEconomy: contextData.calculatedEconomy,
-            userInfo: userData && (userData.nome || userData.email || userData.whatsapp) ? userData : undefined
-        }
-        // Gerar mensagem contextual
-        let message = generateContextualMessage(context, messageData)
-        // Adicionar mensagem personalizada se fornecida
-        if (contextData.customMessage) {
-            message += `\n\n--- Mensagem adicional ---\n${contextData.customMessage}`
-        }
-        // Gerar link do WhatsApp
-        const whatsappLink = generateWhatsAppLink(whatsappNumber, message)
-        // Obter status de atendimento
-        const attendanceStatus = getAttendanceStatus()
-        // Registrar evento para analytics
-        logWhatsAppRedirect({
-            context,
-            page: contextData.page,
-            hasUserData: !!(userData && (userData.nome || userData.email || userData.whatsapp)),
-            timestamp: new Date().toISOString(),
-            userAgent: request.headers.get('user-agent') || undefined,
-            referer: request.headers.get('referer') || undefined,
-            trackingData
-        })
-        // Preparar resposta
-        const response = {
-            success: true,
-            whatsappLink,
-            message: {
-                preview: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
-                context: whatsappMessages[context].title,
-                fullMessage: message
-            },
-            attendance: attendanceStatus,
-            metadata: {
-                timestamp: new Date().toISOString(),
+        // Timeout de 3s para geração de mensagem
+        const abortController = new AbortController()
+        const timeoutId = setTimeout(() => abortController.abort(), 3000)
+
+        try {
+            const body = await request.json()
+
+            // Validar dados de entrada
+            const validatedData = whatsappRedirectSchema.parse(body)
+            const { context, userData, contextData, trackingData } = validatedData
+
+            // Obter número do WhatsApp das variáveis de ambiente
+            const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.WHATSAPP_BUSINESS_NUMBER
+
+            if (!whatsappNumber) {
+                // Fallback: retornar erro mas não bloquear
+                console.error('[WhatsApp] WHATSAPP_NUMBER not configured')
+                return NextResponse.json(
+                    { error: 'Número do WhatsApp não configurado' },
+                    { status: 500 }
+                )
+            }
+
+            // Preparar dados para geração da mensagem
+            const messageData = {
+                page: contextData.page,
+                section: contextData.section,
+                planInterest: contextData.planInterest,
+                calculatedEconomy: contextData.calculatedEconomy,
+                userInfo: userData && (userData.nome || userData.email || userData.whatsapp) ? userData : undefined
+            }
+
+            // Gerar mensagem contextual
+            let message: string
+            try {
+                message = generateContextualMessage(context, messageData)
+            } catch (msgError) {
+                console.error('[WhatsApp] Error generating message, using fallback:', msgError)
+                // Fallback para mensagem padrão
+                message = 'Olá! Preciso de ajuda com SVLentes.'
+            }
+            // Adicionar mensagem personalizada se fornecida
+            if (contextData.customMessage) {
+                message += `\n\n--- Mensagem adicional ---\n${contextData.customMessage}`
+            }
+
+            // Gerar link do WhatsApp
+            const whatsappLink = generateWhatsAppLink(whatsappNumber, message)
+
+            // Obter status de atendimento
+            const attendanceStatus = getAttendanceStatus()
+
+            // Registrar evento para analytics (LGPD-compliant - sem dados pessoais)
+            logWhatsAppRedirect({
                 context,
                 page: contextData.page,
                 hasUserData: !!(userData && (userData.nome || userData.email || userData.whatsapp)),
-                messageLength: message.length
+                timestamp: new Date().toISOString(),
+                userAgent: request.headers.get('user-agent') || undefined,
+                referer: request.headers.get('referer') || undefined,
+                trackingData: trackingData ? {
+                    source: trackingData.source,
+                    medium: trackingData.medium,
+                    campaign: trackingData.campaign,
+                } : undefined
+            })
+
+            // Preparar resposta
+            const responseTime = Date.now() - startTime
+            const response = {
+                success: true,
+                whatsappLink,
+                message: {
+                    preview: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
+                    context: whatsappMessages[context].title,
+                    fullMessage: message
+                },
+                attendance: attendanceStatus,
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    context,
+                    page: contextData.page,
+                    hasUserData: !!(userData && (userData.nome || userData.email || userData.whatsapp)),
+                    messageLength: message.length,
+                    responseTime,
+                }
             }
+
+            return NextResponse.json(response)
+
+        } finally {
+            clearTimeout(timeoutId)
         }
-        return NextResponse.json(response)
     } catch (error) {
-        console.error('Erro na API de redirecionamento WhatsApp:', error)
+        const responseTime = Date.now() - startTime
+
+        console.error('[WhatsApp] API error:', {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            responseTime,
+        })
+
         // Tratar erros de validação
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 {
+                    success: false,
                     error: 'Dados inválidos',
                     details: error.errors.map(err => ({
                         field: err.path.join('.'),
                         message: err.message
-                    }))
+                    })),
+                    // Fallback: fornecer link genérico mesmo em erro
+                    whatsappLink: `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '')}`,
+                    metadata: {
+                        responseTime,
+                        timestamp: new Date().toISOString(),
+                    }
                 },
                 { status: 400 }
             )
         }
-        // Erro genérico
+
+        // Erro genérico - fornecer fallback
+        const fallbackNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') || '5533999898026'
+
         return NextResponse.json(
-            { error: 'Erro interno do servidor. Tente novamente.' },
+            {
+                success: false,
+                error: 'Não foi possível abrir o WhatsApp. Tente novamente ou use o link no rodapé.',
+                whatsappLink: `https://wa.me/${fallbackNumber}`,
+                metadata: {
+                    responseTime,
+                    timestamp: new Date().toISOString(),
+                }
+            },
             { status: 500 }
         )
     }

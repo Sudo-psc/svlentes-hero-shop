@@ -53,7 +53,7 @@ export class SendPulseWhatsAppClient {
     if (!this.clientId || !this.clientSecret) {
       throw new Error('SendPulse Client ID and Secret are required')
     }
-    const response = await fetch(`${this.baseUrl}/oauth/access_token`, {
+    const response = await fetch('https://api.sendpulse.com/oauth/access_token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -92,7 +92,7 @@ export class SendPulseWhatsAppClient {
     }
     return cleanPhone
   }
-  private botId: string | null = null
+  private botId: string = ''
   private async getBotId(): Promise<string> {
     if (this.botId) {
       return this.botId
@@ -281,6 +281,7 @@ export class SendPulseWhatsAppClient {
   async createOrUpdateContact(contact: SendPulseContact): Promise<any> {
     try {
       const token = await this.getAccessToken()
+      const botId = await this.getBotId()
       const cleanPhone = this.cleanPhone(contact.phone)
       const response = await fetch('https://api.sendpulse.com/whatsapp/contacts', {
         method: 'POST',
@@ -289,6 +290,7 @@ export class SendPulseWhatsAppClient {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          bot_id: botId,
           phone: cleanPhone,
           name: contact.name || '',
           variables: contact.variables || {},

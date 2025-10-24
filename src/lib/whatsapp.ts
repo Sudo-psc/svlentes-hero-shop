@@ -66,6 +66,33 @@ Situação:
 • [descrever o problema]
 • Sou cliente SV Lentes: [sim/não]
 Preciso de ajuda urgente!`
+    },
+    renewal: {
+        title: 'Renovação de Assinatura',
+        message: `Olá! Sou assinante SV Lentes e gostaria de informações sobre renovação.
+Minha dúvida é sobre:
+• Antecipação da próxima entrega
+• Ajuste do plano
+• Atualização de dados
+Aguardo retorno!`
+    },
+    delivery: {
+        title: 'Acompanhar Entrega',
+        message: `Olá! Sou assinante SV Lentes e gostaria de acompanhar minha entrega.
+Preciso saber:
+• Status atual do pedido
+• Previsão de chegada
+• Código de rastreamento
+Aguardo informações!`
+    },
+    payment: {
+        title: 'Suporte de Pagamento',
+        message: `Olá! Sou assinante SV Lentes e preciso de suporte com pagamento.
+Minha dúvida é sobre:
+• Regularização de pendência
+• Alteração de método de pagamento
+• Consulta de fatura
+Aguardo retorno!`
     }
 }
 // Função para gerar mensagem contextual

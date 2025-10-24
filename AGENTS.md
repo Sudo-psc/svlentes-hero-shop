@@ -4,13 +4,17 @@
 ```bash
 npm run build                    # Production build (verify before deploy)
 npm run lint                     # ESLint checks (run after changes)
+npm run lint:fix                 # Auto-fix ESLint issues
 npm run test                     # All Jest unit tests
-npm run test -- validations      # Single test file matching "validations"
+npm run test -- validations      # Single test file matching "validations" pattern
 npm run test:watch               # Watch mode for TDD
 npm run test:coverage            # Jest with coverage report
+npm run test:resilience          # Vitest resilience tests (offline, backup auth)
+npm run test:integration         # Vitest integration tests
 npm run test:e2e                 # Playwright E2E tests
 npm run test:e2e:ui              # Playwright with UI mode
 npm run test:e2e:debug          # Debug single E2E test
+npm run test:all                 # Run all tests (resilience + E2E)
 ```
 
 ## Code Style Guidelines
@@ -60,19 +64,22 @@ export function MyComponent({ prop }: ComponentProps) {
 - Never bypass medical authorization or prescription validation (healthcare compliance)
 
 ### Testing Requirements
-- Unit tests for business logic (calculator, validation functions)
-- Component tests for complex UI with user interactions
+- **Jest** for unit tests (business logic, validations)
+- **Vitest** for resilience/integration tests (offline, backup auth)
+- **Playwright** for E2E tests
 - Test files colocated: `src/**/__tests__/ComponentName.test.tsx`
-- Use `@testing-library/react` for component tests, Jest for unit tests
+- Use `@testing-library/react` for component tests
 - Test files should import from parent: `import { func } from '../validations'`
+- Single test file: `npm run test -- <pattern>` (Jest) or `vitest <file-path>` (Vitest)
 
 ## Critical Rules
 1. **Healthcare compliance**: LGPD data protection, prescription validation mandatory
 2. **NO COMMENTS unless requested** - code should be self-documenting
 3. **Security**: No API keys in client code, validate webhook signatures
 4. **Asaas payment gateway** (Brazilian) - primary, Stripe is legacy backup
-5. **Run tests after changes**: `npm run test && npm run build` before considering done
-6. **kluster verification**: Run `npx kluster_code_review_auto` (or `npm run kluster_code_review_auto`) after ANY file change
+5. **Package manager**: Use **npm** (not pnpm/yarn) - project uses npm lock file
+6. **Run tests after changes**: `npm run test && npm run build` before considering done
+7. **kluster verification**: Run `npm run kluster_code_review_auto` after ANY file change
 
 ## LangChain & LangSmith Observability
 

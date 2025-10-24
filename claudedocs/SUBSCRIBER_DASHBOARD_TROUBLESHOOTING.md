@@ -1050,5 +1050,382 @@ If issue persists after following this guide:
 
 ---
 
+---
+
+## Phase 2 Troubleshooting
+
+### Real-Time Delivery Status
+
+#### Issue: Status not auto-refreshing
+
+**Symptoms**: Delivery status remains static, no updates after 5 minutes.
+
+**Diagnosis**:
+```typescript
+// Check if interval is running
+useEffect(() => {
+  console.log('[DeliveryStatus] Mounted, starting auto-refresh')
+
+  const interval = setInterval(() => {
+    console.log('[DeliveryStatus] Auto-refresh triggered')
+    fetchDeliveryStatus()
+  }, 300000)
+
+  return () => {
+    console.log('[DeliveryStatus] Cleanup, clearing interval')
+    clearInterval(interval)
+  }
+}, [])
+```
+
+**Common Causes**:
+1. **Tab inactive**: Browser throttles timers for hidden tabs
+2. **Component unmounting**: Interval cleared too early
+3. **Memory leak**: Multiple intervals running
+
+**Solution**:
+```typescript
+// Respect page visibility
+useEffect(() => {
+  let interval: NodeJS.Timeout | null = null
+
+  const startRefresh = () => {
+    if (interval) clearInterval(interval)
+
+    interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchDeliveryStatus()
+      }
+    }, 300000)
+  }
+
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      if (interval) clearInterval(interval)
+    } else {
+      startRefresh()
+      fetchDeliveryStatus() // Immediate refresh when tab becomes visible
+    }
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  startRefresh()
+
+  return () => {
+    if (interval) clearInterval(interval)
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }
+}, [])
+```
+
+---
+
+#### Issue: Progress bar stuck at 0%
+
+**Symptoms**: Visual progress indicator shows 0% despite delivery data.
+
+**Diagnosis**:
+```typescript
+// Check delivery data structure
+console.log('Delivery data:', currentDelivery)
+console.log('Progress:', currentDelivery?.progress)
+console.log('Percentage:', currentDelivery?.progress?.percentage)
+```
+
+**Solution**:
+```typescript
+// Ensure progress data exists with fallback
+const progress = currentDelivery?.progress || {
+  percentage: 0,
+  currentStep: 0,
+  totalSteps: 4,
+  steps: []
+}
+
+<progress
+  value={progress.percentage}
+  max={100}
+  aria-valuenow={progress.percentage}
+  aria-valuemin={0}
+  aria-valuemax={100}
+>
+  {progress.percentage}%
+</progress>
+```
+
+---
+
+### Floating WhatsApp Button
+
+#### Issue: Button not visible
+
+**Symptoms**: WhatsApp button missing from dashboard.
+
+**Diagnosis**:
+```bash
+# Check component rendering
+# In browser console:
+document.querySelector('[aria-label*="WhatsApp"]')
+# Should return: <button>...</button>
+
+# Check z-index
+const button = document.querySelector('[aria-label*="WhatsApp"]')
+console.log(window.getComputedStyle(button).zIndex)
+# Expected: 50 or higher
+```
+
+**Common Causes**:
+1. **Low z-index**: Button behind other elements
+2. **CSS conflict**: Tailwind class override
+3. **Conditional rendering**: Component not mounting
+4. **Mobile viewport**: Wrong positioning class
+
+**Solution**:
+```tsx
+// Ensure high z-index and proper positioning
+<button
+  className="fixed bottom-4 right-4 z-50 md:bottom-6 md:right-6"
+  style={{ zIndex: 9999 }} // Inline style as failsafe
+  aria-label="Contatar suporte via WhatsApp"
+>
+  <MessageCircle className="h-6 w-6" />
+</button>
+```
+
+---
+
+#### Issue: WhatsApp link opens but message not pre-filled
+
+**Symptoms**: WhatsApp opens with blank message instead of context.
+
+**Diagnosis**:
+```typescript
+// Log generated link
+const handleClick = async () => {
+  const link = await generateWhatsAppLink(context, userData)
+
+  console.log('WhatsApp Link:', link)
+  console.log('Decoded message:', decodeURIComponent(link.split('text=')[1]))
+
+  window.open(link, '_blank')
+}
+```
+
+**Common Causes**:
+1. **Message too long**: URL exceeds 2000 chars
+2. **Encoding issue**: Special characters not properly encoded
+3. **WhatsApp version**: Old app version doesn't support pre-fill
+
+**Solution**:
+```typescript
+// Truncate and properly encode message
+const generateWhatsAppLink = (phoneNumber: string, message: string) => {
+  // Truncate if too long
+  const truncatedMessage = message.length > 1500
+    ? message.substring(0, 1500) + '\n\n[mensagem truncada]'
+    : message
+
+  // Proper encoding
+  const encodedMessage = encodeURIComponent(truncatedMessage)
+
+  return `https://wa.me/${phoneNumber}?text=${encodedMessage}`
+}
+```
+
+---
+
+### Contextual Quick Actions
+
+#### Issue: No actions displayed
+
+**Symptoms**: Quick actions section empty or shows "Nenhuma ação disponível".
+
+**Diagnosis**:
+```typescript
+// Check API response
+const { actions, context } = await fetchContextualActions(token)
+
+console.log('Actions received:', actions)
+console.log('Actions count:', actions.length)
+console.log('Context:', context)
+
+if (actions.length === 0) {
+  console.log('Subscription status:', context.subscriptionStatus)
+  console.log('Has active delivery:', context.hasActiveDelivery)
+  console.log('Days until renewal:', context.daysUntilRenewal)
+}
+```
+
+**Common Causes**:
+1. **Subscription inactive**: No actions for cancelled subscriptions
+2. **API filtering**: All actions filtered out by priority
+3. **Data missing**: Required subscription data not available
+
+**Solution**:
+```typescript
+// Provide fallback actions
+const defaultActions: ContextualAction[] = [
+  {
+    id: 'contact_support',
+    label: 'Falar com Suporte',
+    description: 'Tire suas dúvidas conosco',
+    icon: 'message-circle',
+    priority: 'medium',
+    actionType: 'whatsapp',
+    actionData: { context: 'support' }
+  },
+  {
+    id: 'view_subscription',
+    label: 'Ver Assinatura',
+    description: 'Detalhes da sua assinatura',
+    icon: 'file-text',
+    priority: 'low',
+    actionType: 'modal',
+    actionData: { modalType: 'subscription_details' }
+  }
+]
+
+const displayActions = actions.length > 0 ? actions : defaultActions
+```
+
+---
+
+#### Issue: Actions not updating after subscription change
+
+**Symptoms**: Quick actions remain static after updating subscription.
+
+**Diagnosis**:
+```typescript
+// Check if refetch is triggered
+const { refetch } = useSubscription()
+
+console.log('Subscription updated')
+await refetch()
+console.log('Actions should update now')
+```
+
+**Solution**:
+```typescript
+// Trigger actions refetch after subscription update
+const updateSubscription = async (newData) => {
+  await updateSubscriptionAPI(newData)
+
+  // Refetch subscription
+  await refetchSubscription()
+
+  // Refetch contextual actions
+  await refetchActions()
+
+  toast.success('Assinatura atualizada com sucesso!')
+}
+```
+
+---
+
+### WhatsApp Redirect API
+
+#### Issue: 404 Error on /api/whatsapp-redirect
+
+**Symptoms**: "Not Found" error when calling WhatsApp redirect endpoint.
+
+**Diagnosis**:
+```bash
+# Test endpoint existence
+curl -I https://svlentes.shop/api/whatsapp-redirect
+
+# Expected: 200 OK or 405 Method Not Allowed
+# If 404: Route file missing or not deployed
+```
+
+**Solution**:
+```bash
+# 1. Verify file exists
+ls -la /root/svlentes-hero-shop/src/app/api/whatsapp-redirect/route.ts
+
+# 2. Check Next.js build
+cd /root/svlentes-hero-shop
+npm run build
+
+# 3. Restart service
+systemctl restart svlentes-nextjs
+
+# 4. Verify deployment
+curl https://svlentes.shop/api/whatsapp-redirect?context=support
+```
+
+---
+
+#### Issue: Context validation error
+
+**Symptoms**: "Contexto inválido" error message.
+
+**Diagnosis**:
+```typescript
+// Check allowed contexts
+const allowedContexts = [
+  'hero', 'pricing', 'consultation', 'support',
+  'calculator', 'emergency', 'renewal', 'delivery', 'payment'
+]
+
+console.log('Provided context:', context)
+console.log('Is valid:', allowedContexts.includes(context))
+```
+
+**Solution**:
+```typescript
+// Use valid context or fallback
+const validatedContext = allowedContexts.includes(context)
+  ? context
+  : 'support'
+
+const link = await generateWhatsAppLink(validatedContext, userData)
+```
+
+---
+
+## Quick Diagnostic Commands
+
+### Check All Phase 2 Features
+
+```bash
+#!/bin/bash
+# Phase 2 health check script
+
+echo "🔍 Phase 2 Feature Check"
+echo "========================"
+
+# 1. Delivery Status API
+echo -n "Delivery Status API: "
+curl -sf https://svlentes.shop/api/assinante/delivery-status \
+  -H "Authorization: Bearer TEST" > /dev/null 2>&1 && echo "✅ OK" || echo "❌ ERROR"
+
+# 2. Contextual Actions API
+echo -n "Contextual Actions API: "
+curl -sf https://svlentes.shop/api/assinante/contextual-actions \
+  -H "Authorization: Bearer TEST" > /dev/null 2>&1 && echo "✅ OK" || echo "❌ ERROR"
+
+# 3. WhatsApp Redirect API
+echo -n "WhatsApp Redirect API: "
+curl -sf "https://svlentes.shop/api/whatsapp-redirect?context=support" > /dev/null 2>&1 \
+  && echo "✅ OK" || echo "❌ ERROR"
+
+# 4. Component Files
+echo -n "RealTimeDeliveryStatus: "
+[ -f /root/svlentes-hero-shop/src/components/assinante/RealTimeDeliveryStatus.tsx ] \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+echo -n "FloatingWhatsAppButton: "
+[ -f /root/svlentes-hero-shop/src/components/assinante/FloatingWhatsAppButton.tsx ] \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+echo -n "ContextualQuickActions: "
+[ -f /root/svlentes-hero-shop/src/components/assinante/ContextualQuickActions.tsx ] \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+echo "========================"
+```
+
+---
+
 **Author**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
-**Last Updated**: 2025-10-23
+**Last Updated**: 2025-10-24
