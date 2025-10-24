@@ -116,15 +116,23 @@ function normalizePhoneNumber(phone: string): string {
   if (!phone) return ''
   // Remove todos os caracteres não numéricos
   const cleaned = phone.replace(/\D/g, '')
-  // Verificar se é número brasileiro válido (com DDD)
+  
+  // Número com código do país (55) + DDD + número (13 dígitos total)
+  if (cleaned.length === 13 && cleaned.startsWith('55')) {
+    return cleaned.substring(2) // Remove código do país, mantém DDD + número
+  }
+  
+  // Número com código do país (55) + DDD + número (12 dígitos - sem 9)
+  if (cleaned.length === 12 && cleaned.startsWith('55')) {
+    return cleaned.substring(2)
+  }
+  
+  // Número brasileiro padrão: DDD + número (10 ou 11 dígitos)
   if (cleaned.length === 10 || cleaned.length === 11) {
-    // Se tiver 11 dígitos, remove o 9 inicial (números de celular)
-    if (cleaned.length === 11 && cleaned.startsWith('9')) {
-      return cleaned.substring(1)
-    }
     return cleaned
   }
-  // Retorna o número limpo se não seguir o padrão brasileiro
+  
+  // Retorna o número limpo se não seguir nenhum padrão conhecido
   return cleaned
 }
 /**
@@ -132,7 +140,7 @@ function normalizePhoneNumber(phone: string): string {
  */
 function isValidBrazilianPhone(phone: string): boolean {
   const normalized = normalizePhoneNumber(phone)
-  // Números brasileiros devem ter 10 dígitos (fixo) ou 11 (celular sem o 9)
+  // Números brasileiros devem ter 10 dígitos (fixo) ou 11 dígitos (celular com 9)
   return normalized.length === 10 || normalized.length === 11
 }
 /**

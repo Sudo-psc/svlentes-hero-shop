@@ -1427,5 +1427,691 @@ echo "========================"
 
 ---
 
+## Phase 3 - Troubleshooting
+
+### Prescription Management Issues
+
+#### "Upload de Prescrição Falha"
+
+**Sintomas**: Upload não completa, fica em loading infinito, ou erro retornado.
+
+**Diagnóstico**:
+```bash
+# 1. Check file size
+ls -lh prescription.pdf
+# Should be < 5MB (5242880 bytes)
+
+# 2. Check file format
+file prescription.pdf
+# Should be: PDF, JPEG, or PNG
+
+# 3. View recent upload logs
+journalctl -u svlentes-nextjs | grep -i prescription | tail -20
+
+# 4. Check database for recent uploads
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT * FROM \"Prescription\"
+   WHERE \"userId\" = 'usr_abc123'
+   ORDER BY \"createdAt\" DESC LIMIT 5;"
+
+# 5. Check storage space
+df -h
+# Ensure sufficient space in /root/svlentes-hero-shop/storage/
+```
+
+**Possíveis Causas**:
+1. **Arquivo > 5MB**: Compressão necessária
+2. **Formato não suportado**: Apenas PDF, JPG, PNG aceitos
+3. **Network timeout**: Upload interrompido
+4. **Storage service offline**: S3 ou filesystem indisponível
+5. **Malware detected**: Arquivo rejeitado por segurança
+6. **Rate limit exceeded**: Mais de 10 uploads/hora
+
+**Soluções**:
+
+**1. Comprimir arquivo grande**:
+```bash
+# Para imagens JPG/PNG
+convert large-prescription.jpg -quality 85 -resize 1600x1600\> prescription.jpg
+
+# Para PDF
+gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook \
+   -dNOPAUSE -dQUIET -dBATCH \
+   -sOutputFile=compressed.pdf original.pdf
+
+# Verificar tamanho resultante
+ls -lh prescription.jpg compressed.pdf
+```
+
+**2. Converter formato**:
+```bash
+# JPG/PNG para PDF
+convert prescription.jpg prescription.pdf
+
+# Verificar formato
+file prescription.pdf
+```
+
+**3. Aumentar timeout (Next.js config)**:
+```javascript
+// next.config.js
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '6mb'
+    },
+    responseLimit: false,
+    timeout: 60000 // 60 seconds
+  }
+}
+```
+
+**4. Verificar storage**:
+```bash
+# Check local storage
+ls -la /root/svlentes-hero-shop/storage/prescriptions/
+
+# Check permissions
+chmod -R 755 /root/svlentes-hero-shop/storage/
+
+# Check S3 connectivity (if using)
+aws s3 ls s3://your-bucket/prescriptions/ || echo "S3 unavailable"
+```
+
+**5. Clear rate limit**:
+```bash
+# Reset rate limit in Redis (if using)
+redis-cli DEL "ratelimit:prescription_upload:usr_abc123"
+
+# Or wait 60 minutes for automatic reset
+```
+
+---
+
+#### "Prescrição Não Aparece Após Upload"
+
+**Sintomas**: Upload completa (status 201) mas prescrição não aparece na lista ou em "Current Prescription".
+
+**Diagnóstico**:
+```bash
+# 1. Verify prescription in database
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT id, status, \"fileUrl\", \"createdAt\"
+   FROM \"Prescription\"
+   WHERE \"userId\" = 'usr_abc123'
+   ORDER BY \"createdAt\" DESC LIMIT 1;"
+
+# 2. Check if file exists
+ls -la /root/svlentes-hero-shop/storage/prescriptions/usr_abc123/
+
+# 3. View API logs for prescription GET
+journalctl -u svlentes-nextjs | grep "GET.*prescription" | tail -10
+
+# 4. Check cache status
+curl -I https://svlentes.shop/api/assinante/prescription \
+  -H "Authorization: Bearer ${TOKEN}"
+# Look for Cache-Control headers
+```
+
+**Possíveis Causas**:
+1. **Cache desatualizado**: Browser ou API cache não invalidado
+2. **Database replication lag**: Prescrição ainda não replicada
+3. **Prescrição inválida**: Status marcado como EXPIRED ou INVALID
+4. **Query incorreta**: API não retornando prescrição corretamente
+
+**Soluções**:
+
+**1. Clear cache**:
+```bash
+# Client-side (browser console)
+localStorage.clear()
+sessionStorage.clear()
+location.reload(true) // Hard reload
+
+# Server-side cache (if using Redis)
+redis-cli FLUSHDB
+```
+
+**2. Aguardar replication lag**:
+```bash
+# Check replication status
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT NOW() - pg_last_xact_replay_timestamp() AS replication_lag;"
+
+# If lag > 30 seconds, investigate replication issues
+# Otherwise, wait 30-60 seconds and refresh
+```
+
+**3. Verificar status da prescrição**:
+```sql
+-- Update status if incorrectly marked
+UPDATE "Prescription"
+SET status = 'VALID'
+WHERE id = 'prx_abc123' AND status != 'VALID';
+
+-- Recalculate expiry if needed
+UPDATE "Prescription"
+SET "expiryDate" = "issueDate" + INTERVAL '1 year'
+WHERE id = 'prx_abc123';
+```
+
+**4. Invalidate SWR cache (React)**:
+```typescript
+// In component
+import { mutate } from 'swr'
+
+// Force revalidation
+mutate('/api/assinante/prescription')
+
+// Or trigger manual refetch
+const { data, error, mutate: refetch } = useSWR('/api/assinante/prescription')
+refetch()
+```
+
+---
+
+#### "Alerta de Expiração Não Aparece"
+
+**Sintomas**: Prescrição expira em menos de 30 dias mas alerta não é exibido.
+
+**Diagnóstico**:
+```bash
+# Check prescription expiry
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT
+     id,
+     \"expiryDate\",
+     EXTRACT(DAY FROM (\"expiryDate\" - NOW())) as days_until_expiry
+   FROM \"Prescription\"
+   WHERE \"userId\" = 'usr_abc123' AND status = 'VALID';"
+
+# Should return days_until_expiry < 30
+```
+
+**Possíveis Causas**:
+1. **daysUntilExpiry > 30**: Prescrição ainda não dentro do período de alerta
+2. **Component not rendering**: Alerta não incluído no render condicional
+3. **Notification dismissed**: Usuário já dispensou o alerta
+
+**Soluções**:
+
+**1. Verify calculation**:
+```typescript
+// Check calculation in browser console
+const prescription = { expiryDate: '2025-11-15T00:00:00.000Z' }
+const daysUntilExpiry = Math.ceil(
+  (new Date(prescription.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)
+)
+console.log('Days until expiry:', daysUntilExpiry)
+// Should be < 30 for alert to show
+```
+
+**2. Force alert display**:
+```typescript
+// Temporarily override threshold for testing
+{prescription?.daysUntilExpiry < 60 && (
+  <ExpiryAlert prescription={prescription} />
+)}
+```
+
+**3. Check dismissed state**:
+```typescript
+// Clear dismissed alerts from localStorage
+localStorage.removeItem('dismissedAlerts')
+```
+
+---
+
+### Payment History Issues
+
+#### "Pagamentos Não Carregam"
+
+**Sintomas**: Tabela vazia, loading infinito, ou erro "Failed to fetch".
+
+**Diagnóstico**:
+```bash
+# 1. Test endpoint manually
+curl -X GET "https://svlentes.shop/api/assinante/payment-history" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  | jq
+
+# 2. Check database for payments
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT COUNT(*) as total_payments
+   FROM \"Payment\" p
+   JOIN \"Subscription\" s ON p.\"subscriptionId\" = s.id
+   WHERE s.\"userId\" = 'usr_abc123';"
+
+# 3. Check Asaas integration
+journalctl -u svlentes-nextjs | grep -i asaas | tail -20
+
+# 4. View API errors
+journalctl -u svlentes-nextjs | grep "payment-history" | grep ERROR
+```
+
+**Possíveis Causas**:
+1. **API timeout**: Query muito lenta ou timeout configurado muito baixo
+2. **Circuit breaker aberto**: Muitas falhas consecutivas
+3. **Database query slow**: Faltam índices ou query ineficiente
+4. **Filtros muito restritivos**: Nenhum pagamento corresponde aos filtros
+5. **Asaas API down**: Integração com Asaas indisponível
+
+**Soluções**:
+
+**1. Aumentar timeout**:
+```typescript
+// In fetch call
+const response = await fetch('/api/assinante/payment-history', {
+  headers: { 'Authorization': `Bearer ${token}` },
+  signal: AbortSignal.timeout(30000) // 30 seconds
+})
+```
+
+**2. Reset circuit breaker**:
+```bash
+# If using circuit breaker library
+curl -X POST https://svlentes.shop/api/monitoring/circuit-breaker/reset \
+  -H "Authorization: Bearer ${ADMIN_TOKEN}"
+
+# Or wait 60 seconds for auto-recovery
+```
+
+**3. Optimize database query**:
+```sql
+-- Add missing indexes
+CREATE INDEX IF NOT EXISTS idx_payment_subscription_id ON "Payment"("subscriptionId");
+CREATE INDEX IF NOT EXISTS idx_payment_status ON "Payment"(status);
+CREATE INDEX IF NOT EXISTS idx_payment_due_date ON "Payment"("dueDate");
+
+-- Analyze query performance
+EXPLAIN ANALYZE
+SELECT * FROM "Payment" p
+JOIN "Subscription" s ON p."subscriptionId" = s.id
+WHERE s."userId" = 'usr_abc123'
+ORDER BY p."dueDate" DESC
+LIMIT 20;
+```
+
+**4. Limpar filtros**:
+```typescript
+// Reset all filters to default
+setFilters({
+  page: 1,
+  limit: 20,
+  sortBy: 'dueDate',
+  sortOrder: 'desc'
+})
+```
+
+**5. Check Asaas API status**:
+```bash
+# Test Asaas connectivity
+curl -I https://api.asaas.com/v3/payments \
+  -H "access_token: ${ASAAS_API_KEY_PROD}"
+
+# If 5xx error, use cached data
+# Add fallback in API:
+const cachedPayments = await redis.get(`payments:${userId}`)
+if (asaasDown && cachedPayments) {
+  return JSON.parse(cachedPayments)
+}
+```
+
+---
+
+#### "Summary Cards Mostram Valores Errados"
+
+**Sintomas**: Total Pago, Pendente, ou Pontualidade incorretos.
+
+**Diagnóstico**:
+```bash
+# Verify calculations manually
+docker exec -it postgres psql -U n8nuser -d n8ndb
+
+# Total Paid
+SELECT SUM(amount) as total_paid
+FROM "Payment" p
+JOIN "Subscription" s ON p."subscriptionId" = s.id
+WHERE s."userId" = 'usr_abc123' AND p.status = 'PAID';
+
+# Total Pending
+SELECT SUM(amount) as total_pending
+FROM "Payment" p
+JOIN "Subscription" s ON p."subscriptionId" = s.id
+WHERE s."userId" = 'usr_abc123' AND p.status = 'PENDING';
+
+# On-Time Rate
+SELECT
+  COUNT(*) FILTER (WHERE "paidAt" <= "dueDate") as on_time,
+  COUNT(*) as total,
+  (COUNT(*) FILTER (WHERE "paidAt" <= "dueDate")::float / COUNT(*)) * 100 as rate
+FROM "Payment" p
+JOIN "Subscription" s ON p."subscriptionId" = s.id
+WHERE s."userId" = 'usr_abc123' AND p.status = 'PAID';
+```
+
+**Possíveis Causas**:
+1. **Cache desatualizado**: Summary calculado com dados antigos
+2. **Calculation error**: Lógica de cálculo incorreta
+3. **Filtros aplicados**: Summary calculado apenas com registros filtrados
+4. **Timezone issues**: paidAt vs dueDate em timezones diferentes
+
+**Soluções**:
+
+**1. Invalidate cache**:
+```bash
+# Clear payment summary cache
+redis-cli DEL "payment_summary:usr_abc123"
+
+# Or in API, reduce cache TTL
+const summary = await cache.get('payment_summary', {
+  ttl: 60 // 1 minute instead of 2
+})
+```
+
+**2. Fix calculation logic**:
+```typescript
+// Ensure correct status filtering
+const totalPaid = payments
+  .filter(p => p.status === 'PAID')
+  .reduce((sum, p) => sum + p.amount, 0)
+
+// Not just truthy check
+const totalPending = payments
+  .filter(p => p.status === 'PENDING') // Explicit check
+  .reduce((sum, p) => sum + p.amount, 0)
+```
+
+**3. Calculate before filtering**:
+```typescript
+// Calculate summary from ALL payments, then apply filters for table
+const allPayments = await fetchAllPayments(userId)
+const summary = calculateSummary(allPayments)
+
+const filteredPayments = applyFilters(allPayments, filters)
+
+return { payments: filteredPayments, summary }
+```
+
+**4. Normalize timezones**:
+```typescript
+// Convert all dates to UTC for comparison
+const onTime = payments.filter(p => {
+  const paidAtUTC = new Date(p.paidAt).toISOString()
+  const dueDateUTC = new Date(p.dueDate).toISOString()
+  return paidAtUTC <= dueDateUTC
+})
+```
+
+---
+
+### Delivery Preferences Issues
+
+#### "CEP Não Encontrado"
+
+**Sintomas**: Busca de CEP retorna erro "CEP não encontrado" ou timeout.
+
+**Diagnóstico**:
+```bash
+# 1. Test ViaCEP API directly
+curl https://viacep.com.br/ws/35300000/json/
+# Should return JSON with address
+
+# 2. Test with user's CEP
+curl https://viacep.com.br/ws/12345678/json/
+# Check if valid response
+
+# 3. Check network connectivity
+ping viacep.com.br
+
+# 4. View ViaCEP integration logs
+journalctl -u svlentes-nextjs | grep -i viacep | tail -20
+```
+
+**Possíveis Causas**:
+1. **CEP digitado errado**: Typo ou formato incorreto
+2. **ViaCEP API offline**: Serviço temporariamente indisponível
+3. **CEP não existe**: CEP válido mas não cadastrado
+4. **Network timeout**: Conexão lenta ou bloqueada
+5. **Rural area**: CEP de área rural pode não estar no sistema
+
+**Soluções**:
+
+**1. Validar formato**:
+```typescript
+// CEP format validation
+const validateCEPFormat = (cep: string): boolean => {
+  const cleanCEP = cep.replace(/\D/g, '')
+  return cleanCEP.length === 8 && /^\d{8}$/.test(cleanCEP)
+}
+
+// Examples
+validateCEPFormat('12345-678') // true
+validateCEPFormat('12345678')  // true
+validateCEPFormat('1234567')   // false
+```
+
+**2. Usar CEP alternativo**:
+```bash
+# Se CEP exato não existe, usar CEP da rua ou bairro
+# Example: 35300-000 (genérico) instead of 35300-123 (específico)
+
+# Test with generic CEP
+curl https://viacep.com.br/ws/35300000/json/
+```
+
+**3. Enable manual entry**:
+```typescript
+// Show manual entry form if ViaCEP fails
+const handleCEPError = (error: Error) => {
+  toast.error('CEP não encontrado. Preencha manualmente.')
+  setManualEntry(true) // Enable all address fields
+}
+```
+
+**4. Implement retry logic**:
+```typescript
+async function fetchCEPWithRetry(cep: string, retries = 3): Promise<CEPData> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fetchCEP(cep)
+    } catch (error) {
+      if (i === retries - 1) throw error
+      await sleep(1000 * (i + 1)) // Exponential backoff
+    }
+  }
+}
+```
+
+**5. Check ViaCEP status**:
+```bash
+# Check ViaCEP website status
+curl -I https://viacep.com.br
+
+# If 5xx or timeout, show message:
+# "Serviço de CEP temporariamente indisponível. Preencha manualmente."
+```
+
+---
+
+#### "Preferências Não Salvam"
+
+**Sintomas**: Ao clicar "Salvar", erro retornado ou UI faz rollback.
+
+**Diagnóstico**:
+```bash
+# 1. Test API manually
+curl -X PUT "https://svlentes.shop/api/assinante/delivery-preferences" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address": {
+      "cep": "35300-000",
+      "street": "Rua das Flores",
+      "number": "123",
+      "neighborhood": "Centro",
+      "city": "Caratinga",
+      "state": "MG"
+    },
+    "contact": { "phone": "(33) 98765-4321" },
+    "preferences": {
+      "preferredDeliveryTime": "afternoon",
+      "deliveryFrequency": "monthly"
+    },
+    "notifications": {
+      "email": true,
+      "whatsapp": true,
+      "sms": false
+    }
+  }'
+
+# 2. Check database
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT * FROM \"DeliveryPreferences\"
+   WHERE \"userId\" = 'usr_abc123';"
+
+# 3. View validation errors
+journalctl -u svlentes-nextjs | grep "delivery-preferences" | grep ERROR
+```
+
+**Possíveis Causas**:
+1. **Validation failed**: Campos obrigatórios faltando ou formato inválido
+2. **Network error**: Request não chegou ao servidor
+3. **Delivery in transit**: Bloqueio de atualização durante entrega ativa
+4. **Database constraint**: Violação de constraint (unique, foreign key)
+
+**Soluções**:
+
+**1. Fix validation errors**:
+```typescript
+// Check all required fields before submit
+const validateBeforeSubmit = (): boolean => {
+  const required = ['cep', 'street', 'number', 'neighborhood', 'city', 'state', 'phone']
+
+  for (const field of required) {
+    if (!formData[field] || formData[field].trim() === '') {
+      toast.error(`Campo obrigatório: ${field}`)
+      return false
+    }
+  }
+
+  // Validate formats
+  if (!validateCEP(formData.cep)) {
+    toast.error('CEP inválido')
+    return false
+  }
+
+  if (!validatePhone(formData.phone)) {
+    toast.error('Telefone inválido')
+    return false
+  }
+
+  return true
+}
+```
+
+**2. Retry on network error**:
+```typescript
+const saveWithRetry = async (data: DeliveryPreferences) => {
+  try {
+    await savePreferences(data)
+  } catch (error) {
+    if (error.name === 'NetworkError') {
+      const retry = confirm('Erro de rede. Tentar novamente?')
+      if (retry) {
+        await saveWithRetry(data)
+      }
+    } else {
+      throw error
+    }
+  }
+}
+```
+
+**3. Check delivery status**:
+```bash
+# Verify no active deliveries
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT * FROM \"Order\"
+   WHERE \"subscriptionId\" IN (
+     SELECT id FROM \"Subscription\" WHERE \"userId\" = 'usr_abc123'
+   )
+   AND status IN ('PREPARING', 'SHIPPED');"
+
+# If active delivery exists, show message:
+# "Não é possível alterar endereço durante entrega em andamento"
+```
+
+**4. Debug database constraints**:
+```sql
+-- Check constraint violations
+SELECT conname, contype, conkey
+FROM pg_constraint
+WHERE conrelid = '"DeliveryPreferences"'::regclass;
+
+-- If unique constraint on userId, ensure only one record
+DELETE FROM "DeliveryPreferences"
+WHERE "userId" = 'usr_abc123' AND id NOT IN (
+  SELECT MAX(id) FROM "DeliveryPreferences" WHERE "userId" = 'usr_abc123'
+);
+```
+
+---
+
+### General Phase 3 Health Check
+
+**Quick Validation Script**:
+```bash
+#!/bin/bash
+echo "========================"
+echo "Phase 3 Health Check"
+echo "========================"
+
+# 1. Prescription API
+echo -n "Prescription API: "
+curl -sf https://svlentes.shop/api/assinante/prescription \
+  -H "Authorization: Bearer TEST" > /dev/null 2>&1 && echo "✅ OK" || echo "❌ ERROR"
+
+# 2. Payment History API
+echo -n "Payment History API: "
+curl -sf "https://svlentes.shop/api/assinante/payment-history?page=1&limit=20" \
+  -H "Authorization: Bearer TEST" > /dev/null 2>&1 && echo "✅ OK" || echo "❌ ERROR"
+
+# 3. Delivery Preferences API
+echo -n "Delivery Preferences API: "
+curl -sf https://svlentes.shop/api/assinante/delivery-preferences \
+  -H "Authorization: Bearer TEST" > /dev/null 2>&1 && echo "✅ OK" || echo "❌ ERROR"
+
+# 4. ViaCEP Integration
+echo -n "ViaCEP Integration: "
+curl -sf https://viacep.com.br/ws/35300000/json/ > /dev/null 2>&1 \
+  && echo "✅ OK" || echo "❌ ERROR"
+
+# 5. Storage Directory
+echo -n "Prescription Storage: "
+[ -d /root/svlentes-hero-shop/storage/prescriptions ] \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+# 6. Database Tables
+echo -n "Prescription Table: "
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT 1 FROM \"Prescription\" LIMIT 1;" > /dev/null 2>&1 \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+echo -n "Payment Table: "
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT 1 FROM \"Payment\" LIMIT 1;" > /dev/null 2>&1 \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+echo -n "DeliveryPreferences Table: "
+docker exec -it postgres psql -U n8nuser -d n8ndb -c \
+  "SELECT 1 FROM \"DeliveryPreferences\" LIMIT 1;" > /dev/null 2>&1 \
+  && echo "✅ OK" || echo "❌ MISSING"
+
+echo "========================"
+```
+
+---
+
 **Author**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
 **Last Updated**: 2025-10-24

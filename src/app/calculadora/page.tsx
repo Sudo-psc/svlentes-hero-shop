@@ -1,24 +1,28 @@
 'use client'
-import { ImprovedCalculator } from '@/components/subscription/ImprovedCalculator'
-import { ArrowRight } from 'lucide-react'
+import { ImprovedCalculatorV2 } from '@/components/subscription/ImprovedCalculatorV2'
+import { ArrowRight, Calculator as CalcIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect } from 'react'
+
 export default function CalculadoraPage() {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-cyan-50 py-16">
-            <div className="max-w-4xl mx-auto px-4">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-cyan-50 py-12">
+            <div className="max-w-7xl mx-auto px-4">
                 {/* Header */}
-                <div className="text-center mb-12">
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
+                        <CalcIcon className="w-8 h-8 text-primary-600" />
+                    </div>
                     <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                         Quanto você pode economizar?
                     </h1>
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Descubra em segundos a economia que você terá com a assinatura SV Lentes
+                        Descubra em tempo real a economia que você terá com a assinatura SV Lentes
                     </p>
                 </div>
+
                 {/* Calculator */}
-                <div className="mb-8">
-                    <ImprovedCalculator
+                <div className="mb-10">
+                    <ImprovedCalculatorV2
                         onSaveResult={(result) => {
                             // Salvar no localStorage e redirecionar
                             localStorage.setItem('calculatorResult', JSON.stringify(result))

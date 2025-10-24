@@ -1,20 +1,20 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('SV Lentes logo visibility', () => {
-  test('header and footer logos are visible', async ({ page }) => {
-    // Playwright config uses baseURL http://localhost:5000
-    await page.goto('/', { waitUntil: 'networkidle' })
+    test('header and footer logos are visible', async ({ page }) => {
+        // Playwright config uses baseURL http://localhost:5000
+        await page.goto('/', { waitUntil: 'networkidle' })
 
-    const headerLogo = page.locator('header img[alt="SV Lentes"]')
-    await expect(headerLogo.first()).toBeVisible({ timeout: 10000 })
+        const headerLogo = page.locator('header img[alt="SV Lentes"]')
+        await expect(headerLogo.first()).toBeVisible({ timeout: 10000 })
 
-    const footerLogo = page.locator('footer img[alt="SV Lentes"]')
-    await expect(footerLogo.first()).toBeVisible({ timeout: 10000 })
+        const footerLogo = page.locator('footer img[alt="SV Lentes"]')
+        await expect(footerLogo.first()).toBeVisible({ timeout: 10000 })
 
-    await page.screenshot({ path: 'playwright-report/logo-homepage.png', fullPage: true })
-    await headerLogo.first().screenshot({ path: 'playwright-report/header-logo.png' })
-    await footerLogo.first().screenshot({ path: 'playwright-report/footer-logo.png' })
-  })
+        await page.screenshot({ path: 'playwright-report/logo-homepage.png', fullPage: true })
+        await headerLogo.first().screenshot({ path: 'playwright-report/header-logo.png' })
+        await footerLogo.first().screenshot({ path: 'playwright-report/footer-logo.png' })
+    })
 })
 import { test, expect } from '@playwright/test'
 
@@ -150,55 +150,55 @@ test.describe('SVLentes Logo - Visual & Prominence', () => {
         console.log('✅ Logo has proper alt text:', altText)
     })
 
-  test('should capture full page with logos highlighted', async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 })
-    
-    await page.evaluate(() => {
-      const header = document.querySelector('header a[aria-label*="SV Lentes"]')
-      if (header && header instanceof HTMLElement) {
-        header.style.outline = '4px solid #06b6d4'
-        header.style.outlineOffset = '4px'
-      }
-    })
-    
-    await page.screenshot({ 
-      path: 'test-results/logo-navbar-highlighted.png',
-      fullPage: false 
-    })
-    
-    const footer = page.locator('footer')
-    await footer.scrollIntoViewIfNeeded()
-    
-    await page.evaluate(() => {
-      const footerLogo = document.querySelector('footer img')
-      if (footerLogo && footerLogo instanceof HTMLElement) {
-        footerLogo.style.outline = '4px solid #06b6d4'
-        footerLogo.style.outlineOffset = '4px'
-      }
-    })
-    
-    await footer.screenshot({ 
-      path: 'test-results/logo-footer-highlighted.png' 
-    })
-    
-    console.log('✅ Full page screenshots with highlighted logos saved')
-  })
+    test('should capture full page with logos highlighted', async ({ page }) => {
+        await page.setViewportSize({ width: 1920, height: 1080 })
 
-  test('should verify logo visibility in different scroll positions', async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 })
-    
-    const logo = page.locator('header a[aria-label*="SV Lentes"]')
-    await expect(logo).toBeVisible()
-    
-    await page.screenshot({ 
-      path: 'test-results/logo-scroll-top.png',
-      fullPage: false 
+        await page.evaluate(() => {
+            const header = document.querySelector('header a[aria-label*="SV Lentes"]')
+            if (header && header instanceof HTMLElement) {
+                header.style.outline = '4px solid #06b6d4'
+                header.style.outlineOffset = '4px'
+            }
+        })
+
+        await page.screenshot({
+            path: 'test-results/logo-navbar-highlighted.png',
+            fullPage: false
+        })
+
+        const footer = page.locator('footer')
+        await footer.scrollIntoViewIfNeeded()
+
+        await page.evaluate(() => {
+            const footerLogo = document.querySelector('footer img')
+            if (footerLogo && footerLogo instanceof HTMLElement) {
+                footerLogo.style.outline = '4px solid #06b6d4'
+                footerLogo.style.outlineOffset = '4px'
+            }
+        })
+
+        await footer.screenshot({
+            path: 'test-results/logo-footer-highlighted.png'
+        })
+
+        console.log('✅ Full page screenshots with highlighted logos saved')
     })
-    
-    await page.evaluate(() => window.scrollTo(0, 500))
-    await page.waitForTimeout(300)
-    
-    await expect(logo).toBeVisible()
+
+    test('should verify logo visibility in different scroll positions', async ({ page }) => {
+        await page.setViewportSize({ width: 1920, height: 1080 })
+
+        const logo = page.locator('header a[aria-label*="SV Lentes"]')
+        await expect(logo).toBeVisible()
+
+        await page.screenshot({
+            path: 'test-results/logo-scroll-top.png',
+            fullPage: false
+        })
+
+        await page.evaluate(() => window.scrollTo(0, 500))
+        await page.waitForTimeout(300)
+
+        await expect(logo).toBeVisible()
         await page.screenshot({
             path: 'test-results/logo-scroll-middle.png',
             fullPage: false
