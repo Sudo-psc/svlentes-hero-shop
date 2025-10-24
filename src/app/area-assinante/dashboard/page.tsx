@@ -22,8 +22,13 @@ import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/su
 import { motion } from 'framer-motion'
 import { useToast } from '@/components/assinante/ToastFeedback'
 import { Button } from '@/components/ui/button'
-import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings } from 'lucide-react'
+import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings, ClipboardList, Receipt, Truck } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PrescriptionManager } from '@/components/assinante/PrescriptionManager'
+import { PaymentHistoryTable } from '@/components/assinante/PaymentHistoryTable'
+import { DeliveryPreferences } from '@/components/assinante/DeliveryPreferences'
+
 function DashboardContent() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
@@ -164,7 +169,106 @@ function DashboardContent() {
   if (useEnhancedUI) {
     return (
       <>
-        <AccessibleDashboard />
+        <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Link href="/" className="flex items-center">
+                    <div className="h-10 w-10 relative">
+                      <Logo size="md" variant="header" />
+                    </div>
+                  </Link>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      Área do Assinante
+                    </h1>
+                    <p className="text-sm text-gray-600">
+                      Gerencie sua assinatura e preferências
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => signOut()}
+                  >
+                    Sair
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content with Tabs */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Visão Geral</span>
+                  <span className="sm:hidden">Geral</span>
+                </TabsTrigger>
+                <TabsTrigger value="prescription" className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  <span className="hidden sm:inline">Prescrição</span>
+                  <span className="sm:hidden">Receita</span>
+                </TabsTrigger>
+                <TabsTrigger value="payments" className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4" />
+                  <span className="hidden sm:inline">Pagamentos</span>
+                  <span className="sm:hidden">Pagar</span>
+                </TabsTrigger>
+                <TabsTrigger value="delivery" className="flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  <span className="hidden sm:inline">Entrega</span>
+                  <span className="sm:hidden">Local</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="mt-6">
+                <AccessibleDashboard />
+              </TabsContent>
+
+              {/* Prescription Tab */}
+              <TabsContent value="prescription" className="mt-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PrescriptionManager />
+                </motion.div>
+              </TabsContent>
+
+              {/* Payments Tab */}
+              <TabsContent value="payments" className="mt-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PaymentHistoryTable />
+                </motion.div>
+              </TabsContent>
+
+              {/* Delivery Tab */}
+              <TabsContent value="delivery" className="mt-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <DeliveryPreferences />
+                </motion.div>
+              </TabsContent>
+            </Tabs>
+          </main>
+        </div>
+
         {/* Toast Notifications */}
         <ToastContainer
           toasts={toasts}
