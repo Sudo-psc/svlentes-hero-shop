@@ -69,7 +69,9 @@ beforeAll(() => {
     key: vi.fn()
   }
   Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
+    value: localStorageMock,
+    writable: true,
+    configurable: true
   })
 
   // Mock sessionStorage
@@ -82,7 +84,9 @@ beforeAll(() => {
     key: vi.fn()
   }
   Object.defineProperty(window, 'sessionStorage', {
-    value: sessionStorageMock
+    value: sessionStorageMock,
+    writable: true,
+    configurable: true
   })
 
   // Mock IndexedDB

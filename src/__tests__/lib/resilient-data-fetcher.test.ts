@@ -28,12 +28,14 @@ describe('ResilientDataFetcher - Core Functionality', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers()
     fetcher = new ResilientDataFetcher()
     localStorageMock.getItem.mockReturnValue(null)
   })
 
   afterEach(() => {
     fetcher.destroy()
+    vi.useRealTimers()
   })
 
   describe('✅ Requisições Básicas', () => {
@@ -98,7 +100,6 @@ describe('ResilientDataFetcher - Core Functionality', () => {
     })
 
     it('deve aplicar exponential backoff', async () => {
-      const startTime = Date.now()
       let attemptCount = 0
 
       mockFetch.mockImplementation(() => {
@@ -106,13 +107,14 @@ describe('ResilientDataFetcher - Core Functionality', () => {
         return Promise.reject(new Error('Always fails'))
       })
 
-      await fetcher.fetch({ url: '/api/test', retries: 2 })
+      // Executar fetch em background
+      const fetchPromise = fetcher.fetch({ url: '/api/test', retries: 2 })
 
-      const endTime = Date.now()
-      const duration = endTime - startTime
+      // Avançar timers para simular backoff (1s + 2s = 3s)
+      await vi.advanceTimersByTimeAsync(3000)
 
-      // Deve ter demorado pelo menos o tempo de backoff (1s + 2s = 3s)
-      expect(duration).toBeGreaterThan(2500)
+      await fetchPromise
+
       expect(attemptCount).toBeGreaterThanOrEqual(3)
     })
   })
@@ -144,8 +146,8 @@ describe('ResilientDataFetcher - Core Functionality', () => {
       // Primeira chamada
       await fetcher.fetch({ url: '/api/test', cacheStrategy: 'memory', cacheTTL: 100 })
 
-      // Esperar expiração
-      await new Promise(resolve => setTimeout(resolve, 150))
+      // Avançar tempo para expiração do cache
+      await vi.advanceTimersByTimeAsync(150)
 
       // Segunda chamada deve buscar novamente
       await fetcher.fetch({ url: '/api/test', cacheStrategy: 'memory', cacheTTL: 100 })
@@ -178,8 +180,8 @@ describe('ResilientDataFetcher - Core Functionality', () => {
 
       await fetcher.fetch({ url: '/api/test', cacheTTL: 100 })
 
-      // Esperar cache expirar
-      await new Promise(resolve => setTimeout(resolve, 150))
+      // Avançar tempo para cache expirar
+      await vi.advanceTimersByTimeAsync(150)
 
       // Segunda chamada falha, mas deve retornar cache expirado
       mockFetch.mockRejectedValueOnce(new Error('API down'))

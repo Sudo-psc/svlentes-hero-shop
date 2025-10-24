@@ -68,11 +68,16 @@ function DashboardContent() {
   const handlePlanChange = async (newPlanId: string) => {
     setIsLoading(true)
     try {
+      const token = await authUser?.getIdToken()
+      if (!token) {
+        throw new Error('Usuário não autenticado')
+      }
+
       const response = await fetch('/api/subscription/change-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': authUser?.uid || ''
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ newPlanId })
       })
@@ -91,11 +96,16 @@ function DashboardContent() {
   const handleAddressUpdate = async (addressData: any) => {
     setIsLoading(true)
     try {
+      const token = await authUser?.getIdToken()
+      if (!token) {
+        throw new Error('Usuário não autenticado')
+      }
+
       const response = await fetch('/api/subscription/update-address', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': authUser?.uid || ''
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(addressData)
       })
@@ -114,11 +124,16 @@ function DashboardContent() {
   const handlePaymentUpdate = async (paymentData: any) => {
     setIsLoading(true)
     try {
+      const token = await authUser?.getIdToken()
+      if (!token) {
+        throw new Error('Usuário não autenticado')
+      }
+
       const response = await fetch('/api/subscription/update-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': authUser?.uid || ''
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(paymentData)
       })

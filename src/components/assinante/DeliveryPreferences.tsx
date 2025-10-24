@@ -19,7 +19,7 @@ import {
   FileText,
   Save,
   X,
-  CheckCircle,
+
   Loader2,
   AlertCircle,
   Package,
@@ -37,11 +37,12 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
+
 import { formatZipCode, formatDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/hooks/use-toast'
+import { type DeliveryPreferences as ApiDeliveryPreferences } from '@/schemas/delivery-preferences-schema'
 
 /**
  * Schema de validação com Zod (alinhado com backend API)
@@ -81,12 +82,10 @@ const deliveryPreferencesSchema = z.object({
   deliveryInstructions: z.string().max(500, 'Máximo 500 caracteres').optional()
 })
 
-type DeliveryPreferencesFormData = z.infer<typeof deliveryPreferencesSchema>
-
 /**
- * Interface para preferências de entrega
+ * Type para dados do formulário (estrutura flat para React Hook Form)
  */
-export interface DeliveryPreferences extends DeliveryPreferencesFormData {}
+type DeliveryPreferencesFormData = z.infer<typeof deliveryPreferencesSchema>
 
 /**
  * Interface para próxima entrega
@@ -136,8 +135,8 @@ export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
   const [isDirty, setIsDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Estados de dados
-  const [preferences, setPreferences] = useState<DeliveryPreferences | null>(null)
+  // Estados de dados (usam tipo da API, não do form)
+  const [preferences, setPreferences] = useState<ApiDeliveryPreferences | null>(null)
   const [upcomingDelivery, setUpcomingDelivery] = useState<UpcomingDelivery | null>(null)
 
   // Form com React Hook Form + Zod
@@ -208,7 +207,7 @@ export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
         setPreferences(preferences)
         setUpcomingDelivery(upcomingDelivery)
 
-        // Reset form with fetched data
+        // Reset form with fetched data (converte estrutura nested da API para flat do form)
         reset({
           zipCode: preferences.deliveryAddress.zipCode || '',
           street: preferences.deliveryAddress.street || '',
@@ -217,14 +216,14 @@ export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
           neighborhood: preferences.deliveryAddress.neighborhood || '',
           city: preferences.deliveryAddress.city || '',
           state: preferences.deliveryAddress.state || '',
-          preferredTime: preferences.preferredDeliveryTime || 'ANY',
-          frequency: preferences.deliveryFrequency || 'MONTHLY',
-          contactPhone: preferences.contactPhone || '',
-          alternativePhone: preferences.alternativePhone || '',
-          notifyEmail: preferences.notificationPreferences.email,
-          notifyWhatsApp: preferences.notificationPreferences.whatsapp,
-          notifySMS: preferences.notificationPreferences.sms,
-          deliveryInstructions: preferences.deliveryInstructions || ''
+          preferredTime: preferences.deliveryInstructions?.preferredDeliveryTime || 'ANY',
+          frequency: 'MONTHLY', // TODO: adicionar ao schema se necessário
+          contactPhone: preferences.deliveryContact?.phone || '',
+          alternativePhone: preferences.deliveryContact?.alternativePhone || '',
+          notifyEmail: preferences.notifyByEmail ?? true,
+          notifyWhatsApp: preferences.notifyByWhatsApp ?? true,
+          notifySMS: preferences.notifyBySms ?? false,
+          deliveryInstructions: preferences.deliveryInstructions?.specialInstructions || ''
         })
       } catch (err: any) {
         console.error('Error fetching preferences:', err)
@@ -242,13 +241,24 @@ export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
     fetchPreferences()
   }, [user, reset])
 
-  // Track form changes
+  // Track form changes (compara valores do form flat com estrutura nested da API)
   useEffect(() => {
     if (preferences) {
-      const hasChanges = Object.keys(watchedFields).some(
-        (key) =>
-          watchedFields[key as keyof DeliveryPreferencesFormData] !==
-          preferences[key as keyof DeliveryPreferences]
+      const hasChanges = (
+        watchedFields.zipCode !== preferences.deliveryAddress.zipCode ||
+        watchedFields.street !== preferences.deliveryAddress.street ||
+        watchedFields.number !== preferences.deliveryAddress.number ||
+        watchedFields.complement !== preferences.deliveryAddress.complement ||
+        watchedFields.neighborhood !== preferences.deliveryAddress.neighborhood ||
+        watchedFields.city !== preferences.deliveryAddress.city ||
+        watchedFields.state !== preferences.deliveryAddress.state ||
+        watchedFields.preferredTime !== preferences.deliveryInstructions?.preferredDeliveryTime ||
+        watchedFields.contactPhone !== preferences.deliveryContact?.phone ||
+        watchedFields.alternativePhone !== preferences.deliveryContact?.alternativePhone ||
+        watchedFields.notifyEmail !== preferences.notifyByEmail ||
+        watchedFields.notifyWhatsApp !== preferences.notifyByWhatsApp ||
+        watchedFields.notifySMS !== preferences.notifyBySms ||
+        watchedFields.deliveryInstructions !== preferences.deliveryInstructions?.specialInstructions
       )
       setIsDirty(hasChanges)
     }
@@ -335,18 +345,27 @@ export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
           }
         }
 
-        // Optimistic update
+        // Optimistic update (converte payload para estrutura da API)
         const previousPreferences = preferences
-        const optimisticPreferences = {
+        const optimisticPreferences: ApiDeliveryPreferences = {
           deliveryAddress: payload.deliveryAddress,
-          deliveryInstructions: payload.deliveryInstructions,
-          preferredDeliveryTime: payload.preferredDeliveryTime,
-          deliveryFrequency: payload.deliveryFrequency,
-          contactPhone: payload.contactPhone,
-          alternativePhone: payload.alternativePhone,
-          notificationPreferences: payload.notificationPreferences
+          deliveryContact: {
+            phone: payload.contactPhone,
+            alternativePhone: payload.alternativePhone,
+            recipientName: '', // Será preenchido pelo backend
+            email: undefined
+          },
+          deliveryInstructions: payload.deliveryInstructions ? {
+            preferredDeliveryTime: payload.preferredDeliveryTime as 'morning' | 'afternoon' | 'evening' | 'anytime',
+            specialInstructions: payload.deliveryInstructions,
+            leaveWithReceptionist: false,
+            requiresSignature: true
+          } : undefined,
+          notifyByEmail: payload.notificationPreferences.email,
+          notifyByWhatsApp: payload.notificationPreferences.whatsapp,
+          notifyBySms: payload.notificationPreferences.sms
         }
-        setPreferences(optimisticPreferences as DeliveryPreferences)
+        setPreferences(optimisticPreferences)
 
         // Save to backend
         const response = await fetch('/api/assinante/delivery-preferences', {
