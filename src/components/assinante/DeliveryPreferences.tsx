@@ -190,8 +190,7 @@ export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
         const response = await fetch('/api/assinante/delivery-preferences', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${idToken}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${idToken}`
           }
         })
 
