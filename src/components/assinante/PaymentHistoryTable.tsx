@@ -758,6 +758,7 @@ export function PaymentHistoryTable({
                       className="h-8 w-8"
                       onClick={() => handlePageChange(pagination.page - 1)}
                       disabled={pagination.page === 1 || isRefreshing}
+                      aria-label="Página anterior"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -774,6 +775,8 @@ export function PaymentHistoryTable({
                           )}
                           onClick={() => handlePageChange(pageNum)}
                           disabled={isRefreshing}
+                          aria-label={`Página ${pageNum}`}
+                          aria-current={pageNum === pagination.page ? 'page' : undefined}
                         >
                           {pageNum}
                         </Button>
@@ -790,6 +793,7 @@ export function PaymentHistoryTable({
                       className="h-8 w-8"
                       onClick={() => handlePageChange(pagination.page + 1)}
                       disabled={pagination.page === pagination.pages || isRefreshing}
+                      aria-label="Próxima página"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

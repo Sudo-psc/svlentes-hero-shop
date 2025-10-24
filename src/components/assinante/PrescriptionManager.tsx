@@ -47,11 +47,12 @@ interface EyePrescription {
 
 /**
  * Interface para prescrição atual
+ * Nota: uploadedAt e expiresAt vêm da API como strings ISO-8601
  */
 interface CurrentPrescription {
   id: string
-  uploadedAt: Date
-  expiresAt: Date
+  uploadedAt: string | Date
+  expiresAt: string | Date
   status: 'VALID' | 'EXPIRING_SOON' | 'EXPIRED'
   daysUntilExpiry: number
   fileUrl: string
@@ -62,11 +63,12 @@ interface CurrentPrescription {
 
 /**
  * Interface para histórico de prescrições
+ * Nota: uploadedAt e expiresAt vêm da API como strings ISO-8601
  */
 interface PrescriptionHistory {
   id: string
-  uploadedAt: Date
-  expiresAt: Date
+  uploadedAt: string | Date
+  expiresAt: string | Date
   fileName: string
   fileUrl: string
   status: 'active' | 'expired' | 'replaced'
@@ -154,8 +156,7 @@ export function PrescriptionManager({ className }: PrescriptionManagerProps) {
       const response = await fetch('/api/assinante/prescription', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`
         },
       })
 
