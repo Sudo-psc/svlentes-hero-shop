@@ -64,8 +64,8 @@ class BackupAuthManager {
       isAvailable: true,
       priority: 1
     })
-    // WhatsApp (método secundário)
-    this.methods.set('whatsapp', {
+    // Phone/WhatsApp (método secundário)
+    this.methods.set('phone', {
       name: 'WhatsApp',
       type: 'phone',
       description: 'Verificação via WhatsApp',

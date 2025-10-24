@@ -1,6 +1,7 @@
 /**
  * DeliveryPreferences Component - Fase 3
  * Formulário de preferências de entrega com validação e busca de CEP
+ * Integrado com backend API para persistência de dados
  */
 
 'use client'
@@ -18,7 +19,7 @@ import {
   FileText,
   Save,
   X,
-  CheckCircle,
+
   Loader2,
   AlertCircle,
   Package,
@@ -36,12 +37,15 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
+
 import { formatZipCode, formatDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/hooks/use-toast'
+import { type DeliveryPreferences as ApiDeliveryPreferences } from '@/schemas/delivery-preferences-schema'
 
 /**
- * Schema de validação com Zod
+ * Schema de validação com Zod (alinhado com backend API)
  */
 const deliveryPreferencesSchema = z.object({
   // Endereço
@@ -60,6 +64,15 @@ const deliveryPreferencesSchema = z.object({
   preferredTime: z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'ANY']),
   frequency: z.enum(['MONTHLY', 'BIMONTHLY', 'QUARTERLY']),
 
+  // Telefones (necessários para API)
+  contactPhone: z
+    .string()
+    .regex(
+      /^(?:\+55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}-?\d{4}$/,
+      'Telefone inválido'
+    ),
+  alternativePhone: z.string().optional(),
+
   // Notificações
   notifyEmail: z.boolean(),
   notifyWhatsApp: z.boolean(),
@@ -69,12 +82,10 @@ const deliveryPreferencesSchema = z.object({
   deliveryInstructions: z.string().max(500, 'Máximo 500 caracteres').optional()
 })
 
-type DeliveryPreferencesFormData = z.infer<typeof deliveryPreferencesSchema>
-
 /**
- * Interface para preferências de entrega
+ * Type para dados do formulário (estrutura flat para React Hook Form)
  */
-export interface DeliveryPreferences extends DeliveryPreferencesFormData {}
+type DeliveryPreferencesFormData = z.infer<typeof deliveryPreferencesSchema>
 
 /**
  * Interface para próxima entrega
@@ -88,31 +99,6 @@ interface UpcomingDelivery {
  * Props do componente DeliveryPreferences
  */
 interface DeliveryPreferencesProps {
-  /**
-   * Preferências atuais
-   */
-  preferences?: DeliveryPreferences
-
-  /**
-   * Informações sobre próxima entrega
-   */
-  upcomingDelivery?: UpcomingDelivery
-
-  /**
-   * Callback para salvar alterações
-   */
-  onSave?: (preferences: DeliveryPreferences) => Promise<void>
-
-  /**
-   * Estado de carregamento inicial
-   */
-  isLoading?: boolean
-
-  /**
-   * Estado de salvamento
-   */
-  isSaving?: boolean
-
   /**
    * Classe CSS adicional
    */
@@ -135,19 +121,23 @@ interface ViaCEPResponse {
 /**
  * Componente DeliveryPreferences
  * Formulário completo de preferências de entrega com busca de CEP
+ * Integrado com backend API
  */
-export function DeliveryPreferences({
-  preferences,
-  upcomingDelivery,
-  onSave,
-  isLoading = false,
-  isSaving = false,
-  className
-}: DeliveryPreferencesProps) {
+export function DeliveryPreferences({ className }: DeliveryPreferencesProps) {
+  // Auth context para obter usuário autenticado
+  const { user } = useAuth()
+
+  // Estados de controle
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [isSearchingZip, setIsSearchingZip] = useState(false)
   const [zipError, setZipError] = useState<string | null>(null)
-  const [showSuccess, setShowSuccess] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Estados de dados (usam tipo da API, não do form)
+  const [preferences, setPreferences] = useState<ApiDeliveryPreferences | null>(null)
+  const [upcomingDelivery, setUpcomingDelivery] = useState<UpcomingDelivery | null>(null)
 
   // Form com React Hook Form + Zod
   const {
@@ -159,7 +149,7 @@ export function DeliveryPreferences({
     formState: { errors, isValid }
   } = useForm<DeliveryPreferencesFormData>({
     resolver: zodResolver(deliveryPreferencesSchema),
-    defaultValues: preferences || {
+    defaultValues: {
       zipCode: '',
       street: '',
       number: '',
@@ -169,6 +159,8 @@ export function DeliveryPreferences({
       state: '',
       preferredTime: 'ANY',
       frequency: 'MONTHLY',
+      contactPhone: '',
+      alternativePhone: '',
       notifyEmail: true,
       notifyWhatsApp: true,
       notifySMS: false,
@@ -180,12 +172,92 @@ export function DeliveryPreferences({
   // Watch form changes
   const watchedFields = watch()
 
+  // Fetch preferences on mount
+  useEffect(() => {
+    async function fetchPreferences() {
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Get Firebase ID token
+        const idToken = await user.getIdToken()
+
+        const response = await fetch('/api/assinante/delivery-preferences', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${idToken}`
+          }
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Erro ao carregar preferências')
+        }
+
+        const data = await response.json()
+        const { preferences, upcomingDelivery } = data
+
+        // Set preferences state
+        setPreferences(preferences)
+        setUpcomingDelivery(upcomingDelivery)
+
+        // Reset form with fetched data (converte estrutura nested da API para flat do form)
+        reset({
+          zipCode: preferences.deliveryAddress.zipCode || '',
+          street: preferences.deliveryAddress.street || '',
+          number: preferences.deliveryAddress.number || '',
+          complement: preferences.deliveryAddress.complement || '',
+          neighborhood: preferences.deliveryAddress.neighborhood || '',
+          city: preferences.deliveryAddress.city || '',
+          state: preferences.deliveryAddress.state || '',
+          preferredTime: preferences.deliveryInstructions?.preferredDeliveryTime || 'ANY',
+          frequency: 'MONTHLY', // TODO: adicionar ao schema se necessário
+          contactPhone: preferences.deliveryContact?.phone || '',
+          alternativePhone: preferences.deliveryContact?.alternativePhone || '',
+          notifyEmail: preferences.notifyByEmail ?? true,
+          notifyWhatsApp: preferences.notifyByWhatsApp ?? true,
+          notifySMS: preferences.notifyBySms ?? false,
+          deliveryInstructions: preferences.deliveryInstructions?.specialInstructions || ''
+        })
+      } catch (err: any) {
+        console.error('Error fetching preferences:', err)
+        setError(err.message || 'Erro ao carregar preferências')
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao carregar',
+          description: err.message || 'Não foi possível carregar suas preferências'
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchPreferences()
+  }, [user, reset])
+
+  // Track form changes (compara valores do form flat com estrutura nested da API)
   useEffect(() => {
     if (preferences) {
-      const hasChanges = Object.keys(watchedFields).some(
-        (key) =>
-          watchedFields[key as keyof DeliveryPreferencesFormData] !==
-          preferences[key as keyof DeliveryPreferences]
+      const hasChanges = (
+        watchedFields.zipCode !== preferences.deliveryAddress.zipCode ||
+        watchedFields.street !== preferences.deliveryAddress.street ||
+        watchedFields.number !== preferences.deliveryAddress.number ||
+        watchedFields.complement !== preferences.deliveryAddress.complement ||
+        watchedFields.neighborhood !== preferences.deliveryAddress.neighborhood ||
+        watchedFields.city !== preferences.deliveryAddress.city ||
+        watchedFields.state !== preferences.deliveryAddress.state ||
+        watchedFields.preferredTime !== preferences.deliveryInstructions?.preferredDeliveryTime ||
+        watchedFields.contactPhone !== preferences.deliveryContact?.phone ||
+        watchedFields.alternativePhone !== preferences.deliveryContact?.alternativePhone ||
+        watchedFields.notifyEmail !== preferences.notifyByEmail ||
+        watchedFields.notifyWhatsApp !== preferences.notifyByWhatsApp ||
+        watchedFields.notifySMS !== preferences.notifyBySms ||
+        watchedFields.deliveryInstructions !== preferences.deliveryInstructions?.specialInstructions
       )
       setIsDirty(hasChanges)
     }
@@ -232,20 +304,114 @@ export function DeliveryPreferences({
   // Handler para submit do formulário
   const onSubmit = useCallback(
     async (data: DeliveryPreferencesFormData) => {
-      if (!onSave) return
+      if (!user) {
+        toast({
+          variant: 'destructive',
+          title: 'Não autenticado',
+          description: 'Faça login para salvar suas preferências'
+        })
+        return
+      }
 
       try {
-        await onSave(data)
-        setShowSuccess(true)
+        setIsSaving(true)
+        setError(null)
+
+        // Get Firebase ID token
+        const idToken = await user.getIdToken()
+
+        // Prepare payload matching API schema
+        const payload = {
+          deliveryAddress: {
+            street: data.street,
+            number: data.number,
+            complement: data.complement || undefined,
+            neighborhood: data.neighborhood,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
+            country: 'Brasil'
+          },
+          deliveryInstructions: data.deliveryInstructions || undefined,
+          preferredDeliveryTime: data.preferredTime,
+          deliveryFrequency: data.frequency,
+          contactPhone: data.contactPhone,
+          alternativePhone: data.alternativePhone || undefined,
+          notificationPreferences: {
+            email: data.notifyEmail,
+            whatsapp: data.notifyWhatsApp,
+            sms: data.notifySMS
+          }
+        }
+
+        // Optimistic update (converte payload para estrutura da API)
+        const previousPreferences = preferences
+        const optimisticPreferences: ApiDeliveryPreferences = {
+          deliveryAddress: payload.deliveryAddress,
+          deliveryContact: {
+            phone: payload.contactPhone,
+            alternativePhone: payload.alternativePhone,
+            recipientName: '', // Será preenchido pelo backend
+            email: undefined
+          },
+          deliveryInstructions: payload.deliveryInstructions ? {
+            preferredDeliveryTime: payload.preferredDeliveryTime as 'morning' | 'afternoon' | 'evening' | 'anytime',
+            specialInstructions: payload.deliveryInstructions,
+            leaveWithReceptionist: false,
+            requiresSignature: true
+          } : undefined,
+          notifyByEmail: payload.notificationPreferences.email,
+          notifyByWhatsApp: payload.notificationPreferences.whatsapp,
+          notifyBySms: payload.notificationPreferences.sms
+        }
+        setPreferences(optimisticPreferences)
+
+        // Save to backend
+        const response = await fetch('/api/assinante/delivery-preferences', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${idToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+
+        if (!response.ok) {
+          // Rollback optimistic update
+          setPreferences(previousPreferences)
+
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Erro ao salvar preferências')
+        }
+
+        const result = await response.json()
+
+        // Update with server response
+        setPreferences(result.preferences)
+        setUpcomingDelivery(result.upcomingDelivery)
         setIsDirty(false)
         reset(data)
 
-        setTimeout(() => setShowSuccess(false), 5000)
-      } catch (error) {
-        // Erro já tratado pelo componente pai
+        // Success toast
+        toast({
+          title: 'Preferências salvas!',
+          description: result.message || 'Suas preferências de entrega foram atualizadas com sucesso',
+          variant: 'default'
+        })
+      } catch (err: any) {
+        console.error('Error saving preferences:', err)
+        setError(err.message || 'Erro ao salvar preferências')
+
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao salvar',
+          description: err.message || 'Não foi possível salvar suas preferências. Tente novamente.'
+        })
+      } finally {
+        setIsSaving(false)
       }
     },
-    [onSave, reset]
+    [user, preferences, reset]
   )
 
   // Handler para cancelar alterações
@@ -465,9 +631,55 @@ export function DeliveryPreferences({
             </div>
           </motion.div>
 
-          {/* Seção 2: Preferências de Horário */}
+          {/* Seção 2: Telefones de Contato */}
           <motion.div
             custom={1}
+            variants={sectionVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            <div className="flex items-center gap-2 pb-2 border-b">
+              <Bell className="h-4 w-4 text-cyan-600" />
+              <h3 className="font-semibold text-sm">Telefones de Contato</h3>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contactPhone">Telefone Principal *</Label>
+                <Input
+                  id="contactPhone"
+                  {...register('contactPhone')}
+                  placeholder="(33) 99999-9999"
+                  className={cn(errors.contactPhone && 'border-red-500')}
+                />
+                {errors.contactPhone && (
+                  <motion.p animate={shakeAnimation} className="text-xs text-red-600">
+                    {errors.contactPhone.message}
+                  </motion.p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="alternativePhone">Telefone Alternativo (Opcional)</Label>
+                <Input
+                  id="alternativePhone"
+                  {...register('alternativePhone')}
+                  placeholder="(33) 98888-8888"
+                  className={cn(errors.alternativePhone && 'border-red-500')}
+                />
+                {errors.alternativePhone && (
+                  <motion.p animate={shakeAnimation} className="text-xs text-red-600">
+                    {errors.alternativePhone.message}
+                  </motion.p>
+                )}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Seção 3: Preferências de Horário */}
+          <motion.div
+            custom={2}
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
@@ -520,9 +732,9 @@ export function DeliveryPreferences({
             </div>
           </motion.div>
 
-          {/* Seção 3: Notificações */}
+          {/* Seção 4: Notificações */}
           <motion.div
-            custom={2}
+            custom={3}
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
@@ -573,9 +785,9 @@ export function DeliveryPreferences({
             </div>
           </motion.div>
 
-          {/* Seção 4: Instruções Especiais */}
+          {/* Seção 5: Instruções Especiais */}
           <motion.div
-            custom={3}
+            custom={4}
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
@@ -619,7 +831,7 @@ export function DeliveryPreferences({
           {/* Preview da Próxima Entrega */}
           {upcomingDelivery && (
             <motion.div
-              custom={4}
+              custom={5}
               variants={sectionVariants}
               initial="hidden"
               animate="visible"
@@ -645,21 +857,6 @@ export function DeliveryPreferences({
                   )}
                 </div>
               </div>
-            </motion.div>
-          )}
-
-          {/* Success Message */}
-          {showSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg"
-            >
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-900 font-medium">
-                Preferências salvas com sucesso!
-              </p>
             </motion.div>
           )}
 

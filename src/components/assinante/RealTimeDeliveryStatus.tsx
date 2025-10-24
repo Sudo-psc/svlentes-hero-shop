@@ -81,7 +81,7 @@ export function RealTimeDeliveryStatus({ subscriptionId }: Props) {
     try {
       const data = await monitoredFetch(
         `/api/assinante/delivery-status?subscriptionId=${subscriptionId}`,
-        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+        { method: 'GET' }
       )
 
       if (data.success && data.currentDelivery) {

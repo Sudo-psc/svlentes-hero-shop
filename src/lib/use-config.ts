@@ -35,9 +35,6 @@ export function useConfig(options: UseConfigOptions = {}): UseConfigReturn {
       })
       const response = await fetch(`/api/config?${params.toString()}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         cache: 'default'
       })
       if (!response.ok) {

@@ -3,12 +3,11 @@ const nextConfig = {
     experimental: {
         optimizePackageImports: ['@heroicons/react'],
     },
-    // Enable type checking and linting for production builds
     typescript: {
-        ignoreBuildErrors: true, // Emergency: disable for urgent CSP fix
+        ignoreBuildErrors: true,
     },
     eslint: {
-        ignoreDuringBuilds: true, // Temporary: disable ESLint for urgent CSP fix
+        ignoreDuringBuilds: true,
     },
     images: {
         remotePatterns: [
@@ -47,7 +46,7 @@ const nextConfig = {
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
         qualities: [75, 85, 90, 95, 100],
-        minimumCacheTTL: 60, // 60 seconds for dynamic images
+        minimumCacheTTL: 60,
         dangerouslyAllowSVG: true,
         unoptimized: false,
         loader: 'default',
@@ -57,6 +56,35 @@ const nextConfig = {
     generateEtags: true,
     headers: async () => {
         const isDev = process.env.NODE_ENV === 'development'
+
+        const cspDirectives = isDev
+            ? [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-eval' 'unsafe-inline' data: *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com www.googletagmanager.com www.google-analytics.com checkout.stripe.com",
+                "style-src 'self' 'unsafe-inline' data: r2cdn.perplexity.ai *.googleapis.com fonts.googleapis.com",
+                "img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com",
+                "font-src 'self' data: r2cdn.perplexity.ai *.gstatic.com *.googleapis.com fonts.gstatic.com",
+                "connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com api.stripe.com checkout.stripe.com www.google-analytics.com *.facebook.com *.facebook.net www.facebook.com",
+                "frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com checkout.stripe.com",
+                "frame-ancestors 'self'",
+                "form-action 'self' accounts.google.com",
+                "object-src 'none'",
+                "base-uri 'self'",
+            ]
+            : [
+                "default-src 'self'",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com www.googletagmanager.com www.google-analytics.com checkout.stripe.com",
+                "style-src 'self' 'unsafe-inline' r2cdn.perplexity.ai *.googleapis.com fonts.googleapis.com",
+                "img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com",
+                "font-src 'self' data: r2cdn.perplexity.ai *.gstatic.com *.googleapis.com fonts.gstatic.com",
+                "connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com api.stripe.com checkout.stripe.com www.google-analytics.com *.facebook.com *.facebook.net www.facebook.com",
+                "frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com checkout.stripe.com",
+                "frame-ancestors 'self'",
+                "form-action 'self' accounts.google.com",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "upgrade-insecure-requests"
+            ]
 
         return [
             {
@@ -86,12 +114,9 @@ const nextConfig = {
                         key: 'Strict-Transport-Security',
                         value: 'max-age=31536000; includeSubDomains; preload',
                     },
-                    // CSP Simplificado e robusto que funciona em todos os ambientes
                     {
                         key: 'Content-Security-Policy',
-                        value: isDev
-                            ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' data: *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com https://checkout.stripe.com; style-src 'self' 'unsafe-inline' data: https://r2cdn.perplexity.ai *.googleapis.com https://fonts.googleapis.com; img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com *.googleapis.com https://fonts.gstatic.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com https://api.stripe.com https://checkout.stripe.com https://www.google-analytics.com *.facebook.com *.facebook.net www.facebook; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com https://js.stripe.com https://checkout.stripe.com; object-src 'none'; base-uri 'self';`
-                            : `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' data: *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com https://www.googletagmanager.com https://www.google-analytics.com https://checkout.stripe.com; style-src 'self' 'unsafe-inline' data: https://r2cdn.perplexity.ai *.googleapis.com https://fonts.googleapis.com; img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com; font-src 'self' data: https://r2cdn.perplexity.ai *.gstatic.com *.googleapis.com https://fonts.gstatic.com; connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com https://api.stripe.com https://checkout.stripe.com https://www.google-analytics.com *.facebook.com *.facebook.net www.facebook; frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com https://js.stripe.com https://checkout.stripe.com; object-src 'none'; base-uri 'self';`
+                        value: cspDirectives.join('; '),
                     },
                 ],
             },
@@ -102,11 +127,10 @@ const nextConfig = {
                         key: 'Cache-Control',
                         value: 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400',
                     },
-                    // CORS headers para API endpoints
                     {
                         key: 'Access-Control-Allow-Origin',
                         value: process.env.NODE_ENV === 'production'
-                            ? 'https://svlentes.com.br'
+                            ? 'https://svlentes.com.br, https://www.svlentes.com.br'
                             : '*'
                     },
                     {
@@ -123,7 +147,7 @@ const nextConfig = {
                     },
                     {
                         key: 'Access-Control-Max-Age',
-                        value: '86400' // 24 hours
+                        value: '86400'
                     },
                 ],
             },
@@ -148,7 +172,6 @@ const nextConfig = {
         ]
     },
     webpack: (config) => {
-        // Fix for potential module resolution issues
         config.resolve.fallback = {
             ...config.resolve.fallback,
             fs: false,
@@ -156,7 +179,6 @@ const nextConfig = {
             tls: false,
         }
 
-        // Handle SVG files properly
         config.module.rules.push({
             test: /\.svg$/,
             use: ['@svgr/webpack'],

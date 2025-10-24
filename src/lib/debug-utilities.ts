@@ -291,7 +291,6 @@ export class DebugUtilities {
         const sendpulseResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/admin/sendpulse-health?bot_id=${process.env.SENDPULSE_BOT_ID}`, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.ADMIN_JWT_SECRET || 'dev-token'}`
           },
           signal: AbortSignal.timeout(10000) // 10 second timeout

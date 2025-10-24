@@ -1,11 +1,13 @@
 /**
  * PaymentHistoryTable Component - Fase 3
  * Tabela de histórico de pagamentos com filtros e paginação
+ *
+ * Smart component with integrated data fetching, filtering, and pagination
  */
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   CreditCard,
@@ -19,7 +21,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,11 +37,19 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/hooks/use-toast'
 
 /**
- * Status de pagamento disponíveis
+ * Status de pagamento disponíveis (backend mapping)
  */
-export type PaymentStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED'
+export type PaymentStatus =
+  | 'PENDING'
+  | 'RECEIVED'
+  | 'CONFIRMED'
+  | 'OVERDUE'
+  | 'CANCELLED'
+  | 'REFUNDED'
 
 /**
  * Métodos de pagamento disponíveis
@@ -46,17 +57,21 @@ export type PaymentStatus = 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED'
 export type PaymentMethod = 'PIX' | 'BOLETO' | 'CREDIT_CARD'
 
 /**
- * Interface para pagamento individual
+ * Interface para pagamento individual (backend response)
  */
 export interface Payment {
   id: string
-  date: string | Date
+  invoiceNumber: string | null
+  dueDate: Date | string
+  paidAt: Date | string | null
   amount: number
   status: PaymentStatus
   method: PaymentMethod
-  description: string
-  invoiceUrl?: string
-  receiptUrl?: string
+  installments?: number
+  transactionId: string
+  invoiceUrl: string | null
+  receiptUrl: string | null
+  description: string | null
 }
 
 /**
@@ -66,6 +81,7 @@ interface PaymentSummary {
   totalPaid: number
   totalPending: number
   totalOverdue: number
+  averagePaymentTime: number
   onTimePaymentRate: number
 }
 
@@ -85,7 +101,17 @@ interface Pagination {
 interface PaymentFilters {
   status?: PaymentStatus | 'ALL'
   method?: PaymentMethod | 'ALL'
-  period?: 'ALL' | '30' | '60' | '90' | '180' | '365'
+  startDate?: string
+  endDate?: string
+}
+
+/**
+ * Backend API Response
+ */
+interface PaymentHistoryResponse {
+  payments: Payment[]
+  summary: PaymentSummary
+  pagination: Pagination
 }
 
 /**
@@ -93,34 +119,9 @@ interface PaymentFilters {
  */
 interface PaymentHistoryTableProps {
   /**
-   * Lista de pagamentos
+   * Initial page size (default: 10)
    */
-  payments?: Payment[]
-
-  /**
-   * Resumo de pagamentos
-   */
-  summary?: PaymentSummary
-
-  /**
-   * Configuração de paginação
-   */
-  pagination?: Pagination
-
-  /**
-   * Callback quando filtros são alterados
-   */
-  onFilterChange?: (filters: PaymentFilters) => void
-
-  /**
-   * Callback quando página é alterada
-   */
-  onPageChange?: (page: number) => void
-
-  /**
-   * Estado de carregamento
-   */
-  isLoading?: boolean
+  initialPageSize?: number
 
   /**
    * Classe CSS adicional
@@ -129,14 +130,19 @@ interface PaymentHistoryTableProps {
 }
 
 /**
- * Retorna a configuração de cor para status
+ * Retorna a configuração de cor para status (backend mapping)
  */
 function getStatusConfig(status: PaymentStatus) {
   const configMap = {
-    PAID: {
+    RECEIVED: {
       color: 'bg-green-50 text-green-600 border-green-200',
       icon: CheckCircle,
-      text: 'Pago'
+      text: 'Recebido'
+    },
+    CONFIRMED: {
+      color: 'bg-green-50 text-green-600 border-green-200',
+      icon: CheckCircle,
+      text: 'Confirmado'
     },
     PENDING: {
       color: 'bg-amber-50 text-amber-600 border-amber-200',
@@ -152,6 +158,11 @@ function getStatusConfig(status: PaymentStatus) {
       color: 'bg-gray-50 text-gray-600 border-gray-200',
       icon: XCircle,
       text: 'Cancelado'
+    },
+    REFUNDED: {
+      color: 'bg-purple-50 text-purple-600 border-purple-200',
+      icon: RefreshCw,
+      text: 'Reembolsado'
     }
   }
   return configMap[status]
@@ -171,29 +182,138 @@ function getMethodText(method: PaymentMethod) {
 
 /**
  * Componente PaymentHistoryTable
- * Exibe histórico de pagamentos com filtros e paginação
+ * Smart component com integração backend completa
  */
 export function PaymentHistoryTable({
-  payments = [],
-  summary,
-  pagination,
-  onFilterChange,
-  onPageChange,
-  isLoading = false,
+  initialPageSize = 10,
   className
 }: PaymentHistoryTableProps) {
+  const { user } = useAuth()
+
+  // Component State
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [summary, setSummary] = useState<PaymentSummary | null>(null)
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: initialPageSize,
+    total: 0,
+    pages: 0
+  })
   const [filters, setFilters] = useState<PaymentFilters>({
     status: 'ALL',
-    method: 'ALL',
-    period: 'ALL'
+    method: 'ALL'
   })
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Handler para mudança de filtros
-  const handleFilterChange = (key: keyof PaymentFilters, value: string) => {
-    const newFilters = { ...filters, [key]: value }
-    setFilters(newFilters)
-    onFilterChange?.(newFilters)
-  }
+  /**
+   * Fetch payment history from backend
+   */
+  const fetchPaymentHistory = useCallback(
+    async (showRefreshSpinner = false) => {
+      if (!user) return
+
+      try {
+        if (showRefreshSpinner) {
+          setIsRefreshing(true)
+        } else {
+          setIsLoading(true)
+        }
+        setError(null)
+
+        // Get Firebase ID token
+        const idToken = await user.getIdToken()
+
+        // Build query parameters
+        const params = new URLSearchParams({
+          page: pagination.page.toString(),
+          limit: pagination.limit.toString()
+        })
+
+        // Add filters
+        if (filters.status && filters.status !== 'ALL') {
+          params.append('status', filters.status)
+        }
+
+        if (filters.startDate) {
+          params.append('startDate', filters.startDate)
+        }
+
+        if (filters.endDate) {
+          params.append('endDate', filters.endDate)
+        }
+
+        // Fetch from API
+        const response = await fetch(`/api/assinante/payment-history?${params}`, {
+          headers: {
+            Authorization: `Bearer ${idToken}`
+          }
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          throw new Error(errorData?.message || 'Erro ao buscar histórico de pagamentos')
+        }
+
+        const data: PaymentHistoryResponse = await response.json()
+
+        setPayments(data.payments)
+        setSummary(data.summary)
+        setPagination(data.pagination)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erro desconhecido'
+        setError(message)
+
+        toast({
+          title: 'Erro ao carregar pagamentos',
+          description: message,
+          variant: 'destructive'
+        })
+
+        console.error('[PaymentHistoryTable] Error fetching data:', err)
+      } finally {
+        setIsLoading(false)
+        setIsRefreshing(false)
+      }
+    },
+    [user, pagination.page, pagination.limit, filters]
+  )
+
+  // Initial data fetch
+  useEffect(() => {
+    if (user) {
+      fetchPaymentHistory()
+    }
+  }, [user, pagination.page, pagination.limit, filters.status, filters.startDate, filters.endDate])
+
+  /**
+   * Handler para mudança de filtros
+   */
+  const handleFilterChange = useCallback(
+    (key: keyof PaymentFilters, value: string) => {
+      const newFilters = { ...filters, [key]: value === 'ALL' ? undefined : value }
+      setFilters(newFilters)
+
+      // Reset to page 1 when filters change
+      setPagination((prev) => ({ ...prev, page: 1 }))
+    },
+    [filters]
+  )
+
+  /**
+   * Handler para mudança de página
+   */
+  const handlePageChange = useCallback((newPage: number) => {
+    setPagination((prev) => ({ ...prev, page: newPage }))
+  }, [])
+
+  /**
+   * Manual retry handler
+   */
+  const handleRetry = useCallback(() => {
+    fetchPaymentHistory(true)
+  }, [fetchPaymentHistory])
 
   // Calcula números de página para paginação
   const pageNumbers = useMemo(() => {
@@ -276,8 +396,8 @@ export function PaymentHistoryTable({
       ]
     : []
 
-  // Loading skeleton
-  if (isLoading) {
+  // Loading skeleton (initial load only)
+  if (isLoading && !isRefreshing) {
     return (
       <div className={cn('space-y-4', className)}>
         {/* Summary Skeleton */}
@@ -300,6 +420,27 @@ export function PaymentHistoryTable({
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="h-16 bg-muted rounded" />
             ))}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Error state with retry
+  if (error && !isRefreshing) {
+    return (
+      <div className={cn('space-y-4', className)}>
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+              <h3 className="text-lg font-semibold mb-2">Erro ao carregar pagamentos</h3>
+              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <Button onClick={handleRetry} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Tentar Novamente
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -352,50 +493,32 @@ export function PaymentHistoryTable({
               <Select
                 value={filters.status || 'ALL'}
                 onValueChange={(value) => handleFilterChange('status', value)}
+                disabled={isRefreshing}
               >
                 <SelectTrigger className="w-[140px] h-9">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todos Status</SelectItem>
-                  <SelectItem value="PAID">Pago</SelectItem>
+                  <SelectItem value="RECEIVED">Recebido</SelectItem>
+                  <SelectItem value="CONFIRMED">Confirmado</SelectItem>
                   <SelectItem value="PENDING">Pendente</SelectItem>
                   <SelectItem value="OVERDUE">Vencido</SelectItem>
                   <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                  <SelectItem value="REFUNDED">Reembolsado</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select
-                value={filters.method || 'ALL'}
-                onValueChange={(value) => handleFilterChange('method', value)}
+              {/* Refresh Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => fetchPaymentHistory(true)}
+                disabled={isRefreshing}
               >
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Método" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos Métodos</SelectItem>
-                  <SelectItem value="PIX">PIX</SelectItem>
-                  <SelectItem value="BOLETO">Boleto</SelectItem>
-                  <SelectItem value="CREDIT_CARD">Cartão</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.period || 'ALL'}
-                onValueChange={(value) => handleFilterChange('period', value)}
-              >
-                <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Período" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todo Período</SelectItem>
-                  <SelectItem value="30">Últimos 30 dias</SelectItem>
-                  <SelectItem value="60">Últimos 60 dias</SelectItem>
-                  <SelectItem value="90">Últimos 90 dias</SelectItem>
-                  <SelectItem value="180">Últimos 6 meses</SelectItem>
-                  <SelectItem value="365">Último ano</SelectItem>
-                </SelectContent>
-              </Select>
+                <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -447,6 +570,9 @@ export function PaymentHistoryTable({
                     {payments.map((payment) => {
                       const statusConfig = getStatusConfig(payment.status)
                       const StatusIcon = statusConfig.icon
+                      const displayDescription =
+                        payment.description ||
+                        `Mensalidade ${payment.invoiceNumber || payment.transactionId}`
 
                       return (
                         <motion.tr
@@ -455,10 +581,10 @@ export function PaymentHistoryTable({
                           className="border-b hover:bg-muted/50 transition-colors"
                         >
                           <td className="py-4 px-4 text-sm">
-                            {formatDate(payment.date)}
+                            {formatDate(payment.dueDate)}
                           </td>
                           <td className="py-4 px-4 text-sm font-medium">
-                            {payment.description}
+                            {displayDescription}
                           </td>
                           <td className="py-4 px-4 text-sm font-semibold">
                             {formatCurrency(payment.amount)}
@@ -532,6 +658,9 @@ export function PaymentHistoryTable({
                 {payments.map((payment) => {
                   const statusConfig = getStatusConfig(payment.status)
                   const StatusIcon = statusConfig.icon
+                  const displayDescription =
+                    payment.description ||
+                    `Mensalidade ${payment.invoiceNumber || payment.transactionId}`
 
                   return (
                     <motion.div
@@ -541,11 +670,9 @@ export function PaymentHistoryTable({
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-medium text-sm mb-1">
-                            {payment.description}
-                          </p>
+                          <p className="font-medium text-sm mb-1">{displayDescription}</p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDate(payment.date)}
+                            {formatDate(payment.dueDate)}
                           </p>
                         </div>
                         <Badge
@@ -629,8 +756,9 @@ export function PaymentHistoryTable({
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => onPageChange?.(pagination.page - 1)}
-                      disabled={pagination.page === 1}
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page === 1 || isRefreshing}
+                      aria-label="Página anterior"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -645,7 +773,10 @@ export function PaymentHistoryTable({
                             'h-8 w-8',
                             pageNum === pagination.page && 'bg-cyan-600 hover:bg-cyan-700'
                           )}
-                          onClick={() => onPageChange?.(pageNum)}
+                          onClick={() => handlePageChange(pageNum)}
+                          disabled={isRefreshing}
+                          aria-label={`Página ${pageNum}`}
+                          aria-current={pageNum === pagination.page ? 'page' : undefined}
                         >
                           {pageNum}
                         </Button>
@@ -660,8 +791,9 @@ export function PaymentHistoryTable({
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => onPageChange?.(pagination.page + 1)}
-                      disabled={pagination.page === pagination.pages}
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page === pagination.pages || isRefreshing}
+                      aria-label="Próxima página"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

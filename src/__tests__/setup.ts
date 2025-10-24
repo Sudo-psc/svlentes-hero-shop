@@ -69,7 +69,9 @@ beforeAll(() => {
     key: vi.fn()
   }
   Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
+    value: localStorageMock,
+    writable: true,
+    configurable: true
   })
 
   // Mock sessionStorage
@@ -82,7 +84,9 @@ beforeAll(() => {
     key: vi.fn()
   }
   Object.defineProperty(window, 'sessionStorage', {
-    value: sessionStorageMock
+    value: sessionStorageMock,
+    writable: true,
+    configurable: true
   })
 
   // Mock IndexedDB
@@ -119,6 +123,7 @@ beforeAll(() => {
   // Mock navigator online/offline
   Object.defineProperty(navigator, 'onLine', {
     writable: true,
+    configurable: true,
     value: true
   })
 
@@ -237,12 +242,12 @@ export const setupResilienceTestEnvironment = () => {
 // Helper para simular diferentes condições de rede
 export const mockNetworkConditions = {
   online: () => {
-    Object.defineProperty(navigator, 'onLine', { value: true })
+    Object.defineProperty(navigator, 'onLine', { value: true, configurable: true, writable: true })
     window.dispatchEvent(new Event('online'))
   },
 
   offline: () => {
-    Object.defineProperty(navigator, 'onLine', { value: false })
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true, writable: true })
     window.dispatchEvent(new Event('offline'))
   },
 

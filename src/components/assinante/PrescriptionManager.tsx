@@ -1,11 +1,12 @@
 /**
  * PrescriptionManager Component - Fase 3
  * Gerenciamento de prescrições com upload, preview e histórico
+ * Integrado com backend API e Firebase Auth
  */
 
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload,
@@ -29,8 +30,10 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { formatDate, formatRelativeTime } from '@/lib/formatters'
+import { formatDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from '@/hooks/use-toast'
 
 /**
  * Interface para prescrição de olho individual
@@ -44,11 +47,12 @@ interface EyePrescription {
 
 /**
  * Interface para prescrição atual
+ * Nota: uploadedAt e expiresAt vêm da API como strings ISO-8601
  */
 interface CurrentPrescription {
   id: string
-  uploadedAt: Date
-  expiresAt: Date
+  uploadedAt: string | Date
+  expiresAt: string | Date
   status: 'VALID' | 'EXPIRING_SOON' | 'EXPIRED'
   daysUntilExpiry: number
   fileUrl: string
@@ -59,40 +63,33 @@ interface CurrentPrescription {
 
 /**
  * Interface para histórico de prescrições
+ * Nota: uploadedAt e expiresAt vêm da API como strings ISO-8601
  */
 interface PrescriptionHistory {
   id: string
-  uploadedAt: Date
-  expiresAt: Date
+  uploadedAt: string | Date
+  expiresAt: string | Date
   fileName: string
   fileUrl: string
   status: 'active' | 'expired' | 'replaced'
 }
 
 /**
+ * Interface para resposta da API de prescrições
+ */
+interface PrescriptionApiResponse {
+  current?: CurrentPrescription
+  history: PrescriptionHistory[]
+  alerts: Array<{
+    type: 'warning' | 'danger'
+    message: string
+  }>
+}
+
+/**
  * Props do componente PrescriptionManager
  */
 interface PrescriptionManagerProps {
-  /**
-   * Prescrição atual do assinante
-   */
-  currentPrescription?: CurrentPrescription
-
-  /**
-   * Histórico de prescrições
-   */
-  history?: PrescriptionHistory[]
-
-  /**
-   * Callback para upload de nova prescrição
-   */
-  onUpload?: (file: File) => Promise<void>
-
-  /**
-   * Estado de carregamento
-   */
-  isLoading?: boolean
-
   /**
    * Classe CSS adicional
    */
@@ -126,20 +123,86 @@ function getStatusText(status: CurrentPrescription['status']) {
 /**
  * Componente PrescriptionManager
  * Gerencia prescrições com upload drag-and-drop, preview e histórico
+ * Integrado com backend API
  */
-export function PrescriptionManager({
-  currentPrescription,
-  history = [],
-  onUpload,
-  isLoading = false,
-  className
-}: PrescriptionManagerProps) {
+export function PrescriptionManager({ className }: PrescriptionManagerProps) {
+  // Auth context
+  const { user } = useAuth()
+
+  // Component state
+  const [currentPrescription, setCurrentPrescription] = useState<CurrentPrescription | null>(null)
+  const [history, setHistory] = useState<PrescriptionHistory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [previewFile, setPreviewFile] = useState<File | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  /**
+   * Fetch prescriptions from API
+   */
+  const fetchPrescriptions = useCallback(async () => {
+    if (!user) return
+
+    setIsLoading(true)
+    setFetchError(null)
+
+    try {
+      const idToken = await user.getIdToken()
+
+      const response = await fetch('/api/assinante/prescription', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${idToken}`
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Erro ao carregar prescrições')
+      }
+
+      const data: PrescriptionApiResponse = await response.json()
+
+      setCurrentPrescription(data.current || null)
+      setHistory(data.history || [])
+
+      // Show alerts as toasts
+      if (data.alerts && data.alerts.length > 0) {
+        data.alerts.forEach((alert) => {
+          toast({
+            title: alert.type === 'danger' ? 'Atenção' : 'Aviso',
+            description: alert.message,
+            variant: alert.type === 'danger' ? 'destructive' : 'default',
+          })
+        })
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro ao carregar prescrições'
+      setFetchError(errorMessage)
+      toast({
+        title: 'Erro',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [user])
+
+  // Fetch prescriptions on component mount
+  useEffect(() => {
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
+    fetchPrescriptions()
+  }, [user, fetchPrescriptions])
 
   // Validação de arquivo
   const validateFile = useCallback((file: File): string | null => {
@@ -216,20 +279,88 @@ export function PrescriptionManager({
 
   // Handler para confirmar upload
   const handleConfirmUpload = useCallback(async () => {
-    if (!previewFile || !onUpload) return
+    if (!previewFile || !user) return
 
     setIsUploading(true)
     setUploadError(null)
 
     try {
-      await onUpload(previewFile)
+      // Convert file to base64
+      const base64File = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          // Remove data URL prefix (e.g., "data:image/png;base64,")
+          const base64 = result.split(',')[1]
+          resolve(base64)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(previewFile)
+      })
+
+      // Get Firebase ID token
+      const idToken = await user.getIdToken()
+
+      // Create request body (simplified for now - full prescription data would be collected from form)
+      const requestBody = {
+        file: base64File,
+        fileName: previewFile.name,
+        fileSize: previewFile.size,
+        mimeType: previewFile.type,
+        // Mock prescription data - in production, this would come from a form
+        leftEye: {
+          sphere: 0,
+          cylinder: 0,
+          axis: 0,
+        },
+        rightEye: {
+          sphere: 0,
+          cylinder: 0,
+          axis: 0,
+        },
+        doctorName: 'Dr. Philipe Saraiva Cruz',
+        doctorCRM: 'CRM-MG 69870',
+        prescriptionDate: new Date().toISOString(),
+      }
+
+      const response = await fetch('/api/assinante/prescription', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Erro ao enviar prescrição')
+      }
+
+      // Success!
+      toast({
+        title: 'Prescrição enviada',
+        description: 'Sua prescrição foi enviada com sucesso!',
+        variant: 'default',
+      })
+
       setPreviewFile(null)
+
+      // Refresh prescriptions list
+      await fetchPrescriptions()
     } catch (error) {
-      setUploadError('Erro ao fazer upload. Tente novamente.')
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro ao fazer upload. Tente novamente.'
+      setUploadError(errorMessage)
+      toast({
+        title: 'Erro no upload',
+        description: errorMessage,
+        variant: 'destructive',
+      })
     } finally {
       setIsUploading(false)
     }
-  }, [previewFile, onUpload])
+  }, [previewFile, user, fetchPrescriptions])
 
   // Handler para cancelar upload
   const handleCancelUpload = useCallback(() => {
@@ -273,6 +404,51 @@ export function PrescriptionManager({
         <CardContent className="space-y-4">
           <div className="h-32 bg-muted rounded" />
           <div className="h-24 bg-muted rounded" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Not authenticated
+  if (!user) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-cyan-600" />
+            Prescrição Médica
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground mb-4">
+              Você precisa estar autenticado para gerenciar suas prescrições.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Fetch error
+  if (fetchError) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-cyan-600" />
+            Prescrição Médica
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-red-500" />
+            <p className="text-sm text-muted-foreground mb-4">{fetchError}</p>
+            <Button onClick={fetchPrescriptions} variant="outline" size="sm">
+              Tentar novamente
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )

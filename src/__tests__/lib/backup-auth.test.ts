@@ -6,9 +6,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { BackupAuthManager, backupAuth } from '@/lib/backup-auth'
 
-// Mock do fetch global
+// Mock do fetch global usando vi.stubGlobal
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+vi.stubGlobal('fetch', mockFetch)
 
 // Mock do localStorage
 const localStorageMock = {
@@ -20,12 +20,9 @@ const localStorageMock = {
   key: vi.fn()
 }
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
-})
-
-// Mock de window para storage initialization
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
+  value: localStorageMock,
+  writable: true,
+  configurable: true
 })
 
 describe('BackupAuthManager', () => {
