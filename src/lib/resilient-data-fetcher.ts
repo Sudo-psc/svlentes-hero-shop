@@ -85,6 +85,10 @@ class ResilientDataFetcher {
     // 1. Verificar cache primeiro
     const cachedData = this.getFromCache<T>(requestId, mergedConfig.cacheTTL)
     if (cachedData) {
+      this.stats.total++
+      this.stats.cacheHits++
+      this.stats.totalResponseTime += Date.now() - startTime
+
       return {
         data: cachedData,
         status: 'cached',
@@ -108,6 +112,12 @@ class ResilientDataFetcher {
         // Sucesso! Reset circuit breaker e salvar no cache
         this.resetCircuitBreaker(config.url)
         this.saveToCache(requestId, result.data, mergedConfig.cacheTTL)
+
+        // Update stats
+        this.stats.total++
+        this.stats.success++
+        this.stats.totalResponseTime += Date.now() - startTime
+
         return {
           data: result.data,
           status: 'success',
@@ -129,6 +139,11 @@ class ResilientDataFetcher {
       }
     }
     // 4. Todos os retries falharam - tentar fallbacks
+    // Update failure stats
+    this.stats.total++
+    this.stats.failed++
+    this.stats.totalResponseTime += Date.now() - startTime
+
     return this.handleAllRetriesFailed<T>(config, lastError!, attempts, startTime)
   }
   private async performRequest<T>(
@@ -378,6 +393,62 @@ class ResilientDataFetcher {
         responseTime: hc.responseTime
       }))
     }
+  }
+
+  /**
+   * Obter métricas de performance
+   */
+  private stats = {
+    total: 0,
+    success: 0,
+    failed: 0,
+    cacheHits: 0,
+    totalResponseTime: 0
+  }
+
+  getMetrics() {
+    return {
+      totalRequests: this.stats.total,
+      successfulRequests: this.stats.success,
+      failedRequests: this.stats.failed,
+      averageResponseTime: this.stats.total > 0 ? this.stats.totalResponseTime / this.stats.total : 0,
+      cacheHitRate: this.stats.total > 0 ? this.stats.cacheHits / this.stats.total : 0,
+      successRate: this.stats.total > 0 ? this.stats.success / this.stats.total : 0
+    }
+  }
+
+  /**
+   * Health monitoring
+   */
+  private healthCheckInterval: NodeJS.Timeout | null = null
+
+  startHealthMonitoring(interval: number) {
+    this.stopHealthMonitoring()
+    this.healthCheckInterval = setInterval(async () => {
+      try {
+        await this.performHealthCheck('/api/health-check')
+      } catch (error) {
+        console.error('[ResilientFetcher] Health check failed:', error)
+      }
+    }, interval)
+  }
+
+  stopHealthMonitoring() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval)
+      this.healthCheckInterval = null
+    }
+  }
+
+  /**
+   * Cleanup and destroy instance
+   */
+  destroy() {
+    this.stopHealthMonitoring()
+    this.clearCache()
+    this.resetCircuitBreakers()
+    this.activeRequests.clear()
+    this.healthChecks.clear()
   }
 }
 // Singleton instance

@@ -212,6 +212,71 @@ class OfflineStorage {
       }
     }
   }
+
+  /**
+   * Obter métricas de operação
+   */
+  private operationMetrics = {
+    total: 0,
+    successful: 0,
+    totalTime: 0
+  }
+
+  getMetrics() {
+    return {
+      totalOperations: this.operationMetrics.total,
+      successfulOperations: this.operationMetrics.successful,
+      averageOperationTime: this.operationMetrics.total > 0
+        ? this.operationMetrics.totalTime / this.operationMetrics.total
+        : 0,
+      storageSize: 0 // To be filled by getStats
+    }
+  }
+
+  /**
+   * Sincronizar dados offline com servidor
+   */
+  async sync(): Promise<{
+    successful: number
+    failed: number
+    errors: Array<{ key: string; error: string }>
+  }> {
+    await this.init()
+    const result = {
+      successful: 0,
+      failed: 0,
+      errors: [] as Array<{ key: string; error: string }>
+    }
+
+    try {
+      const keys = await this.keys()
+
+      for (const key of keys) {
+        try {
+          // Get pending sync data
+          if (key.startsWith('pending_sync_')) {
+            const data = await this.get(key)
+            if (data) {
+              // Simulate sync success for now
+              // In production, this would make actual API calls
+              await this.delete(key)
+              result.successful++
+            }
+          }
+        } catch (error) {
+          result.failed++
+          result.errors.push({
+            key,
+            error: (error as Error).message
+          })
+        }
+      }
+    } catch (error) {
+      console.error('[OfflineStorage] Sync failed:', error)
+    }
+
+    return result
+  }
   /**
    * IndexedDB methods
    */

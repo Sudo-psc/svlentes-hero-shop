@@ -92,7 +92,9 @@ beforeAll(() => {
     cmp: vi.fn()
   }
   Object.defineProperty(window, 'indexedDB', {
-    value: mockIndexedDB
+    value: mockIndexedDB,
+    writable: true,
+    configurable: true
   })
 
   // Mock WebSocket
