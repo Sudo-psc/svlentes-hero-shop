@@ -119,6 +119,7 @@ beforeAll(() => {
   // Mock navigator online/offline
   Object.defineProperty(navigator, 'onLine', {
     writable: true,
+    configurable: true,
     value: true
   })
 
@@ -237,12 +238,12 @@ export const setupResilienceTestEnvironment = () => {
 // Helper para simular diferentes condições de rede
 export const mockNetworkConditions = {
   online: () => {
-    Object.defineProperty(navigator, 'onLine', { value: true })
+    Object.defineProperty(navigator, 'onLine', { value: true, configurable: true, writable: true })
     window.dispatchEvent(new Event('online'))
   },
 
   offline: () => {
-    Object.defineProperty(navigator, 'onLine', { value: false })
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true, writable: true })
     window.dispatchEvent(new Event('offline'))
   },
 
