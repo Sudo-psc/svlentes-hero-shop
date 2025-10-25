@@ -331,6 +331,22 @@ export class DebugUtilities {
           createdAt: { gte: yesterday }
         }
       })
+
+      // Calculate average response time from WhatsApp interactions
+      const interactionsWithProcessingTime = await prisma.whatsAppInteraction.findMany({
+        where: {
+          createdAt: { gte: yesterday },
+          processingTime: { not: null }
+        },
+        select: {
+          processingTime: true
+        }
+      })
+
+      const averageResponseTime = interactionsWithProcessingTime.length > 0
+        ? interactionsWithProcessingTime.reduce((sum, interaction) => sum + (interaction.processingTime || 0), 0) / interactionsWithProcessingTime.length
+        : 0
+
       // Get failure rate
       const stats = await messageStatusTracker.getGlobalStats(1)
       const failureRate = stats.failureRate
@@ -356,7 +372,7 @@ export class DebugUtilities {
           messagesLast24h,
           failureRate,
           averageDeliveryTime: stats.averageDeliveryTime,
-          averageResponseTime: 0 // TODO: Calculate from interactions
+          averageResponseTime: Math.round(averageResponseTime) // Calculated from WhatsApp interaction processing times
         },
         alerts
       }

@@ -456,19 +456,19 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    // TODO: Criar registro no SubscriptionHistory para auditoria
-    // await prisma.subscriptionHistory.create({
-    //   data: {
-    //     subscriptionId: subscription.id,
-    //     userId: user.id,
-    //     changeType: 'ADDRESS_UPDATE',
-    //     description: 'Endereço de entrega atualizado',
-    //     oldValue: subscription.shippingAddress,
-    //     newValue: newShippingAddress,
-    //     ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-    //     userAgent: request.headers.get('user-agent'),
-    //   },
-    // })
+    // Criar registro no SubscriptionHistory para auditoria
+    await prisma.subscriptionHistory.create({
+      data: {
+        subscriptionId: subscription.id,
+        userId: user.id,
+        changeType: 'ADDRESS_UPDATE',
+        description: 'Endereço de entrega atualizado',
+        oldValue: subscription.shippingAddress,
+        newValue: newShippingAddress,
+        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: request.headers.get('user-agent'),
+      },
+    })
 
     // Log auditoria LGPD
     console.log('[DeliveryPreferences] Atualização realizada:', {

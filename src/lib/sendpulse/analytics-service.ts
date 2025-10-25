@@ -11,6 +11,7 @@ import type {
 } from './types'
 export class AnalyticsService {
   private conversations: Map<string, ConversationMetrics> = new Map()
+  private firstContactTimestamp: Map<string, string> = new Map() // Track when contact first interacted
   private messageHistory: Array<{
     contactId: string
     type: MessageType | 'template'
@@ -115,11 +116,30 @@ export class AnalyticsService {
       messages: messageMetrics,
       contacts: {
         total: this.conversations.size,
-        new: 0, // TODO: Track new vs returning
+        // Count new contacts: those whose first contact was within the timeframe
+        new: Array.from(this.firstContactTimestamp.entries()).filter(
+          ([_, firstContact]) => {
+            const firstContactDate = new Date(firstContact)
+            return firstContactDate >= new Date(start) && firstContactDate <= new Date(end)
+          }
+        ).length,
+        // Count active contacts: those with activity in the timeframe
         active: Array.from(this.conversations.values()).filter(
           m => new Date(m.lastActivity) >= new Date(start)
         ).length,
-        returning: 0
+        // Count returning contacts: active in timeframe but first contact was before timeframe
+        returning: Array.from(this.conversations.entries()).filter(
+          ([contactId, metrics]) => {
+            const lastActivity = new Date(metrics.lastActivity)
+            const firstContact = this.firstContactTimestamp.get(contactId)
+            if (!firstContact) return false
+
+            const isActiveInPeriod = lastActivity >= new Date(start) && lastActivity <= new Date(end)
+            const wasContactedBefore = new Date(firstContact) < new Date(start)
+
+            return isActiveInPeriod && wasContactedBefore
+          }
+        ).length
       },
       performance: {
         averageResponseTime: this.calculateAverageResponseTime(),
@@ -215,6 +235,13 @@ export class AnalyticsService {
   private getOrCreateMetrics(contactId: string, botId: string): ConversationMetrics {
     let metrics = this.conversations.get(contactId)
     if (!metrics) {
+      const now = new Date().toISOString()
+
+      // Track first contact timestamp if not already tracked
+      if (!this.firstContactTimestamp.has(contactId)) {
+        this.firstContactTimestamp.set(contactId, now)
+      }
+
       metrics = {
         contact_id: contactId,
         bot_id: botId,
@@ -223,7 +250,7 @@ export class AnalyticsService {
         sentByUser: 0,
         averageResponseTime: 0,
         conversationDuration: 0,
-        lastActivity: new Date().toISOString(),
+        lastActivity: now,
         messagesByType: {
           text: 0,
           image: 0,
