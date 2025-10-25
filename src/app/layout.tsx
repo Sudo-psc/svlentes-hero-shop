@@ -5,7 +5,7 @@ import './globals.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { WhatsAppFloat } from '@/components/layout/WhatsAppFloat'
-// import { StructuredData } from '@/components/seo/StructuredData'
+import { StructuredData } from '@/components/seo/StructuredData'
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor'
 import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
 import { ServiceWorkerCleanup } from '@/components/performance/ServiceWorkerCleanup'
@@ -41,9 +41,9 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     // Simplificado - CSP gerenciado pelo next.config.js sem nonce
-
-    // const organizationData = generateOrganizationStructuredData()
-    // const websiteData = generateWebSiteStructuredData()
+    const organizationData = generateOrganizationStructuredData()
+    const websiteData = generateWebSiteStructuredData()
+    
     // Initialize chunk error handler
     if (typeof window !== 'undefined') {
         initializeChunkErrorHandler()
@@ -76,7 +76,7 @@ export default function RootLayout({
                         <ServiceWorkerCleanup />
                         <PerformanceMonitor />
                         <ResourcePreloader />
-                        {/* <StructuredData data={[organizationData, websiteData]} /> */}
+                        <StructuredData data={[organizationData, websiteData]} />
                         <Header />
                         <main className="pt-16 lg:pt-20">
                             {children}

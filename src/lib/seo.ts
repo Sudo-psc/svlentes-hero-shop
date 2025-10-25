@@ -6,24 +6,31 @@ import { featuredFAQ } from '@/data/faq-data'
 export const baseMetadata: Metadata = {
     metadataBase: new URL('https://svlentes.com.br'),
     title: {
-        default: 'SV Lentes - Nunca mais fique sem lentes | Assinatura com Acompanhamento Médico',
+        default: 'SV Lentes Caratinga MG | Assinatura de Lentes com Dr. Philipe Saraiva Cruz CRM 69.870',
         template: '%s | SV Lentes'
     },
-    description: 'Pioneiro no Brasil em assinatura de lentes de contato com acompanhamento médico especializado. Dr. Philipe Saraiva Cruz - CRM 69.870. Economia de até 40%.',
+    description: 'Assinatura de lentes de contato em Caratinga/MG e todo Brasil com acompanhamento médico do Dr. Philipe Saraiva Cruz - CRM 69.870. Lentes mensais, diárias, tóricas e multifocais. Entrega automática e economia de até 40%. Atendimento presencial e online.',
     keywords: [
-        'lentes de contato',
-        'assinatura lentes',
-        'acompanhamento médico',
+        'lentes de contato Caratinga',
+        'lentes de contato Minas Gerais',
+        'assinatura lentes Caratinga',
+        'oftalmologista Caratinga',
         'Dr. Philipe Saraiva Cruz',
-        'oftalmologia',
         'CRM 69.870',
-        'lentes mensais',
-        'lentes diárias',
-        'consulta oftalmológica',
-        'telemedicina',
-        'entrega domicilio',
+        'lentes de contato mensais',
+        'lentes de contato diárias',
+        'lentes tóricas astigmatismo',
+        'lentes multifocais presbiopia',
+        'entrega lentes de contato',
+        'assinatura mensal lentes',
+        'consulta oftalmológica online',
+        'receita lentes de contato',
+        'acompanhamento médico lentes',
+        'telemedicina oftalmologia',
         'SV Lentes',
-        'svlentes.com.br'
+        'svlentes.com.br',
+        'economia lentes de contato',
+        'entrega grátis lentes'
     ],
     authors: [{
         name: doctorInfo.name,
@@ -41,8 +48,8 @@ export const baseMetadata: Metadata = {
         locale: 'pt_BR',
         url: 'https://svlentes.com.br',
         siteName: 'SV Lentes',
-        title: 'SV Lentes - Nunca mais fique sem lentes | Assinatura com Acompanhamento Médico',
-        description: 'Pioneiro no Brasil em assinatura de lentes de contato com acompanhamento médico especializado. Dr. Philipe Saraiva Cruz - CRM 69.870. Economia de até 40%.',
+        title: 'SV Lentes Caratinga MG | Assinatura de Lentes com Acompanhamento Médico',
+        description: 'Assinatura de lentes de contato em Caratinga/MG e todo Brasil. Dr. Philipe Saraiva Cruz - CRM 69.870. Entrega automática, economia de até 40% e acompanhamento médico especializado.',
         images: [
             {
                 url: '/images/og-image.jpg',
@@ -55,8 +62,8 @@ export const baseMetadata: Metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'SV Lentes - Nunca mais fique sem lentes | Assinatura com Acompanhamento Médico',
-        description: 'Pioneiro no Brasil em assinatura de lentes de contato com acompanhamento médico especializado. Dr. Philipe Saraiva Cruz - CRM 69.870.',
+        title: 'SV Lentes Caratinga MG | Assinatura de Lentes com Acompanhamento Médico',
+        description: 'Assinatura de lentes de contato em Caratinga/MG e todo Brasil. Dr. Philipe Saraiva Cruz - CRM 69.870. Economia de até 40%.',
         images: ['/images/og-image.jpg'],
         site: '@svlentes',
     },

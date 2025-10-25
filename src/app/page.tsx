@@ -2,6 +2,9 @@ import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
 import { TrustStrip } from '@/components/trust/TrustStrip'
 import { HomeLazySections } from '@/components/sections/HomeLazySections'
+import { StructuredData } from '@/components/seo/StructuredData'
+import { generateFAQStructuredData, generateMedicalBusinessStructuredData } from '@/lib/seo'
+
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
     description: 'Assinatura de lentes de contato em Caratinga, Minas Gerais, com acompanhamento médico do Dr. Philipe Saraiva Cruz - CRM 69.870. Lentes diárias, mensais, tóricas e multifocais. Economia de até 40% com entrega grátis.',
@@ -23,9 +26,14 @@ export const metadata: Metadata = {
         canonical: 'https://svlentes.com.br',
     },
 }
+
 export default function HomePage() {
+    const faqData = generateFAQStructuredData()
+    const medicalBusinessData = generateMedicalBusinessStructuredData()
+    
     return (
         <div className="min-h-screen">
+            <StructuredData data={[faqData, medicalBusinessData]} />
             {/* Hero Section - Vídeo em largura total */}
             <section id="hero">
                 <VideoHeroSection />
