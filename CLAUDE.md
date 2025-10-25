@@ -227,9 +227,14 @@ src/
 - Demo page available at `/clerk-demo`
 
 **Implementation Details:**
-- **Middleware**: `src/middleware.ts` - Integrated `clerkMiddleware()` with existing logging and monitoring
+- **Middleware**: `src/middleware.ts` - Integrated `clerkMiddleware()` with existing logging and monitoring, includes error handling
 - **Layout**: `ClerkProvider` wraps the entire application in `src/app/layout.tsx`
 - **Protected Routes**: `/area-assinante/*` and `/api/assinante/*` require authentication
+- **Public Routes** (excluded from protection):
+  - `/area-assinante/login` - Login page
+  - `/area-assinante/register` - Registration page
+  - `/api/assinante/register` - Registration API
+  - `/clerk-demo` - Demo/testing page
 - **Components**: Standard Clerk components available:
   - `<SignInButton>` - Trigger sign-in modal or redirect
   - `<SignUpButton>` - Trigger sign-up modal or redirect
@@ -242,6 +247,7 @@ src/
 - Compatible with existing Firebase authentication flow
 - Can be used for new features while maintaining Firebase for legacy functionality
 - Middleware preserves all existing security headers and logging
+- Error handling prevents authentication failures from crashing the application
 
 **Testing:**
 - Visit `/clerk-demo` to test authentication flow

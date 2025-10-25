@@ -45,10 +45,16 @@ CLERK_SECRET_KEY=sk_test_your_secret_key_here
 
 The following routes are automatically protected by Clerk authentication:
 
-- `/area-assinante/*` - Subscriber dashboard and related pages
-- `/api/assinante/*` - Subscriber API endpoints
+- `/area-assinante/*` - Subscriber dashboard and related pages (except public endpoints)
+- `/api/assinante/*` - Subscriber API endpoints (except public endpoints)
 
-Users must be authenticated to access these routes. Unauthenticated users will be redirected to the sign-in page.
+**Public Routes (excluded from protection):**
+- `/area-assinante/login` - Login page
+- `/area-assinante/register` - Registration page
+- `/api/assinante/register` - Registration API endpoint
+- `/clerk-demo` - Demo page for testing Clerk integration
+
+Users must be authenticated to access protected routes. Unauthenticated users will be redirected to the sign-in page. Public routes remain accessible to all users for authentication flows.
 
 ### Available Components
 
@@ -113,8 +119,15 @@ Clerk middleware has been integrated with the existing logging and monitoring mi
 
 1. Preserves all existing security headers
 2. Maintains request/response logging
-3. Adds Clerk authentication checks
-4. Protects specified routes automatically
+3. Adds Clerk authentication checks with error handling
+4. Protects specified routes automatically (while excluding public authentication routes)
+5. Logs authentication failures for monitoring and debugging
+
+**Error Handling:**
+The middleware includes try/catch blocks around authentication checks to:
+- Log authentication failures with detailed context
+- Prevent middleware crashes from blocking the application
+- Allow Clerk to handle redirects appropriately for unauthorized access
 
 ## Customization
 

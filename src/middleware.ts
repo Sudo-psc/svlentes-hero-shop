@@ -229,6 +229,14 @@ async function performLoggingAndMonitoring(request: NextRequest) {
   return { start, logData, riskScore, sessionId };
 }
 
+// Define public routes that should NOT require authentication
+const isPublicRoute = createRouteMatcher([
+  '/area-assinante/login(.*)',
+  '/area-assinante/register(.*)',
+  '/api/assinante/register(.*)',
+  '/clerk-demo(.*)',
+]);
+
 // Define protected routes that require authentication
 const isProtectedRoute = createRouteMatcher([
   '/area-assinante(.*)',
@@ -240,9 +248,23 @@ export default clerkMiddleware(async (auth, request) => {
   // Perform logging and monitoring
   const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
 
-  // Check if route requires authentication
-  if (isProtectedRoute(request)) {
-    await auth.protect();
+  // Check if route requires authentication (exclude public routes)
+  if (isProtectedRoute(request) && !isPublicRoute(request)) {
+    try {
+      await auth.protect();
+    } catch (error) {
+      // Log authentication error
+      Logger.error('Authentication protection failed', {
+        ...logData,
+        path: request.nextUrl.pathname,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        riskScore
+      });
+
+      // For protected routes, let Clerk handle the redirect to sign-in
+      // The error will propagate and Clerk will redirect appropriately
+      throw error;
+    }
   }
 
   // Create response with security headers
