@@ -235,48 +235,80 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // TODO: Buscar prescrições do banco
-    // Por enquanto, retornar dados mock para demonstração
-    const mockPrescriptionDate = new Date('2024-10-15')
-    const mockExpiresAt = new Date(mockPrescriptionDate)
-    mockExpiresAt.setFullYear(mockExpiresAt.getFullYear() + 1) // Válido por 1 ano (CFM)
-
-    const { status, daysUntilExpiry } = calculatePrescriptionStatus(mockExpiresAt)
-    const alerts = generateAlerts(status, daysUntilExpiry)
-
-    const response: PrescriptionResponse = {
-      current: {
-        id: 'mock-prescription-id',
-        uploadedAt: mockPrescriptionDate,
-        expiresAt: mockExpiresAt,
-        status,
-        daysUntilExpiry,
-        fileUrl: '/uploads/prescriptions/mock-prescription.pdf',
-        fileName: 'prescricao_dr_philipe.pdf',
-        leftEye: {
-          sphere: -2.5,
-          cylinder: -0.75,
-          axis: 180,
-        },
-        rightEye: {
-          sphere: -3.0,
-          cylinder: -1.0,
-          axis: 175,
-        },
-        doctorName: 'Dr. Philipe Saraiva Cruz',
-        doctorCRM: 'CRM-MG 69870',
+    // Buscar prescrições do usuário (ordenadas por data de upload, mais recente primeiro)
+    const prescriptions = await prisma.prescription.findMany({
+      where: {
+        userId: user.id,
+        deletedAt: null, // Não incluir prescrições deletadas (soft delete)
       },
-      history: [
-        {
-          id: 'mock-history-1',
-          uploadedAt: new Date('2023-10-10'),
-          expiresAt: new Date('2024-10-10'),
-          status: 'EXPIRED',
-          doctorName: 'Dr. Philipe Saraiva Cruz',
-          doctorCRM: 'CRM-MG 69870',
-        },
-      ],
-      alerts,
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+    })
+
+    // Separar prescrição atual (mais recente) do histórico
+    const currentPrescription = prescriptions[0]
+    const historyPrescriptions = prescriptions.slice(1)
+
+    // Preparar resposta
+    const response: PrescriptionResponse = {
+      current: currentPrescription
+        ? (() => {
+            const { status, daysUntilExpiry } = calculatePrescriptionStatus(
+              currentPrescription.expiresAt
+            )
+            return {
+              id: currentPrescription.id,
+              uploadedAt: currentPrescription.uploadedAt,
+              expiresAt: currentPrescription.expiresAt,
+              status,
+              daysUntilExpiry,
+              fileUrl: currentPrescription.fileUrl,
+              fileName: currentPrescription.fileName,
+              leftEye: {
+                sphere: currentPrescription.leftEyeSphere?.toNumber() || 0,
+                cylinder: currentPrescription.leftEyeCylinder?.toNumber(),
+                axis: currentPrescription.leftEyeAxis || undefined,
+                addition: currentPrescription.leftEyeAddition?.toNumber(),
+              },
+              rightEye: {
+                sphere: currentPrescription.rightEyeSphere?.toNumber() || 0,
+                cylinder: currentPrescription.rightEyeCylinder?.toNumber(),
+                axis: currentPrescription.rightEyeAxis || undefined,
+                addition: currentPrescription.rightEyeAddition?.toNumber(),
+              },
+              doctorName: currentPrescription.doctorName,
+              doctorCRM: currentPrescription.doctorCRM,
+              verifiedBy: currentPrescription.verifiedBy || undefined,
+              verifiedAt: currentPrescription.verifiedAt || undefined,
+            }
+          })()
+        : undefined,
+      history: historyPrescriptions.map((prescription) => {
+        const { status } = calculatePrescriptionStatus(prescription.expiresAt)
+        return {
+          id: prescription.id,
+          uploadedAt: prescription.uploadedAt,
+          expiresAt: prescription.expiresAt,
+          status,
+          doctorName: prescription.doctorName,
+          doctorCRM: prescription.doctorCRM,
+        }
+      }),
+      alerts: currentPrescription
+        ? (() => {
+            const { status, daysUntilExpiry } = calculatePrescriptionStatus(
+              currentPrescription.expiresAt
+            )
+            return generateAlerts(status, daysUntilExpiry)
+          })()
+        : [
+            {
+              type: 'warning',
+              message:
+                'Você ainda não possui nenhuma prescrição cadastrada. Faça o upload da sua prescrição médica.',
+            },
+          ],
     }
 
     return createSuccessResponse(response, requestId)
@@ -384,12 +416,40 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(prescriptionDate)
     expiresAt.setFullYear(expiresAt.getFullYear() + 1)
 
-    // TODO: Salvar prescrição no banco
-    // await prisma.prescription.create({ ... })
+    // Criar prescrição no banco de dados
+    const createdPrescription = await prisma.prescription.create({
+      data: {
+        userId: user.id,
+        subscriptionId: subscription.id,
+        // File storage
+        fileUrl,
+        fileName: validatedData.fileName,
+        fileSize: validatedData.fileSize,
+        mimeType: validatedData.mimeType,
+        // Left eye prescription
+        leftEyeSphere: validatedData.leftEye.sphere,
+        leftEyeCylinder: validatedData.leftEye.cylinder,
+        leftEyeAxis: validatedData.leftEye.axis,
+        leftEyeAddition: validatedData.leftEye.addition,
+        // Right eye prescription
+        rightEyeSphere: validatedData.rightEye.sphere,
+        rightEyeCylinder: validatedData.rightEye.cylinder,
+        rightEyeAxis: validatedData.rightEye.axis,
+        rightEyeAddition: validatedData.rightEye.addition,
+        // Doctor information
+        doctorName: validatedData.doctorName,
+        doctorCRM: validatedData.doctorCRM,
+        // Dates
+        prescriptionDate,
+        expiresAt,
+        // Status defaults to PENDING (defined in Prisma schema)
+      },
+    })
 
     // Log auditoria LGPD
     console.log('[Prescription] Upload realizado:', {
       userId: user.id,
+      prescriptionId: createdPrescription.id,
       requestId,
       doctorCRM: validatedData.doctorCRM,
       timestamp: new Date().toISOString(),
@@ -398,17 +458,17 @@ export async function POST(request: NextRequest) {
     const { status, daysUntilExpiry } = calculatePrescriptionStatus(expiresAt)
 
     const newPrescription = {
-      id: `prescription-${Date.now()}`, // Mock ID
-      uploadedAt: new Date(),
-      expiresAt,
+      id: createdPrescription.id,
+      uploadedAt: createdPrescription.uploadedAt,
+      expiresAt: createdPrescription.expiresAt,
       status,
       daysUntilExpiry,
-      fileUrl,
-      fileName: validatedData.fileName,
+      fileUrl: createdPrescription.fileUrl,
+      fileName: createdPrescription.fileName,
       leftEye: validatedData.leftEye,
       rightEye: validatedData.rightEye,
-      doctorName: validatedData.doctorName,
-      doctorCRM: validatedData.doctorCRM,
+      doctorName: createdPrescription.doctorName,
+      doctorCRM: createdPrescription.doctorCRM,
     }
 
     return createSuccessResponse(
@@ -491,21 +551,136 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // TODO: Verificar ownership da prescrição
-    // TODO: Atualizar prescrição no banco
+    // Buscar prescrição existente
+    const existingPrescription = await prisma.prescription.findUnique({
+      where: { id: validatedData.prescriptionId },
+    })
+
+    if (!existingPrescription) {
+      return ApiErrorHandler.handleError(
+        ErrorType.NOT_FOUND,
+        'Prescrição não encontrada',
+        {
+          ...context,
+          userId: user.id,
+          prescriptionId: validatedData.prescriptionId,
+        }
+      )
+    }
+
+    // SECURITY: Verificar ownership da prescrição
+    if (existingPrescription.userId !== user.id) {
+      return ApiErrorHandler.handleError(
+        ErrorType.FORBIDDEN,
+        'Você não tem permissão para atualizar esta prescrição',
+        {
+          ...context,
+          userId: user.id,
+          prescriptionOwnerId: existingPrescription.userId,
+          prescriptionId: validatedData.prescriptionId,
+        }
+      )
+    }
+
+    // Verificar se prescrição foi deletada (soft delete)
+    if (existingPrescription.deletedAt) {
+      return ApiErrorHandler.handleError(
+        ErrorType.NOT_FOUND,
+        'Prescrição foi removida e não pode ser atualizada',
+        {
+          ...context,
+          userId: user.id,
+          prescriptionId: validatedData.prescriptionId,
+        }
+      )
+    }
+
+    // Preparar dados para atualização (apenas campos fornecidos)
+    const updateData: any = {}
+
+    // Atualizar arquivo se fornecido
+    if (validatedData.file && validatedData.fileName) {
+      const newFileUrl = await savePrescriptionFile(
+        validatedData.file,
+        validatedData.fileName,
+        user.id
+      )
+      updateData.fileUrl = newFileUrl
+      updateData.fileName = validatedData.fileName
+      updateData.fileSize = validatedData.fileSize
+      updateData.mimeType = validatedData.mimeType
+    }
+
+    // Atualizar dados do olho esquerdo se fornecidos
+    if (validatedData.leftEye) {
+      if (validatedData.leftEye.sphere !== undefined)
+        updateData.leftEyeSphere = validatedData.leftEye.sphere
+      if (validatedData.leftEye.cylinder !== undefined)
+        updateData.leftEyeCylinder = validatedData.leftEye.cylinder
+      if (validatedData.leftEye.axis !== undefined)
+        updateData.leftEyeAxis = validatedData.leftEye.axis
+      if (validatedData.leftEye.addition !== undefined)
+        updateData.leftEyeAddition = validatedData.leftEye.addition
+    }
+
+    // Atualizar dados do olho direito se fornecidos
+    if (validatedData.rightEye) {
+      if (validatedData.rightEye.sphere !== undefined)
+        updateData.rightEyeSphere = validatedData.rightEye.sphere
+      if (validatedData.rightEye.cylinder !== undefined)
+        updateData.rightEyeCylinder = validatedData.rightEye.cylinder
+      if (validatedData.rightEye.axis !== undefined)
+        updateData.rightEyeAxis = validatedData.rightEye.axis
+      if (validatedData.rightEye.addition !== undefined)
+        updateData.rightEyeAddition = validatedData.rightEye.addition
+    }
+
+    // Atualizar informações do médico se fornecidas
+    if (validatedData.doctorName) updateData.doctorName = validatedData.doctorName
+    if (validatedData.doctorCRM) updateData.doctorCRM = validatedData.doctorCRM
+
+    // Atualizar data da prescrição e recalcular expiração se fornecida
+    if (validatedData.prescriptionDate) {
+      const prescriptionDate = new Date(validatedData.prescriptionDate)
+      const expiresAt = new Date(prescriptionDate)
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+      updateData.prescriptionDate = prescriptionDate
+      updateData.expiresAt = expiresAt
+    }
+
+    // Atualizar prescrição no banco
+    const updatedPrescription = await prisma.prescription.update({
+      where: { id: validatedData.prescriptionId },
+      data: updateData,
+    })
 
     // Log auditoria LGPD
     console.log('[Prescription] Atualização realizada:', {
       userId: user.id,
       prescriptionId: validatedData.prescriptionId,
+      updatedFields: Object.keys(updateData),
       requestId,
       timestamp: new Date().toISOString(),
     })
 
+    const { status, daysUntilExpiry } = calculatePrescriptionStatus(
+      updatedPrescription.expiresAt
+    )
+
     return createSuccessResponse(
       {
         message: 'Prescrição atualizada com sucesso',
-        prescriptionId: validatedData.prescriptionId,
+        prescription: {
+          id: updatedPrescription.id,
+          uploadedAt: updatedPrescription.uploadedAt,
+          expiresAt: updatedPrescription.expiresAt,
+          status,
+          daysUntilExpiry,
+          fileUrl: updatedPrescription.fileUrl,
+          fileName: updatedPrescription.fileName,
+          doctorName: updatedPrescription.doctorName,
+          doctorCRM: updatedPrescription.doctorCRM,
+        },
       },
       requestId
     )
