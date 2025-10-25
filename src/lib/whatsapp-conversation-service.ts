@@ -322,6 +322,8 @@ export async function getOrCreateUserProfile(
  * Store a WhatsApp interaction (message + response)
  */
 export async function storeInteraction(data: StoreInteractionData): Promise<void> {
+  const { conversationBackupService } = await import('@/lib/conversation-backup-service')
+
   try {
     // Get or create conversation
     const { id: conversationId } = await getOrCreateConversation(
@@ -329,37 +331,98 @@ export async function storeInteraction(data: StoreInteractionData): Promise<void
       data.userProfile.name || undefined,
       data.userProfile.id
     )
-    // Store the interaction
-    await prisma.whatsAppInteraction.create({
-      data: {
+
+    let interactionCreated = null
+    let databaseError = null
+
+    // Try to store in primary database (PostgreSQL via Prisma)
+    try {
+      interactionCreated = await prisma.whatsAppInteraction.create({
+        data: {
+          conversationId,
+          messageId: data.messageId,
+          customerPhone: data.customerPhone,
+          userId: data.userProfile.id,
+          content: data.content,
+          isFromCustomer: true,
+          intent: data.intent?.intent || data.intent?.category || null,
+          sentiment: data.intent?.sentiment || null,
+          urgency: data.intent?.priority?.toString() || null,
+          response: data.response,
+          escalationRequired: data.escalationRequired,
+          ticketCreated: data.ticketCreated,
+          ticketId: data.ticketId || null,
+          llmModel: data.llmModel || null,
+          processingTime: data.processingTime || null
+        }
+      })
+
+      // Update conversation message count and last intent
+      await prisma.whatsAppConversation.update({
+        where: { id: conversationId },
+        data: {
+          messageCount: { increment: 1 },
+          lastIntent: data.intent?.intent || data.intent?.category || null,
+          lastSentiment: data.intent?.sentiment || null,
+          lastMessageAt: new Date()
+        }
+      })
+
+      console.log(`Interaction stored in database: ${data.response.substring(0, 50)}...`)
+
+    } catch (dbError) {
+      databaseError = dbError
+      console.error('Primary database error, using Airtable fallback:', dbError)
+
+      // FALLBACK: Store in Airtable when database fails
+      const fallbackResult = await conversationBackupService.storeInteractionFallback({
+        id: `fallback-${data.messageId}-${Date.now()}`,
         conversationId,
         messageId: data.messageId,
         customerPhone: data.customerPhone,
         userId: data.userProfile.id,
         content: data.content,
-        isFromCustomer: true,
+        direction: 'inbound',
         intent: data.intent?.intent || data.intent?.category || null,
         sentiment: data.intent?.sentiment || null,
-        urgency: data.intent?.priority?.toString() || null,
         response: data.response,
-        escalationRequired: data.escalationRequired,
-        ticketCreated: data.ticketCreated,
-        ticketId: data.ticketId || null,
-        llmModel: data.llmModel || null,
-        processingTime: data.processingTime || null
+        processingTime: data.processingTime || null,
+        status: 'sent',
+        timestamp: new Date(),
+        createdAt: new Date()
+      })
+
+      if (!fallbackResult.success) {
+        throw new Error(`Both database and Airtable fallback failed: ${fallbackResult.error}`)
       }
-    })
-    // Update conversation message count and last intent
-    await prisma.whatsAppConversation.update({
-      where: { id: conversationId },
-      data: {
-        messageCount: { increment: 1 },
-        lastIntent: data.intent?.intent || data.intent?.category || null,
-        lastSentiment: data.intent?.sentiment || null,
-        lastMessageAt: new Date()
-      }
-    })
-    console.log(`Interaction stored: ${data.response.substring(0, 50)}...`)
+
+      console.log(`Interaction stored via Airtable fallback (will sync later)`)
+      return
+    }
+
+    // SUCCESS: Backup to Airtable for redundancy (fire and forget)
+    if (interactionCreated) {
+      conversationBackupService.backupInteraction({
+        id: interactionCreated.id,
+        conversationId: interactionCreated.conversationId,
+        messageId: interactionCreated.messageId,
+        customerPhone: interactionCreated.customerPhone,
+        userId: interactionCreated.userId,
+        content: interactionCreated.content,
+        direction: 'inbound',
+        intent: interactionCreated.intent,
+        sentiment: interactionCreated.sentiment,
+        response: interactionCreated.response,
+        processingTime: interactionCreated.processingTime,
+        status: 'sent',
+        timestamp: interactionCreated.createdAt,
+        createdAt: interactionCreated.createdAt
+      }).catch(err => {
+        // Log but don't throw - backup is optional
+        console.warn('Airtable backup failed (non-critical):', err)
+      })
+    }
+
   } catch (error) {
     console.error('Error storing interaction:', error)
     throw error
