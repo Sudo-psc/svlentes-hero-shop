@@ -1,9 +1,11 @@
 /**
  * Middleware para logging de requisições e monitoramento
  * Intercepta todas as requisições e coleta métricas de performance
+ * Integrado com Clerk para autenticação
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Interface para dados de logging
 interface LogData {
@@ -165,7 +167,8 @@ function calculateRiskScore(request: NextRequest): number {
   return Math.min(risk, 100);
 }
 
-export async function middleware(request: NextRequest) {
+// Logging and monitoring function (extracted from original middleware)
+async function performLoggingAndMonitoring(request: NextRequest) {
   const start = Date.now();
 
   // Extrair informações da requisição
@@ -223,7 +226,26 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // Adicionar headers de segurança e logging
+  return { start, logData, riskScore, sessionId };
+}
+
+// Define protected routes that require authentication
+const isProtectedRoute = createRouteMatcher([
+  '/area-assinante(.*)',
+  '/api/assinante(.*)',
+]);
+
+// Clerk middleware with custom logic integration
+export default clerkMiddleware(async (auth, request) => {
+  // Perform logging and monitoring
+  const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
+
+  // Check if route requires authentication
+  if (isProtectedRoute(request)) {
+    await auth.protect();
+  }
+
+  // Create response with security headers
   const response = NextResponse.next();
 
   // Adicionar session ID ao response para tracking
@@ -272,18 +294,15 @@ export async function middleware(request: NextRequest) {
   }
 
   return response;
-}
+});
 
 // Configurar quais rotas o middleware deve interceptar
+// Usando o padrão recomendado do Clerk para Next.js App Router
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 };
