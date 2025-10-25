@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { orderStatusUpdateSchema } from '@/lib/admin-validations'
+import { sendPulseSMS } from '@/lib/sendpulse-sms-client'
 /**
  * @swagger
  * /api/admin/orders/{id}/status:
@@ -294,29 +295,101 @@ async function triggerOrderStatusActions(
   user: any
 ): Promise<void> {
   try {
+    // Obter telefone do usuário para SMS
+    const userPhone = order.subscription?.user?.phone
+
     switch (status) {
       case 'SHIPPED':
-        // Enviar notificação de envio
-        // TODO: Integrar com sistema de notificações para enviar email/SMS
+        // TODO #6: Enviar notificação de envio (order status SMS)
+        if (userPhone && sendPulseSMS.isEnabled()) {
+          await sendPulseSMS.sendOrderStatus(
+            userPhone,
+            order.id,
+            'SHIPPED'
+          )
+          console.log('[Order SMS] Notificação de envio enviada:', {
+            orderId: order.id,
+            phone: userPhone,
+            status: 'SHIPPED'
+          })
+        }
+
+        // TODO #7: Enviar atualização de rastreio (se código disponível)
+        if (userPhone && order.trackingCode && sendPulseSMS.isEnabled()) {
+          await sendPulseSMS.sendTrackingUpdate(
+            userPhone,
+            order.trackingCode,
+            order.id
+          )
+          console.log('[Order SMS] Código de rastreio enviado:', {
+            orderId: order.id,
+            trackingCode: order.trackingCode,
+            phone: userPhone
+          })
+        }
         break
+
       case 'IN_TRANSIT':
-        // Atualizar cliente sobre trânsito
-        // TODO: Enviar atualização de rastreio
+        // TODO #7: Atualizar cliente sobre trânsito
+        if (userPhone && order.trackingCode && sendPulseSMS.isEnabled()) {
+          await sendPulseSMS.sendTrackingUpdate(
+            userPhone,
+            order.trackingCode,
+            order.id
+          )
+          console.log('[Order SMS] Atualização de trânsito enviada:', {
+            orderId: order.id,
+            trackingCode: order.trackingCode,
+            phone: userPhone
+          })
+        }
         break
+
       case 'DELIVERED':
-        // Confirmar entrega
-        // TODO: Enviar email de confirmação de entrega
+        // TODO #8: Confirmar entrega
+        if (userPhone && sendPulseSMS.isEnabled()) {
+          await sendPulseSMS.sendDeliveryConfirmation(
+            userPhone,
+            order.id
+          )
+          console.log('[Order SMS] Confirmação de entrega enviada:', {
+            orderId: order.id,
+            phone: userPhone,
+            deliveredAt: order.deliveredAt
+          })
+        }
         break
+
       case 'CANCELLED':
-        // Notificar sobre cancelamento
-        // TODO: Enviar notificação de cancelamento e reembolso se aplicável
+        // TODO #9: Notificar sobre cancelamento
+        if (userPhone && sendPulseSMS.isEnabled()) {
+          await sendPulseSMS.sendCancellationNotification(
+            userPhone,
+            order.id,
+            order.notes // Usar notes como motivo
+          )
+          console.log('[Order SMS] Notificação de cancelamento enviada:', {
+            orderId: order.id,
+            phone: userPhone,
+            reason: order.notes
+          })
+        }
         break
+
       default:
-        // Outros status
+        // Outros status - notificação genérica
+        if (userPhone && sendPulseSMS.isEnabled()) {
+          await sendPulseSMS.sendOrderStatus(
+            userPhone,
+            order.id,
+            status
+          )
+        }
         break
     }
   } catch (error) {
     console.error('Error triggering order status actions:', error)
     // Não falhar a atualização se as ações falharem
+    // SMS notifications são best-effort
   }
 }

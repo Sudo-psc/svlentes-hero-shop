@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { supportTicketAssignSchema } from '@/lib/admin-validations'
+import { sendPulseSMS } from '@/lib/sendpulse-sms-client'
 /**
  * @swagger
  * /api/admin/support/tickets/{id}/assign:
@@ -454,15 +455,31 @@ async function triggerAssignmentNotifications(
   notes?: string
 ): Promise<void> {
   try {
-    // Notificar agente sobre nova atribuição
-    // Notificar cliente sobre a atribuição (se aplicável)
-    // TODO: Implementar notificações reais:
+    // Obter telefone do usuário para SMS
+    const userPhone = ticket.user?.phone
+
+    // TODO #10: Notificar cliente sobre atribuição do ticket
+    if (userPhone && sendPulseSMS.isEnabled()) {
+      await sendPulseSMS.sendTicketAssignment(
+        userPhone,
+        ticket.ticketNumber,
+        agent.name
+      )
+      console.log('[Ticket SMS] Notificação de atribuição enviada:', {
+        ticketId: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        phone: userPhone,
+        agentName: agent.name
+      })
+    }
+
+    // TODO: Implementar notificações adicionais no futuro:
     // - Email para o agente com detalhes do ticket
     // - Notificação no painel do agente
-    // - Email/SMS para o cliente informando que o ticket está sendo tratado
     // - Atualizar status em sistemas externos se aplicável
   } catch (error) {
     console.error('Error triggering assignment notifications:', error)
     // Não falhar a atribuição se as notificações falharem
+    // SMS notifications são best-effort
   }
 }
