@@ -175,6 +175,7 @@ src/
 - **shadcn/ui** component library with Radix UI primitives
 - **React Hook Form** with Zod validation
 - **Framer Motion** for animations
+- **Clerk** for modern authentication (alongside Firebase)
 - **Asaas API v3** for payment processing (Brazilian market)
 - **SendPulse** for WhatsApp Business integration
 - **LangChain + OpenAI** for AI-powered customer support
@@ -216,6 +217,42 @@ src/
 - Intent classification: subscription_inquiry, billing_support, delivery_status, etc.
 - Automatic ticket creation for complex issues
 - Response templates with personalization
+
+### Clerk Authentication Integration
+
+**Overview:**
+- Modern authentication platform integrated alongside Firebase
+- Built-in support for social logins, email/password, and passwordless authentication
+- Integrated via middleware for route protection
+- Demo page available at `/clerk-demo`
+
+**Implementation Details:**
+- **Middleware**: `src/middleware.ts` - Integrated `clerkMiddleware()` with existing logging and monitoring, includes error handling
+- **Layout**: `ClerkProvider` wraps the entire application in `src/app/layout.tsx`
+- **Protected Routes**: `/area-assinante/*` and `/api/assinante/*` require authentication
+- **Public Routes** (excluded from protection):
+  - `/area-assinante/login` - Login page
+  - `/area-assinante/register` - Registration page
+  - `/api/assinante/register` - Registration API
+  - `/clerk-demo` - Demo/testing page
+- **Components**: Standard Clerk components available:
+  - `<SignInButton>` - Trigger sign-in modal or redirect
+  - `<SignUpButton>` - Trigger sign-up modal or redirect
+  - `<UserButton>` - User profile dropdown with account management
+  - `<SignedIn>` - Conditional rendering for authenticated users
+  - `<SignedOut>` - Conditional rendering for unauthenticated users
+
+**Configuration:**
+- Environment variables required (see Environment Variables section)
+- Compatible with existing Firebase authentication flow
+- Can be used for new features while maintaining Firebase for legacy functionality
+- Middleware preserves all existing security headers and logging
+- Error handling prevents authentication failures from crashing the application
+
+**Testing:**
+- Visit `/clerk-demo` to test authentication flow
+- Sign in/sign up modals integrated
+- User session management handled automatically
 
 ### Database Schema (Prisma + PostgreSQL)
 
@@ -333,6 +370,12 @@ LANGCHAIN_API_KEY=<langchain-key>
 
 # Database (Prisma)
 DATABASE_URL=<postgresql-url>
+
+# Clerk Authentication (Available as alternative/addition to Firebase)
+# Get your keys from https://dashboard.clerk.com
+# Note: Clerk is integrated but runs alongside Firebase authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<clerk-publishable-key>
+CLERK_SECRET_KEY=<clerk-secret-key>
 
 # Optional Integrations
 NEXT_PUBLIC_GA_MEASUREMENT_ID=<analytics-id>
