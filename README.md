@@ -20,7 +20,7 @@ Landing page para assinatura de lentes de contato com acompanhamento médico esp
 ## 📋 Pré-requisitos
 
 - Node.js 18+
-- npm ou yarn
+- npm (gerenciador de pacotes padrão do projeto)
 - Conta no Asaas (para pagamentos - [asaas.com](https://www.asaas.com))
 
 ## 🛠️ Instalação
@@ -28,14 +28,12 @@ Landing page para assinatura de lentes de contato com acompanhamento médico esp
 1. Clone o repositório
 ```bash
 git clone <repository-url>
-cd svlentes-landing-page
+cd svlentes-hero-shop
 ```
 
 2. Instale as dependências
 ```bash
 npm install
-# ou
-yarn install
 ```
 
 3. Configure as variáveis de ambiente
@@ -58,11 +56,17 @@ NEXTAUTH_URL=https://svlentes.com.br
 5. Execute o projeto em desenvolvimento
 ```bash
 npm run dev
-# ou
-yarn dev
 ```
 
 6. Abra [http://localhost:3000](http://localhost:3000) no seu navegador
+
+7. Execute as verificações locais antes de enviar alterações
+```bash
+npm run lint
+npm run test
+npm run build
+npm run kluster_code_review_auto
+```
 
 ## 📁 Estrutura do Projeto
 
@@ -100,6 +104,8 @@ src/
 - `npm run build` - Gera build de produção
 - `npm run start` - Executa build de produção
 - `npm run lint` - Executa linting
+- `npm run test` - Roda a suíte de testes
+- `npm run kluster_code_review_auto` - Executa a verificação automática Kluster
 
 ## 📝 Especificações
 
