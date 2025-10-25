@@ -2,14 +2,14 @@
 // Combines: Airtable Migration + Intelligent Reminder System
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   // P3: Performance optimization - generate smaller client bundles
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   // P3: Connection pooling optimized for serverless functions
   // Recommended: Use connection pooling via PgBouncer or Prisma Accelerate
   // For direct connection, PostgreSQL manages pooling server-side
@@ -18,15 +18,15 @@ datasource db {
 
 // Enums
 enum SubscriptionStatus {
-  PENDING_ACTIVATION  // Awaiting first payment
-  ACTIVE              // Active subscription
-  OVERDUE             // Payment overdue
-  SUSPENDED           // Temporarily suspended
-  PAUSED              // User paused
-  CANCELLED           // User cancelled
-  EXPIRED             // Expired (legacy)
-  REFUNDED            // Refunded
-  PENDING             // Legacy pending
+  PENDING_ACTIVATION // Awaiting first payment
+  ACTIVE // Active subscription
+  OVERDUE // Payment overdue
+  SUSPENDED // Temporarily suspended
+  PAUSED // User paused
+  CANCELLED // User cancelled
+  EXPIRED // Expired (legacy)
+  REFUNDED // Refunded
+  PENDING // Legacy pending
 }
 
 enum BenefitType {
@@ -158,42 +158,44 @@ model VerificationToken {
 
 // User Model - Extended for Airtable migration
 model User {
-  id            String         @id @default(cuid())
-  googleId      String?        @unique @map("google_id") @db.VarChar(255)
-  firebaseUid   String?        @unique @map("firebase_uid") @db.VarChar(255)
-  email         String         @unique @db.VarChar(255)
-  emailVerified DateTime?      @map("email_verified")
-  name          String?        @db.VarChar(255)
-  password      String?        @db.VarChar(255)
-  avatarUrl     String?        @map("avatar_url") @db.Text
+  id            String    @id @default(cuid())
+  googleId      String?   @unique @map("google_id") @db.VarChar(255)
+  firebaseUid   String?   @unique @map("firebase_uid") @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  emailVerified DateTime? @map("email_verified")
+  name          String?   @db.VarChar(255)
+  password      String?   @db.VarChar(255)
+  avatarUrl     String?   @map("avatar_url") @db.Text
   image         String?
-  role          String         @default("subscriber") @db.VarChar(50)
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
-  lastLoginAt   DateTime?      @map("last_login_at") @db.Timestamp(6)
-  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+  role          String    @default("subscriber") @db.VarChar(50)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  lastLoginAt   DateTime? @map("last_login_at") @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  phone         String?        @map("phone") @db.VarChar(20)
-  whatsapp      String?        @map("whatsapp") @db.VarChar(20)
+  phone    String? @map("phone") @db.VarChar(20)
+  whatsapp String? @map("whatsapp") @db.VarChar(20)
 
-  asaasCustomerId String?      @unique @map("asaas_customer_id") @db.VarChar(255)
+  asaasCustomerId String? @unique @map("asaas_customer_id") @db.VarChar(255)
 
-  preferences   Json?          @map("preferences") @db.JsonB
+  preferences Json? @map("preferences") @db.JsonB
 
-  accounts             Account[]
-  sessions             Session[]
-  subscriptions        Subscription[]
-  supportTickets       SupportTicket[]
-  payments             Payment[]
+  accounts              Account[]
+  sessions              Session[]
+  subscriptions         Subscription[]
+  supportTickets        SupportTicket[]
+  payments              Payment[]
   whatsappConversations WhatsAppConversation[]
-  whatsappInteractions WhatsAppInteraction[]
-  notifications        Notification[]
-  interactions         Interaction[]
-  mlPredictions        MLPrediction[]
-  userBehavior         UserBehavior?
-  consentLogs          ConsentLog[]
-  chatbotAuthCodes     ChatbotAuthCode[]
-  chatbotSessions      ChatbotSession[]
-  subscriptionHistory  SubscriptionHistory[]
+  whatsappInteractions  WhatsAppInteraction[]
+  notifications         Notification[]
+  interactions          Interaction[]
+  mlPredictions         MLPrediction[]
+  userBehavior          UserBehavior?
+  consentLogs           ConsentLog[]
+  chatbotAuthCodes      ChatbotAuthCode[]
+  chatbotSessions       ChatbotSession[]
+  subscriptionHistory   SubscriptionHistory[]
+  prescriptions         Prescription[]
+  ticketHistory         TicketHistory[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -203,49 +205,50 @@ model User {
 
 // Subscription Model - Extended for Airtable migration
 model Subscription {
-  id                   String             @id @default(cuid())
-  userId               String             @map("user_id")
-  asaasSubscriptionId  String?            @unique @map("asaas_subscription_id") @db.VarChar(255)
-  planType             String             @map("plan_type") @db.VarChar(100)
-  status               SubscriptionStatus @default(ACTIVE)
-  monthlyValue         Decimal            @map("monthly_value") @db.Decimal(10, 2)
-  renewalDate          DateTime           @map("renewal_date") @db.Date
-  startDate            DateTime           @map("start_date") @db.Date
-  paymentMethod        PaymentMethod      @map("payment_method")
-  paymentMethodLast4   String?            @map("payment_method_last4") @db.VarChar(4)
-  shippingAddress      Json?              @map("shipping_address") @db.JsonB
-  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                  String             @id @default(cuid())
+  userId              String             @map("user_id")
+  asaasSubscriptionId String?            @unique @map("asaas_subscription_id") @db.VarChar(255)
+  planType            String             @map("plan_type") @db.VarChar(100)
+  status              SubscriptionStatus @default(ACTIVE)
+  monthlyValue        Decimal            @map("monthly_value") @db.Decimal(10, 2)
+  renewalDate         DateTime           @map("renewal_date") @db.Date
+  startDate           DateTime           @map("start_date") @db.Date
+  paymentMethod       PaymentMethod      @map("payment_method")
+  paymentMethodLast4  String?            @map("payment_method_last4") @db.VarChar(4)
+  shippingAddress     Json?              @map("shipping_address") @db.JsonB
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
 
   // Additional fields from Airtable
-  lensType             String?            @map("lens_type") @db.VarChar(255)
-  bothEyes             Boolean            @default(false) @map("both_eyes")
-  differentGrades      Boolean            @default(false) @map("different_grades")
-  endDate              DateTime?          @map("end_date") @db.Date
-  cancelReason         String?            @map("cancel_reason") @db.Text
-  contactInfo          Json?              @map("contact_info") @db.JsonB
-  metadata             Json?              @map("metadata") @db.JsonB
-  nextBillingDate      DateTime?          @map("next_billing_date") @db.Date
+  lensType        String?   @map("lens_type") @db.VarChar(255)
+  bothEyes        Boolean   @default(false) @map("both_eyes")
+  differentGrades Boolean   @default(false) @map("different_grades")
+  endDate         DateTime? @map("end_date") @db.Date
+  cancelReason    String?   @map("cancel_reason") @db.Text
+  contactInfo     Json?     @map("contact_info") @db.JsonB
+  metadata        Json?     @map("metadata") @db.JsonB
+  nextBillingDate DateTime? @map("next_billing_date") @db.Date
 
   // Lifecycle tracking fields
-  lastPaymentId        String?            @map("last_payment_id") @db.VarChar(255)
-  lastPaymentDate      DateTime?          @map("last_payment_date") @db.Timestamp(6)
-  overdueDate          DateTime?          @map("overdue_date") @db.Timestamp(6)
-  daysOverdue          Int?               @map("days_overdue")
-  suspendedDate        DateTime?          @map("suspended_date") @db.Timestamp(6)
-  suspendedReason      String?            @map("suspended_reason") @db.Text
-  refundedDate         DateTime?          @map("refunded_date") @db.Timestamp(6)
-  refundReason         String?            @map("refund_reason") @db.Text
-  refundAmount         Decimal?           @map("refund_amount") @db.Decimal(10, 2)
-  activatedAt          DateTime?          @map("activated_at") @db.Timestamp(6)
+  lastPaymentId   String?   @map("last_payment_id") @db.VarChar(255)
+  lastPaymentDate DateTime? @map("last_payment_date") @db.Timestamp(6)
+  overdueDate     DateTime? @map("overdue_date") @db.Timestamp(6)
+  daysOverdue     Int?      @map("days_overdue")
+  suspendedDate   DateTime? @map("suspended_date") @db.Timestamp(6)
+  suspendedReason String?   @map("suspended_reason") @db.Text
+  refundedDate    DateTime? @map("refunded_date") @db.Timestamp(6)
+  refundReason    String?   @map("refund_reason") @db.Text
+  refundAmount    Decimal?  @map("refund_amount") @db.Decimal(10, 2)
+  activatedAt     DateTime? @map("activated_at") @db.Timestamp(6)
 
-  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  benefits SubscriptionBenefit[]
-  orders   Order[]
-  invoices Invoice[]
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  benefits       SubscriptionBenefit[]
+  orders         Order[]
+  invoices       Invoice[]
   paymentMethods PaymentMethodRecord[]
-  payments Payment[]
-  history SubscriptionHistory[]
+  payments       Payment[]
+  history        SubscriptionHistory[]
+  prescriptions  Prescription[]
 
   @@index([userId], name: "idx_subscriptions_user_id")
   @@index([asaasSubscriptionId], name: "idx_subscriptions_asaas_id")
@@ -255,68 +258,68 @@ model Subscription {
 
 // Payment Model - Track individual payments from Asaas webhooks
 model Payment {
-  id                String         @id @default(cuid())
-  userId            String         @map("user_id")
-  subscriptionId    String         @map("subscription_id")
+  id             String @id @default(cuid())
+  userId         String @map("user_id")
+  subscriptionId String @map("subscription_id")
 
   // Asaas References (required for webhook idempotency)
-  asaasPaymentId    String         @unique @map("asaas_payment_id") @db.VarChar(255)
-  asaasCustomerId   String         @map("asaas_customer_id") @db.VarChar(255)
-  asaasSubscriptionId String?      @map("asaas_subscription_id") @db.VarChar(255)
+  asaasPaymentId      String  @unique @map("asaas_payment_id") @db.VarChar(255)
+  asaasCustomerId     String  @map("asaas_customer_id") @db.VarChar(255)
+  asaasSubscriptionId String? @map("asaas_subscription_id") @db.VarChar(255)
 
   // Core Payment Data
-  amount            Decimal        @map("amount") @db.Decimal(10, 2)
-  netValue          Decimal?       @map("net_value") @db.Decimal(10, 2)
-  originalValue     Decimal?       @map("original_value") @db.Decimal(10, 2)
-  status            PaymentStatus  @map("status")
-  billingType       String         @map("billing_type") @db.VarChar(50)
-  description       String?        @map("description") @db.Text
+  amount        Decimal       @map("amount") @db.Decimal(10, 2)
+  netValue      Decimal?      @map("net_value") @db.Decimal(10, 2)
+  originalValue Decimal?      @map("original_value") @db.Decimal(10, 2)
+  status        PaymentStatus @map("status")
+  billingType   String        @map("billing_type") @db.VarChar(50)
+  description   String?       @map("description") @db.Text
 
   // Date Management
-  dueDate           DateTime       @map("due_date") @db.Date
-  originalDueDate   DateTime?      @map("original_due_date") @db.Date
-  paymentDate       DateTime?      @map("payment_date") @db.Timestamp(6)
-  clientPaymentDate DateTime?      @map("client_payment_date") @db.Timestamp(6)
-  confirmedDate     DateTime?      @map("confirmed_date") @db.Timestamp(6)
-  refundedDate      DateTime?      @map("refunded_date") @db.Timestamp(6)
+  dueDate           DateTime  @map("due_date") @db.Date
+  originalDueDate   DateTime? @map("original_due_date") @db.Date
+  paymentDate       DateTime? @map("payment_date") @db.Timestamp(6)
+  clientPaymentDate DateTime? @map("client_payment_date") @db.Timestamp(6)
+  confirmedDate     DateTime? @map("confirmed_date") @db.Timestamp(6)
+  refundedDate      DateTime? @map("refunded_date") @db.Timestamp(6)
 
   // Financial Adjustments
-  discountValue     Decimal?       @map("discount_value") @db.Decimal(10, 2)
-  interestValue     Decimal?       @map("interest_value") @db.Decimal(10, 2)
-  fineValue         Decimal?       @map("fine_value") @db.Decimal(10, 2)
-  refundAmount      Decimal?       @map("refund_amount") @db.Decimal(10, 2)
+  discountValue Decimal? @map("discount_value") @db.Decimal(10, 2)
+  interestValue Decimal? @map("interest_value") @db.Decimal(10, 2)
+  fineValue     Decimal? @map("fine_value") @db.Decimal(10, 2)
+  refundAmount  Decimal? @map("refund_amount") @db.Decimal(10, 2)
 
   // URLs and Documents
-  invoiceUrl        String?        @map("invoice_url") @db.Text
-  invoiceNumber     String?        @map("invoice_number") @db.VarChar(100)
-  bankSlipUrl       String?        @map("bank_slip_url") @db.Text
-  transactionReceiptUrl String?    @map("transaction_receipt_url") @db.Text
-  nossoNumero       String?        @map("nosso_numero") @db.VarChar(100)
+  invoiceUrl            String? @map("invoice_url") @db.Text
+  invoiceNumber         String? @map("invoice_number") @db.VarChar(100)
+  bankSlipUrl           String? @map("bank_slip_url") @db.Text
+  transactionReceiptUrl String? @map("transaction_receipt_url") @db.Text
+  nossoNumero           String? @map("nosso_numero") @db.VarChar(100)
 
   // PIX-specific fields
-  pixQrCodePayload  String?        @map("pix_qr_code_payload") @db.Text
-  pixQrCodeImage    String?        @map("pix_qr_code_image") @db.Text
-  pixExpirationDate DateTime?      @map("pix_expiration_date") @db.Timestamp(6)
+  pixQrCodePayload  String?   @map("pix_qr_code_payload") @db.Text
+  pixQrCodeImage    String?   @map("pix_qr_code_image") @db.Text
+  pixExpirationDate DateTime? @map("pix_expiration_date") @db.Timestamp(6)
 
   // Additional References
-  externalReference String?        @map("external_reference") @db.VarChar(255)
-  installmentNumber Int?           @map("installment_number")
+  externalReference String? @map("external_reference") @db.VarChar(255)
+  installmentNumber Int?    @map("installment_number")
 
   // Flags
-  deleted           Boolean        @default(false)
-  anticipated       Boolean        @default(false)
-  postalService     Boolean        @default(false) @map("postal_service")
+  deleted       Boolean @default(false)
+  anticipated   Boolean @default(false)
+  postalService Boolean @default(false) @map("postal_service")
 
   // Flexible metadata for additional Asaas data
-  metadata          Json?          @map("metadata") @db.JsonB
+  metadata Json? @map("metadata") @db.JsonB
 
   // Audit Fields
-  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
   // Relations
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription      Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   // Indexes for efficient querying
   @@index([userId], name: "idx_payments_user_id")
@@ -331,15 +334,15 @@ model Payment {
 }
 
 model SubscriptionBenefit {
-  id                  String      @id @default(cuid())
-  subscriptionId      String      @map("subscription_id")
-  benefitName         String      @map("benefit_name") @db.VarChar(255)
-  benefitDescription  String      @map("benefit_description") @db.Text
-  benefitIcon         String      @map("benefit_icon") @db.VarChar(100)
-  benefitType         BenefitType @map("benefit_type")
-  quantityTotal       Int?        @map("quantity_total")
-  quantityUsed        Int         @default(0) @map("quantity_used")
-  expirationDate      DateTime?   @map("expiration_date") @db.Date
+  id                 String      @id @default(cuid())
+  subscriptionId     String      @map("subscription_id")
+  benefitName        String      @map("benefit_name") @db.VarChar(255)
+  benefitDescription String      @map("benefit_description") @db.Text
+  benefitIcon        String      @map("benefit_icon") @db.VarChar(100)
+  benefitType        BenefitType @map("benefit_type")
+  quantityTotal      Int?        @map("quantity_total")
+  quantityUsed       Int         @default(0) @map("quantity_used")
+  expirationDate     DateTime?   @map("expiration_date") @db.Date
 
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
@@ -360,15 +363,15 @@ model Order {
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
 
   // Additional fields from Airtable
-  type            String         @map("type") @db.VarChar(50) // 'subscription' | 'one_time'
-  totalAmount     Decimal        @map("total_amount") @db.Decimal(10, 2)
-  paymentStatus   String         @map("payment_status") @db.VarChar(50) // 'pending' | 'paid' | 'failed' | 'refunded'
-  estimatedDelivery DateTime?    @map("estimated_delivery") @db.Date
-  deliveredAt     DateTime?      @map("delivered_at") @db.Timestamp(6)
-  notes           String?        @map("notes") @db.Text
-  paymentMethodId String?        @map("payment_method_id")
+  type              String    @map("type") @db.VarChar(50) // 'subscription' | 'one_time'
+  totalAmount       Decimal   @map("total_amount") @db.Decimal(10, 2)
+  paymentStatus     String    @map("payment_status") @db.VarChar(50) // 'pending' | 'paid' | 'failed' | 'refunded'
+  estimatedDelivery DateTime? @map("estimated_delivery") @db.Date
+  deliveredAt       DateTime? @map("delivered_at") @db.Timestamp(6)
+  notes             String?   @map("notes") @db.Text
+  paymentMethodId   String?   @map("payment_method_id")
 
-  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscription  Subscription         @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   invoices      Invoice[]
   paymentMethod PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
 
@@ -380,22 +383,22 @@ model Order {
 
 // Payment Method Records - New model from Airtable
 model PaymentMethodRecord {
-  id             String              @id @default(cuid())
-  subscriptionId String              @map("subscription_id")
-  type           PaymentMethodType   @map("type")
-  brand          String?             @map("brand") @db.VarChar(100)
-  last4          String?             @map("last4") @db.VarChar(4)
-  expiryMonth    String?             @map("expiry_month") @db.VarChar(2)
-  expiryYear     String?             @map("expiry_year") @db.VarChar(4)
-  holderName     String              @map("holder_name") @db.VarChar(255)
-  isDefault      Boolean             @default(false) @map("is_default")
-  asaasCardId    String?             @map("asaas_card_id") @db.VarChar(255)
-  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+  id             String            @id @default(cuid())
+  subscriptionId String            @map("subscription_id")
+  type           PaymentMethodType @map("type")
+  brand          String?           @map("brand") @db.VarChar(100)
+  last4          String?           @map("last4") @db.VarChar(4)
+  expiryMonth    String?           @map("expiry_month") @db.VarChar(2)
+  expiryYear     String?           @map("expiry_year") @db.VarChar(4)
+  holderName     String            @map("holder_name") @db.VarChar(255)
+  isDefault      Boolean           @default(false) @map("is_default")
+  asaasCardId    String?           @map("asaas_card_id") @db.VarChar(255)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  subscription   Subscription        @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  orders         Order[]
-  invoices       Invoice[]
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  invoices     Invoice[]
 
   @@index([subscriptionId], name: "idx_payment_methods_subscription_id")
   @@map("payment_method_records")
@@ -403,25 +406,25 @@ model PaymentMethodRecord {
 
 // Invoice Model - New from Airtable
 model Invoice {
-  id              String           @id @default(cuid())
-  subscriptionId  String           @map("subscription_id")
-  orderId         String?          @map("order_id")
-  type            InvoiceType      @map("type")
-  amount          Decimal          @map("amount") @db.Decimal(10, 2)
-  status          InvoiceStatus    @map("status")
-  dueDate         DateTime         @map("due_date") @db.Date
-  paidAt          DateTime?        @map("paid_at") @db.Timestamp(6)
-  paymentMethodId String?          @map("payment_method_id")
-  items           Json              @map("items") @db.JsonB
-  taxes           Decimal          @default(0) @map("taxes") @db.Decimal(10, 2)
-  discounts       Decimal          @default(0) @map("discounts") @db.Decimal(10, 2)
-  pdfUrl          String?          @map("pdf_url") @db.Text
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+  id              String        @id @default(cuid())
+  subscriptionId  String        @map("subscription_id")
+  orderId         String?       @map("order_id")
+  type            InvoiceType   @map("type")
+  amount          Decimal       @map("amount") @db.Decimal(10, 2)
+  status          InvoiceStatus @map("status")
+  dueDate         DateTime      @map("due_date") @db.Date
+  paidAt          DateTime?     @map("paid_at") @db.Timestamp(6)
+  paymentMethodId String?       @map("payment_method_id")
+  items           Json          @map("items") @db.JsonB
+  taxes           Decimal       @default(0) @map("taxes") @db.Decimal(10, 2)
+  discounts       Decimal       @default(0) @map("discounts") @db.Decimal(10, 2)
+  pdfUrl          String?       @map("pdf_url") @db.Text
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  subscription    Subscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  order           Order?           @relation(fields: [orderId], references: [id])
-  paymentMethod   PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
+  subscription  Subscription         @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  order         Order?               @relation(fields: [orderId], references: [id])
+  paymentMethod PaymentMethodRecord? @relation(fields: [paymentMethodId], references: [id])
 
   @@index([subscriptionId], name: "idx_invoices_subscription_id")
   @@index([status], name: "idx_invoices_status")
@@ -431,31 +434,32 @@ model Invoice {
 
 // Support Ticket Model
 model SupportTicket {
-  id              String         @id @default(cuid())
-  ticketNumber    String         @unique
-  userId          String         @map("user_id")
-  customerInfo    Json           @map("customer_info") @db.JsonB
-  subject         String
-  description     String
-  category        SupportCategory @map("category")
-  priority        SupportPriority @map("priority")
-  status          SupportStatus  @default(OPEN) @map("status")
-  assignedAgentId String?        @map("assigned_agent_id")
-  escalationId    String?        @map("escalation_id")
-  source          String         @default("whatsapp") @map("source")
-  messageId       String?        @map("message_id")
-  intent          String?        @map("intent")
-  context         Json?          @map("context") @db.JsonB
-  tags            String[]       @default([])
-  slaBreach       Boolean        @default(false) @map("sla_breach")
-  estimatedResolution String?     @map("estimated_resolution")
-  assignedAt      DateTime?      @map("assigned_at")
-  resolvedAt      DateTime?      @map("resolved_at")
-  customerSatisfaction Float?     @map("customer_satisfaction")
-  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                   String          @id @default(cuid())
+  ticketNumber         String          @unique
+  userId               String          @map("user_id")
+  customerInfo         Json            @map("customer_info") @db.JsonB
+  subject              String
+  description          String
+  category             SupportCategory @map("category")
+  priority             SupportPriority @map("priority")
+  status               SupportStatus   @default(OPEN) @map("status")
+  assignedAgentId      String?         @map("assigned_agent_id")
+  escalationId         String?         @map("escalation_id")
+  source               String          @default("whatsapp") @map("source")
+  messageId            String?         @map("message_id")
+  intent               String?         @map("intent")
+  context              Json?           @map("context") @db.JsonB
+  tags                 String[]        @default([])
+  slaBreach            Boolean         @default(false) @map("sla_breach")
+  estimatedResolution  String?         @map("estimated_resolution")
+  assignedAt           DateTime?       @map("assigned_at")
+  resolvedAt           DateTime?       @map("resolved_at")
+  customerSatisfaction Float?          @map("customer_satisfaction")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamp(6)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  history TicketHistory[]
 
   @@index([userId], name: "idx_support_tickets_user_id")
   @@index([status], name: "idx_support_tickets_status")
@@ -467,24 +471,24 @@ model SupportTicket {
 
 // Escalation Model
 model Escalation {
-  id              String           @id @default(cuid())
-  ticketId        String           @unique @map("ticket_id")
-  reason          String           @map("reason")
-  priority        SupportPriority @map("priority")
-  requestedBy     String           @map("requested_by")
-  requestedAt     DateTime         @default(now()) @map("requested_at")
-  context         Json?            @map("context") @db.JsonB
-  assignedAgentId String?          @map("assigned_agent_id")
-  assignedAt      DateTime?        @map("assigned_at")
-  status          String           @default("pending") @map("status")
-  estimatedResolution String?     @map("estimated_resolution")
-  actualResolution String?        @map("actual_resolution")
-  notes           String?          @map("notes")
-  escalationScore Int              @default(50) @map("escalation_score")
-  resolvedAt      DateTime?        @map("resolved_at")
-  resolvedBy      String?          @map("resolved_by")
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                  String          @id @default(cuid())
+  ticketId            String          @unique @map("ticket_id")
+  reason              String          @map("reason")
+  priority            SupportPriority @map("priority")
+  requestedBy         String          @map("requested_by")
+  requestedAt         DateTime        @default(now()) @map("requested_at")
+  context             Json?           @map("context") @db.JsonB
+  assignedAgentId     String?         @map("assigned_agent_id")
+  assignedAt          DateTime?       @map("assigned_at")
+  status              String          @default("pending") @map("status")
+  estimatedResolution String?         @map("estimated_resolution")
+  actualResolution    String?         @map("actual_resolution")
+  notes               String?         @map("notes")
+  escalationScore     Int             @default(50) @map("escalation_score")
+  resolvedAt          DateTime?       @map("resolved_at")
+  resolvedBy          String?         @map("resolved_by")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamp(6)
 
   @@index([ticketId], name: "idx_escalations_ticket_id")
   @@index([status], name: "idx_escalations_status")
@@ -494,20 +498,20 @@ model Escalation {
 
 // Agent Model
 model Agent {
-  id                 String   @id @default(cuid())
-  name               String
-  email              String   @unique
-  specializations    Json     @map("specializations") @db.JsonB
-  isOnline           Boolean  @default(true) @map("is_online")
-  maxConcurrentTickets Int    @default(5) @map("max_concurrent_tickets")
-  currentTicketCount Int     @default(0) @map("current_ticket_count")
-  averageResponseTime Float?  @map("average_response_time")
-  satisfactionScore Float?  @map("satisfaction_score")
-  isActive           Boolean  @default(true) @map("is_active")
-  lastActive         DateTime? @map("last_active")
-  workingHours       Json     @map("working_hours") @db.JsonB
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  specializations      Json      @map("specializations") @db.JsonB
+  isOnline             Boolean   @default(true) @map("is_online")
+  maxConcurrentTickets Int       @default(5) @map("max_concurrent_tickets")
+  currentTicketCount   Int       @default(0) @map("current_ticket_count")
+  averageResponseTime  Float?    @map("average_response_time")
+  satisfactionScore    Float?    @map("satisfaction_score")
+  isActive             Boolean   @default(true) @map("is_active")
+  lastActive           DateTime? @map("last_active")
+  workingHours         Json      @map("working_hours") @db.JsonB
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
 
   @@index([email], name: "idx_agents_email")
   @@index([isOnline], name: "idx_agents_online")
@@ -516,31 +520,31 @@ model Agent {
 
 // WhatsApp Conversation Model - Thread Management
 model WhatsAppConversation {
-  id                String   @id @default(cuid())
-  customerPhone     String   @map("customer_phone") @db.VarChar(20)
-  userId            String?  @map("user_id")
-  customerName      String?  @map("customer_name") @db.VarChar(255)
+  id            String  @id @default(cuid())
+  customerPhone String  @map("customer_phone") @db.VarChar(20)
+  userId        String? @map("user_id")
+  customerName  String? @map("customer_name") @db.VarChar(255)
 
   // Conversation metadata
-  lastMessageAt     DateTime @default(now()) @map("last_message_at") @db.Timestamp(6)
-  messageCount      Int      @default(0) @map("message_count")
-  isActive          Boolean  @default(true) @map("is_active")
+  lastMessageAt DateTime @default(now()) @map("last_message_at") @db.Timestamp(6)
+  messageCount  Int      @default(0) @map("message_count")
+  isActive      Boolean  @default(true) @map("is_active")
 
   // Last interaction context
-  lastIntent        String?  @map("last_intent") @db.VarChar(50)
-  lastSentiment     String?  @map("last_sentiment") @db.VarChar(50)
+  lastIntent    String? @map("last_intent") @db.VarChar(50)
+  lastSentiment String? @map("last_sentiment") @db.VarChar(50)
 
   // SendPulse metadata
   sendpulseContactId String? @map("sendpulse_contact_id") @db.VarChar(255)
   sendpulseBotId     String? @map("sendpulse_bot_id") @db.VarChar(255)
 
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
   // Relations
-  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  messages          WhatsAppInteraction[]
-  chatbotSessions   ChatbotSession[]
+  user            User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages        WhatsAppInteraction[]
+  chatbotSessions ChatbotSession[]
 
   @@unique([customerPhone], name: "unique_conversation_phone")
   @@index([customerPhone], name: "idx_conversations_phone")
@@ -552,30 +556,30 @@ model WhatsAppConversation {
 
 // WhatsApp Interaction Model - Individual Messages
 model WhatsAppInteraction {
-  id                String   @id @default(cuid())
-  conversationId    String   @map("conversation_id")
-  messageId         String   @unique
-  customerPhone     String   @map("customer_phone")
-  userId            String?  @map("user_id")
-  content           String   @db.Text
-  isFromCustomer    Boolean  @default(true) @map("is_from_customer")
-  intent            String?  @map("intent")
-  sentiment         String?  @map("sentiment")
-  urgency           String?  @map("urgency")
-  response          String?  @map("response") @db.Text
-  escalationRequired Boolean  @default(false) @map("escalation_required")
-  ticketCreated     Boolean  @default(false) @map("ticket_created")
-  ticketId          String?  @map("ticket_id")
+  id                 String  @id @default(cuid())
+  conversationId     String  @map("conversation_id")
+  messageId          String  @unique
+  customerPhone      String  @map("customer_phone")
+  userId             String? @map("user_id")
+  content            String  @db.Text
+  isFromCustomer     Boolean @default(true) @map("is_from_customer")
+  intent             String? @map("intent")
+  sentiment          String? @map("sentiment")
+  urgency            String? @map("urgency")
+  response           String? @map("response") @db.Text
+  escalationRequired Boolean @default(false) @map("escalation_required")
+  ticketCreated      Boolean @default(false) @map("ticket_created")
+  ticketId           String? @map("ticket_id")
 
   // LangChain metadata
-  llmModel          String?  @map("llm_model") @db.VarChar(100)
-  processingTime    Int?     @map("processing_time")
+  llmModel       String? @map("llm_model") @db.VarChar(100)
+  processingTime Int?    @map("processing_time")
 
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   // Relations
-  conversation      WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user              User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  conversation WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([conversationId], name: "idx_whatsapp_interactions_conversation")
   @@index([customerPhone], name: "idx_whatsapp_interactions_phone")
@@ -589,25 +593,26 @@ model WhatsAppInteraction {
 
 // FAQ Model for Knowledge Base
 model FAQ {
-  id                   String   @id @default(cuid())
-  category             String   @map("category")
-  question             String   @map("question")
-  answer               String   @map("answer")
-  keywords             String[] @default([])
-  priority             Int      @default(5)
-  language             String   @default("pt-BR")
-  isActive             Boolean  @default(true) @map("is_active")
-  relatedTopics        String[] @default([])
-  escalationRequired   Boolean  @default(false) @map("escalation_required")
+  id                  String   @id @default(cuid())
+  category            String   @map("category")
+  question            String   @map("question")
+  answer              String   @map("answer")
+  keywords            String[] @default([])
+  priority            Int      @default(5)
+  language            String   @default("pt-BR")
+  isActive            Boolean  @default(true) @map("is_active")
+  relatedTopics       String[] @default([])
+  escalationRequired  Boolean  @default(false) @map("escalation_required")
   confidenceThreshold Float    @default(0.8) @map("confidence_threshold")
-  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
   @@index([category], name: "idx_faqs_category")
   @@index([isActive], name: "idx_faqs_active")
   @@index([priority], name: "idx_faqs_priority")
   @@map("faqs")
 }
+
 // ==================== NOTIFICATION & REMINDER ENUMS ====================
 
 enum NotificationChannel {
@@ -678,59 +683,59 @@ enum DataRequestStatus {
 // ==================== INTELLIGENT REMINDER SYSTEM ====================
 
 model UserBehavior {
-  id                      String    @id @default(cuid())
-  userId                  String    @unique
-  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  emailOpenRate           Float     @default(0)
-  emailClickRate          Float     @default(0)
-  whatsappOpenRate        Float     @default(0)
-  whatsappClickRate       Float     @default(0)
-  smsOpenRate             Float     @default(0)
-  smsClickRate            Float     @default(0)
-  pushOpenRate            Float     @default(0)
-  pushClickRate           Float     @default(0)
-  
-  bestHourOfDay           Int?
-  averageResponseTime     Int?
-  
-  preferredFrequency      Int       @default(3)
-  currentFatigueScore     Float     @default(0)
-  
-  conversionRate          Float     @default(0)
-  
-  updatedAt               DateTime  @updatedAt
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  emailOpenRate     Float @default(0)
+  emailClickRate    Float @default(0)
+  whatsappOpenRate  Float @default(0)
+  whatsappClickRate Float @default(0)
+  smsOpenRate       Float @default(0)
+  smsClickRate      Float @default(0)
+  pushOpenRate      Float @default(0)
+  pushClickRate     Float @default(0)
+
+  bestHourOfDay       Int?
+  averageResponseTime Int?
+
+  preferredFrequency  Int   @default(3)
+  currentFatigueScore Float @default(0)
+
+  conversionRate Float @default(0)
+
+  updatedAt DateTime @updatedAt
+
   @@map("user_behaviors")
 }
 
 model Notification {
-  id                String              @id @default(cuid())
-  userId            String
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  channel           NotificationChannel
-  type              NotificationType    @default(REMINDER)
-  
-  subject           String?
-  content           String
-  metadata          Json?
-  
-  scheduledAt       DateTime
-  sentAt            DateTime?
-  deliveredAt       DateTime?
-  
-  status            NotificationStatus  @default(SCHEDULED)
-  errorMessage      String?
-  
-  predictedChannel  NotificationChannel?
-  predictionScore   Float?
-  
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  
-  interactions      Interaction[]
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channel NotificationChannel
+  type    NotificationType    @default(REMINDER)
+
+  subject  String?
+  content  String
+  metadata Json?
+
+  scheduledAt DateTime
+  sentAt      DateTime?
+  deliveredAt DateTime?
+
+  status       NotificationStatus @default(SCHEDULED)
+  errorMessage String?
+
+  predictedChannel NotificationChannel?
+  predictionScore  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interactions Interaction[]
+
   @@index([userId])
   @@index([status])
   @@index([scheduledAt])
@@ -739,18 +744,18 @@ model Notification {
 }
 
 model Interaction {
-  id                String            @id @default(cuid())
-  notificationId    String
-  notification      Notification      @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-  
-  userId            String
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  actionType        InteractionType
-  metadata          Json?
-  
-  timestamp         DateTime          @default(now())
-  
+  id             String       @id @default(cuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  actionType InteractionType
+  metadata   Json?
+
+  timestamp DateTime @default(now())
+
   @@index([notificationId])
   @@index([userId])
   @@index([timestamp])
@@ -758,75 +763,75 @@ model Interaction {
 }
 
 model MLPrediction {
-  id                  String              @id @default(cuid())
-  userId              String
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  predictedChannel    NotificationChannel
-  predictedTime       DateTime
-  confidenceScore     Float
-  
-  modelVersion        String
-  features            Json
-  
-  actualChannel       NotificationChannel?
-  actualTime          DateTime?
-  wasAccurate         Boolean?
-  
-  createdAt           DateTime            @default(now())
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  predictedChannel NotificationChannel
+  predictedTime    DateTime
+  confidenceScore  Float
+
+  modelVersion String
+  features     Json
+
+  actualChannel NotificationChannel?
+  actualTime    DateTime?
+  wasAccurate   Boolean?
+
+  createdAt DateTime @default(now())
+
   @@index([userId])
   @@index([createdAt])
   @@map("ml_predictions")
 }
 
 model Campaign {
-  id                String              @id @default(cuid())
-  name              String
-  description       String?
-  
-  type              NotificationType
-  targetChannels    NotificationChannel[]
-  
-  content           Json
-  
-  scheduledAt       DateTime
-  completedAt       DateTime?
-  
-  totalTargets      Int                 @default(0)
-  totalSent         Int                 @default(0)
-  totalDelivered    Int                 @default(0)
-  totalOpened       Int                 @default(0)
-  totalClicked      Int                 @default(0)
-  totalConverted    Int                 @default(0)
-  
-  status            String              @default("draft")
-  
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  type           NotificationType
+  targetChannels NotificationChannel[]
+
+  content Json
+
+  scheduledAt DateTime
+  completedAt DateTime?
+
+  totalTargets   Int @default(0)
+  totalSent      Int @default(0)
+  totalDelivered Int @default(0)
+  totalOpened    Int @default(0)
+  totalClicked   Int @default(0)
+  totalConverted Int @default(0)
+
+  status String @default("draft")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("campaigns")
 }
 
 model AnalyticsSnapshot {
-  id                String              @id @default(cuid())
+  id String @id @default(cuid())
 
-  date              DateTime            @unique
+  date DateTime @unique
 
-  totalSent         Int                 @default(0)
-  totalDelivered    Int                 @default(0)
-  totalOpened       Int                 @default(0)
-  totalClicked      Int                 @default(0)
+  totalSent      Int @default(0)
+  totalDelivered Int @default(0)
+  totalOpened    Int @default(0)
+  totalClicked   Int @default(0)
 
-  emailMetrics      Json?
-  whatsappMetrics   Json?
-  smsMetrics        Json?
-  pushMetrics       Json?
+  emailMetrics    Json?
+  whatsappMetrics Json?
+  smsMetrics      Json?
+  pushMetrics     Json?
 
-  avgResponseTime   Float?
-  optOutRate        Float?
+  avgResponseTime Float?
+  optOutRate      Float?
 
-  createdAt         DateTime            @default(now())
+  createdAt DateTime @default(now())
 
   @@index([date])
   @@map("analytics_snapshots")
@@ -835,21 +840,21 @@ model AnalyticsSnapshot {
 // ==================== LGPD COMPLIANCE MODELS ====================
 
 model ConsentLog {
-  id              String         @id @default(cuid())
-  userId          String?        @map("user_id")
-  email           String         @db.VarChar(255)
-  consentType     ConsentType    @map("consent_type")
-  status          ConsentStatus  @default(GRANTED)
-  ipAddress       String         @map("ip_address") @db.VarChar(45)
-  userAgent       String         @map("user_agent") @db.Text
-  timestamp       DateTime       @default(now()) @db.Timestamp(6)
-  expiresAt       DateTime?      @map("expires_at") @db.Timestamp(6)
+  id          String        @id @default(cuid())
+  userId      String?       @map("user_id")
+  email       String        @db.VarChar(255)
+  consentType ConsentType   @map("consent_type")
+  status      ConsentStatus @default(GRANTED)
+  ipAddress   String        @map("ip_address") @db.VarChar(45)
+  userAgent   String        @map("user_agent") @db.Text
+  timestamp   DateTime      @default(now()) @db.Timestamp(6)
+  expiresAt   DateTime?     @map("expires_at") @db.Timestamp(6)
 
   // Metadata for additional context
-  metadata        Json?          @db.JsonB
+  metadata Json? @db.JsonB
 
   // Relations
-  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId], name: "idx_consent_logs_user_id")
   @@index([email], name: "idx_consent_logs_email")
@@ -859,23 +864,23 @@ model ConsentLog {
 }
 
 model DataRequest {
-  id              String              @id @default(cuid())
-  email           String              @db.VarChar(255)
-  name            String              @db.VarChar(255)
-  requestType     DataRequestType     @map("request_type")
-  status          DataRequestStatus   @default(PENDING)
-  reason          String?             @db.Text
+  id          String            @id @default(cuid())
+  email       String            @db.VarChar(255)
+  name        String            @db.VarChar(255)
+  requestType DataRequestType   @map("request_type")
+  status      DataRequestStatus @default(PENDING)
+  reason      String?           @db.Text
 
   // Request tracking
-  requestedAt     DateTime            @default(now()) @map("requested_at") @db.Timestamp(6)
-  completedAt     DateTime?           @map("completed_at") @db.Timestamp(6)
+  requestedAt DateTime  @default(now()) @map("requested_at") @db.Timestamp(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamp(6)
 
   // Audit trail
-  ipAddress       String              @map("ip_address") @db.VarChar(45)
-  userAgent       String              @map("user_agent") @db.Text
+  ipAddress String @map("ip_address") @db.VarChar(45)
+  userAgent String @map("user_agent") @db.Text
 
   // Additional information
-  metadata        Json?               @db.JsonB
+  metadata Json? @db.JsonB
 
   @@index([email], name: "idx_data_requests_email")
   @@index([status], name: "idx_data_requests_status")
@@ -887,46 +892,46 @@ model DataRequest {
 // ==================== CHATBOT AUTHENTICATION SYSTEM ====================
 
 enum ChatbotAuthStatus {
-  PENDING      // Código gerado, aguardando uso
-  VERIFIED     // Código verificado com sucesso
-  EXPIRED      // Código expirou
-  REVOKED      // Código revogado manualmente
-  USED         // Código já foi usado
+  PENDING // Código gerado, aguardando uso
+  VERIFIED // Código verificado com sucesso
+  EXPIRED // Código expirou
+  REVOKED // Código revogado manualmente
+  USED // Código já foi usado
 }
 
 enum ChatbotSessionStatus {
-  ACTIVE       // Sessão ativa
-  EXPIRED      // Sessão expirada por tempo
-  TERMINATED   // Sessão terminada pelo usuário
-  REVOKED      // Sessão revogada por segurança
+  ACTIVE // Sessão ativa
+  EXPIRED // Sessão expirada por tempo
+  TERMINATED // Sessão terminada pelo usuário
+  REVOKED // Sessão revogada por segurança
 }
 
 // Authentication Codes - Códigos OTP para login via WhatsApp
 model ChatbotAuthCode {
-  id              String              @id @default(cuid())
-  userId          String              @map("user_id")
-  code            String              @db.VarChar(6) // Código de 6 dígitos
-  phone           String              @db.VarChar(20) // Telefone que solicitou
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  code   String @db.VarChar(6) // Código de 6 dígitos
+  phone  String @db.VarChar(20) // Telefone que solicitou
 
   // Status e validade
-  status          ChatbotAuthStatus   @default(PENDING)
-  expiresAt       DateTime            @map("expires_at") @db.Timestamp(6)
-  verifiedAt      DateTime?           @map("verified_at") @db.Timestamp(6)
+  status     ChatbotAuthStatus @default(PENDING)
+  expiresAt  DateTime          @map("expires_at") @db.Timestamp(6)
+  verifiedAt DateTime?         @map("verified_at") @db.Timestamp(6)
 
   // Controle de tentativas
-  attempts        Int                 @default(0) // Tentativas de verificação
-  maxAttempts     Int                 @default(3) @map("max_attempts")
+  attempts    Int @default(0) // Tentativas de verificação
+  maxAttempts Int @default(3) @map("max_attempts")
 
   // Auditoria
-  ipAddress       String?             @map("ip_address") @db.VarChar(45)
-  userAgent       String?             @map("user_agent") @db.Text
-  metadata        Json?               @db.JsonB
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+  userAgent String? @map("user_agent") @db.Text
+  metadata  Json?   @db.JsonB
 
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
   // Relations
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], name: "idx_chatbot_auth_codes_user")
   @@index([phone], name: "idx_chatbot_auth_codes_phone")
@@ -938,37 +943,37 @@ model ChatbotAuthCode {
 
 // Chatbot Sessions - Sessões autenticadas do chatbot
 model ChatbotSession {
-  id              String              @id @default(cuid())
-  userId          String              @map("user_id")
-  phone           String              @db.VarChar(20)
-  conversationId  String?             @map("conversation_id")
+  id             String  @id @default(cuid())
+  userId         String  @map("user_id")
+  phone          String  @db.VarChar(20)
+  conversationId String? @map("conversation_id")
 
   // Sessão e token
-  sessionToken    String              @unique @map("session_token") @db.VarChar(255)
-  status          ChatbotSessionStatus @default(ACTIVE)
+  sessionToken String               @unique @map("session_token") @db.VarChar(255)
+  status       ChatbotSessionStatus @default(ACTIVE)
 
   // Validade
-  expiresAt       DateTime            @map("expires_at") @db.Timestamp(6)
-  lastActivityAt  DateTime            @default(now()) @map("last_activity_at") @db.Timestamp(6)
+  expiresAt      DateTime @map("expires_at") @db.Timestamp(6)
+  lastActivityAt DateTime @default(now()) @map("last_activity_at") @db.Timestamp(6)
 
   // Controle de atividades
-  commandsExecuted Int                @default(0) @map("commands_executed")
-  dataAccessLog   Json?               @map("data_access_log") @db.JsonB // Log de acessos
+  commandsExecuted Int   @default(0) @map("commands_executed")
+  dataAccessLog    Json? @map("data_access_log") @db.JsonB // Log de acessos
 
   // Auditoria e segurança
-  ipAddress       String?             @map("ip_address") @db.VarChar(45)
-  deviceInfo      Json?               @map("device_info") @db.JsonB
+  ipAddress  String? @map("ip_address") @db.VarChar(45)
+  deviceInfo Json?   @map("device_info") @db.JsonB
 
   // Encerramento
-  terminatedAt    DateTime?           @map("terminated_at") @db.Timestamp(6)
-  terminationReason String?           @map("termination_reason") @db.Text
+  terminatedAt      DateTime? @map("terminated_at") @db.Timestamp(6)
+  terminationReason String?   @map("termination_reason") @db.Text
 
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 
   // Relations
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversation    WhatsAppConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation WhatsAppConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
   @@index([userId], name: "idx_chatbot_sessions_user")
   @@index([phone], name: "idx_chatbot_sessions_phone")
@@ -993,31 +998,147 @@ enum SubscriptionChangeType {
   SUBSCRIPTION_RESUMED
 }
 
+// ==================== PRESCRIPTION MANAGEMENT SYSTEM ====================
+
+enum PrescriptionStatus {
+  PENDING // Aguardando validação
+  VALIDATED // Validada por profissional
+  REJECTED // Rejeitada
+  EXPIRED // Expirou
+  ARCHIVED // Arquivada
+}
+
+enum EyeSide {
+  LEFT // Olho esquerdo
+  RIGHT // Olho direito
+  BOTH // Ambos os olhos
+}
+
 model SubscriptionHistory {
-  id              String                  @id @default(cuid())
-  subscriptionId  String                  @map("subscription_id")
-  userId          String                  @map("user_id")
-  
+  id             String @id @default(cuid())
+  subscriptionId String @map("subscription_id")
+  userId         String @map("user_id")
+
   // Change details
-  changeType      SubscriptionChangeType  @map("change_type")
-  description     String                  @db.Text
-  oldValue        Json?                   @map("old_value") @db.JsonB
-  newValue        Json?                   @map("new_value") @db.JsonB
-  metadata        Json?                   @db.JsonB
-  
+  changeType  SubscriptionChangeType @map("change_type")
+  description String                 @db.Text
+  oldValue    Json?                  @map("old_value") @db.JsonB
+  newValue    Json?                  @map("new_value") @db.JsonB
+  metadata    Json?                  @db.JsonB
+
   // Audit trail
-  ipAddress       String?                 @map("ip_address") @db.VarChar(45)
-  userAgent       String?                 @map("user_agent") @db.Text
-  
-  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
-  
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+  userAgent String? @map("user_agent") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
   // Relations
-  subscription    Subscription            @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([subscriptionId], name: "idx_subscription_history_subscription")
   @@index([userId], name: "idx_subscription_history_user")
   @@index([changeType], name: "idx_subscription_history_change_type")
   @@index([createdAt(sort: Desc)], name: "idx_subscription_history_created_at")
   @@map("subscription_history")
+}
+
+// Medical Prescription Management
+model Prescription {
+  id             String  @id @default(cuid())
+  userId         String  @map("user_id")
+  subscriptionId String? @map("subscription_id")
+
+  // File storage
+  fileUrl         String  @map("file_url") @db.Text
+  fileName        String  @map("file_name") @db.VarChar(255)
+  fileSize        Int     @map("file_size") // bytes
+  mimeType        String  @map("mime_type") @db.VarChar(100)
+  cloudStorageKey String? @map("cloud_storage_key") @db.Text // S3/R2 key
+
+  // Medical data - Olho Esquerdo
+  leftEyeSphere   Decimal? @map("left_eye_sphere") @db.Decimal(4, 2) // e.g., -2.50
+  leftEyeCylinder Decimal? @map("left_eye_cylinder") @db.Decimal(4, 2)
+  leftEyeAxis     Int?     @map("left_eye_axis") // 0-180 degrees
+  leftEyeAddition Decimal? @map("left_eye_addition") @db.Decimal(3, 2)
+
+  // Medical data - Olho Direito
+  rightEyeSphere   Decimal? @map("right_eye_sphere") @db.Decimal(4, 2)
+  rightEyeCylinder Decimal? @map("right_eye_cylinder") @db.Decimal(4, 2)
+  rightEyeAxis     Int?     @map("right_eye_axis")
+  rightEyeAddition Decimal? @map("right_eye_addition") @db.Decimal(3, 2)
+
+  // Lens specifications
+  lensType  String?  @map("lens_type") @db.VarChar(100) // daily, monthly, etc.
+  baseCurve Decimal? @map("base_curve") @db.Decimal(3, 2)
+  diameter  Decimal? @map("diameter") @db.Decimal(4, 2)
+
+  // Doctor information
+  doctorName  String  @map("doctor_name") @db.VarChar(255)
+  doctorCRM   String  @map("doctor_crm") @db.VarChar(50) // CRM-UF format
+  doctorPhone String? @map("doctor_phone") @db.VarChar(20)
+
+  // Prescription dates
+  prescriptionDate DateTime @map("prescription_date") @db.Date
+  expiresAt        DateTime @map("expires_at") @db.Date // Typically 1 year
+
+  // Validation
+  status          PrescriptionStatus @default(PENDING)
+  verifiedBy      String?            @map("verified_by") @db.VarChar(255) // Agent/doctor ID
+  verifiedAt      DateTime?          @map("verified_at") @db.Timestamp(6)
+  rejectionReason String?            @map("rejection_reason") @db.Text
+
+  // Notes and metadata
+  notes    String? @db.Text
+  metadata Json?   @db.JsonB
+
+  // Lifecycle
+  uploadedAt DateTime  @default(now()) @map("uploaded_at") @db.Timestamp(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamp(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId], name: "idx_prescriptions_user")
+  @@index([subscriptionId], name: "idx_prescriptions_subscription")
+  @@index([status], name: "idx_prescriptions_status")
+  @@index([expiresAt], name: "idx_prescriptions_expires")
+  @@index([uploadedAt(sort: Desc)], name: "idx_prescriptions_uploaded")
+  @@map("prescriptions")
+}
+
+// Support Ticket History - Audit trail
+model TicketHistory {
+  id       String  @id @default(cuid())
+  ticketId String  @map("ticket_id")
+  userId   String? @map("user_id") // Who made the change
+
+  // Change tracking
+  action   String  @map("action") @db.VarChar(50) // created, assigned, updated, closed, reopened, escalated
+  field    String? @map("field") @db.VarChar(100) // Which field changed
+  oldValue Json?   @map("old_value") @db.JsonB
+  newValue Json?   @map("new_value") @db.JsonB
+
+  // Context
+  description String? @db.Text
+  notes       String? @db.Text
+  metadata    Json?   @db.JsonB
+
+  // Audit trail
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+  userAgent String? @map("user_agent") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId], name: "idx_ticket_history_ticket")
+  @@index([userId], name: "idx_ticket_history_user")
+  @@index([action], name: "idx_ticket_history_action")
+  @@index([createdAt(sort: Desc)], name: "idx_ticket_history_created")
+  @@map("ticket_history")
 }
