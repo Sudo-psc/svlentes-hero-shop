@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { simpleLangChainProcessor } from '@/lib/simple-langchain-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
-import { supportEscalationSystem } from '@/lib/support-escalation-system'
+import { supportEscalationSystem, EscalationReason } from '@/lib/support-escalation-system'
 import { sendPulseClient } from '@/lib/sendpulse-client'
 import { sendMessageWithFallback } from '@/lib/mcp-sendpulse-client'
 import {
@@ -1209,18 +1209,134 @@ async function handleEscalationIfNeeded(
   context: any
 ) {
   try {
-    if (processingResult.escalationRequired) {
-      // TODO: Integrate with escalation system
-      // await supportEscalationSystem.createEscalation({
-      //   customerPhone,
-      //   intent: processingResult.intent,
-      //   context,
-      //   priority: processingResult.intent.priority
-      // })
+    if (!processingResult.escalationRequired) {
+      return
     }
+
+    // Get or create user profile
+    const userProfile = await getOrCreateUserProfile(customerPhone, context.customerName)
+
+    // Create support ticket first
+    const ticketResult = await supportTicketManager.createTicket({
+      userId: userProfile.id,
+      customerInfo: {
+        name: userProfile.name || 'Cliente',
+        phone: customerPhone,
+        whatsapp: customerPhone,
+        subscriptionId: userProfile.subscriptionId,
+        userId: userProfile.id
+      },
+      subject: processingResult.intent.name || 'Solicitação de suporte',
+      description: context.messageContent || 'Solicitação via WhatsApp',
+      category: mapIntentToCategory(processingResult.intent.category),
+      priority: processingResult.intent.priority || 'MEDIUM',
+      source: 'whatsapp',
+      messageId: context.messageId,
+      intent: processingResult.intent.name,
+      context: {
+        previousMessages: context.conversationHistory?.map((msg: any) => msg.content) || [],
+        userHistory: context.userProfile,
+        escalationReason: processingResult.intent.name
+      },
+      tags: processingResult.intent.tags || []
+    })
+
+    if (!ticketResult || !ticketResult.ticket) {
+      logger.warn(LogCategory.WHATSAPP, 'Failed to create support ticket for escalation', {
+        customerPhone,
+        intent: processingResult.intent.name
+      })
+      return
+    }
+
+    // Map intent to escalation reason
+    const escalationReason = mapIntentToEscalationReason(processingResult.intent)
+
+    // Process escalation with the ticket ID
+    const escalationResult = await supportEscalationSystem.processEscalation(
+      ticketResult.ticket.id,
+      escalationReason,
+      {
+        customerMessage: context.messageContent,
+        conversationHistory: context.conversationHistory?.map((msg: any) => msg.content) || [],
+        previousAttempts: 0,
+        customerSentiment: processingResult.intent.sentiment || 'neutral',
+        riskLevel: determineRiskLevel(processingResult.intent),
+        timeToResolution: ticketResult.ticket.estimatedResolution,
+        businessImpact: processingResult.intent.category === 'emergency' ? 'high' : 'medium'
+      },
+      'system'
+    )
+
+    logger.info(LogCategory.WHATSAPP, 'Escalation processed successfully', {
+      customerPhone,
+      ticketId: ticketResult.ticket.id,
+      escalationId: escalationResult.escalationId,
+      assigned: escalationResult.assigned,
+      agentId: escalationResult.agentId
+    })
+
   } catch (error) {
-    console.error('Error handling escalation:', error)
+    logger.error(LogCategory.WHATSAPP, 'Error handling escalation', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      customerPhone,
+      intent: processingResult.intent?.name
+    })
   }
+}
+
+/**
+ * Map intent category to ticket category
+ */
+function mapIntentToCategory(intentCategory: string): string {
+  const categoryMap: Record<string, string> = {
+    'emergency': 'EMERGENCY',
+    'billing': 'BILLING',
+    'delivery': 'DELIVERY',
+    'product': 'PRODUCT',
+    'technical': 'TECHNICAL',
+    'complaint': 'COMPLAINT'
+  }
+  return categoryMap[intentCategory] || 'GENERAL'
+}
+
+/**
+ * Map intent to escalation reason
+ */
+function mapIntentToEscalationReason(intent: any): any {
+  if (intent.category === 'emergency') {
+    return EscalationReason.EMERGENCY
+  }
+  if (intent.name?.includes('payment') || intent.category === 'billing') {
+    return EscalationReason.PAYMENT_ISSUE
+  }
+  if (intent.name?.includes('complaint')) {
+    return EscalationReason.COMPLAINT_ESCALATION
+  }
+  if (intent.name?.includes('complex')) {
+    return EscalationReason.COMPLEX_ISSUE
+  }
+  if (intent.escalationRequired && intent.confidence < 0.5) {
+    return EscalationReason.TECHNICAL_LIMITATION
+  }
+
+  return EscalationReason.CUSTOMER_REQUEST
+}
+
+/**
+ * Determine risk level from intent
+ */
+function determineRiskLevel(intent: any): 'low' | 'medium' | 'high' | 'critical' {
+  if (intent.category === 'emergency') {
+    return 'critical'
+  }
+  if (intent.priority === 'CRITICAL' || intent.priority === 'HIGH') {
+    return 'high'
+  }
+  if (intent.priority === 'MEDIUM') {
+    return 'medium'
+  }
+  return 'low'
 }
 /**
  * Update message status
@@ -1237,36 +1353,40 @@ async function updateMessageStatus(webhookData: any, requestId?: string) {
     })
     // Map SendPulse status to our MessageStatus enum
     const mappedStatus = mapSendPulseStatus(status)
-    // TODO: Re-enable when message-status-tracker is implemented
+
     // Update status in database
-    // const statusRecord = await messageStatusTracker.updateStatus({
-    //   messageId: message_id,
-    //   status: mappedStatus,
-    //   timestamp: timestamp ? new Date(timestamp) : new Date(),
-    //   errorCode: error_code,
-    //   errorMessage: error_message,
-    //   metadata
-    // })
-    // Log status update (simplified without status tracker)
+    const statusRecord = await messageStatusTracker.updateStatus({
+      messageId: message_id,
+      status: mappedStatus,
+      timestamp: timestamp ? new Date(timestamp) : new Date(),
+      errorCode: error_code,
+      errorMessage: error_message,
+      metadata
+    })
+
+    // Log status update with actual tracking data
     const duration = timer()
     logger.logSendPulseMessageStatus(
       message_id,
-      'unknown',
+      statusRecord?.conversationId || 'unknown',
       mappedStatus,
       duration,
       {
         requestId,
-        deliveryTime: null,
-        readTime: null
+        deliveryTime: statusRecord?.deliveryTime || null,
+        readTime: statusRecord?.readTime || null
       }
     )
+
     // TODO: Re-enable when debug-utilities is implemented
     // await debugUtilities.traceMessageProcessing('status_update', {
     //   messageId: message_id,
     //   status: mappedStatus,
     //   duration
     // }, duration)
-    if (false) {  // Temporarily disabled status record handling
+
+    // Warn if message was not found in database
+    if (!statusRecord) {
       logger.warn(LogCategory.SENDPULSE, `Message not found for status update`, {
         requestId,
         messageId: message_id,
