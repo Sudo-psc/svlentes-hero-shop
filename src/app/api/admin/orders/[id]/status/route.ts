@@ -300,7 +300,7 @@ async function triggerOrderStatusActions(
 
     switch (status) {
       case 'SHIPPED':
-        // TODO #6: Enviar notificação de envio (order status SMS)
+        // ✅ RESOLVED (Phase 2): Enviar notificação de envio (order status SMS)
         if (userPhone && sendPulseSMS.isEnabled()) {
           await sendPulseSMS.sendOrderStatus(
             userPhone,
@@ -314,7 +314,7 @@ async function triggerOrderStatusActions(
           })
         }
 
-        // TODO #7: Enviar atualização de rastreio (se código disponível)
+        // ✅ RESOLVED (Phase 2): Enviar atualização de rastreio (se código disponível)
         if (userPhone && order.trackingCode && sendPulseSMS.isEnabled()) {
           await sendPulseSMS.sendTrackingUpdate(
             userPhone,
@@ -330,7 +330,7 @@ async function triggerOrderStatusActions(
         break
 
       case 'IN_TRANSIT':
-        // TODO #7: Atualizar cliente sobre trânsito
+        // ✅ RESOLVED (Phase 2): Atualizar cliente sobre trânsito
         if (userPhone && order.trackingCode && sendPulseSMS.isEnabled()) {
           await sendPulseSMS.sendTrackingUpdate(
             userPhone,
@@ -346,7 +346,7 @@ async function triggerOrderStatusActions(
         break
 
       case 'DELIVERED':
-        // TODO #8: Confirmar entrega
+        // ✅ RESOLVED (Phase 2): Confirmar entrega
         if (userPhone && sendPulseSMS.isEnabled()) {
           await sendPulseSMS.sendDeliveryConfirmation(
             userPhone,
@@ -361,7 +361,7 @@ async function triggerOrderStatusActions(
         break
 
       case 'CANCELLED':
-        // TODO #9: Notificar sobre cancelamento
+        // ✅ RESOLVED (Phase 2): Notificar sobre cancelamento
         if (userPhone && sendPulseSMS.isEnabled()) {
           await sendPulseSMS.sendCancellationNotification(
             userPhone,

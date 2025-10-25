@@ -241,7 +241,7 @@ export async function PUT(
         }
       })
 
-      // TODO #12: Criar registro de atribuição no histórico
+      // ✅ RESOLVED (Phase 3): Criar registro de atribuição no histórico
       await tx.ticketHistory.create({
         data: {
           ticketId: updatedTicket.id,
@@ -503,7 +503,7 @@ async function triggerAssignmentNotifications(
     // Obter telefone do usuário para SMS
     const userPhone = ticket.user?.phone
 
-    // TODO #10: Notificar cliente sobre atribuição do ticket
+    // ✅ RESOLVED (Phase 2): Notificar cliente sobre atribuição do ticket
     if (userPhone && sendPulseSMS.isEnabled()) {
       await sendPulseSMS.sendTicketAssignment(
         userPhone,

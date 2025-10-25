@@ -18,7 +18,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { adminAuth } from '@/lib/firebase-admin'
+import { uploadFile, deleteFile, getStorageInfo } from '@/lib/cloud-storage'
+import { requireAuth } from '@/lib/clerk-auth'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import {
@@ -147,27 +148,52 @@ function generateAlerts(status: PrescriptionStatus, daysUntilExpiry: number): Ar
 }
 
 /**
- * Salva arquivo de prescrição (mock - em produção usar S3/CloudFlare R2)
+ * Salva arquivo de prescrição usando cloud storage (S3/CloudFlare R2)
+ * Falls back to local storage if cloud storage is not configured
  */
 async function savePrescriptionFile(
   base64File: string,
   fileName: string,
   userId: string
 ): Promise<string> {
-  // TODO: Em produção, fazer upload para S3/CloudFlare R2
-  // Por enquanto, retorna URL mock
-  const timestamp = Date.now()
-  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
-  const fileUrl = `/uploads/prescriptions/${userId}/${timestamp}_${sanitizedFileName}`
+  // ✅ RESOLVED: Cloud storage implementation with R2/S3 support
+
+  // Determine content type from filename
+  const extension = fileName.split('.').pop()?.toLowerCase()
+  let contentType = 'application/octet-stream'
+  if (extension === 'pdf') contentType = 'application/pdf'
+  else if (extension === 'jpg' || extension === 'jpeg') contentType = 'image/jpeg'
+  else if (extension === 'png') contentType = 'image/png'
+
+  // Upload to cloud storage
+  const uploadResult = await uploadFile({
+    fileName,
+    fileData: base64File,
+    contentType,
+    folder: `prescriptions/${userId}`,
+    metadata: {
+      userId,
+      uploadedAt: new Date().toISOString(),
+      fileType: 'medical_prescription',
+    },
+  })
+
+  if (!uploadResult.success) {
+    throw new Error(`File upload failed: ${uploadResult.error}`)
+  }
 
   // Log para auditoria (LGPD compliance)
-  console.log('[Prescription] File upload:', {
+  const storageInfo = getStorageInfo()
+  console.log('[Prescription] File uploaded:', {
     userId,
-    fileName: sanitizedFileName,
+    fileName,
+    provider: uploadResult.provider,
+    key: uploadResult.key,
+    configured: storageInfo.configured,
     timestamp: new Date().toISOString(),
   })
 
-  return fileUrl
+  return uploadResult.url
 }
 
 // ============================================================================
@@ -193,22 +219,16 @@ export async function GET(request: NextRequest) {
   const timeoutSignal = AbortSignal.timeout(10000)
 
   return ApiErrorHandler.wrapApiHandler(async () => {
-    // Validar autenticação Firebase
-    const authResult = await validateFirebaseAuth(
-      request.headers.get('Authorization'),
-      adminAuth,
-      context
-    )
-
+    // Autenticação via Clerk
+    const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
-      return authResult // Error response
+      return authResult
     }
-
-    const { uid } = authResult
+    const { userId } = authResult
 
     // Buscar usuário pelo Firebase UID
     const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
+      where: { clerkId: userId },
     })
 
     if (!user) {
@@ -338,18 +358,12 @@ export async function POST(request: NextRequest) {
   const timeoutSignal = AbortSignal.timeout(10000)
 
   return ApiErrorHandler.wrapApiHandler(async () => {
-    // Validar autenticação Firebase
-    const authResult = await validateFirebaseAuth(
-      request.headers.get('Authorization'),
-      adminAuth,
-      context
-    )
-
+    // Autenticação via Clerk
+    const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
-      return authResult // Error response
+      return authResult
     }
-
-    const { uid } = authResult
+    const { userId } = authResult
 
     // Parse request body
     const body = await request.json()
@@ -377,7 +391,7 @@ export async function POST(request: NextRequest) {
 
     // Buscar usuário
     const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
+      where: { clerkId: userId },
     })
 
     if (!user) {
@@ -501,18 +515,12 @@ export async function PUT(request: NextRequest) {
   }
 
   return ApiErrorHandler.wrapApiHandler(async () => {
-    // Validar autenticação Firebase
-    const authResult = await validateFirebaseAuth(
-      request.headers.get('Authorization'),
-      adminAuth,
-      context
-    )
-
+    // Autenticação via Clerk
+    const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
-      return authResult // Error response
+      return authResult
     }
-
-    const { uid } = authResult
+    const { userId } = authResult
 
     // Parse request body
     const body = await request.json()
@@ -540,7 +548,7 @@ export async function PUT(request: NextRequest) {
 
     // Buscar usuário
     const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
+      where: { clerkId: userId },
     })
 
     if (!user) {
