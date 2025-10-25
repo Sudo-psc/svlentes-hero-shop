@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { supportTicketAssignSchema } from '@/lib/admin-validations'
 import { sendPulseSMS } from '@/lib/sendpulse-sms-client'
+import { trackTicketAssignment, trackTicketUnassignment, getIpAddress, getUserAgent } from '@/lib/ticket-history'
 /**
  * @swagger
  * /api/admin/support/tickets/{id}/assign:
@@ -239,8 +240,29 @@ export async function PUT(
           lastActive: new Date()
         }
       })
-      // Criar registro de atribuição no histórico (se houver tabela de histórico)
-      // TODO: Implementar quando houver tabela de histórico de tickets
+
+      // TODO #12: Criar registro de atribuição no histórico
+      await tx.ticketHistory.create({
+        data: {
+          ticketId: updatedTicket.id,
+          userId: user.id,
+          action: 'assigned',
+          field: 'assignedAgentId',
+          oldValue: null,
+          newValue: assignData.assignedAgentId,
+          description: `Ticket ${updatedTicket.ticketNumber} atribuído para ${agent.name}`,
+          notes: assignData.notes,
+          metadata: {
+            agentId: agent.id,
+            agentName: agent.name,
+            ticketNumber: updatedTicket.ticketNumber,
+            priority: updatedTicket.priority,
+          },
+          ipAddress: getIpAddress(request),
+          userAgent: getUserAgent(request),
+        },
+      })
+
       return { ticket: updatedTicket, agent }
     })
     // Disparar notificações
@@ -393,6 +415,29 @@ export async function DELETE(
           currentTicketCount: Math.max(0, currentAgent.currentTicketCount - 1)
         }
       })
+
+      // Criar registro de desatribuição no histórico
+      await tx.ticketHistory.create({
+        data: {
+          ticketId: updatedTicket.id,
+          userId: user.id,
+          action: 'unassigned',
+          field: 'assignedAgentId',
+          oldValue: currentAgent.id,
+          newValue: null,
+          description: `Ticket ${updatedTicket.ticketNumber} desatribuído de ${currentAgent.name}`,
+          metadata: {
+            previousAgentId: currentAgent.id,
+            previousAgentName: currentAgent.name,
+            ticketNumber: updatedTicket.ticketNumber,
+            previousStatus: existingTicket.status,
+            newStatus: updatedTicket.status,
+          },
+          ipAddress: getIpAddress(request),
+          userAgent: getUserAgent(request),
+        },
+      })
+
       return { ticket: updatedTicket, previousAgent: currentAgent }
     })
     return createSuccessResponse(

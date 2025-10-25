@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePermission, createSuccessResponse } from '@/lib/admin-auth'
 import { supportTicketUpdateSchema } from '@/lib/admin-validations'
+import { trackTicketUpdate, trackTicketStatusChange, getIpAddress, getUserAgent } from '@/lib/ticket-history'
 /**
  * @swagger
  * /api/admin/support/tickets/{id}:
@@ -323,6 +324,26 @@ export async function PUT(
         }
       }
     })
+
+    // Rastrear alterações no histórico
+    await trackTicketUpdate({
+      ticketId: updatedTicket.id,
+      ticketNumber: updatedTicket.ticketNumber,
+      userId: user.id,
+      oldValues: {
+        status: existingTicket.status,
+        priority: existingTicket.priority,
+        category: existingTicket.category,
+      },
+      newValues: {
+        status: updatedTicket.status,
+        priority: updatedTicket.priority,
+        category: updatedTicket.category,
+      },
+      ipAddress: getIpAddress(request),
+      userAgent: getUserAgent(request),
+    })
+
     return createSuccessResponse(updatedTicket, 'Ticket atualizado com sucesso')
   } catch (error) {
     console.error('Support ticket update error:', error)
