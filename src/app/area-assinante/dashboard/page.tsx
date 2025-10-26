@@ -44,12 +44,12 @@ function DashboardContent() {
   // Enhanced features state
   const [useEnhancedUI, setUseEnhancedUI] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
-  // Load pricing plans
   useEffect(() => {
     const loadPlans = async () => {
       try {
         setIsLoading(true)
-        const { default: plansData } = await import('@/data/pricing-plans')
+        const plansModule = await import('@/data/pricing-plans')
+        const plansData = plansModule.pricingPlans || []
         setAvailablePlans(plansData)
       } catch (error) {
         console.error('Error loading plans:', error)
@@ -164,7 +164,7 @@ function DashboardContent() {
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-silver-50 flex items-center justify-center">
         <div className="max-w-md w-full mx-4">
           <DashboardError
-            message={error}
+            error={error}
             onRetry={refetch}
           />
           <div className="mt-4 text-center">
@@ -620,7 +620,7 @@ function DashboardContent() {
             isOpen={showChangePlanModal}
             onClose={() => setShowChangePlanModal(false)}
             currentPlan={{
-              id: subscription.plan.id,
+              id: subscription.id,
               name: subscription.plan.name,
               price: subscription.plan.price
             }}
@@ -638,7 +638,7 @@ function DashboardContent() {
             onClose={() => setShowUpdatePaymentModal(false)}
             currentPaymentMethod={{
               type: subscription.paymentMethod as any,
-              last4: subscription.paymentMethodLast4
+              last4: subscription.paymentMethodLast4 || undefined
             }}
             onPaymentUpdate={handlePaymentUpdate}
           />

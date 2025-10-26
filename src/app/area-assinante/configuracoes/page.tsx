@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { NotificationPreferences } from '@/components/NotificationPreferences'
 import { type UserNotificationPreferences } from '@/types/user-preferences'
 import { User, Bell, ChevronLeft, Save, AlertCircle } from 'lucide-react'
@@ -186,45 +188,28 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
         )}
-        {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border mb-6">
-          <div className="border-b">
-            <div className="flex">
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'profile'
-                    ? 'border-cyan-600 text-cyan-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <User className="h-4 w-4 inline-block mr-2" />
-                Perfil
-              </button>
-              <button
-                onClick={() => setActiveTab('notifications')}
-                className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === 'notifications'
-                    ? 'border-cyan-600 text-cyan-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Bell className="h-4 w-4 inline-block mr-2" />
-                Notificações
-              </button>
-            </div>
-          </div>
-          {/* Tab Content */}
-          <div className="p-6">
-            {activeTab === 'profile' && (
-              <div className="space-y-6">
+        <Card className="border-0 shadow-sm">
+          <Tabs value={activeTab} onValueChange={(v: string) => setActiveTab(v as 'profile' | 'notifications')} className="w-full">
+            <CardHeader>
+              <TabsList className="grid w-full grid-cols-2 h-auto">
+                <TabsTrigger value="profile" className="flex items-center gap-2 py-3">
+                  <User className="h-4 w-4" />
+                  Perfil
+                </TabsTrigger>
+                <TabsTrigger value="notifications" className="flex items-center gap-2 py-3">
+                  <Bell className="h-4 w-4" />
+                  Notificações
+                </TabsTrigger>
+              </TabsList>
+            </CardHeader>
+
+            <CardContent>
+              <TabsContent value="profile" className="mt-0 space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Informações do Perfil
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-6">
+                  <CardTitle className="text-xl mb-2">Informações do Perfil</CardTitle>
+                  <CardDescription>
                     Atualize suas informações pessoais e de contato
-                  </p>
+                  </CardDescription>
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -285,27 +270,26 @@ export default function ConfiguracoesPage() {
                     {saving ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
                 </div>
-              </div>
-            )}
-            {activeTab === 'notifications' && (
-              <div>
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    Preferências de Notificação
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Escolha como deseja receber lembretes e atualizações
-                  </p>
+              </TabsContent>
+
+              <TabsContent value="notifications" className="mt-0">
+                <div className="space-y-6">
+                  <div>
+                    <CardTitle className="text-xl mb-2">Preferências de Notificação</CardTitle>
+                    <CardDescription>
+                      Escolha como deseja receber lembretes e atualizações
+                    </CardDescription>
+                  </div>
+                  <NotificationPreferences
+                    preferences={notificationPreferences}
+                    phone={profileData.whatsapp || profileData.phone}
+                    onSave={handleNotificationsSave}
+                  />
                 </div>
-                <NotificationPreferences
-                  preferences={notificationPreferences}
-                  phone={profileData.whatsapp || profileData.phone}
-                  onSave={handleNotificationsSave}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        </Card>
       </main>
     </div>
   )
