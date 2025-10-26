@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 // CSP headers gerenciado pelo next.config.js - sem import necessário
-import { Inter, Poppins } from 'next/font/google'
+// Temporariamente desabilitado Google Fonts devido a problema de rede
+// import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -23,18 +24,19 @@ import {
     generateOrganizationStructuredData,
     generateWebSiteStructuredData
 } from '@/lib/seo'
-const inter = Inter({
-    subsets: ['latin'],
-    display: 'swap',
-    variable: '--font-inter',
-    weight: ['300', '400', '500', '600', '700'],
-})
-const poppins = Poppins({
-    subsets: ['latin'],
-    display: 'swap',
-    variable: '--font-poppins',
-    weight: ['400', '500', '600', '700', '800'],
-})
+// Temporariamente desabilitado Google Fonts devido a problema de rede
+// const inter = Inter({
+//     subsets: ['latin'],
+//     display: 'swap',
+//     variable: '--font-inter',
+//     weight: ['300', '400', '500', '600', '700'],
+// })
+// const poppins = Poppins({
+//     subsets: ['latin'],
+//     display: 'swap',
+//     variable: '--font-poppins',
+//     weight: ['400', '500', '600', '700', '800'],
+// })
 export const metadata: Metadata = baseMetadata
 export default function RootLayout({
     children,
@@ -51,7 +53,7 @@ export default function RootLayout({
     }
     return (
         <ClerkProvider>
-            <html lang="pt-BR" className={`${inter.variable} ${poppins.variable}`}>
+            <html lang="pt-BR"  className="font-sans">{/* Temporariamente usando fontes do sistema */}
                 <head>
                     <CriticalCSS />
                     {/* Facebook Domain Verification */}
