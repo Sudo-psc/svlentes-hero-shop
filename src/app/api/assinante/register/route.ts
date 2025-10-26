@@ -8,6 +8,9 @@ import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import { csrfProtection } from '@/lib/csrf'
 /**
  * Schema de validação para registro de usuário
+ * Suporta dois fluxos:
+ * 1. Registro direto com senha (legacy)
+ * 2. Sync de usuário Firebase (novo fluxo)
  */
 const registerSchema = z.object({
   name: z.string()
@@ -19,7 +22,12 @@ const registerSchema = z.object({
     .trim(),
   password: z.string()
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
-    .max(100, 'Senha deve ter no máximo 100 caracteres'),
+    .max(100, 'Senha deve ter no máximo 100 caracteres')
+    .optional(), // Opcional para sync do Firebase
+  firebaseUid: z.string()
+    .min(1, 'Firebase UID é obrigatório')
+    .optional(), // Opcional para registro legacy
+  avatarUrl: z.string().url().optional(),
 })
 /**
  * POST /api/assinante/register
@@ -47,35 +55,71 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { name, email, password } = validationResult.data
+    const { name, email, password, firebaseUid, avatarUrl } = validationResult.data
     // Verificar se o email já está em uso
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
+
+    // Se usuário já existe e está fazendo sync do Firebase, apenas atualizar
+    if (existingUser && firebaseUid) {
+      const updatedUser = await prisma.user.update({
+        where: { email },
+        data: {
+          firebaseUid,
+          avatarUrl: avatarUrl || existingUser.avatarUrl,
+          emailVerified: new Date(), // Firebase users are auto-verified
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          firebaseUid: true,
+          createdAt: true,
+        }
+      })
+
+      return NextResponse.json(
+        {
+          message: 'Usuário sincronizado com Firebase',
+          user: {
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            firebaseUid: updatedUser.firebaseUid,
+          },
+          synced: true,
+        },
+        { status: 200 }
+      )
+    }
+
     if (existingUser) {
       return NextResponse.json(
         { error: 'EMAIL_EXISTS', message: 'Este email já está cadastrado' },
         { status: 409 }
       )
     }
-    // Hash da senha com bcrypt
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // Hash da senha com bcrypt (se fornecida - legacy flow)
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null
     // Criar usuário no banco de dados
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
+        firebaseUid: firebaseUid || null,
         role: 'subscriber',
-        emailVerified: null, // Será verificado após confirmação por email (futuro)
+        emailVerified: firebaseUid ? new Date() : null, // Firebase users are auto-verified
         googleId: null,
         image: null,
-        avatarUrl: null,
+        avatarUrl: avatarUrl || null,
       },
       select: {
         id: true,
         name: true,
         email: true,
+        firebaseUid: true,
         createdAt: true,
       }
     })
@@ -94,8 +138,9 @@ export async function POST(request: NextRequest) {
           id: user.id,
           name: user.name,
           email: user.email,
+          firebaseUid: user.firebaseUid,
         },
-        emailSent: true,
+        emailSent: !firebaseUid, // Only send email for non-Firebase registrations
       },
       { status: 201 }
     )

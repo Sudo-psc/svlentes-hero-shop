@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       )
     }
     // Buscar usuário com assinaturas ativas usando o UID do Firebase
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { firebaseUid: firebaseUser.uid },
       include: {
         subscriptions: {
@@ -68,9 +68,57 @@ export async function GET(request: NextRequest) {
         }
       }
     })
+
+    // Fallback: try to find user by email if not found by firebaseUid
+    if (!user && firebaseUser.email) {
+      user = await prisma.user.findUnique({
+        where: { email: firebaseUser.email },
+        include: {
+          subscriptions: {
+            where: { status: 'ACTIVE' },
+            include: {
+              benefits: true,
+              orders: {
+                orderBy: { createdAt: 'desc' },
+                take: 1
+              }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
+        }
+      })
+
+      // If found by email but missing firebaseUid, update it
+      if (user && !user.firebaseUid) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { firebaseUid: firebaseUser.uid },
+          include: {
+            subscriptions: {
+              where: { status: 'ACTIVE' },
+              include: {
+                benefits: true,
+                orders: {
+                  orderBy: { createdAt: 'desc' },
+                  take: 1
+                }
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 1
+            }
+          }
+        })
+      }
+    }
+
     if (!user) {
       return NextResponse.json(
-        { error: 'NOT_FOUND', message: 'Usuário não encontrado' },
+        {
+          error: 'NOT_FOUND',
+          message: 'Usuário não encontrado no banco de dados. Por favor, complete seu cadastro.',
+          hint: 'Seu usuário Firebase existe, mas não foi sincronizado com o banco de dados. Entre em contato com o suporte.',
+        },
         { status: 404 }
       )
     }

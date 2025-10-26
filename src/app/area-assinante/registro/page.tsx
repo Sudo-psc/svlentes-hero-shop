@@ -39,7 +39,42 @@ export default function RegisterPage() {
       return
     }
     try {
+      // Step 1: Create Firebase user
       await signUp(email, password, name)
+
+      // Step 2: Get Firebase user to extract UID
+      const { auth as firebaseAuth } = await import('@/lib/firebase')
+      const currentUser = firebaseAuth.currentUser
+
+      if (!currentUser) {
+        throw new Error('Falha ao obter usuário do Firebase')
+      }
+
+      // Step 3: Sync with database - create Prisma user with firebaseUid
+      try {
+        const syncResponse = await fetch('/api/assinante/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            firebaseUid: currentUser.uid,
+            avatarUrl: currentUser.photoURL || undefined,
+          }),
+        })
+
+        if (!syncResponse.ok) {
+          console.error('[REGISTER] Failed to sync with database:', await syncResponse.text())
+          // Don't fail the registration, just log the error
+          // User can still use Firebase auth, database will be synced on first login
+        }
+      } catch (syncError) {
+        console.error('[REGISTER] Database sync error:', syncError)
+        // Continue with success even if sync fails
+      }
+
       // Sucesso - mostrar mensagem
       setSuccess(true)
     } catch (error: any) {

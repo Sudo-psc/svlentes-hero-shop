@@ -1,11 +1,10 @@
 /**
  * Middleware para logging de requisições e monitoramento
  * Intercepta todas as requisições e coleta métricas de performance
- * Integrado com Clerk para autenticação
+ * Integrado com Firebase Admin para autenticação
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Interface para dados de logging
 interface LogData {
@@ -167,9 +166,65 @@ function calculateRiskScore(request: NextRequest): number {
   return Math.min(risk, 100);
 }
 
-// Logging and monitoring function (extracted from original middleware)
-async function performLoggingAndMonitoring(request: NextRequest) {
+// Check if route is public (doesn't require authentication)
+function isPublicRoute(pathname: string): boolean {
+  const publicPaths = [
+    '/area-assinante/login',
+    '/area-assinante/registro',
+    '/api/assinante/register',
+    '/api/health-check',
+    '/api/monitoring',
+    '/api/privacy',
+    '/api/webhooks',
+    '/api/schedule-consultation',
+    '/api/whatsapp-redirect',
+    '/api/create-checkout',
+    '/api/asaas/create-payment',
+  ];
+
+  return publicPaths.some(path => pathname.startsWith(path));
+}
+
+// Check if route is protected (requires authentication)
+function isProtectedRoute(pathname: string): boolean {
+  const protectedPaths = [
+    '/area-assinante',
+    '/api/assinante',
+  ];
+
+  return protectedPaths.some(path => pathname.startsWith(path));
+}
+
+// Verify Firebase token from Authorization header
+async function verifyFirebaseToken(request: NextRequest): Promise<{ authenticated: boolean; userId?: string }> {
+  try {
+    const authHeader = request.headers.get('Authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { authenticated: false };
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    // Import Firebase Admin dynamically to avoid initialization issues
+    const { adminAuth } = await import('@/lib/firebase-admin');
+
+    if (!adminAuth) {
+      Logger.warn('Firebase Admin not configured');
+      return { authenticated: false };
+    }
+
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    return { authenticated: true, userId: decodedToken.uid };
+  } catch (error: any) {
+    Logger.error('Token verification failed', { error: error.message });
+    return { authenticated: false };
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const start = Date.now();
+  const pathname = request.nextUrl.pathname;
 
   // Extrair informações da requisição
   const userAgent = request.headers.get('user-agent') || undefined;
@@ -209,7 +264,7 @@ async function performLoggingAndMonitoring(request: NextRequest) {
   }
 
   // Log de requisições de API
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     Logger.info('API Request started', {
       ...logData,
       riskScore,
@@ -219,52 +274,39 @@ async function performLoggingAndMonitoring(request: NextRequest) {
 
   // Log de páginas principais
   const mainPages = ['/assinar', '/agendar-consulta', '/area-assinante'];
-  if (mainPages.some(page => request.nextUrl.pathname.startsWith(page))) {
+  if (mainPages.some(page => pathname.startsWith(page))) {
     Logger.info('Main page access', {
       ...logData,
-      page: request.nextUrl.pathname
+      page: pathname
     });
   }
 
-  return { start, logData, riskScore, sessionId };
-}
+  // Authentication check for protected routes
+  if (isProtectedRoute(pathname) && !isPublicRoute(pathname)) {
+    // For API routes, check Bearer token
+    if (pathname.startsWith('/api/')) {
+      const { authenticated, userId: firebaseUserId } = await verifyFirebaseToken(request);
 
-// Define public routes that should NOT require authentication
-const isPublicRoute = createRouteMatcher([
-  '/area-assinante/login(.*)',
-  '/area-assinante/register(.*)',
-  '/api/assinante/register(.*)',
-  '/clerk-demo(.*)',
-]);
+      if (!authenticated) {
+        Logger.warn('Unauthorized API access attempt', {
+          ...logData,
+          path: pathname,
+        });
 
-// Define protected routes that require authentication
-const isProtectedRoute = createRouteMatcher([
-  '/area-assinante(.*)',
-  '/api/assinante(.*)',
-]);
+        return NextResponse.json(
+          { error: 'UNAUTHORIZED', message: 'Authentication required' },
+          { status: 401 }
+        );
+      }
 
-// Clerk middleware with custom logic integration
-export default clerkMiddleware(async (auth, request) => {
-  // Perform logging and monitoring
-  const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
-
-  // Check if route requires authentication (exclude public routes)
-  if (isProtectedRoute(request) && !isPublicRoute(request)) {
-    try {
-      await auth.protect();
-    } catch (error) {
-      // Log authentication error
-      Logger.error('Authentication protection failed', {
+      Logger.info('Authenticated API access', {
         ...logData,
-        path: request.nextUrl.pathname,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        riskScore
+        firebaseUserId,
       });
-
-      // For protected routes, let Clerk handle the redirect to sign-in
-      // The error will propagate and Clerk will redirect appropriately
-      throw error;
     }
+    // For page routes, redirect to login if no session
+    // Note: Firebase client-side auth will handle the actual authentication
+    // The middleware primarily protects API routes
   }
 
   // Create response with security headers
@@ -285,7 +327,7 @@ export default clerkMiddleware(async (auth, request) => {
   response.headers.set('x-response-time', `${responseTime}ms`);
 
   // Log final da requisição
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     Logger.info('API Request completed', {
       ...logData,
       responseTime,
@@ -304,7 +346,7 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   // Monitoramento de saúde da aplicação
-  if (request.nextUrl.pathname === '/api/health-check') {
+  if (pathname === '/api/health-check') {
     const healthData = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -316,10 +358,9 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   return response;
-});
+}
 
 // Configurar quais rotas o middleware deve interceptar
-// Usando o padrão recomendado do Clerk para Next.js App Router
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
