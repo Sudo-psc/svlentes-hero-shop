@@ -1,0 +1,18 @@
+name: Bundle Analyzer
+on: [pull_request]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - name: Build with analyzer
+        run: ANALYZE=true npx next build
+      - name: Upload analyzer report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: .next/analyze
+          if-no-files-found: ignore
