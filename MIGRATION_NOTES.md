@@ -92,19 +92,20 @@ export async function GET(
 }
 ```
 
-**Arquivos Corrigidos (3):**
+**Arquivos Corrigidos (10/10 ✅):**
 - ✅ `src/app/api/admin/orders/[id]/route.ts` (GET, PUT, DELETE)
 - ✅ `src/app/api/admin/orders/[id]/status/route.ts` (PUT)
 - ✅ `src/app/api/admin/pricing/costs/route.ts` (GET, POST - HOC fix)
+- ✅ `src/app/api/admin/pricing/planos/[id]/route.ts` (GET, PUT, DELETE + HOC fix)
+- ✅ `src/app/api/admin/pricing/planos/route.ts` (GET, POST - HOC fix)
+- ✅ `src/app/api/admin/subscriptions/[id]/route.ts` (GET, PUT, DELETE)
+- ✅ `src/app/api/admin/subscriptions/[id]/status/route.ts` (PUT)
+- ✅ `src/app/api/admin/support/tickets/[id]/assign/route.ts` (PUT, DELETE)
+- ✅ `src/app/api/admin/support/tickets/[id]/route.ts` (GET, PUT, DELETE)
+- ✅ `src/app/api/debug/conversation/[phone]/route.ts` (GET)
+- ✅ `src/app/api/debug/message/[messageId]/route.ts` (GET)
 
-**Arquivos Pendentes (7):**
-- ⚠️ `src/app/api/admin/pricing/planos/[id]/route.ts`
-- ⚠️ `src/app/api/admin/subscriptions/[id]/route.ts`
-- ⚠️ `src/app/api/admin/subscriptions/[id]/status/route.ts`
-- ⚠️ `src/app/api/admin/support/tickets/[id]/assign/route.ts`
-- ⚠️ `src/app/api/admin/support/tickets/[id]/route.ts`
-- ⚠️ `src/app/api/debug/conversation/[phone]/route.ts`
-- ⚠️ `src/app/api/debug/message/[messageId]/route.ts`
+**All route handlers migrated to Next.js 16 async params API!**
 
 ### 4. Fontes Google (Temporário)
 

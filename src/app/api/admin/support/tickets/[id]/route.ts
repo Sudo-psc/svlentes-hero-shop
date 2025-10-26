@@ -70,9 +70,10 @@ import { supportTicketUpdateSchema } from '@/lib/admin-validations'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await props.params
     // Verificar permissão
     const { user, error } = await requirePermission('support:view')(request)
     if (error) {
@@ -236,9 +237,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await props.params
     // Verificar permissão
     const { user, error } = await requirePermission('support:update')(request)
     if (error) {
@@ -344,9 +346,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await props.params
     // Verificar permissão
     const { user, error } = await requirePermission('support:delete')(request)
     if (error) {

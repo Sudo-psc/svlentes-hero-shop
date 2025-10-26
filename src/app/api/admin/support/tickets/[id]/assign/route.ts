@@ -90,7 +90,7 @@ import { supportTicketAssignSchema } from '@/lib/admin-validations'
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar permissão
@@ -98,6 +98,7 @@ export async function PUT(
     if (error) {
       return error
     }
+    const params = await props.params
     const ticketId = params.id
     if (!ticketId) {
       return NextResponse.json(
@@ -290,7 +291,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar permissão
@@ -298,6 +299,7 @@ export async function DELETE(
     if (error) {
       return error
     }
+    const params = await props.params
     const ticketId = params.id
     if (!ticketId) {
       return NextResponse.json(

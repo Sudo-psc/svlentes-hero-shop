@@ -136,10 +136,11 @@ const planosDB: PlanoAssinatura[] = [
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   return withAdminAuth(async (req, { session }) => {
     try {
+      const params = await props.params
       const id = params.id
 
       // Buscar plano
@@ -156,15 +157,16 @@ export async function GET(
         { status: 500 }
       )
     }
-  })
+  })(request)
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   return withAdminAuth(async (req, { session }) => {
     try {
+      const params = await props.params
       const id = params.id
       const body = await request.json()
       const planoData: Partial<PlanoAssinatura> = body
@@ -191,15 +193,16 @@ export async function PUT(
         { status: 500 }
       )
     }
-  })
+  })(request)
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   return withAdminAuth(async (req, { session }) => {
     try {
+      const params = await props.params
       const id = params.id
 
       // Buscar plano
@@ -230,5 +233,5 @@ export async function DELETE(
         { status: 500 }
       )
     }
-  })
+  })(request)
 }

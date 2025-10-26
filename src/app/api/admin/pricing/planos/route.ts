@@ -143,7 +143,7 @@ export function GET(request: NextRequest) {
           planos: planosDB,
           total: planosDB.length,
           ativos: planosDB.filter(p => p.ativo).length
-        })
+        })(request)
       } catch (error) {
         console.error('Erro ao buscar planos:', error)
         return NextResponse.json(
@@ -157,7 +157,7 @@ export function GET(request: NextRequest) {
       tags: ['pricing-plans', 'admin'],
       deduplicate: true
     })(request)
-  })
+  })(request)
 }
 
 export async function POST(request: NextRequest) {
@@ -197,5 +197,5 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-  })
+  })(request)
 }
