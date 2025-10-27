@@ -21,59 +21,68 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
     const savings = isAnnual ? (plan.priceMonthly * 12 - plan.priceAnnual) : 0
     return (
         <div className={cn(
-            'relative bg-white rounded-2xl border-2 p-8 shadow-lg transition-all duration-300 hover:shadow-xl',
+            'relative bg-white rounded-3xl border p-10 shadow-premium transition-all duration-500 hover:shadow-premium-lg hover:-translate-y-2',
             plan.recommended
-                ? 'border-primary-500 ring-2 ring-primary-100 scale-105'
-                : 'border-gray-200 hover:border-primary-300'
+                ? 'border-primary-600 ring-4 ring-primary-100 scale-105'
+                : 'border-luxury-200 hover:border-primary-400'
         )}>
             {plan.recommended && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge variant="default" className="px-4 py-2 text-sm font-semibold">
+                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2">
+                    <div className="px-6 py-2.5 rounded-full bg-gradient-luxury text-white text-sm font-medium tracking-wide shadow-premium">
                         Mais Popular
-                    </Badge>
+                    </div>
                 </div>
             )}
-            <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                <div className="mb-4">
-                    <div className="flex items-baseline justify-center">
-                        <span className="text-4xl font-bold text-gray-900">
-                            R$ {monthlyPrice.toFixed(2).replace('.', ',')}
+
+            <div className="text-center mb-8">
+                <h3 className="text-2xl font-semibold text-luxury-900 mb-6 tracking-tight">{plan.name}</h3>
+                <div className="mb-6">
+                    <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-luxury-600 font-light text-lg">R$</span>
+                        <span className="text-5xl font-semibold text-primary-700 tracking-tight">
+                            {monthlyPrice.toFixed(2).replace('.', ',')}
                         </span>
-                        <span className="text-gray-600 ml-2">/mês</span>
+                        <span className="text-luxury-600 font-light text-lg ml-1">/mês</span>
                     </div>
                     {isAnnual && (
-                        <div className="mt-2">
-                            <p className="text-sm text-gray-600">
+                        <div className="mt-4 space-y-1">
+                            <p className="text-sm text-luxury-600 font-light">
                                 R$ {price.toFixed(2).replace('.', ',')} cobrado anualmente
                             </p>
                             {savings > 0 && (
-                                <p className="text-sm font-medium text-green-600">
-                                    Economize R$ {savings.toFixed(2).replace('.', ',')} por ano
-                                </p>
+                                <div className="inline-flex items-center px-3 py-1 rounded-full bg-success-50 text-success-700 text-xs font-medium">
+                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Economize R$ {savings.toFixed(2).replace('.', ',')}
+                                </div>
                             )}
                         </div>
                     )}
                 </div>
             </div>
-            <ul className="space-y-4 mb-8">
+
+            <ul className="space-y-4 mb-10">
                 {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                        <svg
-                            className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                        <span className="text-gray-700">{feature}</span>
+                    <li key={index} className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center mt-0.5">
+                            <svg
+                                className="w-3 h-3 text-primary-600"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                            >
+                                <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                />
+                            </svg>
+                        </div>
+                        <span className="text-luxury-700 text-sm font-light leading-relaxed tracking-wide">{feature}</span>
                     </li>
                 ))}
             </ul>
+
             <div className="space-y-3">
                 <Button
                     onClick={async () => {
@@ -88,16 +97,16 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                         }
                     }}
                     className={cn(
-                        'w-full py-3 text-lg font-semibold',
+                        'w-full py-4 text-base font-medium rounded-xl transition-all duration-300 shadow-premium hover:shadow-premium-lg hover:-translate-y-0.5 tracking-wide',
                         plan.recommended
                             ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                            : 'bg-gray-900 hover:bg-gray-800 text-white'
+                            : 'bg-luxury-900 hover:bg-luxury-800 text-white'
                     )}
                 >
                     {plan.ctaText}
                 </Button>
                 <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={async () => {
                         try {
                             await handleScheduleConsultation({
@@ -108,7 +117,7 @@ function PricingCard({ plan, isAnnual }: PricingCardProps) {
                             alert('Erro ao agendar consulta. Tente novamente.')
                         }
                     }}
-                    className="w-full py-3 text-lg font-medium border-2"
+                    className="w-full py-4 text-base font-medium border-0 text-luxury-700 hover:text-primary-600 hover:bg-luxury-100 rounded-xl transition-all duration-300"
                 >
                     Agendar Consulta
                 </Button>
@@ -420,22 +429,21 @@ export default function PricingSection({
         }
     ]
     return (
-        <section id="planos-precos" className="py-20 bg-gray-50">
+        <section id="planos-precos" className="py-24 bg-luxury-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="text-center mb-12">
-                    <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 text-primary-800 text-sm font-semibold mb-6">
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <div className="text-center mb-16 space-y-6 animate-fade-in-up">
+                    <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary-50 border border-primary-200 text-primary-700 text-sm font-medium tracking-wide">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
                         </svg>
                         Planos de Assinatura
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                        Escolha o Plano Ideal para Você
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-luxury-900 tracking-tight leading-tight">
+                        Escolha seu plano ideal
                     </h2>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-                        Todos os planos incluem acompanhamento médico com Dr. Philipe Saraiva Cruz
-                        e entrega gratuita em todo o Brasil
+                    <p className="text-lg md:text-xl text-luxury-600 max-w-2xl mx-auto font-light leading-relaxed tracking-wide">
+                        Acompanhamento médico e entrega gratuita inclusos
                     </p>
                     {/* Enhanced Pricing Toggle */}
                     <div className="flex items-center justify-center mb-8">

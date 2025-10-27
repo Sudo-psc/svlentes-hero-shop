@@ -75,13 +75,13 @@ export function Header({ className }: HeaderProps) {
     }, [signOut])
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
-                    : 'bg-white shadow-sm'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                    ? 'bg-white/80 backdrop-blur-xl shadow-liquid border-b border-luxury-200/60'
+                    : 'bg-white/60 backdrop-blur-lg shadow-soft border-b border-transparent'
                 } ${className}`}
         >
             <div className="container-custom">
-                <div className="flex items-center justify-between h-16 lg:h-20">
+                <div className="flex items-center justify-between h-20 lg:h-24">
                     {/* Logo */}
                     <a
                         href="/"
@@ -91,7 +91,7 @@ export function Header({ className }: HeaderProps) {
                         <LogoHeader className="h-full w-full" />
                     </a>
                     {/* Navigation Desktop */}
-                    <nav className="hidden md:flex items-center space-x-8">
+                    <nav className="hidden md:flex items-center space-x-10">
                         {navigation.map((item: any) => (
                             item.isAnchor ? (
                                 <a
@@ -101,64 +101,64 @@ export function Header({ className }: HeaderProps) {
                                         e.preventDefault()
                                         handleNavClick(item.href)
                                     }}
-                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                    className="text-luxury-700 hover:text-primary-600 font-medium text-sm tracking-wide transition-all duration-300 relative group"
                                 >
                                     {item.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-luxury transition-all duration-300 group-hover:w-full rounded-full"></span>
                                 </a>
                             ) : (
                                 <a
                                     key={item.name}
                                     href={item.href}
-                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                    className="text-luxury-700 hover:text-primary-600 font-medium text-sm tracking-wide transition-all duration-300 relative group"
                                 >
                                     {item.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
+                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-luxury transition-all duration-300 group-hover:w-full rounded-full"></span>
                                 </a>
                             )
                         ))}
                     </nav>
                     {/* CTA Button Desktop */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="hidden md:flex items-center gap-3">
                         {user ? (
                             <>
                                 <Button
                                     onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                     variant="outline"
-                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                    className="flex items-center gap-2 border-2 border-primary-600 text-primary-700 hover:bg-primary-600 hover:text-white transition-all duration-300 rounded-xl px-5 py-2.5 font-medium shadow-soft hover:shadow-premium hover:-translate-y-0.5"
                                     size="default"
                                 >
                                     <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
-                                    <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
+                                    <span className="text-sm">{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogout}
                                     variant="ghost"
-                                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                                    className="flex items-center gap-2 text-luxury-600 hover:text-primary-600 hover:bg-luxury-100 transition-all duration-300 rounded-xl px-4 py-2.5 font-medium"
                                     size="default"
                                 >
                                     <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
-                                    <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
+                                    <span className="text-sm">{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                 </Button>
                             </>
                         ) : (
                             <>
                                 <Button
                                     onClick={handleAgendarConsulta}
-                                    className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
+                                    className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white transition-all duration-300 rounded-xl px-6 py-2.5 font-medium shadow-premium hover:shadow-premium-lg hover:-translate-y-0.5"
                                     size="default"
                                 >
                                     <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
-                                    <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
+                                    <span className="text-sm tracking-wide">{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogin}
-                                    variant="outline"
-                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                    variant="ghost"
+                                    className="flex items-center gap-2 text-luxury-700 hover:text-primary-600 hover:bg-luxury-100 transition-all duration-300 rounded-xl px-4 py-2.5 font-medium"
                                     size="default"
                                 >
                                     <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
-                                    <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
+                                    <span className="text-sm">{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                 </Button>
                             </>
                         )}
@@ -166,7 +166,7 @@ export function Header({ className }: HeaderProps) {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="md:hidden p-2.5 rounded-xl text-luxury-700 hover:bg-luxury-100 hover:text-primary-600 transition-all duration-300"
                         aria-label={isMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
                         aria-expanded={isMenuOpen}
                         aria-controls="mobile-menu"
@@ -180,13 +180,13 @@ export function Header({ className }: HeaderProps) {
                 </div>
                 {/* Mobile Menu */}
                 {isMenuOpen && (
-                    <div 
+                    <div
                         id="mobile-menu"
-                        className="md:hidden border-t border-gray-200 bg-white"
+                        className="md:hidden border-t border-luxury-200 bg-white/95 backdrop-blur-lg"
                         role="navigation"
                         aria-label="Menu de navegação mobile"
                     >
-                        <div className="py-4 space-y-4">
+                        <div className="py-6 space-y-2">
                             {navigation.map((item: any) => (
                                 item.isAnchor ? (
                                     <a
@@ -196,7 +196,7 @@ export function Header({ className }: HeaderProps) {
                                             e.preventDefault()
                                             handleNavClick(item.href)
                                         }}
-                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        className="block px-6 py-3 text-luxury-700 hover:text-primary-600 hover:bg-luxury-100 font-medium transition-all duration-300 rounded-xl mx-4"
                                         role="menuitem"
                                     >
                                         {item.name}
@@ -205,7 +205,7 @@ export function Header({ className }: HeaderProps) {
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        className="block px-6 py-3 text-luxury-700 hover:text-primary-600 hover:bg-luxury-100 font-medium transition-all duration-300 rounded-xl mx-4"
                                         role="menuitem"
                                     >
                                         {item.name}
@@ -213,13 +213,13 @@ export function Header({ className }: HeaderProps) {
                                 )
                             ))}
                             {/* Mobile CTA */}
-                            <div className="px-4 pt-4 border-t border-gray-200 space-y-3" role="menu">
+                            <div className="px-4 pt-6 mt-4 border-t border-luxury-200 space-y-3" role="menu">
                                 {user ? (
                                     <>
                                         <Button
                                             onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                             variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                            className="w-full flex items-center justify-center gap-2 border-2 border-primary-600 text-primary-700 hover:bg-primary-600 hover:text-white transition-all duration-300 rounded-xl py-3 font-medium shadow-soft hover:shadow-premium min-h-[48px]"
                                             size="default"
                                         >
                                             <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
@@ -228,7 +228,7 @@ export function Header({ className }: HeaderProps) {
                                         <Button
                                             onClick={handleLogout}
                                             variant="ghost"
-                                            className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800"
+                                            className="w-full flex items-center justify-center gap-2 text-luxury-600 hover:text-primary-600 hover:bg-luxury-100 transition-all duration-300 rounded-xl py-3 font-medium min-h-[48px]"
                                             size="default"
                                         >
                                             <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
@@ -239,16 +239,16 @@ export function Header({ className }: HeaderProps) {
                                     <>
                                         <Button
                                             onClick={handleAgendarConsulta}
-                                            className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
+                                            className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white transition-all duration-300 rounded-xl py-3 font-medium shadow-premium hover:shadow-premium-lg min-h-[48px]"
                                             size="default"
                                         >
                                             <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
-                                            <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
+                                            <span className="tracking-wide">{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                         </Button>
                                         <Button
                                             onClick={handleLogin}
-                                            variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                            variant="ghost"
+                                            className="w-full flex items-center justify-center gap-2 text-luxury-700 hover:text-primary-600 hover:bg-luxury-100 transition-all duration-300 rounded-xl py-3 font-medium min-h-[48px]"
                                             size="default"
                                         >
                                             <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
