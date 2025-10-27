@@ -210,14 +210,14 @@ export default function AdminAnalyticsPage() {
               newSubscriptions: 15,
               retainedMonth1: 14,
               retainedMonth3: 12,
-              retainedMonth6: null
+              retainedMonth6: 0
             },
             {
               period: 'Mar-2024',
               newSubscriptions: 18,
               retainedMonth1: 17,
-              retainedMonth3: null,
-              retainedMonth6: null
+              retainedMonth3: 0,
+              retainedMonth6: 0
             }
           ]
         },

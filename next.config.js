@@ -1,13 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'standalone',
     experimental: {
-        optimizePackageImports: ['@heroicons/react'],
+        optimizePackageImports: [
+            '@heroicons/react',
+            'lucide-react',
+            'date-fns',
+            'react-hook-form',
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-tooltip',
+        ],
     },
     typescript: {
+        // Temporarily allow errors in legacy code (admin pages) - will fix in separate PR
         ignoreBuildErrors: true,
     },
-    eslint: {
-        ignoreDuringBuilds: true,
+    // Webpack configuration (continue using webpack for now)
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                fs: false,
+                net: false,
+                tls: false,
+            }
+        }
+
+        config.module.rules.push({
+            test: /\.svg$/,
+            use: ['@svgr/webpack'],
+        })
+
+        return config
     },
     images: {
         remotePatterns: [
@@ -170,21 +196,6 @@ const nextConfig = {
                 ],
             },
         ]
-    },
-    webpack: (config) => {
-        config.resolve.fallback = {
-            ...config.resolve.fallback,
-            fs: false,
-            net: false,
-            tls: false,
-        }
-
-        config.module.rules.push({
-            test: /\.svg$/,
-            use: ['@svgr/webpack'],
-        })
-
-        return config
     },
 }
 

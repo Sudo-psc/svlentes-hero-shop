@@ -8,7 +8,7 @@ import { logger, LogCategory } from '@/lib/logger'
 import { requirePermission } from '@/lib/admin-auth'
 export async function GET(
   request: NextRequest,
-  { params }: { params: { messageId: string } }
+  props: { params: Promise<{ messageId: string }> }
 ) {
   // Require admin authentication for debug access
   const { user, error } = await requirePermission('support:view')(request)
@@ -17,6 +17,7 @@ export async function GET(
   }
   const timer = logger.startTimer()
   try {
+    const params = await props.params
     const { messageId } = params
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'json' // json or text

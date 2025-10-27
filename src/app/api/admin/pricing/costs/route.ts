@@ -29,9 +29,9 @@ let configDB: ConfigPainelCustos = {
   usuarioAtualizacao: 'admin'
 }
 
-export function GET(request: NextRequest) {
-  return withAdminAuth(async (req, { session }) => {
-    return withCache(async (req) => {
+export async function GET(request: NextRequest) {
+  return await withAdminAuth(async (req, { session }) => {
+    return await withCache(async (req) => {
       try {
         // Retornar configuração
         return NextResponse.json(configDB)
@@ -48,11 +48,11 @@ export function GET(request: NextRequest) {
       tags: ['pricing-costs', 'admin'],
       deduplicate: true
     })(request)
-  })
+  })(request)
 }
 
 export async function POST(request: NextRequest) {
-  return withAdminAuth(async (req, { session }) => {
+  return await withAdminAuth(async (req, { session }) => {
     try {
       // Obter dados do corpo
       const body = await request.json()
@@ -135,5 +135,5 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-  })
+  })(request)
 }
