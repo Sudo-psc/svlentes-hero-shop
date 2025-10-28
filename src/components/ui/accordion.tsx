@@ -1,15 +1,24 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-const Accordion = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("space-y-1", className)}
-    {...props}
-  />
-))
+
+interface AccordionProps extends React.HTMLAttributes<HTMLDivElement> {
+  type?: 'single' | 'multiple'
+  collapsible?: boolean
+  defaultValue?: string
+}
+
+const Accordion = React.forwardRef<HTMLDivElement, AccordionProps>(
+  ({ className, type, collapsible, defaultValue, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn("space-y-1", className)}
+      data-type={type}
+      data-collapsible={collapsible}
+      data-default-value={defaultValue}
+      {...props}
+    />
+  )
+)
 Accordion.displayName = "Accordion"
 const AccordionItem = React.forwardRef<
   HTMLDivElement,

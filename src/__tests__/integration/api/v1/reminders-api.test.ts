@@ -1,16 +1,15 @@
 // Integration tests for Reminders API
 
-/**
- * @jest-environment node
- */
-
+import { describe, it, expect, vi } from 'vitest'
+import { NextRequest } from 'next/server'
 import { NotificationType } from '@/types/reminders'
+import { POST } from '@/app/api/v1/reminders/route'
 
 // Mock the reminder orchestrator
-jest.mock('@/lib/reminders', () => ({
+vi.mock('@/lib/reminders', () => ({
   reminderOrchestrator: {
-    createIntelligentReminder: jest.fn(),
-    getUserHistory: jest.fn(),
+    createIntelligentReminder: vi.fn(),
+    getUserHistory: vi.fn(),
   },
 }))
 
@@ -19,7 +18,7 @@ describe.skip('Reminders API', () => {
   describe('POST /api/v1/reminders', () => {
     it('should create a reminder successfully', async () => {
       const { reminderOrchestrator } = await import('@/lib/reminders')
-      ;(reminderOrchestrator.createIntelligentReminder as jest.Mock).mockResolvedValue('notif-123')
+      ;(reminderOrchestrator.createIntelligentReminder as any).mockResolvedValue('notif-123')
 
       const request = new NextRequest('http://localhost/api/v1/reminders', {
         method: 'POST',
@@ -56,7 +55,7 @@ describe.skip('Reminders API', () => {
 
     it('should return 429 when user fatigue is high', async () => {
       const { reminderOrchestrator } = await import('@/lib/reminders')
-      ;(reminderOrchestrator.createIntelligentReminder as jest.Mock).mockRejectedValue(
+      ;(reminderOrchestrator.createIntelligentReminder as any).mockRejectedValue(
         new Error('User fatigue score too high')
       )
 
@@ -101,7 +100,7 @@ describe.skip('Reminders API', () => {
         { id: '1', content: 'Reminder 1' },
         { id: '2', content: 'Reminder 2' },
       ]
-      ;(reminderOrchestrator.getUserHistory as jest.Mock).mockResolvedValue(mockReminders)
+      ;(reminderOrchestrator.getUserHistory as any).mockResolvedValue(mockReminders)
 
       const request = new NextRequest('http://localhost/api/v1/reminders?userId=user-1')
 
@@ -127,7 +126,7 @@ describe.skip('Reminders API', () => {
     it('should respect limit parameter', async () => {
       const { reminderOrchestrator } = await import('@/lib/reminders')
       const mockReminders: any[] = []
-      ;(reminderOrchestrator.getUserHistory as jest.Mock).mockResolvedValue(mockReminders)
+      ;(reminderOrchestrator.getUserHistory as any).mockResolvedValue(mockReminders)
 
       const request = new NextRequest('http://localhost/api/v1/reminders?userId=user-1&limit=10')
 
@@ -140,7 +139,7 @@ describe.skip('Reminders API', () => {
   describe('RF-001: Multi-channel support', () => {
     it('should support all 4 notification channels', async () => {
       const { reminderOrchestrator } = await import('@/lib/reminders')
-      ;(reminderOrchestrator.createIntelligentReminder as jest.Mock).mockResolvedValue('notif-123')
+      ;(reminderOrchestrator.createIntelligentReminder as any).mockResolvedValue('notif-123')
 
       const channels = ['EMAIL', 'WHATSAPP', 'SMS', 'PUSH']
 

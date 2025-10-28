@@ -1,0 +1,5 @@
+export { homepageFAQs } from './homepage'
+export { cataractFAQs } from './catarata'
+export { glaucomaFAQs } from './glaucoma'
+export { contactLensesFAQs } from './lentes-contato'
+export { consultationFAQs } from './consulta'

@@ -1,15 +1,23 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useModals } from '@/hooks/useModals'
+import { usePricingPlans, PricingPlansProvider } from '@/contexts/PricingPlansContext'
 // import { useResilientSubscription } from '@/hooks/useResilientSubscription'
 // import { ResilientDashboardWrapper } from '@/components/assinante/ResilientDashboardWrapper'
-import { AccessibleDashboard } from '@/components/assinante/AccessibleDashboard'
+// Eager load components needed immediately
 import { ToastContainer } from '@/components/assinante/ToastFeedback'
 import { DashboardLoading } from '@/components/assinante/DashboardLoading'
 import { DashboardError } from '@/components/assinante/DashboardError'
+
+// Lazy load tab components for better performance
+const AccessibleDashboard = lazy(() => import('@/components/assinante/AccessibleDashboard').then(mod => ({ default: mod.AccessibleDashboard })))
+const PrescriptionManager = lazy(() => import('@/components/assinante/PrescriptionManager').then(mod => ({ default: mod.PrescriptionManager })))
+const PaymentHistoryTable = lazy(() => import('@/components/assinante/PaymentHistoryTable').then(mod => ({ default: mod.PaymentHistoryTable })))
+const DeliveryPreferences = lazy(() => import('@/components/assinante/DeliveryPreferences').then(mod => ({ default: mod.DeliveryPreferences })))
 import { OrdersModal } from '@/components/assinante/OrdersModal'
 import { InvoicesModal } from '@/components/assinante/InvoicesModal'
 import { ChangePlanModal } from '@/components/assinante/ChangePlanModal'
@@ -22,43 +30,20 @@ import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/su
 import { motion } from 'framer-motion'
 import { useToast } from '@/components/assinante/ToastFeedback'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings, ClipboardList, Receipt, Truck } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PrescriptionManager } from '@/components/assinante/PrescriptionManager'
-import { PaymentHistoryTable } from '@/components/assinante/PaymentHistoryTable'
-import { DeliveryPreferences } from '@/components/assinante/DeliveryPreferences'
 
 function DashboardContent() {
   const router = useRouter()
   const { user: authUser, loading: authLoading, signOut } = useAuth()
   const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
   const { toasts, removeToast } = useToast()
-  // Modal states
-  const [showOrdersModal, setShowOrdersModal] = useState(false)
-  const [showInvoicesModal, setShowInvoicesModal] = useState(false)
-  const [showChangePlanModal, setShowChangePlanModal] = useState(false)
-  const [showUpdateAddressModal, setShowUpdateAddressModal] = useState(false)
-  const [showUpdatePaymentModal, setShowUpdatePaymentModal] = useState(false)
-  const [availablePlans, setAvailablePlans] = useState<any[]>([])
+  const { modals, openModal, closeModal } = useModals()
+  const { plans: availablePlans, loading: plansLoading } = usePricingPlans()
   // Enhanced features state
   const [useEnhancedUI, setUseEnhancedUI] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
-  useEffect(() => {
-    const loadPlans = async () => {
-      try {
-        setIsLoading(true)
-        const plansModule = await import('@/data/pricing-plans')
-        const plansData = plansModule.pricingPlans || []
-        setAvailablePlans(plansData)
-      } catch (error) {
-        console.error('Error loading plans:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadPlans()
-  }, [])
   useEffect(() => {
     if (!authLoading && !authUser) {
       router.push('/area-assinante/login')
@@ -245,40 +230,48 @@ function DashboardContent() {
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="mt-6">
-                <AccessibleDashboard />
+                <Suspense fallback={<DashboardLoading />}>
+                  <AccessibleDashboard />
+                </Suspense>
               </TabsContent>
 
               {/* Prescription Tab */}
               <TabsContent value="prescription" className="mt-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <PrescriptionManager />
-                </motion.div>
+                <Suspense fallback={<DashboardLoading />}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PrescriptionManager />
+                  </motion.div>
+                </Suspense>
               </TabsContent>
 
               {/* Payments Tab */}
               <TabsContent value="payments" className="mt-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <PaymentHistoryTable />
-                </motion.div>
+                <Suspense fallback={<DashboardLoading />}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PaymentHistoryTable />
+                  </motion.div>
+                </Suspense>
               </TabsContent>
 
               {/* Delivery Tab */}
               <TabsContent value="delivery" className="mt-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <DeliveryPreferences />
-                </motion.div>
+                <Suspense fallback={<DashboardLoading />}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <DeliveryPreferences />
+                  </motion.div>
+                </Suspense>
               </TabsContent>
             </Tabs>
           </main>
@@ -430,7 +423,7 @@ function DashboardContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowChangePlanModal(true)}
+                      onClick={() => openModal('changePlan')}
                       className="w-full"
                       disabled={isLoading}
                     >
@@ -493,7 +486,7 @@ function DashboardContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowUpdatePaymentModal(true)}
+                      onClick={() => openModal('updatePayment')}
                       className="w-full"
                       disabled={isLoading}
                     >
@@ -503,7 +496,7 @@ function DashboardContent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowUpdateAddressModal(true)}
+                      onClick={() => openModal('updateAddress')}
                       className="w-full"
                       disabled={isLoading}
                     >
@@ -573,11 +566,11 @@ function DashboardContent() {
               transition={{ delay: 0.5 }}
               className="flex flex-wrap gap-4 mb-8"
             >
-              <Button onClick={() => setShowOrdersModal(true)} size="lg">
+              <Button onClick={() => openModal('orders')} size="lg">
                 <Package className="h-4 w-4 mr-2" />
                 Ver Histórico de Pedidos
               </Button>
-              <Button variant="outline" onClick={() => setShowInvoicesModal(true)} size="lg">
+              <Button variant="outline" onClick={() => openModal('invoices')} size="lg">
                 <FileText className="h-4 w-4 mr-2" />
                 Baixar Fatura
               </Button>
@@ -612,13 +605,13 @@ function DashboardContent() {
         </motion.div>
       </main>
       {/* Enhanced Modals */}
-      <OrdersModal isOpen={showOrdersModal} onClose={() => setShowOrdersModal(false)} />
-      <InvoicesModal isOpen={showInvoicesModal} onClose={() => setShowInvoicesModal(false)} />
+      <OrdersModal isOpen={modals.orders} onClose={() => closeModal('orders')} />
+      <InvoicesModal isOpen={modals.invoices} onClose={() => closeModal('invoices')} />
       {subscription && (
         <>
           <ChangePlanModal
-            isOpen={showChangePlanModal}
-            onClose={() => setShowChangePlanModal(false)}
+            isOpen={modals.changePlan}
+            onClose={() => closeModal('changePlan')}
             currentPlan={{
               id: subscription.id,
               name: subscription.plan.name,
@@ -628,14 +621,14 @@ function DashboardContent() {
             onPlanChange={handlePlanChange}
           />
           <UpdateAddressModal
-            isOpen={showUpdateAddressModal}
-            onClose={() => setShowUpdateAddressModal(false)}
+            isOpen={modals.updateAddress}
+            onClose={() => closeModal('updateAddress')}
             currentAddress={subscription.shippingAddress}
             onAddressUpdate={handleAddressUpdate}
           />
           <UpdatePaymentModal
-            isOpen={showUpdatePaymentModal}
-            onClose={() => setShowUpdatePaymentModal(false)}
+            isOpen={modals.updatePayment}
+            onClose={() => closeModal('updatePayment')}
             currentPaymentMethod={{
               type: subscription.paymentMethod as any,
               last4: subscription.paymentMethodLast4 || undefined
@@ -663,7 +656,11 @@ function DashboardContent() {
 }
 // Wrapper principal simplificado
 export default function DashboardPage() {
-  return <DashboardContent />
+  return (
+    <PricingPlansProvider>
+      <DashboardContent />
+    </PricingPlansProvider>
+  )
 }
 // Force dynamic rendering for authenticated routes
 export const dynamic = 'force-dynamic'

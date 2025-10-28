@@ -3,9 +3,9 @@
  * Testes de error handling e fallbacks
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from '@jest/globals'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
-import { GET } from '../delivery-status/route'
+import { GET } from '@/app/api/assinante/delivery-status/route'
 
 describe('GET /api/assinante/delivery-status', () => {
   beforeEach(() => {
