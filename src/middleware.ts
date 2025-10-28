@@ -1,11 +1,9 @@
 /**
  * Middleware para logging de requisições e monitoramento
  * Intercepta todas as requisições e coleta métricas de performance
- * Integrado com Clerk para autenticação
+ * Integrado com Firebase Authentication
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Interface para dados de logging
 interface LogData {
@@ -82,15 +80,39 @@ function generateSessionId(): string {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
 
-// Extrai informações do usuário
-async function getUserInfo(request: NextRequest): Promise<{ userId?: string; sessionId?: string }> {
-  const token = await getToken({ req: request });
+// Decode Firebase JWT client-side (without verification - for logging only)
+function decodeFirebaseToken(token: string): { uid?: string } {
+  try {
+    // Firebase JWT is base64-encoded, decode the payload (second part)
+    const parts = token.split('.');
+    if (parts.length !== 3) return {};
 
-  // Tentar obter ID do usuário do token JWT
-  const userId = token?.sub || token?.id;
+    const payload = Buffer.from(parts[1], 'base64').toString('utf-8');
+    const decoded = JSON.parse(payload);
+
+    return { uid: decoded.user_id || decoded.sub };
+  } catch (error) {
+    console.warn('[Middleware] Failed to decode Firebase token:', error);
+    return {};
+  }
+}
+
+// Extrai informações do usuário do Firebase token
+async function getUserInfo(request: NextRequest): Promise<{ userId?: string; sessionId?: string }> {
+  // Try to get Firebase token from header or cookie
+  const authHeader = request.headers.get('Authorization');
+  const firebaseToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.split('Bearer ')[1]
+    : null;
+  const cookieToken = request.cookies.get('firebase-token')?.value;
+
+  const token = firebaseToken || cookieToken;
+
+  // Decode Firebase token to get UID (don't verify - just for logging)
+  const userId = token ? decodeFirebaseToken(token).uid : undefined;
 
   // Obter ou criar session ID
-  let sessionId = request.headers.get('x-session-id');
+  let sessionId = request.headers.get('x-session-id') as string | null;
   if (!sessionId) {
     sessionId = generateSessionId();
   }
@@ -102,7 +124,6 @@ async function getUserInfo(request: NextRequest): Promise<{ userId?: string; ses
 function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIP = request.headers.get('x-real-ip');
-  const clientIP = request.ip;
 
   if (forwarded) {
     return forwarded.split(',')[0].trim();
@@ -112,7 +133,8 @@ function getClientIP(request: NextRequest): string {
     return realIP;
   }
 
-  return clientIP || 'unknown';
+  // Next.js doesn't have request.ip, use headers instead
+  return 'unknown';
 }
 
 // Detectar bots e crawlers
@@ -229,42 +251,73 @@ async function performLoggingAndMonitoring(request: NextRequest) {
   return { start, logData, riskScore, sessionId };
 }
 
+// Simple route matcher helper
+function routeMatcher(patterns: string[]) {
+  return (request: NextRequest) => {
+    const pathname = request.nextUrl.pathname;
+    return patterns.some(pattern => {
+      // Convert pattern to regex: /path(.*) becomes /^\/path/
+      const regex = new RegExp(`^${pattern.replace('(.*)', '.*')}`);
+      return regex.test(pathname);
+    });
+  };
+}
+
 // Define public routes that should NOT require authentication
-const isPublicRoute = createRouteMatcher([
-  '/area-assinante/login(.*)',
-  '/area-assinante/register(.*)',
-  '/api/assinante/register(.*)',
-  '/clerk-demo(.*)',
+const isPublicRoute = routeMatcher([
+  '/area-assinante/login',
+  '/area-assinante/registro',
+  '/api/assinante/register',
 ]);
 
 // Define protected routes that require authentication
-const isProtectedRoute = createRouteMatcher([
-  '/area-assinante(.*)',
-  '/api/assinante(.*)',
+const isProtectedRoute = routeMatcher([
+  '/area-assinante',
+  '/api/assinante',
 ]);
 
-// Clerk middleware with custom logic integration
-export default clerkMiddleware(async (auth, request) => {
+// Firebase Authentication Middleware
+export async function middleware(request: NextRequest) {
   // Perform logging and monitoring
   const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
 
   // Check if route requires authentication (exclude public routes)
   if (isProtectedRoute(request) && !isPublicRoute(request)) {
-    try {
-      await auth.protect();
-    } catch (error) {
-      // Log authentication error
-      Logger.error('Authentication protection failed', {
+    // Check for Firebase token in Authorization header
+    const authHeader = request.headers.get('Authorization');
+    const firebaseToken = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
+
+    // Check for Firebase token in cookie (for client-side navigation)
+    const cookieToken = request.cookies.get('firebase-token')?.value;
+
+    const token = firebaseToken || cookieToken;
+
+    if (!token) {
+      // No authentication token found - redirect to login
+      Logger.warn('No authentication token found', {
         ...logData,
         path: request.nextUrl.pathname,
-        error: error instanceof Error ? error.message : 'Unknown error',
         riskScore
       });
 
-      // For protected routes, let Clerk handle the redirect to sign-in
-      // The error will propagate and Clerk will redirect appropriately
-      throw error;
+      // For API routes, return 401 Unauthorized
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'UNAUTHORIZED', message: 'Token de autenticação não fornecido' },
+          { status: 401 }
+        );
+      }
+
+      // For page routes, redirect to login
+      const loginUrl = new URL('/area-assinante/login', request.url);
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
     }
+
+    // Note: Token verification is handled by each API route using Firebase Admin SDK
+    // This middleware only checks for token presence and redirects if missing
+    // Actual token validation happens in API routes for security reasons
+    // (Firebase Admin SDK is only available on the server side)
   }
 
   // Create response with security headers
@@ -316,10 +369,10 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   return response;
-});
+}
 
 // Configurar quais rotas o middleware deve interceptar
-// Usando o padrão recomendado do Clerk para Next.js App Router
+// Padrão recomendado para Next.js App Router
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
