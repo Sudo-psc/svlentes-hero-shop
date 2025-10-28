@@ -7,27 +7,32 @@
  * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
-import { config } from '@/config/loader'
+// Temporarily disabled to fix build - will re-enable after fixing client-side import issue
+// import { config } from '@/config/loader'
 /**
  * Get doctor information from centralized config
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getDoctorInfo() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedDoctorInfo
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      return appConfig.medical.doctor
-    }
-  } catch (error) {
-    console.warn('[Medical] Error loading doctor info, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedDoctorInfo
+
+  // TODO: Re-enable centralized config after fixing build
+  // Guard: only try to load config on server-side
+  // if (typeof window !== 'undefined') {
+  //   return hardcodedDoctorInfo
+  // }
+
+  // try {
+  //   const appConfig = config.load()
+  //   const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+  //   if (useCentralizedMedical) {
+  //     return appConfig.medical.doctor
+  //   }
+  // } catch (error) {
+  //   console.warn('[Medical] Error loading doctor info, using fallback:', error)
+  // }
+  // return hardcodedDoctorInfo
 }
 // Hardcoded fallback data
 const hardcodedDoctorInfo = {

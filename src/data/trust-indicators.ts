@@ -7,33 +7,38 @@
  * NOTA: Este arquivo agora funciona como wrapper para o sistema centralizado.
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
-import { config } from '@/config/loader'
+// Temporarily disabled to fix build - will re-enable after fixing client-side import issue
+// import { config } from '@/config/loader'
 /**
  * Get trust badges from centralized config
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getTrustBadges() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedTrustBadges
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      // Add color property for backward compatibility (not in YAML schema)
-      return appConfig.medical.trust.badges.map((badge: any) => ({
-        ...badge,
-        color: badge.id === 'anvisa' ? 'text-purple-400' :
-               badge.id === 'lgpd' ? 'text-blue-400' :
-               badge.id === 'ssl' ? 'text-green-400' : 'text-gray-400'
-      }))
-    }
-  } catch (error) {
-    console.warn('[Trust] Error loading trust badges, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedTrustBadges
+
+  // TODO: Re-enable centralized config after fixing build
+  // Guard: only try to load config on server-side
+  // if (typeof window !== 'undefined') {
+  //   return hardcodedTrustBadges
+  // }
+
+  // try {
+  //   const appConfig = config.load()
+  //   const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+  //   if (useCentralizedMedical) {
+  //     // Add color property for backward compatibility (not in YAML schema)
+  //     return appConfig.medical.trust.badges.map((badge: any) => ({
+  //       ...badge,
+  //       color: badge.id === 'anvisa' ? 'text-purple-400' :
+  //              badge.id === 'lgpd' ? 'text-blue-400' :
+  //              badge.id === 'ssl' ? 'text-green-400' : 'text-gray-400'
+  //     }))
+  //   }
+  // } catch (error) {
+  //   console.warn('[Trust] Error loading trust badges, using fallback:', error)
+  // }
+  // return hardcodedTrustBadges
 }
 // Hardcoded fallback data
 const hardcodedTrustBadges = [

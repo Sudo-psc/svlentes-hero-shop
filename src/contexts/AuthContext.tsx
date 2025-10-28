@@ -14,7 +14,10 @@ import {
   FacebookAuthProvider,
   GithubAuthProvider,
 } from 'firebase/auth'
-import { auth, OAUTH_CLIENT_ID } from '@/lib/firebase'
+import { getFirebaseAuth, OAUTH_CLIENT_ID } from '@/lib/firebase'
+
+// Get auth instance
+const auth = typeof window !== 'undefined' ? getFirebaseAuth() : null
 interface AuthContextType {
   user: User | null
   loading: boolean
@@ -39,32 +42,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
+    // Only set up auth listener on client side
+    if (!auth) {
+      setLoading(false)
+      return
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
       setLoading(false)
+    }, (error) => {
+      console.error('[AUTH] Auth state change error:', error)
+      setLoading(false)
     })
+
     return unsubscribe
   }, [])
   const signIn = async (email: string, password: string) => {
-    const result = await signInWithEmailAndPassword(auth, email, password)
-    // Check if email is verified
-    if (!result.user.emailVerified) {
-      throw new Error('EMAIL_NOT_VERIFIED')
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
+    }
+
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password)
+      // Check if email is verified
+      if (!result.user.emailVerified) {
+        throw new Error('EMAIL_NOT_VERIFIED')
+      }
+    } catch (error: any) {
+      console.error('[AUTH] Sign in error:', error)
+      throw error
     }
   }
   const signUp = async (email: string, password: string, displayName: string) => {
-    const result = await createUserWithEmailAndPassword(auth, email, password)
-    // Update profile with display name
-    if (result.user) {
-      await updateProfile(result.user, { displayName })
-      // Send verification email
-      await sendEmailVerification(result.user, {
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login?verified=true`,
-        handleCodeInApp: false,
-      })
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
+    }
+
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      // Update profile with display name
+      if (result.user) {
+        await updateProfile(result.user, { displayName })
+        // Send verification email
+        await sendEmailVerification(result.user, {
+          url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login?verified=true`,
+          handleCodeInApp: false,
+        })
+      }
+    } catch (error: any) {
+      console.error('[AUTH] Sign up error:', error)
+      throw error
     }
   }
   const signOut = async () => {
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível.')
+    }
     await firebaseSignOut(auth)
   }
   const sendVerificationEmail = async () => {
@@ -81,6 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
   }
   const signInWithGoogle = async () => {
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
+    }
+
     const provider = new GoogleAuthProvider()
     provider.setCustomParameters({
       prompt: 'select_account',
@@ -120,6 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
   const signInWithFacebook = async () => {
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
+    }
+
     const provider = new FacebookAuthProvider()
     provider.setCustomParameters({
       display: 'popup',
@@ -145,11 +187,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
   // GitHub Authentication (Feature Flag controlled)
   const signInWithGitHub = async () => {
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
+    }
+
     // Check if GitHub authentication is enabled via feature flag
     const githubAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === 'true'
     if (!githubAuthEnabled) {
       throw new Error('Autenticação via GitHub não está disponível no momento')
     }
+
     const provider = new GithubAuthProvider()
     provider.setCustomParameters({
       allow_signup: 'false',

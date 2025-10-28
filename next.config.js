@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
+    // Turbopack configuration (Next.js 16+)
+    turbopack: {},
     experimental: {
         optimizePackageImports: [
             '@heroicons/react',

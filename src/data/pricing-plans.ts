@@ -8,46 +8,51 @@
  * Dados reais vêm de src/config/base.yaml quando feature flag está ativa.
  */
 import type { PricingPlan, PricingPlanGroup } from '@/types'
-import { config } from '@/config/loader'
+// Temporarily disabled to fix build - will re-enable after fixing client-side import issue
+// import { config } from '@/config/loader'
 /**
  * Get pricing plans from centralized config (new aspheric and toric system)
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getPricingPlans(): PricingPlan[] {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedPlans
-  }
-
-  try {
-    const appConfig = config.load()
-    const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
-    const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
-    const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
-    const allPlans: PricingPlan[] = []
-    // Load aspheric plans
-    if (usePricingAsfericos && appConfig.pricing_asfericos) {
-      const asphericPlans = Object.values(appConfig.pricing_asfericos) as any[]
-      allPlans.push(...asphericPlans.map(convertYamlPlanToPricingPlan))
-    }
-    // Load toric plans
-    if (usePricingToricos && appConfig.pricing_toricos) {
-      const toricPlans = Object.values(appConfig.pricing_toricos) as any[]
-      allPlans.push(...toricPlans.map(convertYamlPlanToPricingPlan))
-    }
-    // Return combined plans if any are loaded
-    if (allPlans.length > 0) {
-      return allPlans.sort((a, b) => a.sortOrder - b.sortOrder)
-    }
-    // Legacy system: Use old pricing structure
-    if (useCentralizedPricing && appConfig.pricing?.plans) {
-      return appConfig.pricing.plans as PricingPlan[]
-    }
-  } catch (error) {
-    console.warn('[Pricing] Error loading centralized config, using fallback data:', error)
-  }
-  // Fallback to hardcoded data
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedPlans
+
+  // TODO: Re-enable centralized config after fixing build
+  // Guard: only try to load config on server-side
+  // if (typeof window !== 'undefined') {
+  //   return hardcodedPlans
+  // }
+
+  // try {
+  //   const appConfig = config.load()
+  //   const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
+  //   const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
+  //   const useCentralizedPricing = config.isFeatureEnabled('useCentralizedPricing')
+  //   const allPlans: PricingPlan[] = []
+  //   // Load aspheric plans
+  //   if (usePricingAsfericos && appConfig.pricing_asfericos) {
+  //     const asphericPlans = Object.values(appConfig.pricing_asfericos) as any[]
+  //     allPlans.push(...asphericPlans.map(convertYamlPlanToPricingPlan))
+  //   }
+  //   // Load toric plans
+  //   if (usePricingToricos && appConfig.pricing_toricos) {
+  //     const toricPlans = Object.values(appConfig.pricing_toricos) as any[]
+  //     allPlans.push(...toricPlans.map(convertYamlPlanToPricingPlan))
+  //   }
+  //   // Return combined plans if any are loaded
+  //   if (allPlans.length > 0) {
+  //     return allPlans.sort((a, b) => a.sortOrder - b.sortOrder)
+  //   }
+  //   // Legacy system: Use old pricing structure
+  //   if (useCentralizedPricing && appConfig.pricing?.plans) {
+  //     return appConfig.pricing.plans as PricingPlan[]
+  //   }
+  // } catch (error) {
+  //   console.warn('[Pricing] Error loading centralized config, using fallback data:', error)
+  // }
+  // // Fallback to hardcoded data
+  // return hardcodedPlans
 }
 /**
  * Convert YAML plan structure to PricingPlan interface
