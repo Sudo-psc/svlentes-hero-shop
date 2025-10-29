@@ -1,6 +1,6 @@
 import 'dotenv/config'
 
-import {createClient} from '@sanity/client'
+import {createClient} from 'sanity'
 
 interface ExistingArticle {
   _id: string
