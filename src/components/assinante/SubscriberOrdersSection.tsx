@@ -43,8 +43,6 @@ function mapOrderStatusToTimelineStatus(status: string) {
       return 'processing'
     case 'pending':
       return 'scheduled'
-    case 'cancelled':
-      return 'delayed'
     default:
       return 'processing'
   }
@@ -78,23 +76,26 @@ export function SubscriberOrdersSection({ className, onViewAllOrders }: Subscrib
     [orders]
   )
   const timelineData: DeliveryData[] = useMemo(() => {
-    return orders.slice(0, 4).map((order) => ({
-      id: order.id,
-      orderNumber: `#${order.id.slice(-8).toUpperCase()}`,
-      status: mapOrderStatusToTimelineStatus(order.status),
-      scheduledDate: order.shippingDate ?? order.createdAt,
-      deliveredDate: order.deliveryDate ?? undefined,
-      trackingCode: order.trackingCode ?? undefined,
-      trackingUrl: order.trackingCode
-        ? `https://rastreamento.correios.com.br/app/index.php?objeto=${order.trackingCode}`
-        : undefined,
-      items: [
-        {
-          name: order.planName,
-          quantity: 1,
-        },
-      ],
-    }))
+    return orders
+      .filter((order) => order.status !== 'cancelled')
+      .slice(0, 4)
+      .map((order) => ({
+        id: order.id,
+        orderNumber: `#${order.id.slice(-8).toUpperCase()}`,
+        status: mapOrderStatusToTimelineStatus(order.status),
+        scheduledDate: order.shippingDate ?? order.createdAt,
+        deliveredDate: order.deliveryDate ?? undefined,
+        trackingCode: order.trackingCode ?? undefined,
+        trackingUrl: order.trackingCode
+          ? `https://rastreamento.correios.com.br/app/index.php?objeto=${order.trackingCode}`
+          : undefined,
+        items: [
+          {
+            name: order.planName,
+            quantity: 1,
+          },
+        ],
+      }))
   }, [orders])
 
   const totalOrders = pagination?.total ?? orders.length
