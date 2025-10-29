@@ -41,7 +41,7 @@ interface UseSubscriberOrdersReturn {
 export function useSubscriberOrders(options: UseSubscriberOrdersOptions = {}): UseSubscriberOrdersReturn {
   const { user } = useAuth()
   const [orders, setOrders] = useState<SubscriberOrder[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<SubscriberOrdersPagination | null>(null)
   const [refreshIndex, setRefreshIndex] = useState(0)
