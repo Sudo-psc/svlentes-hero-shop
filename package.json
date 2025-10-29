@@ -40,7 +40,8 @@
         "test:mcp": "ts-node scripts/test-mcp-integration.ts",
         "test:send": "ts-node scripts/test-send-to-phone.ts",
         "test:chatbot": "npx tsx --env-file=.env.local scripts/test-whatsapp-chatbot-status.ts",
-        "kluster_code_review_auto": "node ./scripts/kluster_code_review_auto.mjs"
+        "kluster_code_review_auto": "node ./scripts/kluster_code_review_auto.mjs",
+        "sanity:publish-article": "ts-node --esm scripts/publish-sanity-article.ts"
     },
     "dependencies": {
         "@clerk/nextjs": "^6.34.0",
