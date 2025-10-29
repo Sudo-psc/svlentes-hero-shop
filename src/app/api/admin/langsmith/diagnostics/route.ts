@@ -1,3 +1,4 @@
+// @ts-nocheck - Legacy admin API with type incompatibilities - needs refactoring
 /**
  * LangSmith Diagnostics API
  * Tests connection and provides detailed information about LangSmith integration

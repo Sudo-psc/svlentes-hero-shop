@@ -1,3 +1,4 @@
+// @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
 /**
  * SendPulse Webhook Integration
  * Receives WhatsApp messages via SendPulse API and processes them

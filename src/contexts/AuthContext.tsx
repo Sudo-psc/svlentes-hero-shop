@@ -15,6 +15,7 @@ import {
   GithubAuthProvider,
 } from 'firebase/auth'
 import { getFirebaseAuth, OAUTH_CLIENT_ID } from '@/lib/firebase'
+import { devLog } from '@/lib/devLogger'
 
 // Get auth instance
 const auth = typeof window !== 'undefined' ? getFirebaseAuth() : null
@@ -48,8 +49,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
+
+      // Store Firebase token securely via server-side API
+      if (user) {
+        devLog.auth('user-signed-in', { uid: user.uid, email: user.email })
+        try {
+          const token = await user.getIdToken()
+          // Send token to secure server-side endpoint for HttpOnly cookie storage
+          const response = await fetch('/api/auth/set-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          })
+
+          if (!response.ok) {
+            console.error('[AUTH] Failed to store token securely')
+          } else {
+            devLog.auth('token-stored')
+          }
+        } catch (error) {
+          console.error('[AUTH] Failed to get ID token:', error)
+        }
+      } else {
+        devLog.auth('user-signed-out')
+        // Clear cookie when user signs out via server-side API
+        try {
+          await fetch('/api/auth/set-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clear' }),
+          })
+          devLog.auth('token-cleared')
+        } catch (error) {
+          console.error('[AUTH] Failed to clear token:', error)
+        }
+      }
+
       setLoading(false)
     }, (error) => {
       console.error('[AUTH] Auth state change error:', error)
@@ -99,6 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível.')
     }
+    devLog.auth('sign-out-initiated')
+    // Clear the Firebase token cookie securely via server-side API
+    try {
+      await fetch('/api/auth/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear' }),
+      })
+      devLog.auth('sign-out-token-cleared')
+    } catch (error) {
+      console.error('[AUTH] Failed to clear token on sign out:', error)
+    }
     await firebaseSignOut(auth)
   }
   const sendVerificationEmail = async () => {
@@ -109,6 +158,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
   }
   const sendPasswordReset = async (email: string) => {
+    if (!auth) {
+      throw new Error('Firebase Auth não está disponível.')
+    }
     await sendPasswordResetEmail(auth, email, {
       url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login`,
       handleCodeInApp: false,
@@ -127,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     try {
       const result = await signInWithPopup(auth, provider)
+      devLog.auth('google-signin-success', { uid: result.user?.uid })
       // Google accounts are automatically verified
       // No need to check emailVerified for social logins
       return
@@ -134,7 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('[GOOGLE_AUTH] Error during login:', {
         code: error.code,
         message: error.message,
-        fullError: error,
       })
       // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {
@@ -203,6 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     try {
       const result = await signInWithPopup(auth, provider)
+      devLog.auth('github-signin-success', { uid: result.user?.uid })
       // GitHub accounts are automatically verified
       // No need to check emailVerified for social logins
       return
@@ -210,7 +263,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('[GITHUB_AUTH] Error during GitHub login:', {
         code: error.code,
         message: error.message,
-        fullError: error,
       })
       // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {

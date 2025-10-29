@@ -41,19 +41,15 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
         )}
         {...props}
       >
-        {/* prefer a small animated gif if present, otherwise fallback to optimized webp/png */}
-        <picture>
-          <source srcSet="/logosv-md.webp" type="image/webp" />
-          <Image
-            src="/logosv-md.png"
-            alt="SV Lentes"
-            width={dimension}
-            height={dimension}
-            className="w-full h-full object-contain"
-            priority
-            unoptimized
-          />
-        </picture>
+        <Image
+          src="/images/logo.jpeg"
+          alt="SV Lentes"
+          width={dimension}
+          height={dimension}
+          className="w-full h-full object-contain"
+          priority
+          unoptimized
+        />
       </div>
     )
   }

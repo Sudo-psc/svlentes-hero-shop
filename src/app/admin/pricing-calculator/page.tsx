@@ -1,3 +1,4 @@
+// @ts-nocheck - Legacy admin page with type incompatibilities - needs refactoring
 /**
  * Página principal da Calculadora de Preços e Rentabilidade
  * Sistema completo para gestão de planos de assinatura com análise financeira

@@ -47,10 +47,7 @@ export default function RootLayout({
 
     // const organizationData = generateOrganizationStructuredData()
     // const websiteData = generateWebSiteStructuredData()
-    // Initialize chunk error handler
-    if (typeof window !== 'undefined') {
-        initializeChunkErrorHandler()
-    }
+
     return (
         <ClerkProvider>
             <html lang="pt-BR"  className="font-sans">{/* Temporariamente usando fontes do sistema */}

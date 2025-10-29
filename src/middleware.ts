@@ -323,6 +323,30 @@ export async function middleware(request: NextRequest) {
   // Create response with security headers
   const response = NextResponse.next();
 
+  // Handle CORS for API routes
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const origin = request.headers.get('origin');
+    const productionOrigins = [
+      'https://svlentes.com.br',
+      'https://www.svlentes.com.br'
+    ];
+
+    // Determine allowed origin (must be single value when credentials: true)
+    let allowedOrigin: string;
+    if (process.env.NODE_ENV === 'production') {
+      // In production, validate against allowlist
+      allowedOrigin = origin && productionOrigins.includes(origin)
+        ? origin
+        : productionOrigins[0]; // Default to primary domain
+    } else {
+      // In development, allow request origin or default to localhost
+      allowedOrigin = origin || 'http://localhost:3000';
+    }
+
+    response.headers.set('Access-Control-Allow-Origin', allowedOrigin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+
   // Adicionar session ID ao response para tracking
   if (sessionId) {
     response.headers.set('x-session-id', sessionId);

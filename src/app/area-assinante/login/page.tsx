@@ -24,6 +24,10 @@ export default function LoginPage() {
     setError('')
     try {
       await signIn(email, password)
+
+      // Wait a bit for AuthContext to set the firebase-token cookie
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       // Force redirect to dashboard
       router.push('/area-assinante/dashboard')
       router.refresh()
