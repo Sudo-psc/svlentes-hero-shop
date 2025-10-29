@@ -54,7 +54,6 @@ export function useSubscriberOrders(options: UseSubscriberOrdersOptions = {}): U
 
     const loadOrders = async () => {
       if (!user) {
-        if (!isActive) return
         setOrders([])
         setPagination(null)
         setLoading(false)
