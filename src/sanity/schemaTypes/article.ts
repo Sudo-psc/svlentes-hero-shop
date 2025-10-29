@@ -22,6 +22,7 @@ export const articleType = defineType({
           value
             ?.toLowerCase()
             .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // Remove combining diacritical marks
             .replace(/[^\w\s-]/g, '')
             .trim()
             .replace(/\s+/g, '-')
