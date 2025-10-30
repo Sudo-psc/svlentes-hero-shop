@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
-    // Turbopack configuration (Next.js 16+)
-    turbopack: {},
     experimental: {
         optimizePackageImports: [
             '@heroicons/react',
@@ -14,14 +12,19 @@ const nextConfig = {
             '@radix-ui/react-dropdown-menu',
             '@radix-ui/react-tooltip',
         ],
-        skipTrailingSlashRedirect: true,
     },
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
+    skipTrailingSlashRedirect: true,
     typescript: {
         // Allow production builds with type errors - errors will be caught in IDE and CI
         ignoreBuildErrors: true,
+    },
+    eslint: {
+        // Ignore ESLint errors during build
+        ignoreDuringBuilds: true,
+    },
+    // Skip failing paths during build
+    generateBuildId: async () => {
+        return 'build-' + Date.now()
     },
     // Webpack configuration (continue using webpack for now)
     webpack: (config, { isServer }) => {
@@ -77,7 +80,6 @@ const nextConfig = {
         formats: ['image/webp', 'image/avif'],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-        qualities: [75, 85, 90, 95, 100],
         minimumCacheTTL: 60,
         dangerouslyAllowSVG: true,
         unoptimized: false,

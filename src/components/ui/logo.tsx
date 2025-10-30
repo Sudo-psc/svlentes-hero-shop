@@ -5,21 +5,23 @@ import { cn } from "@/lib/utils"
 
 interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string
-  size?: "sm" | "md" | "lg" | "xl"
+  size?: "sm" | "md" | "lg" | "xl" | "footer-animated"
   variant?: "default" | "header" | "footer"
+  useAnimatedGif?: boolean
 }
 
 const SIZE_CONFIG = {
   sm: { wrapper: "h-10 w-10", dimension: 40 },
   md: { wrapper: "h-14 w-14", dimension: 56 },
   lg: { wrapper: "h-16 w-16", dimension: 64 },
-  xl: { wrapper: "h-[200px] w-[200px]", dimension: 200 }
+  xl: { wrapper: "h-[200px] w-[200px]", dimension: 200 },
+  "footer-animated": { wrapper: "h-[168px] w-[168px]", dimension: 168 } // 3x do tamanho md (56 * 3 = 168)
 } as const
 
 type SizeKey = keyof typeof SIZE_CONFIG
 
 const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
-  ({ className = "", size = "md", variant = "default", ...props }, forwardedRef) => {
+  ({ className = "", size = "md", variant = "default", useAnimatedGif = false, ...props }, forwardedRef) => {
     const hasSize = Object.prototype.hasOwnProperty.call(SIZE_CONFIG, size)
     const sizeKey = (hasSize ? size : "md") as SizeKey
     const { wrapper, dimension } = SIZE_CONFIG[sizeKey]
@@ -29,6 +31,8 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
       header: "hover:opacity-90 transition-all",
       footer: "hover:opacity-90 transition-all"
     }
+
+    const logoSrc = useAnimatedGif ? "/logo_animado.gif" : "/images/logo.jpeg"
 
     return (
       <div
@@ -42,7 +46,7 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
         {...props}
       >
         <Image
-          src="/images/logo.jpeg"
+          src={logoSrc}
           alt="SV Lentes"
           width={dimension}
           height={dimension}
@@ -62,7 +66,7 @@ export const LogoHeader = React.forwardRef<HTMLDivElement, LogoProps>((props, re
 LogoHeader.displayName = "LogoHeader"
 
 export const LogoFooter = React.forwardRef<HTMLDivElement, LogoProps>((props, ref) => (
-  <Logo ref={ref} size="md" variant="footer" {...props} />
+  <Logo ref={ref} size="footer-animated" variant="footer" useAnimatedGif={true} {...props} />
 ))
 LogoFooter.displayName = "LogoFooter"
 
