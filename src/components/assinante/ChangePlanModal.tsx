@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
-import { X, Check, AlertCircle } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { X, Check, AlertCircle, ExternalLink } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import type { PricingPlan } from '@/types'
 interface ChangePlanModalProps {
@@ -23,10 +24,17 @@ export function ChangePlanModal({
   availablePlans,
   onPlanChange
 }: ChangePlanModalProps) {
+  const router = useRouter()
   const [selectedPlanId, setSelectedPlanId] = useState<string>(currentPlan.id)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const handleViewAllPlans = () => {
+    // Navigate to home page with pricing section
+    router.push('/#planos-precos')
+    onClose()
+  }
+
   const handleConfirm = async () => {
     if (selectedPlanId === currentPlan.id) {
       setError('Você já está no plano selecionado')
@@ -90,7 +98,18 @@ export function ChangePlanModal({
         </div>
         {/* Available Plans */}
         <div className="space-y-3 mb-6">
-          <p className="text-sm font-medium text-gray-700">Escolha seu novo plano:</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-gray-700">Escolha seu novo plano:</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleViewAllPlans}
+              className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
+            >
+              Ver Todos os Planos
+              <ExternalLink className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
           {availablePlans.map((plan) => (
             <div
               key={plan.id}
