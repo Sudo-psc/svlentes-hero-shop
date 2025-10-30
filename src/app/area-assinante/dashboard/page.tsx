@@ -739,7 +739,9 @@ function DashboardContent() {
                               <div key={reward.id} className="rounded-lg border border-gray-100 p-4 bg-gray-50 space-y-3">
                                 <div className="flex items-start gap-3">
                                   <div className="p-2 rounded-full bg-cyan-100 text-cyan-700">
-                                    <reward.icon className="h-5 w-5" />
+                                    {reward.icon ? (
+                                      <reward.icon className="h-5 w-5" />
+                                    ) : null}
                                   </div>
                                   <div className="flex-1">
                                     <p className="font-semibold text-gray-900">{reward.name}</p>
