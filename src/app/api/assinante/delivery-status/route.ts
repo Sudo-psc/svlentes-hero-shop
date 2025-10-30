@@ -21,6 +21,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { add, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { z } from 'zod'
+import { adminAuth } from '@/lib/firebase-admin'
+import { prisma } from '@/lib/prisma'
+import {
+  ApiErrorHandler,
+  ErrorType,
+  generateRequestId,
+  validateFirebaseAuth,
+  validateSubscriptionOwnership,
+} from '@/lib/api-error-handler'
 
 // Schema de validação
 const deliveryStatusSchema = z.object({
@@ -91,9 +100,17 @@ function calculateProgress(status: DeliveryStatus['status']): number {
 /**
  * GET /api/assinante/delivery-status
  * Retorna status da entrega atual
+ *
+ * SECURITY: Valida ownership do subscriptionId para prevenir acesso não autorizado
  */
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
+  const requestId = generateRequestId()
+  const context = {
+    api: '/api/assinante/delivery-status',
+    requestId,
+    timestamp: new Date(),
+  }
 
   try {
     // Verificar circuit breaker
@@ -119,12 +136,51 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // === VALIDAÇÃO DE AUTENTICAÇÃO ===
+    const authResult = await validateFirebaseAuth(
+      request.headers.get('Authorization'),
+      adminAuth,
+      context
+    )
+
+    if (authResult instanceof NextResponse) {
+      return authResult // Error response
+    }
+
+    const { uid } = authResult
+
+    // Buscar usuário pelo Firebase UID
+    const user = await prisma.user.findUnique({
+      where: { firebaseUid: uid },
+    })
+
+    if (!user) {
+      return ApiErrorHandler.handleError(
+        ErrorType.NOT_FOUND,
+        'Usuário não encontrado no banco de dados',
+        { ...context, metadata: { firebaseUid: uid } }
+      )
+    }
+
     // Parse query params
     const { searchParams } = new URL(request.url)
     const subscriptionId = searchParams.get('subscriptionId')
 
     // Validar dados
     const validatedData = deliveryStatusSchema.parse({ subscriptionId })
+
+    // === VALIDAÇÃO DE AUTORIZAÇÃO (OWNERSHIP) ===
+    // CRÍTICO: Previne User A acessar dados de User B
+    const subscription = await validateSubscriptionOwnership(
+      prisma,
+      validatedData.subscriptionId,
+      user.id,
+      { ...context, userId: user.id }
+    )
+
+    if (subscription instanceof NextResponse) {
+      return subscription // Error 403 - acesso negado
+    }
 
     // Reset failure count on success
     if (failureCount > 0) {
@@ -145,6 +201,7 @@ export async function GET(request: NextRequest) {
       metadata: {
         responseTime,
         timestamp: new Date().toISOString(),
+        requestId,
       },
     })
 
@@ -159,6 +216,7 @@ export async function GET(request: NextRequest) {
       error: error instanceof Error ? error.message : 'Unknown error',
       failureCount,
       responseTime,
+      requestId,
     })
 
     // Tratamento específico de erros de validação
@@ -184,6 +242,7 @@ export async function GET(request: NextRequest) {
         responseTime,
         timestamp: new Date().toISOString(),
         failureCount,
+        requestId,
       },
     })
   }

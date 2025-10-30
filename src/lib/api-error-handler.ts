@@ -362,3 +362,163 @@ export async function validateFirebaseAuth(
     )
   }
 }
+
+/**
+ * Helper para validar ownership de assinatura
+ * CRÍTICO: Previne acesso não autorizado a recursos de outros usuários (LGPD Art. 6º)
+ *
+ * @param prisma - Prisma client instance
+ * @param subscriptionId - ID da assinatura a ser validada
+ * @param userId - ID do usuário autenticado
+ * @param context - Contexto da requisição para logging
+ * @returns Subscription object se o usuário é o dono, ou NextResponse com erro 403
+ */
+export async function validateSubscriptionOwnership<T = any>(
+  prisma: any, // TODO: Type as PrismaClient when schema is stable
+  subscriptionId: string,
+  userId: string,
+  context: ErrorContext
+): Promise<T | NextResponse> {
+  try {
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        id: subscriptionId,
+        userId: userId,
+      },
+    })
+
+    if (!subscription) {
+      // Log tentativa de acesso não autorizado (auditoria LGPD)
+      console.warn('[SECURITY] Tentativa de acesso não autorizado:', {
+        subscriptionId,
+        userId,
+        api: context.api,
+        requestId: context.requestId,
+        timestamp: new Date().toISOString(),
+      })
+
+      return ApiErrorHandler.handleError(
+        ErrorType.AUTHORIZATION,
+        'Acesso negado a este recurso',
+        context
+      )
+    }
+
+    return subscription
+  } catch (error) {
+    console.error('[validateSubscriptionOwnership] Erro ao validar ownership:', error)
+    return ApiErrorHandler.handleError(
+      ErrorType.DATABASE,
+      'Erro ao validar permissões',
+      context,
+      error as Error
+    )
+  }
+}
+
+/**
+ * Helper para validar ownership de pagamento
+ * CRÍTICO: Previne acesso não autorizado a dados financeiros de outros usuários
+ *
+ * @param prisma - Prisma client instance
+ * @param paymentId - ID do pagamento a ser validado
+ * @param userId - ID do usuário autenticado
+ * @param context - Contexto da requisição para logging
+ * @returns Payment object se o usuário é o dono, ou NextResponse com erro 403
+ */
+export async function validatePaymentOwnership<T = any>(
+  prisma: any, // TODO: Type as PrismaClient when schema is stable
+  paymentId: string,
+  userId: string,
+  context: ErrorContext
+): Promise<T | NextResponse> {
+  try {
+    const payment = await prisma.payment.findFirst({
+      where: {
+        id: paymentId,
+        userId: userId,
+      },
+    })
+
+    if (!payment) {
+      console.warn('[SECURITY] Tentativa de acesso não autorizado a pagamento:', {
+        paymentId,
+        userId,
+        api: context.api,
+        requestId: context.requestId,
+        timestamp: new Date().toISOString(),
+      })
+
+      return ApiErrorHandler.handleError(
+        ErrorType.AUTHORIZATION,
+        'Acesso negado a este recurso',
+        context
+      )
+    }
+
+    return payment
+  } catch (error) {
+    console.error('[validatePaymentOwnership] Erro ao validar ownership:', error)
+    return ApiErrorHandler.handleError(
+      ErrorType.DATABASE,
+      'Erro ao validar permissões',
+      context,
+      error as Error
+    )
+  }
+}
+
+/**
+ * Helper para validar ownership de pedido
+ * CRÍTICO: Previne acesso não autorizado a dados de pedidos de outros usuários
+ *
+ * @param prisma - Prisma client instance
+ * @param orderId - ID do pedido a ser validado
+ * @param userId - ID do usuário autenticado
+ * @param context - Contexto da requisição para logging
+ * @returns Order object se o usuário é o dono, ou NextResponse com erro 403
+ */
+export async function validateOrderOwnership<T = any>(
+  prisma: any, // TODO: Type as PrismaClient when schema is stable
+  orderId: string,
+  userId: string,
+  context: ErrorContext
+): Promise<T | NextResponse> {
+  try {
+    // Buscar ordem através da subscription do usuário
+    const order = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+        subscription: {
+          userId: userId,
+        },
+      },
+    })
+
+    if (!order) {
+      console.warn('[SECURITY] Tentativa de acesso não autorizado a pedido:', {
+        orderId,
+        userId,
+        api: context.api,
+        requestId: context.requestId,
+        timestamp: new Date().toISOString(),
+      })
+
+      return ApiErrorHandler.handleError(
+        ErrorType.AUTHORIZATION,
+        'Acesso negado a este recurso',
+        context
+      )
+    }
+
+    return order
+  } catch (error) {
+    console.error('[validateOrderOwnership] Erro ao validar ownership:', error)
+    return ApiErrorHandler.handleError(
+      ErrorType.DATABASE,
+      'Erro ao validar permissões',
+      context,
+      error as Error
+    )
+  }
+}
