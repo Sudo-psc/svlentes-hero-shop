@@ -8,6 +8,10 @@ export const APP_CONFIG = {
     apiKeySandbox: process.env.ASAAS_API_KEY_SANDBOX,
     apiKeyProduction: process.env.ASAAS_API_KEY_PROD,
   },
+  stripe: {
+    publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
+    pricingTableId: process.env.NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID || '',
+  },
   urls: {
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://svlentes.com.br',
     stripeBillingPortal: process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL || 'https://billing.stripe.com/p/login/test00000000000000000',

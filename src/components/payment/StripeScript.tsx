@@ -18,9 +18,11 @@ export const StripeScript: React.FC<StripeScriptProps> = ({
         src="https://js.stripe.com/v3/"
         strategy="afterInteractive"
         onLoad={() => {
-          // Initialize Stripe
-          if (typeof window !== 'undefined' && (window as any).Stripe) {
-            (window as any).Stripe = (window as any).Stripe(publishableKey)
+          if (typeof window !== 'undefined' && typeof (window as any).Stripe === 'function') {
+            const factory = (window as any).Stripe
+            if (!(window as any).__stripeClient) {
+              (window as any).__stripeClient = factory(publishableKey)
+            }
           }
         }}
         onError={(e) => {
