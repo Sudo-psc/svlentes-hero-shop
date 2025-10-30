@@ -1,5 +1,6 @@
 // @ts-nocheck - Type incompatibilities in subscriber dashboard - needs refactoring
 'use client'
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -18,7 +19,7 @@ export default function ConfiguracoesPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -178,11 +179,10 @@ export default function ConfiguracoesPage() {
         </Button>
         {/* Message Alert */}
         {message && (
-          <div className={`mb-6 p-4 rounded-lg border ${
-            message.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
+          <div className={`mb-6 p-4 rounded-lg border ${message.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
               : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
+            }`}>
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
               <p className="font-medium">{message.text}</p>
@@ -295,4 +295,3 @@ export default function ConfiguracoesPage() {
     </div>
   )
 }
-export const dynamic = 'force-dynamic'

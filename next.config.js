@@ -24,10 +24,9 @@ const nextConfig = {
     generateBuildId: async () => {
         return 'build-' + Date.now()
     },
-    // Turbopack configuration (Next.js 16 default)
-    // Empty config silences migration warning while keeping webpack compat
+    // Turbopack configuration (empty to silence warning in Next.js 16)
     turbopack: {},
-    // Webpack configuration (continue using webpack for now)
+    // Webpack configuration (still used as fallback)
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {

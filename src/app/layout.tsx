@@ -10,15 +10,12 @@ import { WhatsAppFloat } from '@/components/layout/WhatsAppFloat'
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor'
 import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
 import { ServiceWorkerCleanup } from '@/components/performance/ServiceWorkerCleanup'
-import { ErrorHandler } from '@/components/performance/ErrorHandler'
 import { initializeChunkErrorHandler } from '@/lib/chunk-error-handler'
-import { PrivacyProvider } from '@/components/privacy/PrivacyProvider'
 import { CookieConsent } from '@/components/privacy/CookieConsent'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
 import { CriticalCSS } from '@/components/performance/CriticalCSS'
 import { StripeScript } from '@/components/payment/StripeScript'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClientProviders } from '@/components/providers/ClientProviders'
 import {
     baseMetadata,
     generateOrganizationStructuredData,
@@ -49,48 +46,43 @@ export default function RootLayout({
     // const websiteData = generateWebSiteStructuredData()
 
     return (
-        <ClerkProvider>
-            <html lang="pt-BR"  className="font-sans">{/* Temporariamente usando fontes do sistema */}
-                <head>
-                    <CriticalCSS />
-                    {/* Facebook Domain Verification */}
-                    <meta name="facebook-domain-verification" content="x8z1y4rfe0q22puqwl053agwm7y5w4" />
-                    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
-                    <link rel="icon" href="/images/favicon-16x16.png" sizes="16x16" type="image/png" />
-                    <link rel="icon" href="/images/favicon-32x32.png" sizes="32x32" type="image/png" />
-                    <link rel="icon" href="/images/favicon-192.png" sizes="192x192" type="image/png" />
-                    <link rel="icon" href="/images/favicon-512.png" sizes="512x512" type="image/png" />
-                    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
-                    <link rel="manifest" href="/site.webmanifest" />
-                      <link rel="dns-prefetch" href="https://api.whatsapp.com" />
-                    <link rel="dns-prefetch" href="https://js.stripe.com" />
-                    <meta name="theme-color" content="#0f4c75" />
-                    <meta name="mobile-web-app-capable" content="yes" />
-                    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-                    <meta name="format-detection" content="telephone=no" />
-                    {/* CSP gerenciado pelo next.config.js - sem nonce necessário */}
-                </head>
-                <body className="antialiased">
-                    <AuthProvider>
-                        <PrivacyProvider>
-                            <ErrorHandler />
-                            <ServiceWorkerCleanup />
-                            <PerformanceMonitor />
-                            <ResourcePreloader />
-                            {/* <StructuredData data={[organizationData, websiteData]} /> */}
-                            <Header />
-                            <main className="pt-16 lg:pt-20">
-                                {children}
-                            </main>
-                            <Footer />
-                            <CookieConsent />
-                            <WhatsAppFloat />
-                            <SmoothScroll />
-                            <StripeScript publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} />
-                        </PrivacyProvider>
-                    </AuthProvider>
-                </body>
-            </html>
-        </ClerkProvider>
+        <html lang="pt-BR"  className="font-sans">{/* Temporariamente usando fontes do sistema */}
+            <head>
+                <CriticalCSS />
+                {/* Facebook Domain Verification */}
+                <meta name="facebook-domain-verification" content="x8z1y4rfe0q22puqwl053agwm7y5w4" />
+                <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+                <link rel="icon" href="/images/favicon-16x16.png" sizes="16x16" type="image/png" />
+                <link rel="icon" href="/images/favicon-32x32.png" sizes="32x32" type="image/png" />
+                <link rel="icon" href="/images/favicon-192.png" sizes="192x192" type="image/png" />
+                <link rel="icon" href="/images/favicon-512.png" sizes="512x512" type="image/png" />
+                <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
+                <link rel="manifest" href="/site.webmanifest" />
+                  <link rel="dns-prefetch" href="https://api.whatsapp.com" />
+                <link rel="dns-prefetch" href="https://js.stripe.com" />
+                <meta name="theme-color" content="#0f4c75" />
+                <meta name="mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+                <meta name="format-detection" content="telephone=no" />
+                {/* CSP gerenciado pelo next.config.js - sem nonce necessário */}
+            </head>
+            <body className="antialiased">
+                <ClientProviders>
+                    <ServiceWorkerCleanup />
+                    <PerformanceMonitor />
+                    <ResourcePreloader />
+                    {/* <StructuredData data={[organizationData, websiteData]} /> */}
+                    <Header />
+                    <main className="pt-16 lg:pt-20">
+                        {children}
+                    </main>
+                    <Footer />
+                    <CookieConsent />
+                    <WhatsAppFloat />
+                    <SmoothScroll />
+                    <StripeScript publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} />
+                </ClientProviders>
+            </body>
+        </html>
     )
 }

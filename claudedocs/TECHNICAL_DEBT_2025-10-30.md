@@ -54,16 +54,35 @@ if (pathname.startsWith('/api/') && !isBuildTime) {
 
 ---
 
-### 2. Build Warning: Non-Standard NODE_ENV
-**File**: Build process
+### 2. 🚨 CRITICAL: Non-Standard NODE_ENV Exposing Healthcare Data
+**File**: Build process, systemd service configuration
 **Issue**: `NODE_ENV=development` set in production environment
-**Impact**: Potential performance degradation, verbose logging in production
+**Priority**: 🔴 **HIGH** (upgraded from LOW)
+**Impact**:
+- **Performance degradation** in production builds
+- **Verbose development logging** exposes sensitive data in production
+- **⚠️ HEALTHCARE DATA EXPOSURE RISK**: Development logs may contain:
+  - Patient personally identifiable information (PII)
+  - Medical prescriptions and health records
+  - Contact lens specifications (medical data)
+  - Payment and billing information
+  - LGPD-protected personal data (CPF, addresses, phone numbers)
+- **Compliance Violation**: LGPD Article 46 - inadequate security for sensitive personal data
+- **CFM/CRM Risk**: Medical data exposure violates patient confidentiality regulations
 
 **Current State**:
 ```bash
 $ env | grep NODE_ENV
 NODE_ENV=development
 ```
+
+**Security Concerns**:
+Development mode enables:
+- Detailed stack traces with database queries containing patient data
+- Unredacted API request/response logging
+- Sensitive variable dumps in error messages
+- Extended debugging information in browser console
+- Source maps exposing internal architecture
 
 **Solution**:
 ```bash
@@ -77,12 +96,22 @@ Environment="NODE_ENV=production"
 **Files to Check**:
 - `/etc/systemd/system/svlentes-nextjs.service`
 - `~/.bashrc`, `~/.profile`, `/etc/environment`
+- `/root/.bashrc` (root user profile)
 
-**Action Items**:
-- [ ] Locate where NODE_ENV=development is set
-- [ ] Update systemd service file if needed
-- [ ] Restart service after fix
+**Urgent Action Items**:
+- [ ] **IMMEDIATE**: Locate where NODE_ENV=development is set
+- [ ] **IMMEDIATE**: Review logs for any patient data exposure (`journalctl -u svlentes-nextjs -n 1000 | grep -E "email|cpf|prescription"`)
+- [ ] **IMMEDIATE**: Update systemd service file to `NODE_ENV=production`
+- [ ] **IMMEDIATE**: Remove from all shell profiles (`~/.bashrc`, `/etc/environment`)
+- [ ] **IMMEDIATE**: Restart service: `systemctl restart svlentes-nextjs`
 - [ ] Verify with `journalctl -u svlentes-nextjs -n 20`
+- [ ] Audit log retention policies - ensure sensitive logs are purged
+- [ ] Implement log sanitization for any remaining development logging
+- [ ] Document incident if patient data was exposed (LGPD compliance)
+
+**Assigned**: System Administrator
+**ETA**: Same day (urgent remediation required)
+**Related**: LGPD Article 46, 48 (security and breach notification)
 
 ---
 
@@ -236,14 +265,72 @@ arquivoUrl: '#' // TODO: gerar URL real do arquivo
 // Context: Why this is needed
 // Impact: What happens without this
 // Solution: Specific implementation steps
+// Compliance: NONE|LGPD|DATA_PRIVACY|SECURITY
+// Severity: CRITICAL|HIGH|MEDIUM|LOW
 // Related: GitHub issue, design doc, etc.
 ```
 
+**Extended Example**:
+```typescript
+// TODO: [HIGH] Implement real prescription validation with ANVISA API
+// Context: Currently using mock validation - medical safety requirement
+// Impact: Invalid prescriptions may be approved, violating CFM regulations
+// Solution:
+//   1. Integrate ANVISA prescription validation endpoint
+//   2. Validate CRM registration of prescribing physician
+//   3. Check prescription expiry (max 1 year for contact lenses)
+//   4. Implement retry logic and offline fallback
+// Compliance: SECURITY, DATA_PRIVACY (prescription = sensitive health data)
+// Severity: CRITICAL (healthcare safety)
+// Related: #medical-validation-spec, CFM Resolution 2.227/2018
+```
+
+**Enforcement**:
+
+To ensure consistent TODO quality and prevent technical debt accumulation:
+
+1. **Pre-commit Hook** (via Husky):
+   ```javascript
+   // .husky/pre-commit
+   // Validate TODO format before allowing commit
+   const todoPattern = /TODO:.*(?!Context:|Impact:|Solution:|Compliance:|Severity:)/
+   // Reject commits with incomplete TODOs
+   ```
+
+2. **ESLint Rule**:
+   ```javascript
+   // .eslintrc.js
+   rules: {
+     'no-warning-comments': ['warn', {
+       terms: ['TODO'],
+       location: 'start',
+       // Require structured format
+     }]
+   }
+   ```
+
+3. **Automated Issue Creation**:
+   - TODOs marked `Severity: CRITICAL` or `Severity: HIGH` automatically trigger GitHub issue creation
+   - Use GitHub Actions workflow to scan code on PR merge
+   - Auto-assign to team lead based on file ownership (CODEOWNERS)
+   - Link to `.github/ISSUE_TEMPLATE/technical-debt.md` template
+
+4. **CI/CD Integration**:
+   ```yaml
+   # .github/workflows/todo-checker.yml
+   # Scan for HIGH/CRITICAL TODOs and create issues
+   # Block merge if CRITICAL TODOs lack GitHub issue reference
+   ```
+
 **Action Items**:
 - [ ] Review all 12 existing TODOs
-- [ ] Add context and priority to each
-- [ ] Convert high-priority items to GitHub issues
-- [ ] Assign owners for critical TODOs
+- [ ] Run automated TODO formatter across codebase
+- [ ] Convert TODOs to new template format
+- [ ] Create GitHub issues for HIGH/CRITICAL TODOs (auto-assign owners)
+- [ ] Implement Husky pre-commit hook for TODO validation
+- [ ] Add ESLint rule for TODO format enforcement
+- [ ] Set up GitHub Actions workflow for automated issue creation
+- [ ] Document TODO standards in CONTRIBUTING.md
 
 ---
 
@@ -253,22 +340,23 @@ arquivoUrl: '#' // TODO: gerar URL real do arquivo
 **Resolved**: 1 (2025-10-30)
 **Remaining**: 17
 
-- 🔴 High Priority: ~~2~~ → **1 remaining** (NODE_ENV configuration)
-  - ✅ Rate limiting - RESOLVED
+- 🔴 High Priority: ~~2~~ → **1 remaining** (NODE_ENV configuration - UPGRADED FROM LOW)
+  - ✅ Rate limiting - RESOLVED (2025-10-30)
+  - 🚨 NODE_ENV Healthcare Data Exposure - **URGENT** (same-day resolution required)
 - 🟡 Medium Priority: 2 (Configuration/Optimization)
 - 🟢 Low Priority: 14 (Code Quality/UX)
 
 **Categories**:
-- Security: ~~1~~ → **0 (Rate limiting RESOLVED)**
-- Performance: 1 (NODE_ENV)
+- Security: ~~1~~ → **1 CRITICAL** (NODE_ENV healthcare data exposure - UPGRADED)
+- Performance: 0 (NODE_ENV reclassified as Security issue)
 - Configuration: 1 (YAML config)
 - Code Quality: 15 (Various)
 
 **Estimated Effort Remaining**:
-- High Priority: 4 hours (NODE_ENV only)
+- High Priority: 2-4 hours (NODE_ENV urgent remediation + log audit)
 - Medium Priority: 4-8 hours
 - Low Priority: 2-4 hours
-- **Total**: 10-16 hours (down from 14-28)
+- **Total**: 8-16 hours (down from 14-28)
 
 ---
 

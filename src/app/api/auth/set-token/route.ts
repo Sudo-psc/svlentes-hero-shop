@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
         sameSite: 'lax',
         path: '/',
         maxAge: 0, // Immediately expire
+        domain: process.env.NODE_ENV === 'production' ? '.svlentes.com.br' : undefined, // Allow subdomain access in production
       })
       return response
     }
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax', // CSRF protection
       path: '/',
       maxAge: 3600, // 1 hour, matches Firebase token expiry
+      domain: process.env.NODE_ENV === 'production' ? '.svlentes.com.br' : undefined, // Allow subdomain access in production
     })
 
     return response

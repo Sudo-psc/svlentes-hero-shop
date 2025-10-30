@@ -7,17 +7,31 @@ import { useAuth } from '@/contexts/AuthContext'
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons'
 export default function LoginPage() {
   const router = useRouter()
-  const { user, loading: authLoading, signIn } = useAuth()
+  const {
+    user,
+    loading: authLoading,
+    signIn,
+    status,
+    fallbackSession,
+    lastResolution,
+    activateGuestAccess
+  } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   useEffect(() => {
     // If user is already authenticated, redirect to dashboard
-    if (user && !authLoading) {
-      router.push('/area-assinante/dashboard')
+    if (!authLoading) {
+      if (user) {
+        router.push('/area-assinante/dashboard')
+        return
+      }
+      if (status.fallbackActive && fallbackSession) {
+        router.push('/area-assinante/dashboard?modo=fallback')
+      }
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, status.fallbackActive, fallbackSession])
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -36,12 +50,18 @@ export default function LoginPage() {
       // Use a full navigation to ensure server-side rendering reflects
       // the authenticated session (reads the HttpOnly cookie).
       if (typeof window !== 'undefined') {
-        window.location.replace('/area-assinante/dashboard')
+        if (status.fallbackActive && fallbackSession) {
+          router.push('/area-assinante/dashboard?modo=fallback')
+          router.refresh()
+        } else {
+          window.location.replace('/area-assinante/dashboard')
+        }
       } else {
         // Fallback to client router when window is not available
         router.push('/area-assinante/dashboard')
         router.refresh()
       }
+      setIsLoading(false)
     } catch (error: any) {
       console.error('[LOGIN] Firebase error:', error)
       // Mapear erros do Firebase para mensagens amigáveis
@@ -94,6 +114,17 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+        {!error && lastResolution && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg text-sm">
+            {lastResolution.message}
+          </div>
+        )}
+        {status.fallbackActive && fallbackSession && (
+          <div className="bg-cyan-50 border border-cyan-200 text-cyan-700 px-4 py-3 rounded-lg text-sm">
+            Modo offline ativado. Último acesso sincronizado em{' '}
+            {new Date(fallbackSession.createdAt).toLocaleString()}.
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -141,6 +172,24 @@ export default function LoginPage() {
           >
             {isLoading ? 'Entrando...' : 'Entrar'}
           </Button>
+          {status.isOffline && (
+            <p className="text-xs text-gray-500 text-center">
+              Sem conexão com a internet. Você pode usar os dados salvos ou entrar como convidado.
+            </p>
+          )}
+          {status.isOffline && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                activateGuestAccess()
+                setIsLoading(false)
+              }}
+            >
+              Acessar como convidado
+            </Button>
+          )}
         </form>
         {/* Social Login Buttons */}
         <SocialLoginButtons onError={setError} />

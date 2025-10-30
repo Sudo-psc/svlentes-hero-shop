@@ -110,10 +110,10 @@ function DashboardContent() {
   const gamificationLevel = gamificationProfile?.points.currentLevel ?? 1
   const gamificationProgress = gamificationProfile
     ? Math.min(
-        100,
-        (gamificationProfile.points.experiencePoints /
-          Math.max(gamificationProfile.points.experienceToNextLevel, 1)) * 100
-      )
+      100,
+      (gamificationProfile.points.experiencePoints /
+        Math.max(gamificationProfile.points.experienceToNextLevel, 1)) * 100
+    )
     : 0
   const achievements = gamificationProfile?.achievements
     ? gamificationProfile.achievements.slice(0, 6)
@@ -840,5 +840,3 @@ export default function DashboardPage() {
     </PricingPlansProvider>
   )
 }
-
-export const dynamic = 'force-dynamic'

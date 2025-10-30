@@ -30,10 +30,20 @@ export function ChangePlanModal({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const handleViewAllPlans = () => {
-    // Close modal first, then navigate to ensure scroll works
+    // Close modal first, then navigate using client-side routing
     onClose()
-    // Use window.location for full navigation to fragment
-    window.location.href = '/#planos-precos'
+
+    // Wait for modal to fully close before navigating
+    setTimeout(() => {
+      // Try smooth scrolling to the element first
+      const element = document.getElementById('planos-precos')
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        // Fallback to Next.js router navigation if element not found on current page
+        router.push('/#planos-precos')
+      }
+    }, 200) // Small delay to ensure modal has fully closed
   }
 
   const handleConfirm = async () => {
