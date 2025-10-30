@@ -185,7 +185,8 @@ function DashboardContent() {
       active: false,
       onClick: () => {
         const section = document.getElementById('gamificacao')
-        section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        section?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
       }
     },
     {
