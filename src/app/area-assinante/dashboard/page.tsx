@@ -425,10 +425,6 @@ function DashboardContent() {
                 >
                   <SettingsIcon className="h-4 w-4 mr-2" /> Configurações
                 </Button>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={() => showInfo('Tour em breve', 'Nossa experiência guiada estará disponível em breve.')}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" /> Iniciar Tour
-                </Button>
               </div>
             </div>
           </header>
