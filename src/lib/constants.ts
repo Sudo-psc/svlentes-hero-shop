@@ -1,7 +1,9 @@
 export const APP_CONFIG = {
   whatsapp: {
-    number: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511947038078',
-    businessNumber: process.env.WHATSAPP_BUSINESS_NUMBER || '5511947038078',
+    number: process.env.NEXT_PUBLIC_WHATSAPP_CHATBOT || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5533999898026',
+    businessNumber: process.env.WHATSAPP_BUSINESS_NUMBER || '5533999898026',
+    chatbot: process.env.NEXT_PUBLIC_WHATSAPP_CHATBOT || '5533999898026',
+    support: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '5533986061427',
   },
   asaas: {
     environment: (process.env.ASAAS_ENV as 'sandbox' | 'production') || 'sandbox',
