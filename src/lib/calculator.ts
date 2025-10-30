@@ -90,11 +90,14 @@ export function validateCalculatorInput(input: Partial<CalculatorInput>): {
  * @returns Número validado ou null se inválido
  */
 export function validateCustomUsageDays(value: string): number | null {
-  const trimmed = value.trim()
+  const trimmed = value.trim().replace(',', '.')
   if (!trimmed) return null
   // Rejeitar se tiver ponto decimal
-  if (trimmed.includes('.') || trimmed.includes(',')) {
-    return null
+  if (trimmed.includes('.')) {
+    const parts = trimmed.split('.')
+    if (parts.length > 2 || (parts.length === 2 && parseInt(parts[1], 10) !== 0)) {
+      return null
+    }
   }
   const num = parseInt(trimmed, 10)
   if (isNaN(num) || num < 1 || num > 31) {
