@@ -347,8 +347,11 @@ src/
 ```bash
 # Application
 NEXT_PUBLIC_APP_URL=https://svlentes.shop
-NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # Chatbot: (33) 99989-8026
-# Note: Direct support number is (33) 98606-1427 - used in messages, not env vars
+
+# WhatsApp Contact Numbers (configured via environment variables)
+NEXT_PUBLIC_WHATSAPP_CHATBOT=5533999898026  # Chatbot: (33) 99989-8026 - SendPulse automated support
+NEXT_PUBLIC_SUPPORT_PHONE=5533986061427      # Direct Support: (33) 98606-1427 - Human support
+NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026    # Legacy variable (kept for backward compatibility)
 
 # Asaas Payment (Required for production)
 ASAAS_ENV=production
@@ -417,6 +420,17 @@ NEXTAUTH_URL=https://svlentes.shop
 - Automated response generation with context awareness
 - Ticket escalation for complex queries
 - Direct contact flow via `/api/whatsapp-redirect`
+
+**Phone Number Utilities (src/lib/phone-utils.ts):**
+- **Centralized phone number management** via environment variables
+- Phone numbers configured in `.env`:
+  - `NEXT_PUBLIC_WHATSAPP_CHATBOT` - Automated chatbot support (33) 99989-8026
+  - `NEXT_PUBLIC_SUPPORT_PHONE` - Direct human support (33) 98606-1427
+- **formatPhoneNumber()** - Formats raw digits to Brazilian format: `5533999898026` → `(33) 99989-8026`
+- **getWhatsAppLink()** - Generates WhatsApp URLs with pre-filled messages
+- **getPhoneNumbers()** - Retrieves phone numbers from environment variables
+- **getFormattedPhoneNumbers()** - Returns both raw and formatted phone numbers
+- Usage: Import utilities instead of hardcoding phone numbers in components
 
 **Chatbot Authentication System (src/lib/chatbot-auth-handler.ts):**
 - **Automatic phone-based authentication**: No OTP codes required
@@ -790,6 +804,7 @@ npm run test:all                # Complete resilience test suite
 - **Calculator**: `src/lib/calculator.ts` - Savings calculation algorithms
 - **Payments**: `src/lib/asaas.ts` - Asaas API integration
 - **WhatsApp**: `src/lib/sendpulse-client.ts` - SendPulse API client
+- **Phone Utilities**: `src/lib/phone-utils.ts` - Phone number formatting and WhatsApp link generation
 - **AI Support**: `src/lib/langchain-support-processor.ts` - NLP processing
 - **Authentication**: `src/lib/chatbot-auth-handler.ts` - WhatsApp chatbot auth
 
