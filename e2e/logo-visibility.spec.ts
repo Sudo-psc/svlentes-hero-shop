@@ -16,7 +16,6 @@ test.describe('SV Lentes logo visibility', () => {
         await footerLogo.first().screenshot({ path: 'playwright-report/footer-logo.png' })
     })
 })
-import { test, expect } from '@playwright/test'
 
 test.describe('SVLentes Logo - Visual & Prominence', () => {
     test.beforeEach(async ({ page }) => {
