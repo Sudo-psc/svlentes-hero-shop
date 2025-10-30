@@ -31,6 +31,7 @@ import {
   createSuccessResponse,
 } from '@/lib/api-error-handler'
 import { unstable_cache } from 'next/cache'
+import { logAudit, AuditAction } from '@/lib/audit-logger'
 
 // ============================================================================
 // SCHEMAS DE VALIDAÇÃO
@@ -351,6 +352,31 @@ export async function GET(request: NextRequest) {
       receiptUrl: payment.transactionReceiptUrl,
       description: payment.description,
     }))
+
+    // === LGPD AUDIT LOG ===
+    // Registrar acesso ao histórico de pagamentos (dados financeiros sensíveis)
+    // LGPD Article 7: tratamento de dados financeiros requer rastreamento
+    await logAudit({
+      userId: user.id,
+      action: AuditAction.ACCESS_PAYMENT_HISTORY,
+      entityType: 'Payment',
+      entityId: null, // Null para listagens
+      oldValue: null,
+      newValue: {
+        accessType: 'history',
+        recordCount: formattedPayments.length,
+        totalRecords: totalPayments,
+        filters: {
+          startDate: validatedQuery.startDate || null,
+          endDate: validatedQuery.endDate || null,
+          status: validatedQuery.status || null,
+          page: validatedQuery.page,
+          limit: validatedQuery.limit,
+        },
+        // Sanitização automática de valores financeiros pelo audit-logger
+      },
+      request,
+    })
 
     const response: PaymentHistoryResponse = {
       payments: formattedPayments,

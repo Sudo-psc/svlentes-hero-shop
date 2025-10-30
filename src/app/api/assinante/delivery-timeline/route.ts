@@ -10,6 +10,11 @@ import {
   validateFirebaseAuth,
   createSuccessResponse,
 } from '@/lib/api-error-handler'
+import {
+  getUserByFirebaseUid,
+  getActiveSubscription,
+  isErrorResponse,
+} from '@/lib/api-helpers'
 
 /**
  * GET /api/assinante/delivery-timeline
@@ -49,45 +54,22 @@ export async function GET(request: NextRequest) {
 
     const { uid } = authResult
 
-    // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
-    })
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
 
-    if (!user) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Usuário não encontrado',
-        { ...context, userId: uid }
-      )
-    }
+    // === OWNERSHIP VALIDATION: Buscar assinatura ativa do usuário ===
+    const subscriptionResult = await getActiveSubscription(user.id, context)
+    if (isErrorResponse(subscriptionResult)) return subscriptionResult
+    const subscription = subscriptionResult
 
-    // Buscar assinatura ativa
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: user.id,
-        status: 'ACTIVE',
-      },
-      select: {
-        id: true,
-        nextBillingDate: true,
-        renewalDate: true,
-      },
-    })
-
-    if (!subscription) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Assinatura ativa não encontrada',
-        { ...context, userId: user.id }
-      )
-    }
-
-    // === BUSCAR ÚLTIMAS 3 ENTREGAS CONCLUÍDAS ===
+    // === BUSCAR ÚLTIMAS 3 ENTREGAS CONCLUÍDAS COM OWNERSHIP ===
+    // Orders já estão filtrados pela subscription que pertence ao usuário
     const pastDeliveries = await prisma.order.findMany({
       where: {
-        subscriptionId: subscription.id,
-        deliveryStatus: 'DELIVERED'
+        subscriptionId: subscription.id, // ← OWNERSHIP via subscription
+        deliveryStatus: 'DELIVERED',
       },
       orderBy: {
         deliveredAt: 'desc'
@@ -111,13 +93,14 @@ export async function GET(request: NextRequest) {
     const now = new Date()
     const nextBillingDate = subscription.nextBillingDate || subscription.renewalDate
 
-    // Buscar próxima entrega pendente/em trânsito (se existir)
+    // === BUSCAR PRÓXIMA ENTREGA PENDENTE COM OWNERSHIP ===
+    // Orders já estão filtrados pela subscription que pertence ao usuário
     const nextPendingOrder = await prisma.order.findFirst({
       where: {
-        subscriptionId: subscription.id,
+        subscriptionId: subscription.id, // ← OWNERSHIP via subscription
         deliveryStatus: {
-          in: ['PENDING', 'SHIPPED', 'IN_TRANSIT']
-        }
+          in: ['PENDING', 'SHIPPED', 'IN_TRANSIT'],
+        },
       },
       orderBy: {
         orderDate: 'desc'

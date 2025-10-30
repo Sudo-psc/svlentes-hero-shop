@@ -10,6 +10,11 @@ import {
   validateFirebaseAuth,
   createSuccessResponse,
 } from '@/lib/api-error-handler'
+import {
+  getUserByFirebaseUid,
+  getActiveSubscription,
+  isErrorResponse,
+} from '@/lib/api-helpers'
 
 /**
  * GET /api/assinante/savings-widget
@@ -49,51 +54,28 @@ export async function GET(request: NextRequest) {
 
     const { uid } = authResult
 
-    // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
-    })
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
 
-    if (!user) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Usuário não encontrado',
-        { ...context, userId: uid }
-      )
-    }
-
-    // Buscar assinatura ativa
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: user.id,
-        status: 'ACTIVE',
-      },
-      select: {
-        id: true,
-        monthlyValue: true,
-        startDate: true,
-      },
-    })
-
-    if (!subscription) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Assinatura ativa não encontrada',
-        { ...context, userId: user.id }
-      )
-    }
+    // === OWNERSHIP VALIDATION: Buscar assinatura ativa do usuário ===
+    const subscriptionResult = await getActiveSubscription(user.id, context)
+    if (isErrorResponse(subscriptionResult)) return subscriptionResult
+    const subscription = subscriptionResult
 
     const monthlyValue = Number(subscription.monthlyValue)
     const theoreticalRetailPrice = monthlyValue * 1.5 // 50% mais caro compra avulsa
 
-    // === BUSCAR TODOS PAGAMENTOS CONFIRMADOS ===
+    // === BUSCAR TODOS PAGAMENTOS CONFIRMADOS COM OWNERSHIP ===
+    // Filtrar APENAS pagamentos do usuário autenticado e sua subscription
     const allPayments = await prisma.payment.findMany({
       where: {
-        userId: user.id,
-        subscriptionId: subscription.id,
+        userId: user.id, // ← OWNERSHIP FILTER
+        subscriptionId: subscription.id, // ← OWNERSHIP FILTER
         status: {
-          in: ['RECEIVED', 'CONFIRMED']
-        }
+          in: ['RECEIVED', 'CONFIRMED'],
+        },
       },
       select: {
         amount: true,

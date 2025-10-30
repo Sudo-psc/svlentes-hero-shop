@@ -29,35 +29,12 @@ import {
   validateFirebaseAuth,
   createSuccessResponse,
 } from '@/lib/api-error-handler'
-
-// ============================================================================
-// SCHEMAS DE VALIDAÇÃO
-// ============================================================================
-
-const prescriptionEyeSchema = z.object({
-  sphere: z.number().min(-20).max(20),
-  cylinder: z.number().min(-6).max(6).optional(),
-  axis: z.number().min(0).max(180).optional(),
-  addition: z.number().min(0).max(4).optional(), // Para lentes multifocais
-})
-
-const prescriptionUploadSchema = z.object({
-  file: z.string(), // Base64 encoded file
-  fileName: z.string(),
-  fileSize: z.number().max(5 * 1024 * 1024, 'Arquivo deve ter no máximo 5MB'),
-  mimeType: z.enum(['application/pdf', 'image/jpeg', 'image/png'], {
-    errorMap: () => ({ message: 'Formato inválido. Use PDF, JPG ou PNG' }),
-  }),
-  leftEye: prescriptionEyeSchema,
-  rightEye: prescriptionEyeSchema,
-  doctorName: z.string().min(1, 'Nome do médico é obrigatório'),
-  doctorCRM: z.string().regex(/^CRM-[A-Z]{2}\s+\d{4,6}$/, 'CRM inválido (use formato: CRM-UF 123456)'),
-  prescriptionDate: z.string().datetime(),
-})
-
-const prescriptionUpdateSchema = prescriptionUploadSchema.partial().extend({
-  prescriptionId: z.string().cuid(),
-})
+import {
+  prescriptionEyeSchema,
+  prescriptionUploadSchema,
+  prescriptionUpdateSchema,
+} from '@/lib/validation-schemas'
+import { logAudit, AuditAction } from '@/lib/audit-logger'
 
 // ============================================================================
 // TYPES
@@ -245,6 +222,24 @@ export async function GET(request: NextRequest) {
     const { status, daysUntilExpiry } = calculatePrescriptionStatus(mockExpiresAt)
     const alerts = generateAlerts(status, daysUntilExpiry)
 
+    // === LGPD AUDIT LOG ===
+    // Registrar acesso a dados médicos (CRÍTICO - Article 11 LGPD)
+    // Dados de prescrição são categoria ESPECIAL (dados de saúde)
+    await logAudit({
+      userId: user.id,
+      action: AuditAction.ACCESS_PRESCRIPTION,
+      entityType: 'Prescription',
+      entityId: null, // Null para listagens
+      oldValue: null,
+      newValue: {
+        accessType: 'list',
+        recordCount: 2, // 1 current + 1 history
+        includesCurrent: true,
+        includesHistory: true,
+      },
+      request,
+    })
+
     const response: PrescriptionResponse = {
       current: {
         id: 'mock-prescription-id',
@@ -388,12 +383,26 @@ export async function POST(request: NextRequest) {
     // TODO: Salvar prescrição no banco
     // await prisma.prescription.create({ ... })
 
-    // Log auditoria LGPD
-    console.log('[Prescription] Upload realizado:', {
+    // === LGPD AUDIT LOG ===
+    // Registrar upload de prescrição médica (CRÍTICO - dados de saúde)
+    // IMPORTANTE: NÃO logar conteúdo do arquivo (base64), apenas METADADOS
+    await logAudit({
       userId: user.id,
-      requestId,
-      doctorCRM: validatedData.doctorCRM,
-      timestamp: new Date().toISOString(),
+      action: AuditAction.UPLOAD_PRESCRIPTION,
+      entityType: 'Prescription',
+      entityId: `prescription-${Date.now()}`, // Mock ID
+      oldValue: null, // Null para CREATE
+      newValue: {
+        fileName: validatedData.fileName,
+        fileSize: validatedData.file?.length || 0, // Base64 size (NOT content!)
+        uploadedAt: new Date().toISOString(),
+        doctorName: validatedData.doctorName,
+        doctorCRM: validatedData.doctorCRM,
+        prescriptionDate: validatedData.prescriptionDate,
+        expiresAt: expiresAt.toISOString(),
+        // CRÍTICO: NÃO incluir file content, apenas metadados
+      },
+      request,
     })
 
     const { status, daysUntilExpiry } = calculatePrescriptionStatus(expiresAt)
@@ -493,14 +502,22 @@ export async function PUT(request: NextRequest) {
     }
 
     // TODO: Verificar ownership da prescrição
-    // TODO: Atualizar prescrição no banco
+    // TODO: Atualizar prescrição no banco (capturar oldValue)
 
-    // Log auditoria LGPD
-    console.log('[Prescription] Atualização realizada:', {
+    // === LGPD AUDIT LOG ===
+    // Registrar atualização de prescrição (dados médicos sensíveis)
+    await logAudit({
       userId: user.id,
-      prescriptionId: validatedData.prescriptionId,
-      requestId,
-      timestamp: new Date().toISOString(),
+      action: AuditAction.UPDATE_PRESCRIPTION,
+      entityType: 'Prescription',
+      entityId: validatedData.prescriptionId,
+      oldValue: null, // TODO: Capturar prescrição antiga quando implementar banco
+      newValue: {
+        prescriptionId: validatedData.prescriptionId,
+        updatedFields: Object.keys(validatedData), // Quais campos foram atualizados
+        timestamp: new Date().toISOString(),
+      },
+      request,
     })
 
     return createSuccessResponse(

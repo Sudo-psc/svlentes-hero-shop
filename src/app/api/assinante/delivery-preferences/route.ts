@@ -31,53 +31,16 @@ import {
   validateFirebaseAuth,
   createSuccessResponse,
 } from '@/lib/api-error-handler'
-
-// ============================================================================
-// SCHEMAS DE VALIDAÇÃO
-// ============================================================================
-
-const deliveryAddressSchema = z.object({
-  street: z.string().min(3, 'Rua/Avenida deve ter pelo menos 3 caracteres'),
-  number: z.string().min(1, 'Número é obrigatório'),
-  complement: z.string().optional(),
-  neighborhood: z.string().min(3, 'Bairro deve ter pelo menos 3 caracteres'),
-  city: z.string().min(3, 'Cidade deve ter pelo menos 3 caracteres'),
-  state: z
-    .string()
-    .length(2, 'Estado deve ter 2 caracteres (ex: MG)')
-    .regex(/^[A-Z]{2}$/, 'Estado deve ser em letras maiúsculas'),
-  zipCode: z
-    .string()
-    .regex(/^\d{5}-?\d{3}$/, 'CEP inválido (use formato: 12345-678 ou 12345678)'),
-  country: z.string().default('Brasil'),
-})
-
-const notificationPreferencesSchema = z.object({
-  email: z.boolean(),
-  whatsapp: z.boolean(),
-  sms: z.boolean(),
-})
-
-const deliveryPreferencesUpdateSchema = z.object({
-  deliveryAddress: deliveryAddressSchema,
-  deliveryInstructions: z.string().max(500, 'Instruções devem ter no máximo 500 caracteres').optional(),
-  preferredDeliveryTime: z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'ANY']).optional(),
-  deliveryFrequency: z.enum(['MONTHLY', 'BIMONTHLY', 'QUARTERLY']).optional(),
-  contactPhone: z
-    .string()
-    .regex(
-      /^(?:\+55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}-?\d{4}$/,
-      'Telefone inválido (use formato: (33) 99999-9999 ou 33999999999)'
-    ),
-  alternativePhone: z
-    .string()
-    .regex(
-      /^(?:\+55\s?)?(?:\(?\d{2}\)?\s?)?\d{4,5}-?\d{4}$/,
-      'Telefone alternativo inválido'
-    )
-    .optional(),
-  notificationPreferences: notificationPreferencesSchema,
-})
+import {
+  getUserByFirebaseUid,
+  getActiveSubscription,
+  isErrorResponse,
+} from '@/lib/api-helpers'
+import {
+  brazilianAddressSchema,
+  notificationPreferencesSchema,
+  deliveryPreferencesUpdateSchema,
+} from '@/lib/validation-schemas'
 
 // ============================================================================
 // TYPES
@@ -227,48 +190,15 @@ export async function GET(request: NextRequest) {
 
     const { uid } = authResult
 
-    // Buscar usuário pelo Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        whatsapp: true,
-      },
-    })
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
 
-    if (!user) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Usuário não encontrado no banco de dados',
-        { ...context, userId: uid }
-      )
-    }
-
-    // Buscar assinatura ativa
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: user.id,
-        status: 'ACTIVE',
-      },
-      select: {
-        id: true,
-        shippingAddress: true,
-        updatedAt: true,
-        nextBillingDate: true,
-        renewalDate: true,
-      },
-    })
-
-    if (!subscription) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Assinatura ativa não encontrada',
-        { ...context, userId: user.id }
-      )
-    }
+    // === OWNERSHIP VALIDATION: Buscar assinatura ativa do usuário ===
+    const subscriptionResult = await getActiveSubscription(user.id, context)
+    if (isErrorResponse(subscriptionResult)) return subscriptionResult
+    const subscription = subscriptionResult
 
     // Buscar última entrega
     const lastOrder = await prisma.order.findFirst({
@@ -393,34 +323,16 @@ export async function PUT(request: NextRequest) {
       throw error
     }
 
-    // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
-    })
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
 
-    if (!user) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Usuário não encontrado',
-        { ...context, userId: uid }
-      )
-    }
-
-    // Buscar assinatura ativa
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: user.id,
-        status: 'ACTIVE',
-      },
-    })
-
-    if (!subscription) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Assinatura ativa não encontrada',
-        { ...context, userId: user.id }
-      )
-    }
+    // === OWNERSHIP VALIDATION: Buscar assinatura ativa do usuário ===
+    // Garante que apenas o proprietário possa atualizar preferências
+    const subscriptionResult = await getActiveSubscription(user.id, context)
+    if (isErrorResponse(subscriptionResult)) return subscriptionResult
+    const subscription = subscriptionResult
 
     // Verificar se há entregas em trânsito
     const hasInTransit = await hasDeliveriesInTransit(subscription.id)
@@ -431,6 +343,11 @@ export async function PUT(request: NextRequest) {
     const normalizedAltPhone = validatedData.alternativePhone
       ? normalizePhone(validatedData.alternativePhone)
       : undefined
+
+    // Capturar estado anterior para auditoria
+    const oldShippingAddress = subscription.shippingAddress as any
+    const oldPhone = user.phone
+    const oldWhatsapp = user.whatsapp
 
     // Preparar novo endereço de entrega
     const newShippingAddress = {
@@ -457,27 +374,42 @@ export async function PUT(request: NextRequest) {
       },
     })
 
-    // TODO: Criar registro no SubscriptionHistory para auditoria
-    // await prisma.subscriptionHistory.create({
-    //   data: {
-    //     subscriptionId: subscription.id,
-    //     userId: user.id,
-    //     changeType: 'ADDRESS_UPDATE',
-    //     description: 'Endereço de entrega atualizado',
-    //     oldValue: subscription.shippingAddress,
-    //     newValue: newShippingAddress,
-    //     ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
-    //     userAgent: request.headers.get('user-agent'),
-    //   },
-    // })
-
-    // Log auditoria LGPD
-    console.log('[DeliveryPreferences] Atualização realizada:', {
+    // === LGPD AUDIT LOG ===
+    // Registrar atualização de preferências de entrega (endereço + telefones)
+    // LGPD Article 7: tratamento de dados pessoais sensíveis requer rastreamento
+    await logAudit({
       userId: user.id,
-      subscriptionId: subscription.id,
-      requestId,
-      timestamp: new Date().toISOString(),
-      hasInTransit,
+      action: AuditAction.UPDATE_DELIVERY_PREFERENCES,
+      entityType: 'Subscription',
+      entityId: subscription.id,
+      oldValue: {
+        address: {
+          street: oldShippingAddress?.street,
+          number: oldShippingAddress?.number,
+          city: oldShippingAddress?.city,
+          state: oldShippingAddress?.state,
+          zipCode: oldShippingAddress?.zipCode,
+          // NÃO logar complemento (pode conter informações sensíveis como "apto 101")
+        },
+        phone: oldPhone ? `****${oldPhone.slice(-4)}` : null, // Apenas últimos 4 dígitos
+        whatsapp: oldWhatsapp ? `****${oldWhatsapp.slice(-4)}` : null,
+        preferredTime: oldShippingAddress?.preferredTime,
+      },
+      newValue: {
+        address: {
+          street: validatedData.deliveryAddress.street,
+          number: validatedData.deliveryAddress.number,
+          city: validatedData.deliveryAddress.city,
+          state: validatedData.deliveryAddress.state,
+          zipCode: normalizedZipCode,
+          // NÃO logar complemento
+        },
+        phone: `****${normalizedPhone.slice(-4)}`, // Sanitização automática
+        whatsapp: normalizedAltPhone ? `****${normalizedAltPhone.slice(-4)}` : null,
+        preferredTime: validatedData.preferredDeliveryTime,
+        hasInTransit, // Contexto: se afeta entrega atual
+      },
+      request,
     })
 
     // Calcular próxima entrega

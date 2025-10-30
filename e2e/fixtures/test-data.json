@@ -1,0 +1,137 @@
+{
+  "validAddresses": [
+    {
+      "zipCode": "35300-000",
+      "street": "Rua Coronel Joaquim Soares",
+      "number": "100",
+      "complement": "Centro Comercial",
+      "neighborhood": "Centro",
+      "city": "Caratinga",
+      "state": "MG"
+    },
+    {
+      "zipCode": "01310-100",
+      "street": "Avenida Paulista",
+      "number": "1578",
+      "complement": "Andar 5",
+      "neighborhood": "Bela Vista",
+      "city": "São Paulo",
+      "state": "SP"
+    },
+    {
+      "zipCode": "22040-020",
+      "street": "Avenida Atlântica",
+      "number": "1702",
+      "neighborhood": "Copacabana",
+      "city": "Rio de Janeiro",
+      "state": "RJ"
+    }
+  ],
+  "invalidAddresses": [
+    {
+      "name": "Invalid CEP - too short",
+      "zipCode": "123",
+      "street": "Rua Teste",
+      "number": "100",
+      "neighborhood": "Centro",
+      "city": "São Paulo",
+      "state": "SP",
+      "expectedError": "CEP inválido"
+    },
+    {
+      "name": "Invalid state code",
+      "zipCode": "12345-678",
+      "street": "Rua Teste",
+      "number": "100",
+      "neighborhood": "Centro",
+      "city": "Cidade Teste",
+      "state": "XX",
+      "expectedError": "UF inválida"
+    },
+    {
+      "name": "Missing required fields",
+      "zipCode": "12345-678",
+      "expectedError": "Campo obrigatório"
+    }
+  ],
+  "validPhones": [
+    "(11) 98765-4321",
+    "11987654321",
+    "(11) 3456-7890",
+    "1134567890",
+    "(33) 99999-8888",
+    "5511987654321"
+  ],
+  "invalidPhones": [
+    "123",
+    "abc-defg-hijk",
+    "999",
+    "12345678901234567890"
+  ],
+  "prescriptionData": {
+    "valid": {
+      "rightEye": {
+        "sphere": -2.50,
+        "cylinder": -0.75,
+        "axis": 180,
+        "addition": 0
+      },
+      "leftEye": {
+        "sphere": -2.25,
+        "cylinder": -0.50,
+        "axis": 175,
+        "addition": 0
+      },
+      "prescribedBy": "Dr. Philipe Saraiva Cruz",
+      "crm": "CRM-MG 69.870"
+    }
+  },
+  "testUsers": {
+    "notes": "Test users are created dynamically in tests. This section documents expected user types.",
+    "types": [
+      {
+        "role": "subscriber",
+        "hasActiveSubscription": true,
+        "description": "Regular subscriber with active subscription"
+      },
+      {
+        "role": "expired",
+        "hasActiveSubscription": false,
+        "description": "User with expired subscription"
+      },
+      {
+        "role": "admin",
+        "hasActiveSubscription": false,
+        "description": "Admin user for testing access controls"
+      }
+    ]
+  },
+  "auditActions": [
+    "UPDATE_SHIPPING_ADDRESS",
+    "UPLOAD_PRESCRIPTION",
+    "ACCESS_PAYMENT_HISTORY",
+    "UPDATE_DELIVERY_PREFERENCES",
+    "VIEW_SUBSCRIPTION",
+    "UPDATE_PAYMENT_METHOD"
+  ],
+  "subscriptionPlans": [
+    {
+      "id": "monthly-basic",
+      "name": "Lentes Diárias Mensal",
+      "price": 15900,
+      "billingCycle": "monthly"
+    },
+    {
+      "id": "quarterly-premium",
+      "name": "Lentes Premium Trimestral",
+      "price": 42900,
+      "billingCycle": "quarterly"
+    },
+    {
+      "id": "annual-basic",
+      "name": "Lentes Diárias Anual",
+      "price": 169900,
+      "billingCycle": "annual"
+    }
+  ]
+}

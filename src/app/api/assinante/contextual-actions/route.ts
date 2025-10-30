@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth } from '@/lib/firebase-admin'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import {
+  ApiErrorHandler,
+  ErrorType,
+  generateRequestId,
+  validateFirebaseAuth,
+  createSuccessResponse,
+} from '@/lib/api-error-handler'
+import {
+  getUserByFirebaseUid,
+  isErrorResponse,
+} from '@/lib/api-helpers'
 
 /**
  * GET /api/assinante/contextual-actions
@@ -11,105 +22,89 @@ import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
  * - Ações primárias com prioridade
  * - Alertas contextuais
  * - Atalhos inteligentes
+ *
+ * SECURITY: Ownership validation enforced
+ * - Filters subscriptions by authenticated user ID
+ * - Prevents access to other users' context (OWASP A01:2021)
  */
 export async function GET(request: NextRequest) {
+  const requestId = generateRequestId()
+  const context = {
+    api: '/api/assinante/contextual-actions',
+    requestId,
+    timestamp: new Date(),
+  }
+
   // Rate limiting: 200 requisições em 15 minutos (leitura)
   const rateLimitResult = await rateLimit(request, rateLimitConfigs.read)
   if (rateLimitResult) {
     return rateLimitResult
   }
 
-  try {
-    // Verificar se Firebase Admin está inicializado
-    if (!adminAuth) {
-      console.warn('[API /api/assinante/contextual-actions] Firebase Admin não configurado')
-      return NextResponse.json(
-        {
-          error: 'SERVICE_UNAVAILABLE',
-          message: 'Serviço de autenticação temporariamente indisponível'
-        },
-        { status: 503 }
-      )
+  return ApiErrorHandler.wrapApiHandler(async () => {
+    // Validar autenticação Firebase
+    const authResult = await validateFirebaseAuth(
+      request.headers.get('Authorization'),
+      adminAuth,
+      context
+    )
+
+    if (authResult instanceof NextResponse) {
+      return authResult // Error response
     }
 
-    // Verificar token Firebase
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Token de autenticação não fornecido' },
-        { status: 401 }
-      )
-    }
+    const { uid } = authResult
 
-    const token = authHeader.split('Bearer ')[1]
-    let firebaseUser
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
 
-    try {
-      firebaseUser = await adminAuth.verifyIdToken(token)
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Token inválido ou expirado' },
-        { status: 401 }
-      )
-    }
-
-    if (!firebaseUser || !firebaseUser.uid) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Usuário não autenticado' },
-        { status: 401 }
-      )
-    }
-
-    // Buscar usuário com dados completos para análise contextual
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid: firebaseUser.uid },
+    // === BUSCAR SUBSCRIPTIONS COM OWNERSHIP VALIDATION ===
+    // Filtrar APENAS subscriptions do usuário autenticado
+    const subscriptions = await prisma.subscription.findMany({
+      where: {
+        userId: user.id, // ← OWNERSHIP FILTER
+        status: { in: ['ACTIVE', 'PAUSED', 'OVERDUE'] },
+      },
       include: {
-        subscriptions: {
-          where: { status: { in: ['ACTIVE', 'PAUSED', 'OVERDUE'] } },
-          include: {
-            orders: {
-              orderBy: { createdAt: 'desc' },
-              take: 1
-            },
-            payments: {
-              where: {
-                status: { in: ['PENDING', 'OVERDUE'] }
-              },
-              orderBy: { dueDate: 'asc' },
-              take: 1
-            }
-          },
+        orders: {
           orderBy: { createdAt: 'desc' },
-          take: 1
+          take: 1,
         },
-        notifications: {
+        payments: {
           where: {
-            status: { in: ['SENT', 'DELIVERED'] },
-            // Não lidas nos últimos 7 dias
-            createdAt: {
-              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-            }
+            status: { in: ['PENDING', 'OVERDUE'] },
           },
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+          orderBy: { dueDate: 'asc' },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 1,
     })
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'NOT_FOUND', message: 'Usuário não encontrado' },
-        { status: 404 }
+    if (subscriptions.length === 0) {
+      return ApiErrorHandler.handleError(
+        ErrorType.NOT_FOUND,
+        'Assinatura não encontrada',
+        { ...context, userId: user.id }
       )
     }
 
-    if (user.subscriptions.length === 0) {
-      return NextResponse.json(
-        { error: 'NOT_FOUND', message: 'Assinatura não encontrada' },
-        { status: 404 }
-      )
-    }
+    const subscription = subscriptions[0]
 
-    const subscription = user.subscriptions[0]
+    // Buscar notificações do usuário (ownership já garantido por userId)
+    const notifications = await prisma.notification.findMany({
+      where: {
+        userId: user.id, // ← OWNERSHIP FILTER
+        status: { in: ['SENT', 'DELIVERED'] },
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
     const now = new Date()
 
     // Análise contextual para gerar ações e alertas
@@ -242,15 +237,15 @@ export async function GET(request: NextRequest) {
     }
 
     // 5. NOTIFICAÇÕES NÃO LIDAS (> 3 notificações)
-    if (user.notifications.length > 3) {
+    if (notifications.length > 3) {
       primaryActions.push({
         id: 'view_notifications',
         label: 'Ver Avisos Importantes',
-        description: `Você tem ${user.notifications.length} notificações não visualizadas`,
+        description: `Você tem ${notifications.length} notificações não visualizadas`,
         icon: 'Bell',
         url: '/area-assinante/notificacoes',
         variant: 'secondary',
-        priority: 3
+        priority: 3,
       })
     }
 
@@ -278,30 +273,33 @@ export async function GET(request: NextRequest) {
     // Ordenar ações por prioridade
     primaryActions.sort((a, b) => a.priority - b.priority)
 
-    return NextResponse.json({
-      primaryActions: primaryActions.slice(0, 6), // Máximo 6 ações
-      alerts,
-      metadata: {
-        subscriptionStatus: subscription.status,
-        hasOverduePayment: subscription.payments.length > 0 && new Date(subscription.payments[0].dueDate) < now,
-        isPaused: subscription.status === 'PAUSED',
-        daysUntilRenewal: subscription.nextBillingDate
-          ? Math.max(0, Math.ceil(
-              (new Date(subscription.nextBillingDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-            ))
-          : null,
-        prescriptionAgeInDays: prescriptionAge,
-        unreadNotifications: user.notifications.length
-      }
-    }, { status: 200 })
-
-  } catch (error: any) {
-    console.error('[API /api/assinante/contextual-actions] Erro:', error.message)
-    return NextResponse.json(
-      { error: 'INTERNAL_ERROR', message: 'Erro interno do servidor' },
-      { status: 500 }
+    return createSuccessResponse(
+      {
+        primaryActions: primaryActions.slice(0, 6), // Máximo 6 ações
+        alerts,
+        metadata: {
+          subscriptionStatus: subscription.status,
+          hasOverduePayment:
+            subscription.payments.length > 0 &&
+            new Date(subscription.payments[0].dueDate) < now,
+          isPaused: subscription.status === 'PAUSED',
+          daysUntilRenewal: subscription.nextBillingDate
+            ? Math.max(
+                0,
+                Math.ceil(
+                  (new Date(subscription.nextBillingDate).getTime() -
+                    now.getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )
+              )
+            : null,
+          prescriptionAgeInDays: prescriptionAge,
+          unreadNotifications: notifications.length,
+        },
+      },
+      requestId
     )
-  }
+  }, context)
 }
 
 // Force dynamic rendering

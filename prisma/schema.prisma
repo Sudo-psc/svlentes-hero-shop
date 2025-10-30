@@ -194,6 +194,7 @@ model User {
   chatbotAuthCodes     ChatbotAuthCode[]
   chatbotSessions      ChatbotSession[]
   subscriptionHistory  SubscriptionHistory[]
+  auditLogs            AuditLog[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -882,6 +883,40 @@ model DataRequest {
   @@index([requestType], name: "idx_data_requests_type")
   @@index([requestedAt], name: "idx_data_requests_requested_at")
   @@map("data_requests")
+}
+
+// ==================== AUDIT LOG SYSTEM (LGPD Article 37 Compliance) ====================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+
+  // Operation details
+  action      String   @db.VarChar(100) // Enum: 'UPDATE_SHIPPING_ADDRESS', 'CHANGE_PLAN', etc.
+  entityType  String   @db.VarChar(100) // 'Subscription', 'Prescription', 'Payment', etc.
+  entityId    String?  @map("entity_id") @db.VarChar(255) // ID do recurso afetado
+
+  // Change tracking (sanitized - never log passwords/tokens)
+  oldValue    Json?    @map("old_value") @db.JsonB // Estado anterior (snapshot)
+  newValue    Json?    @map("new_value") @db.JsonB // Estado novo (snapshot)
+
+  // Request metadata for traceability
+  ipAddress   String?  @map("ip_address") @db.VarChar(45) // IPv4 or IPv6
+  userAgent   String?  @map("user_agent") @db.Text
+
+  // Timestamp (append-only, never delete)
+  timestamp   DateTime @default(now()) @db.Timestamp(6)
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Performance indexes
+  @@index([userId], name: "idx_audit_logs_user_id")
+  @@index([action], name: "idx_audit_logs_action")
+  @@index([timestamp(sort: Desc)], name: "idx_audit_logs_timestamp")
+  @@index([entityType], name: "idx_audit_logs_entity_type")
+  @@index([userId, timestamp(sort: Desc)], name: "idx_audit_logs_user_timeline")
+  @@map("audit_logs")
 }
 
 // ==================== CHATBOT AUTHENTICATION SYSTEM ====================

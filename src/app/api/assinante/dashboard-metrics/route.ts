@@ -10,6 +10,11 @@ import {
   validateFirebaseAuth,
   createSuccessResponse,
 } from '@/lib/api-error-handler'
+import {
+  getUserByFirebaseUid,
+  getActiveSubscription,
+  isErrorResponse,
+} from '@/lib/api-helpers'
 
 /**
  * GET /api/assinante/dashboard-metrics
@@ -53,50 +58,26 @@ export async function GET(request: NextRequest) {
 
     const { uid } = authResult
 
-    // Buscar usuário pelo Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid: uid },
-    })
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
 
-    if (!user) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Usuário não encontrado no banco de dados',
-        { ...context, userId: uid }
-      )
-    }
+    // === OWNERSHIP VALIDATION: Buscar assinatura ativa do usuário ===
+    const subscriptionResult = await getActiveSubscription(user.id, context)
+    if (isErrorResponse(subscriptionResult)) return subscriptionResult
+    const subscription = subscriptionResult
 
-    // Buscar assinatura ativa
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: user.id,
-        status: 'ACTIVE',
-      },
-      select: {
-        id: true,
-        monthlyValue: true,
-        nextBillingDate: true,
-        renewalDate: true,
-      },
-    })
-
-    if (!subscription) {
-      return ApiErrorHandler.handleError(
-        ErrorType.NOT_FOUND,
-        'Assinatura ativa não encontrada',
-        { ...context, userId: user.id }
-      )
-    }
-
-    // === CÁLCULO 1: Total Economizado ===
+    // === CÁLCULO 1: Total Economizado COM OWNERSHIP ===
     // Lógica: Σ(pagamentos realizados) vs custo teórico avulso (plan.price * 1.5)
+    // Filtrar pagamentos APENAS do usuário e subscription autenticados
     const payments = await prisma.payment.findMany({
       where: {
-        userId: user.id,
-        subscriptionId: subscription.id,
+        userId: user.id, // ← OWNERSHIP FILTER
+        subscriptionId: subscription.id, // ← OWNERSHIP FILTER
         status: {
-          in: ['RECEIVED', 'CONFIRMED']
-        }
+          in: ['RECEIVED', 'CONFIRMED'],
+        },
       },
       select: {
         amount: true
@@ -110,13 +91,13 @@ export async function GET(request: NextRequest) {
     const theoreticalRetailTotal = theoreticalRetailPrice * monthsActive
     const totalSaved = theoreticalRetailTotal - totalPaid
 
-    // === CÁLCULO 2: Lentes Recebidas ===
-    // COUNT de Orders com status DELIVERED
+    // === CÁLCULO 2: Lentes Recebidas COM OWNERSHIP ===
+    // COUNT de Orders com status DELIVERED da subscription do usuário
     const lensesReceived = await prisma.order.count({
       where: {
-        subscriptionId: subscription.id,
-        deliveryStatus: 'DELIVERED'
-      }
+        subscriptionId: subscription.id, // ← OWNERSHIP via subscription
+        deliveryStatus: 'DELIVERED',
+      },
     })
 
     // === CÁLCULO 3: Dias até Próxima Entrega ===
@@ -127,12 +108,12 @@ export async function GET(request: NextRequest) {
       (nextBillingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     )
 
-    // === CÁLCULO 4: Taxa de Pontualidade ===
-    // (entregas no prazo / total entregas) * 100
+    // === CÁLCULO 4: Taxa de Pontualidade COM OWNERSHIP ===
+    // (entregas no prazo / total entregas) * 100 da subscription do usuário
     const allDeliveries = await prisma.order.findMany({
       where: {
-        subscriptionId: subscription.id,
-        deliveryStatus: 'DELIVERED'
+        subscriptionId: subscription.id, // ← OWNERSHIP via subscription
+        deliveryStatus: 'DELIVERED',
       },
       select: {
         deliveredAt: true,

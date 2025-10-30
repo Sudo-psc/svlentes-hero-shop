@@ -1,9 +1,26 @@
 // @ts-nocheck - Prisma type mismatches - requires schema regeneration or type fixes
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { adminAuth } from '@/lib/firebase-admin'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import { csrfProtection } from '@/lib/csrf'
+import {
+  getUserByFirebaseUid,
+  getActiveSubscription,
+  isErrorResponse,
+  validateSubscriptionOwnership,
+} from '@/lib/api-helpers'
+import {
+  ApiErrorHandler,
+  ErrorType,
+  validateFirebaseAuth,
+  generateRequestId,
+  type ErrorContext,
+} from '@/lib/api-error-handler'
+import { subscriptionAddressUpdateSchema } from '@/lib/validation-schemas'
+import { logAudit, AuditAction } from '@/lib/audit-logger'
+
 /**
  * GET /api/assinante/subscription
  * Retorna dados da assinatura do usuário autenticado
@@ -185,8 +202,37 @@ export async function PUT(request: NextRequest) {
         { status: 401 }
       )
     }
-    const body = await request.json()
-    const { shippingAddress } = body
+    // Parse e validar request body
+    let body
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        {
+          error: 'INVALID_JSON',
+          message: 'Formato JSON inválido'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validar dados com Zod
+    const validation = subscriptionAddressUpdateSchema.safeParse(body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'VALIDATION_ERROR',
+          message: 'Dados de endereço inválidos',
+          details: validation.error.flatten().fieldErrors
+        },
+        { status: 400 }
+      )
+    }
+
+    // Usar dados validados
+    const { shippingAddress } = validation.data
+
     // Primeiro, buscar o usuário pelo Firebase UID
     const user = await prisma.user.findUnique({
       where: { firebaseUid: firebaseUser.uid }
@@ -197,7 +243,7 @@ export async function PUT(request: NextRequest) {
         { status: 404 }
       )
     }
-    // Buscar assinatura ativa do usuário
+    // Buscar assinatura ativa do usuário (capturar estado anterior para auditoria)
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: user.id,
@@ -210,7 +256,11 @@ export async function PUT(request: NextRequest) {
         { status: 404 }
       )
     }
-    // Atualizar endereço de entrega
+
+    // Capturar estado anterior para auditoria LGPD
+    const oldShippingAddress = subscription.shippingAddress
+
+    // Atualizar endereço de entrega com dados validados
     const updatedSubscription = await prisma.subscription.update({
       where: { id: subscription.id },
       data: {
@@ -218,6 +268,18 @@ export async function PUT(request: NextRequest) {
         updatedAt: new Date()
       }
     })
+
+    // LGPD Article 37: Log audit entry (non-blocking)
+    await logAudit({
+      userId: user.id,
+      action: AuditAction.UPDATE_SHIPPING_ADDRESS,
+      entityType: 'Subscription',
+      entityId: subscription.id,
+      oldValue: oldShippingAddress,
+      newValue: shippingAddress,
+      request,
+    })
+
     return NextResponse.json({
       message: 'Endereço atualizado com sucesso',
       subscription: {

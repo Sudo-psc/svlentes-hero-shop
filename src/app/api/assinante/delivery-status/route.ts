@@ -15,12 +15,30 @@
  * - Fallback para estimativa quando tracking falha
  * - Circuit breaker após 3 falhas consecutivas
  * - Nunca retorna erro - sempre fallback
+ *
+ * SECURITY: Ownership validation enforced
+ * - Validates subscriptionId belongs to authenticated user
+ * - Prevents access to other users' delivery status (OWASP A01:2021)
+ * - Returns HTTP 403 for unauthorized access attempts
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { add, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { z } from 'zod'
+import { adminAuth } from '@/lib/firebase-admin'
+import {
+  ApiErrorHandler,
+  ErrorType,
+  generateRequestId,
+  validateFirebaseAuth,
+  createSuccessResponse,
+} from '@/lib/api-error-handler'
+import {
+  getUserByFirebaseUid,
+  validateSubscriptionOwnership,
+  isErrorResponse,
+} from '@/lib/api-helpers'
 
 // Schema de validação
 const deliveryStatusSchema = z.object({
@@ -91,11 +109,19 @@ function calculateProgress(status: DeliveryStatus['status']): number {
 /**
  * GET /api/assinante/delivery-status
  * Retorna status da entrega atual
+ *
+ * SECURITY: Validates subscriptionId belongs to authenticated user
  */
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
+  const requestId = generateRequestId()
+  const context = {
+    api: '/api/assinante/delivery-status',
+    requestId,
+    timestamp: new Date(),
+  }
 
-  try {
+  return ApiErrorHandler.wrapApiHandler(async () => {
     // Verificar circuit breaker
     if (failureCount >= CIRCUIT_BREAKER_THRESHOLD) {
       const timeSinceLastFailure = lastFailureTime
@@ -105,12 +131,14 @@ export async function GET(request: NextRequest) {
       if (timeSinceLastFailure < CIRCUIT_BREAKER_RESET_MS) {
         console.warn('[DeliveryStatus] Circuit breaker OPEN - usando fallback')
 
-        return NextResponse.json({
-          success: true,
-          currentDelivery: generateEstimatedDelivery(),
-          fallback: true,
-          reason: 'circuit_breaker_open',
-        })
+        return createSuccessResponse(
+          {
+            currentDelivery: generateEstimatedDelivery(),
+            fallback: true,
+            reason: 'circuit_breaker_open',
+          },
+          requestId
+        )
       } else {
         // Reset circuit breaker
         console.log('[DeliveryStatus] Circuit breaker RESET')
@@ -119,12 +147,40 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Validar autenticação Firebase
+    const authResult = await validateFirebaseAuth(
+      request.headers.get('Authorization'),
+      adminAuth,
+      context
+    )
+
+    if (authResult instanceof NextResponse) {
+      return authResult // Error response
+    }
+
+    const { uid } = authResult
+
+    // === OWNERSHIP VALIDATION: Buscar usuário autenticado ===
+    const userResult = await getUserByFirebaseUid(uid, context)
+    if (isErrorResponse(userResult)) return userResult
+    const user = userResult
+
     // Parse query params
     const { searchParams } = new URL(request.url)
     const subscriptionId = searchParams.get('subscriptionId')
 
     // Validar dados
     const validatedData = deliveryStatusSchema.parse({ subscriptionId })
+
+    // === OWNERSHIP VALIDATION: Validar que subscription pertence ao usuário ===
+    const subscriptionResult = await validateSubscriptionOwnership(
+      validatedData.subscriptionId,
+      user.id,
+      context
+    )
+
+    if (isErrorResponse(subscriptionResult)) return subscriptionResult
+    const subscription = subscriptionResult
 
     // Reset failure count on success
     if (failureCount > 0) {
@@ -139,16 +195,21 @@ export async function GET(request: NextRequest) {
       console.warn(`[DeliveryStatus] Slow response: ${responseTime}ms`)
     }
 
-    return NextResponse.json({
-      success: true,
-      currentDelivery: generateEstimatedDelivery(),
-      metadata: {
-        responseTime,
-        timestamp: new Date().toISOString(),
+    return createSuccessResponse(
+      {
+        currentDelivery: generateEstimatedDelivery(),
+        metadata: {
+          responseTime,
+          timestamp: new Date().toISOString(),
+          subscriptionId: subscription.id, // Confirmar ownership
+        },
       },
-    })
+      requestId
+    )
 
-  } catch (error) {
+    // Success - return delivery status
+  }, async (error) => {
+    // Custom error handler with fallback behavior
     const responseTime = Date.now() - startTime
 
     // Incrementar failure count
@@ -163,15 +224,18 @@ export async function GET(request: NextRequest) {
 
     // Tratamento específico de erros de validação
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Dados inválidos',
-        details: error.errors.map(err => ({
-          field: err.path.join('.'),
-          message: err.message,
-        })),
-        currentDelivery: generateEstimatedDelivery(),
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Dados inválidos',
+          details: error.errors.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+          currentDelivery: generateEstimatedDelivery(),
+        },
+        { status: 400 }
+      )
     }
 
     // NUNCA retorna erro fatal - sempre fornece fallback
@@ -186,5 +250,5 @@ export async function GET(request: NextRequest) {
         failureCount,
       },
     })
-  }
+  })
 }
