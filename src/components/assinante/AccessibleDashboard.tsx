@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useDashboardActions } from '@/hooks/useDashboardActions'
+import { useStripePortal } from '@/hooks/useStripePortal'
 import { useToast } from '@/components/assinante/ToastFeedback'
 import { createQuickActions } from '@/components/assinante/QuickActions'
 import { EnhancedSubscriptionCard } from '@/components/assinante/EnhancedSubscriptionCard'
@@ -21,7 +22,6 @@ import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Package, AlertTriangle, Settings, Accessibility, Volume2, VolumeX } from 'lucide-react'
 import { formatDate } from '@/lib/formatters'
-import { STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
 interface AccessibleDashboardProps {
   className?: string
 }
@@ -30,6 +30,7 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
   const { user: authUser, loading: authLoading, signOut } = useAuth()
   const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
   const dashboardActions = useDashboardActions()
+  const { openPortal: openStripePortal, isAvailable: isStripeAvailable } = useStripePortal()
   const { toasts } = useToast()
   // Modal states
   const [showOrdersModal, setShowOrdersModal] = useState(false)
@@ -109,18 +110,9 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
     onAddressClick: () => setShowUpdateAddressModal(true),
     onSupportClick: () => dashboardActions.support.contact('whatsapp'),
     onBenefitsClick: () => setShowOrdersModal(true),
-    onStripePortalClick: () => {
-      if (!STRIPE_BILLING_PORTAL_URL || STRIPE_BILLING_PORTAL_URL.includes('test00000000000000000')) {
-        console.error('Stripe billing portal URL is not configured')
-        dashboardActions.support.contact('whatsapp')
-        return
-      }
-      const popup = window.open(STRIPE_BILLING_PORTAL_URL, '_blank', 'noopener,noreferrer')
-      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-        console.warn('Popup was blocked. Please allow popups for this site.')
-        dashboardActions.support.contact('whatsapp')
-      }
-    },
+    onStripePortalClick: isStripeAvailable 
+      ? () => openStripePortal('/area-assinante/dashboard?tab=payment')
+      : undefined,
     pendingOrders: subscription?.pendingOrders || 0,
     unreadMessages: subscription?.unreadMessages || 0
   })

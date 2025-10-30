@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateLong, formatRelativeTime } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel, type SubscriptionStatus } from '@/lib/subscription-helpers'
-import { STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
+import { StripePortalButton } from '@/components/assinante/StripePortalButton'
 import { cn } from '@/lib/utils'
 interface EnhancedSubscriptionCardProps {
   status: SubscriptionStatus
@@ -379,23 +379,15 @@ export function EnhancedSubscriptionCard({
             )}
           </div>
           {/* Stripe Portal Button */}
-          <Button
-            asChild
+          <StripePortalButton
             variant="default"
             size="sm"
-            className="w-full bg-cyan-600 hover:bg-cyan-700"
+            fullWidth
+            className="bg-cyan-600 hover:bg-cyan-700"
+            returnUrl="/area-assinante/dashboard"
           >
-            <a
-              href={STRIPE_BILLING_PORTAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Gerenciar Assinatura no Stripe
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </Button>
+            Gerenciar Assinatura no Stripe
+          </StripePortalButton>
         </div>
       </div>
     </motion.div>
