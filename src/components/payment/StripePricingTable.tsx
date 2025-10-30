@@ -14,8 +14,15 @@ interface StripePricingTableProps {
 
 declare global {
   namespace JSX {
+    interface StripePricingTableElementProps extends React.DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement> {
+      'pricing-table-id': string
+      'publishable-key': string
+      'client-reference-id'?: string
+      'customer-email'?: string
+      'customer-session-client-secret'?: string
+    }
     interface IntrinsicElements {
-      'stripe-pricing-table': HTMLAttributes<HTMLElement>
+      'stripe-pricing-table': StripePricingTableElementProps
     }
   }
 }

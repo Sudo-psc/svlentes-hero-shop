@@ -83,7 +83,6 @@ export default function AreaAssinantePage() {
       }, 1200)
       return () => window.clearTimeout(timeout)
     }
-    return undefined
   }, [loading, user, router])
 
   if (loading) {
