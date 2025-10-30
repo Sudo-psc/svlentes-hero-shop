@@ -16,6 +16,7 @@ import { UpdateAddressModal } from '@/components/assinante/UpdateAddressModal'
 import { UpdatePaymentModal } from '@/components/assinante/UpdatePaymentModal'
 import { SubscriptionHistoryTimeline } from '@/components/assinante/SubscriptionHistoryTimeline'
 import { EmergencyContact } from '@/components/assinante/EmergencyContact'
+import { SubscriberOrdersSection } from '@/components/assinante/SubscriberOrdersSection'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Package, AlertTriangle, Settings, Accessibility, Volume2, VolumeX } from 'lucide-react'
@@ -329,6 +330,14 @@ export function AccessibleDashboard({ className }: AccessibleDashboardProps) {
                       </motion.div>
                     ))}
                   </div>
+                </section>
+                {/* Orders and Deliveries */}
+                <section role="region" aria-label="Pedidos e entregas recentes">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-1 w-8 bg-cyan-600 rounded-full" />
+                    <h2 className="text-lg font-semibold text-gray-900">Pedidos e Entregas</h2>
+                  </div>
+                  <SubscriberOrdersSection onViewAllOrders={() => setShowOrdersModal(true)} />
                 </section>
                 {/* Subscription History Timeline */}
                 <section role="region" aria-label="Histórico da assinatura">
