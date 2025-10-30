@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { useToast } from '@/components/assinante/ToastFeedback'
+import { createWhatsAppUrl, createTelUrl, PHONE_NUMBERS } from '@/lib/phone-utils'
 interface DashboardActionState {
   isLoading: boolean
   isUpdating: boolean
@@ -225,10 +226,10 @@ export function useDashboardActions() {
   const contactSupport = useCallback((type: 'whatsapp' | 'phone' | 'email') => {
     switch (type) {
       case 'whatsapp':
-        window.open('https://wa.me/5533999898026', '_blank')
+        window.open(createWhatsAppUrl(PHONE_NUMBERS.chatbot), '_blank')
         break
       case 'phone':
-        window.open('tel:+5533986061427', '_blank')
+        window.open(createTelUrl(PHONE_NUMBERS.support), '_blank')
         break
       case 'email':
         window.open('mailto:contato@svlentes.com.br', '_blank')

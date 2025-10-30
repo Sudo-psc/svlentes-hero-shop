@@ -324,8 +324,40 @@ src/
 - Asaas webhook token validation
 - SendPulse webhook authentication
 - CORS configuration for payment providers
-- Rate limiting on sensitive endpoints
+- **Rate Limiting**: Comprehensive rate limiting on all API routes (see Rate Limiting section below)
 - No sensitive data in client-side code
+
+### Rate Limiting
+
+**Implementation** (Added: 2025-10-30):
+- Rate limiting implemented in `src/middleware.ts` using `@upstash/ratelimit`
+- Supports both Upstash Redis (distributed) and in-memory storage (single-instance)
+- Automatic failover to in-memory if Redis is not configured
+- Returns HTTP 429 with proper headers when limit exceeded
+
+**Rate Limits by Endpoint:**
+- `/api/assinante/*` - 100 requests/hour per authenticated user
+- `/api/webhooks/*` - 1000 requests/hour per webhook source (IP or token)
+- `/api/asaas/*` - 50 requests/hour per IP address
+- All other `/api/*` - 200 requests/hour per IP
+
+**Rate Limit Headers:**
+- `X-RateLimit-Limit` - Maximum requests allowed
+- `X-RateLimit-Remaining` - Requests remaining in current window
+- `X-RateLimit-Reset` - Unix timestamp when limit resets
+- `Retry-After` - Seconds until rate limit resets (on 429 response)
+
+**Configuration:**
+```bash
+# Optional - defaults to in-memory if not configured
+UPSTASH_REDIS_REST_URL=https://your-redis-instance.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token_here
+```
+
+**Monitoring:**
+- Rate limit violations logged to console with identifier, pathname, and limit
+- All rate limit checks logged for monitoring and analytics
+- Fail-open policy: errors don't block requests (logged and allowed)
 
 ## Important Implementation Details
 
@@ -347,8 +379,10 @@ src/
 ```bash
 # Application
 NEXT_PUBLIC_APP_URL=https://svlentes.shop
+
+# Contact Numbers
 NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # Chatbot: (33) 99989-8026
-# Note: Direct support number is (33) 98606-1427 - used in messages, not env vars
+NEXT_PUBLIC_SUPPORT_PHONE=5533986061427     # Direct Support: (33) 98606-1427
 
 # Asaas Payment (Required for production)
 ASAAS_ENV=production
@@ -376,6 +410,11 @@ DATABASE_URL=<postgresql-url>
 # Note: Clerk is integrated but runs alongside Firebase authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<clerk-publishable-key>
 CLERK_SECRET_KEY=<clerk-secret-key>
+
+# Rate Limiting (Optional - defaults to in-memory if not configured)
+# Get your Upstash Redis credentials from https://upstash.com
+UPSTASH_REDIS_REST_URL=https://your-redis-instance.upstash.io
+UPSTASH_REDIS_REST_TOKEN=<upstash-redis-token>
 
 # Optional Integrations
 NEXT_PUBLIC_GA_MEASUREMENT_ID=<analytics-id>
@@ -539,15 +578,25 @@ curl https://svlentes.com.br/api/health-check
 ### Contact Information
 - **WhatsApp Chatbot**: +55 33 99989-8026 (5533999898026)
   - **Format**: (33) 99989-8026
+  - **Environment Variable**: `NEXT_PUBLIC_WHATSAPP_NUMBER`
   - This is the SendPulse chatbot number for automated customer support
   - Users send messages to this number for subscription management
 - **Direct Support (Human)**: +55 33 98606-1427 (5533986061427)
   - **Format**: (33) 98606-1427
+  - **Environment Variable**: `NEXT_PUBLIC_SUPPORT_PHONE`
   - This is the SaraivaVision team contact for direct human support
   - Used for escalations and complex issues
 - **Email**: saraivavision@gmail.com
 - **Website**: svlentes.shop
 - **Responsible Physician**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
+
+**Phone Number Management**:
+All phone numbers throughout the codebase are managed centrally via `src/lib/phone-utils.ts`, which provides:
+- Centralized phone number constants from environment variables
+- Formatting utilities for display (Brazilian format: `(33) 99989-8026`)
+- URL generation for WhatsApp (`https://wa.me/...`) and tel (`tel:+55...`)
+- Phone number validation and context helpers
+- Type-safe approach with proper TypeScript types
 
 ## Nginx Reverse Proxy Configuration
 

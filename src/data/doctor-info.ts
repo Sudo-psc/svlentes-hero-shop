@@ -9,6 +9,7 @@
  */
 // Temporarily disabled to fix build - will re-enable after fixing client-side import issue
 // import { config } from '@/config/loader'
+import { PHONE_NUMBERS } from '@/lib/phone-utils'
 /**
  * Get doctor information from centralized config
  * Falls back to hardcoded data if feature flag is disabled
@@ -51,7 +52,7 @@ const hardcodedDoctorInfo = {
     experience: 'Especialista em oftalmologia',
     bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado, dedicando-se a proporcionar cuidado oftalmológico personalizado e acessível.',
     contact: {
-        whatsapp: '+5533999898026',
+        whatsapp: PHONE_NUMBERS.chatbot,
         email: 'dr.philipe@svlentes.com.br',
         clinicAddress: 'Rua Catarina Maria Passos, 97 - Santa Zita, Caratinga/MG'
     },
@@ -131,8 +132,8 @@ const hardcodedClinicInfo = {
         country: 'Brasil'
     },
     contact: {
-        phone: '+55 33 99989-8026',
-        whatsapp: '+55 33 99989-8026',
+        phone: PHONE_NUMBERS.chatbot,
+        whatsapp: PHONE_NUMBERS.chatbot,
         email: 'contato@svlentes.com.br',
         website: 'https://svlentes.com.br'
     },

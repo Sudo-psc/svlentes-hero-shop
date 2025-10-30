@@ -10,6 +10,7 @@ import {
   X
 } from 'lucide-react'
 import React, { useState } from 'react'
+import { formatPhoneDisplay, formatPhoneWhatsApp, PHONE_NUMBERS } from '@/lib/phone-utils'
 interface EmergencyContactProps {
   contact: {
     phone: string
@@ -28,7 +29,7 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
     setContactError(null)
     setIsLoading(true)
     try {
-      const phoneNumber = contact.phone.replace(/\D/g, '')
+      const phoneNumber = formatPhoneWhatsApp(contact.phone)
       if (!phoneNumber || phoneNumber.length < 10) {
         throw new Error('Número de WhatsApp inválido')
       }
@@ -72,15 +73,6 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
     } finally {
       setIsLoading(false)
     }
-  }
-  const formatPhoneNumber = (phone: string) => {
-    // Format phone number for display
-    const cleaned = phone.replace(/\D/g, '')
-    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/)
-    if (match) {
-      return `(${match[1]}) ${match[2]}-${match[3]}`
-    }
-    return phone
   }
   return (
     <Card>
@@ -147,7 +139,7 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
             <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
               <div>
                 <p className="font-medium text-green-900">
-                  {formatPhoneNumber(contact.phone)}
+                  {formatPhoneDisplay(contact.phone)}
                 </p>
                 <p className="text-sm text-green-700">
                   Atendimento de segunda a sexta, 8h-18h
@@ -182,7 +174,7 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
             <div className="flex items-center justify-between p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
               <div>
                 <p className="font-medium text-cyan-900">
-                  {formatPhoneNumber(contact.phone)}
+                  {formatPhoneDisplay(contact.phone)}
                 </p>
                 <p className="text-sm text-cyan-700">
                   Para emergências urgentes
@@ -301,7 +293,7 @@ export function EmergencyContactCard({ contact }: EmergencyContactProps) {
 // Componente简化 sem props para uso direto
 export function EmergencyContact() {
   const contact = {
-    phone: "5533999898026",
+    phone: PHONE_NUMBERS.chatbot,
     email: "contato@svlentes.com.br",
     doctor: {
       name: "Dr. Philipe Saraiva Cruz",

@@ -7,6 +7,7 @@
 import { useMemo } from 'react'
 // Temporarily disabled to fix build - will re-enable after fixing client-side import issue
 // import { config } from '@/config/loader'
+import { PHONE_NUMBERS } from '@/lib/phone-utils'
 export interface ServerConfigData {
   site: {
     name: string
@@ -123,8 +124,8 @@ export const DEFAULT_CLIENT_CONFIG: ServerConfigData = {
     }
   },
   contact: {
-    whatsapp: "5533999898026",
-    phone: "5533986061427",
+    whatsapp: PHONE_NUMBERS.chatbot,
+    phone: PHONE_NUMBERS.support,
     email: "saraivavision@gmail.com"
   }
 }

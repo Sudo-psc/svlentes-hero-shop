@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { createWhatsAppUrl, createTelUrl, PHONE_NUMBERS } from '@/lib/phone-utils'
 interface QuickAction {
   id: string
   label: string
@@ -151,7 +152,7 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
           <Button
             size="lg"
             className="w-14 h-14 rounded-full shadow-lg bg-cyan-600 hover:bg-cyan-700"
-            onClick={() => window.open('https://wa.me/5533999898026', '_blank')}
+            onClick={() => window.open(createWhatsAppUrl(PHONE_NUMBERS.chatbot), '_blank')}
           >
             <MessageCircle className="h-6 w-6" />
           </Button>
@@ -164,7 +165,7 @@ export function QuickActions({ actions, className }: QuickActionsProps) {
             size="lg"
             variant="outline"
             className="w-14 h-14 rounded-full shadow-lg bg-white"
-            onClick={() => window.open('tel:+5533986061427', '_blank')}
+            onClick={() => window.open(createTelUrl(PHONE_NUMBERS.support), '_blank')}
           >
             <Phone className="h-6 w-6" />
           </Button>

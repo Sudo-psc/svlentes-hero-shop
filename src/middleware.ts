@@ -281,6 +281,86 @@ export async function middleware(request: NextRequest) {
   // Perform logging and monitoring
   const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
 
+  // Rate limiting for API routes
+  // TEMPORARILY DISABLED - TODO: Fix rate limiter initialization issue (GitHub #125)
+  const pathname = request.nextUrl.pathname;
+  if (false && pathname.startsWith('/api/')) {
+    try {
+      const {
+        selectRateLimiter,
+        getRateLimitIdentifier,
+        checkRateLimit,
+        formatRetryAfter,
+        logRateLimitViolation,
+      } = await import('./lib/rate-limiter');
+
+      const limiter = selectRateLimiter(pathname);
+
+      if (limiter) {
+        // Get user ID from token if available (for subscriber routes)
+        const authHeader = request.headers.get('Authorization');
+        const firebaseToken = authHeader?.startsWith('Bearer ')
+          ? authHeader.split('Bearer ')[1]
+          : null;
+        const cookieToken = request.cookies.get('firebase-token')?.value;
+        const token = firebaseToken || cookieToken;
+        const userId = token ? decodeFirebaseToken(token).uid : undefined;
+
+        // Get webhook token for webhook routes
+        const webhookToken = request.headers.get('x-webhook-token') || undefined;
+
+        // Get client IP
+        const ip = getClientIP(request);
+
+        // Create identifier for rate limiting
+        const identifier = getRateLimitIdentifier(pathname, ip, userId, webhookToken);
+
+        // Check rate limit
+        const rateLimitResult = await checkRateLimit(identifier, limiter);
+
+        if (!rateLimitResult.success) {
+          // Log rate limit violation
+          logRateLimitViolation(identifier, pathname, rateLimitResult.limit);
+
+          // Return 429 Too Many Requests
+          const retryAfter = formatRetryAfter(rateLimitResult.reset);
+
+          return NextResponse.json(
+            {
+              error: 'RATE_LIMIT_EXCEEDED',
+              message: 'Too many requests. Please try again later.',
+              retryAfter: parseInt(retryAfter),
+            },
+            {
+              status: 429,
+              headers: {
+                'Retry-After': retryAfter,
+                'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+                'X-RateLimit-Remaining': '0',
+                'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+              },
+            }
+          );
+        }
+
+        // Add rate limit headers to the request for logging
+        Logger.info('Rate limit checked', {
+          identifier,
+          pathname,
+          limit: rateLimitResult.limit,
+          remaining: rateLimitResult.remaining,
+          reset: new Date(rateLimitResult.reset).toISOString(),
+        });
+      }
+    } catch (error) {
+      // Log error but don't block the request (fail open)
+      Logger.error('Rate limit check failed', {
+        pathname,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
   // Check if route requires authentication (exclude public routes)
   if (isProtectedRoute(request) && !isPublicRoute(request)) {
     // Check for Firebase token in Authorization header
@@ -322,6 +402,44 @@ export async function middleware(request: NextRequest) {
 
   // Create response with security headers
   const response = NextResponse.next();
+
+  // Add rate limit headers to successful API responses
+  // TEMPORARILY DISABLED - TODO: Fix rate limiter initialization issue (GitHub #125)
+  if (false && pathname.startsWith('/api/')) {
+    try {
+      const {
+        selectRateLimiter,
+        getRateLimitIdentifier,
+        checkRateLimit,
+      } = await import('./lib/rate-limiter');
+
+      const limiter = selectRateLimiter(pathname);
+
+      if (limiter) {
+        // Get user ID and IP (same logic as above)
+        const authHeader = request.headers.get('Authorization');
+        const firebaseToken = authHeader?.startsWith('Bearer ')
+          ? authHeader.split('Bearer ')[1]
+          : null;
+        const cookieToken = request.cookies.get('firebase-token')?.value;
+        const token = firebaseToken || cookieToken;
+        const userId = token ? decodeFirebaseToken(token).uid : undefined;
+        const webhookToken = request.headers.get('x-webhook-token') || undefined;
+        const ip = getClientIP(request);
+        const identifier = getRateLimitIdentifier(pathname, ip, userId, webhookToken);
+
+        // Get current rate limit status (without incrementing again)
+        const rateLimitResult = await checkRateLimit(identifier, limiter);
+
+        // Add rate limit headers to response
+        response.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString());
+        response.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
+        response.headers.set('X-RateLimit-Reset', rateLimitResult.reset.toString());
+      }
+    } catch (error) {
+      // Silently fail - don't add headers if there's an error
+    }
+  }
 
   // Handle CORS for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
