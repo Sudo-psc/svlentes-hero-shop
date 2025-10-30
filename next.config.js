@@ -18,14 +18,15 @@ const nextConfig = {
         // Allow production builds with type errors - errors will be caught in IDE and CI
         ignoreBuildErrors: true,
     },
-    eslint: {
-        // Ignore ESLint errors during build
-        ignoreDuringBuilds: true,
-    },
+    // Next.js 16: eslint config moved to .eslintrc or eslint.config.mjs
+    // ESLint is now configured via eslint.config.mjs
     // Skip failing paths during build
     generateBuildId: async () => {
         return 'build-' + Date.now()
     },
+    // Turbopack configuration (Next.js 16 default)
+    // Empty config silences migration warning while keeping webpack compat
+    turbopack: {},
     // Webpack configuration (continue using webpack for now)
     webpack: (config, { isServer }) => {
         if (!isServer) {
