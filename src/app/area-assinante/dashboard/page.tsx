@@ -767,7 +767,7 @@ function DashboardContent() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleCopyRewardCode(reward.id.toUpperCase())}
+                                    onClick={() => handleCopyRewardCode(reward.code)}
                                   >
                                     <Copy className="h-4 w-4 mr-2" /> Copiar código
                                   </Button>
