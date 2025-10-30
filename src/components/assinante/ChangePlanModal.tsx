@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/Modal'
-import { X, Check, AlertCircle, ExternalLink } from 'lucide-react'
+import { X, Check, AlertCircle, ArrowRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/formatters'
 import type { PricingPlan } from '@/types'
 interface ChangePlanModalProps {
@@ -30,9 +30,10 @@ export function ChangePlanModal({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const handleViewAllPlans = () => {
-    // Navigate to home page with pricing section
-    router.push('/#planos-precos')
+    // Close modal first, then navigate to ensure scroll works
     onClose()
+    // Use window.location for full navigation to fragment
+    window.location.href = '/#planos-precos'
   }
 
   const handleConfirm = async () => {
@@ -107,7 +108,7 @@ export function ChangePlanModal({
               className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
             >
               Ver Todos os Planos
-              <ExternalLink className="h-4 w-4 ml-1" />
+              <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
           {availablePlans.map((plan) => (

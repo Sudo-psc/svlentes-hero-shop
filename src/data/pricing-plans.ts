@@ -19,6 +19,10 @@ function getPricingPlans(): PricingPlan[] {
   return hardcodedPlans
 
   // TODO: Re-enable centralized config after fixing build
+  // Priority: MEDIUM - Configuration management improvement
+  // Context: Config loader causes client-side import errors during Next.js build
+  // Impact: Pricing data must be manually updated in code instead of centralized YAML
+  // Solution: Implement server-only config loading with proper Next.js dynamic imports
   // Guard: only try to load config on server-side
   // if (typeof window !== 'undefined') {
   //   return hardcodedPlans

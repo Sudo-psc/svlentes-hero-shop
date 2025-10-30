@@ -283,6 +283,10 @@ export async function middleware(request: NextRequest) {
 
   // Rate limiting for API routes
   // TEMPORARILY DISABLED - TODO: Fix rate limiter initialization issue (GitHub #125)
+  // Priority: HIGH - Security vulnerability without rate limiting
+  // Context: Rate limiter throws "Cannot read properties of null (reading 'useContext')" during build
+  // Impact: API endpoints vulnerable to abuse without rate limiting protection
+  // Solution: Investigate Upstash Redis initialization in middleware context
   const pathname = request.nextUrl.pathname;
   if (false && pathname.startsWith('/api/')) {
     try {
