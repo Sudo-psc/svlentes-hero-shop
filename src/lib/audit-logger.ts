@@ -104,23 +104,32 @@ function sanitizeValue(value: any): any {
     const sanitized: any = {}
 
     for (const [key, val] of Object.entries(value)) {
-      // Check if field name contains sensitive keywords
+      const lowerKey = key.toLowerCase()
+
+      // PRIORITY 1: Keep last4 fields as-is
+      if (key === 'last4' && typeof val === 'string') {
+        sanitized[key] = val
+        continue
+      }
+
+      // PRIORITY 2: Mask credit card numbers (keep last 4 digits)
+      if (
+        (lowerKey.includes('card') || lowerKey.includes('credit')) &&
+        typeof val === 'string' &&
+        /^\d{13,19}$/.test(val) // Valid card number pattern
+      ) {
+        sanitized[key] = `****${val.slice(-4)}`
+        continue
+      }
+
+      // PRIORITY 3: Redact other sensitive fields
       const isSensitive = SENSITIVE_FIELDS.some((pattern) =>
-        key.toLowerCase().includes(pattern.toLowerCase())
+        lowerKey.includes(pattern.toLowerCase())
       )
 
-      if (isSensitive) {
+      if (isSensitive && !lowerKey.includes('card')) {
+        // Non-card sensitive fields get fully redacted
         sanitized[key] = '[REDACTED]'
-      } else if (key === 'last4' && typeof val === 'string') {
-        // Keep last 4 digits of credit cards
-        sanitized[key] = val
-      } else if (
-        key.toLowerCase().includes('card') &&
-        typeof val === 'string' &&
-        val.length > 4
-      ) {
-        // Mask credit card numbers, keep last 4
-        sanitized[key] = `****${val.slice(-4)}`
       } else {
         // Recursively sanitize nested objects
         sanitized[key] = sanitizeValue(val)
