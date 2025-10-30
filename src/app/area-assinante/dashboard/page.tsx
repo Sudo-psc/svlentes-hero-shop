@@ -62,7 +62,7 @@ function DashboardContent() {
   const { subscription, user, loading: subLoading, error, refetch } = useSubscription()
   const { modals, openModal, closeModal } = useModals()
   const { plans: availablePlans } = usePricingPlans()
-  const gamificationUserId = authUser?.uid ?? 'demo-user'
+  const gamificationUserId = authUser?.uid ?? null
   const {
     profile: gamificationProfile,
     loading: gamificationLoading,
