@@ -282,13 +282,12 @@ export async function middleware(request: NextRequest) {
   const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
 
   // Rate limiting for API routes
-  // TEMPORARILY DISABLED - TODO: Fix rate limiter initialization issue (GitHub #125)
-  // Priority: HIGH - Security vulnerability without rate limiting
-  // Context: Rate limiter throws "Cannot read properties of null (reading 'useContext')" during build
-  // Impact: API endpoints vulnerable to abuse without rate limiting protection
-  // Solution: Investigate Upstash Redis initialization in middleware context
+  // FIXED (2025-10-30): Refactored rate-limiter.ts to use lazy initialization
+  // Skip rate limiting during build time (when request is from static generation)
   const pathname = request.nextUrl.pathname;
-  if (false && pathname.startsWith('/api/')) {
+  const isBuildTime = !request.headers.get('user-agent'); // Build requests don't have user-agent
+
+  if (pathname.startsWith('/api/') && !isBuildTime) {
     try {
       const {
         selectRateLimiter,
@@ -408,8 +407,9 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // Add rate limit headers to successful API responses
-  // TEMPORARILY DISABLED - TODO: Fix rate limiter initialization issue (GitHub #125)
-  if (false && pathname.startsWith('/api/')) {
+  // FIXED (2025-10-30): Rate limiting now enabled with lazy initialization
+  // Skip during build time to avoid static generation issues
+  if (pathname.startsWith('/api/') && !isBuildTime) {
     try {
       const {
         selectRateLimiter,

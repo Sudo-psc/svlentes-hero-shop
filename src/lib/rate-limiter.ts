@@ -10,34 +10,51 @@
  * - /api/webhooks/* - 1000 requests/hour per webhook source
  * - /api/asaas/* - 50 requests/hour per IP address
  * - All other /api/* - 200 requests/hour per IP
+ *
+ * IMPORTANT: This module uses dynamic imports to avoid build-time initialization
+ * of Upstash libraries which can cause edge runtime compatibility issues.
  */
 
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+// Type imports are safe (no runtime execution)
+import type { Ratelimit } from '@upstash/ratelimit';
+import type { Redis } from '@upstash/redis';
 
 // Environment variables
 const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 // Check if Upstash Redis is configured
-const isUpstashConfigured = !!( UPSTASH_REDIS_REST_URL &&
+const isUpstashConfigured = !!(
+  UPSTASH_REDIS_REST_URL &&
   UPSTASH_REDIS_REST_TOKEN &&
   UPSTASH_REDIS_REST_URL.length > 0 &&
   UPSTASH_REDIS_REST_TOKEN.length > 0
 );
 
-// Create Redis client (or use memory store for development)
+// Lazy Redis client initialization to avoid build-time issues
 let redis: Redis | null = null;
-try {
-  if (isUpstashConfigured) {
-    redis = new Redis({
-      url: UPSTASH_REDIS_REST_URL!,
-      token: UPSTASH_REDIS_REST_TOKEN!,
-    });
+let redisInitialized = false;
+
+async function getRedisClient(): Promise<Redis | null> {
+  if (redisInitialized) {
+    return redis;
   }
-} catch (error) {
-  console.warn('[RateLimit] Failed to initialize Upstash Redis, falling back to memory store:', error);
-  redis = null;
+
+  try {
+    if (isUpstashConfigured) {
+      const { Redis } = await import('@upstash/redis');
+      redis = new Redis({
+        url: UPSTASH_REDIS_REST_URL!,
+        token: UPSTASH_REDIS_REST_TOKEN!,
+      });
+    }
+  } catch (error) {
+    console.warn('[RateLimit] Failed to initialize Upstash Redis, falling back to memory store:', error);
+    redis = null;
+  }
+
+  redisInitialized = true;
+  return redis;
 }
 
 /**
@@ -119,105 +136,145 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
  * Rate limiter for subscriber area (/api/assinante/*)
  * Limit: 100 requests per hour per authenticated user
  */
-function createSubscriberRateLimiter() {
+let _subscriberRateLimiter: Ratelimit | MemoryRateLimiter | null = null;
+
+async function getSubscriberRateLimiter() {
+  if (_subscriberRateLimiter !== null) {
+    return _subscriberRateLimiter;
+  }
+
+  const redis = await getRedisClient();
   if (redis !== null) {
     try {
-      return new Ratelimit({
+      const { Ratelimit } = await import('@upstash/ratelimit');
+      _subscriberRateLimiter = new Ratelimit({
         redis: redis,
         limiter: Ratelimit.slidingWindow(100, '1 h'),
         analytics: true,
         prefix: '@svlentes/subscriber',
       });
+      return _subscriberRateLimiter;
     } catch (error) {
       console.warn('[RateLimit] Failed to create Upstash rate limiter, using memory store:', error);
     }
   }
-  return new MemoryRateLimiter(100, ONE_HOUR_MS);
+  _subscriberRateLimiter = new MemoryRateLimiter(100, ONE_HOUR_MS);
+  return _subscriberRateLimiter;
 }
 
-export const subscriberRateLimiter = createSubscriberRateLimiter();
+export const subscriberRateLimiter = { async get() { return await getSubscriberRateLimiter(); } };
 
 /**
  * Rate limiter for webhooks (/api/webhooks/*)
  * Limit: 1000 requests per hour per webhook source
  */
-function createWebhookRateLimiter() {
+let _webhookRateLimiter: Ratelimit | MemoryRateLimiter | null = null;
+
+async function getWebhookRateLimiter() {
+  if (_webhookRateLimiter !== null) {
+    return _webhookRateLimiter;
+  }
+
+  const redis = await getRedisClient();
   if (redis !== null) {
     try {
-      return new Ratelimit({
+      const { Ratelimit } = await import('@upstash/ratelimit');
+      _webhookRateLimiter = new Ratelimit({
         redis: redis,
         limiter: Ratelimit.slidingWindow(1000, '1 h'),
         analytics: true,
         prefix: '@svlentes/webhook',
       });
+      return _webhookRateLimiter;
     } catch (error) {
       console.warn('[RateLimit] Failed to create Upstash rate limiter, using memory store:', error);
     }
   }
-  return new MemoryRateLimiter(1000, ONE_HOUR_MS);
+  _webhookRateLimiter = new MemoryRateLimiter(1000, ONE_HOUR_MS);
+  return _webhookRateLimiter;
 }
 
-export const webhookRateLimiter = createWebhookRateLimiter();
+export const webhookRateLimiter = { async get() { return await getWebhookRateLimiter(); } };
 
 /**
  * Rate limiter for payment endpoints (/api/asaas/*)
  * Limit: 50 requests per hour per IP address
  */
-function createPaymentRateLimiter() {
+let _paymentRateLimiter: Ratelimit | MemoryRateLimiter | null = null;
+
+async function getPaymentRateLimiter() {
+  if (_paymentRateLimiter !== null) {
+    return _paymentRateLimiter;
+  }
+
+  const redis = await getRedisClient();
   if (redis !== null) {
     try {
-      return new Ratelimit({
+      const { Ratelimit } = await import('@upstash/ratelimit');
+      _paymentRateLimiter = new Ratelimit({
         redis: redis,
         limiter: Ratelimit.slidingWindow(50, '1 h'),
         analytics: true,
         prefix: '@svlentes/payment',
       });
+      return _paymentRateLimiter;
     } catch (error) {
       console.warn('[RateLimit] Failed to create Upstash rate limiter, using memory store:', error);
     }
   }
-  return new MemoryRateLimiter(50, ONE_HOUR_MS);
+  _paymentRateLimiter = new MemoryRateLimiter(50, ONE_HOUR_MS);
+  return _paymentRateLimiter;
 }
 
-export const paymentRateLimiter = createPaymentRateLimiter();
+export const paymentRateLimiter = { async get() { return await getPaymentRateLimiter(); } };
 
 /**
  * Default rate limiter for all other API routes
  * Limit: 200 requests per hour per IP
  */
-function createDefaultRateLimiter() {
+let _defaultRateLimiter: Ratelimit | MemoryRateLimiter | null = null;
+
+async function getDefaultRateLimiter() {
+  if (_defaultRateLimiter !== null) {
+    return _defaultRateLimiter;
+  }
+
+  const redis = await getRedisClient();
   if (redis !== null) {
     try {
-      return new Ratelimit({
+      const { Ratelimit } = await import('@upstash/ratelimit');
+      _defaultRateLimiter = new Ratelimit({
         redis: redis,
         limiter: Ratelimit.slidingWindow(200, '1 h'),
         analytics: true,
         prefix: '@svlentes/default',
       });
+      return _defaultRateLimiter;
     } catch (error) {
       console.warn('[RateLimit] Failed to create Upstash rate limiter, using memory store:', error);
     }
   }
-  return new MemoryRateLimiter(200, ONE_HOUR_MS);
+  _defaultRateLimiter = new MemoryRateLimiter(200, ONE_HOUR_MS);
+  return _defaultRateLimiter;
 }
 
-export const defaultRateLimiter = createDefaultRateLimiter();
+export const defaultRateLimiter = { async get() { return await getDefaultRateLimiter(); } };
 
 /**
  * Select appropriate rate limiter based on pathname
  */
-export function selectRateLimiter(pathname: string) {
+export async function selectRateLimiter(pathname: string) {
   if (pathname.startsWith('/api/assinante/')) {
-    return subscriberRateLimiter;
+    return await subscriberRateLimiter.get();
   }
   if (pathname.startsWith('/api/webhooks/')) {
-    return webhookRateLimiter;
+    return await webhookRateLimiter.get();
   }
   if (pathname.startsWith('/api/asaas/')) {
-    return paymentRateLimiter;
+    return await paymentRateLimiter.get();
   }
   if (pathname.startsWith('/api/')) {
-    return defaultRateLimiter;
+    return await defaultRateLimiter.get();
   }
   return null;
 }
