@@ -66,7 +66,7 @@ describe('FAQ Component', () => {
 
         const whatsappLink = screen.getByText('Falar no WhatsApp').closest('a')
         expect(whatsappLink).toHaveAttribute('href',
-            'https://wa.me/+5533999898026?text=Olá! Tenho uma dúvida sobre o serviço de assinatura de lentes.'
+            'https://wa.me/5533999898026?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida%20sobre%20o%20servi%C3%A7o%20de%20assinatura%20de%20lentes.'
         )
         expect(whatsappLink).toHaveAttribute('target', '_blank')
         expect(whatsappLink).toHaveAttribute('rel', 'noopener noreferrer')
