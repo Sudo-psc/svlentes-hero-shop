@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
       return ApiErrorHandler.handleError(
         ErrorType.NOT_FOUND,
         'Usuário não encontrado no banco de dados',
-        { ...context, userId: uid }
+        { ...context, metadata: { firebaseUid: uid } }
       )
     }
 

@@ -373,12 +373,12 @@ export async function validateFirebaseAuth(
  * @param context - Contexto da requisição para logging
  * @returns Subscription object se o usuário é o dono, ou NextResponse com erro 403
  */
-export async function validateSubscriptionOwnership(
-  prisma: any,
+export async function validateSubscriptionOwnership<T = any>(
+  prisma: any, // TODO: Type as PrismaClient when schema is stable
   subscriptionId: string,
   userId: string,
   context: ErrorContext
-): Promise<any | NextResponse> {
+): Promise<T | NextResponse> {
   try {
     const subscription = await prisma.subscription.findFirst({
       where: {
@@ -426,12 +426,12 @@ export async function validateSubscriptionOwnership(
  * @param context - Contexto da requisição para logging
  * @returns Payment object se o usuário é o dono, ou NextResponse com erro 403
  */
-export async function validatePaymentOwnership(
-  prisma: any,
+export async function validatePaymentOwnership<T = any>(
+  prisma: any, // TODO: Type as PrismaClient when schema is stable
   paymentId: string,
   userId: string,
   context: ErrorContext
-): Promise<any | NextResponse> {
+): Promise<T | NextResponse> {
   try {
     const payment = await prisma.payment.findFirst({
       where: {
@@ -478,12 +478,12 @@ export async function validatePaymentOwnership(
  * @param context - Contexto da requisição para logging
  * @returns Order object se o usuário é o dono, ou NextResponse com erro 403
  */
-export async function validateOrderOwnership(
-  prisma: any,
+export async function validateOrderOwnership<T = any>(
+  prisma: any, // TODO: Type as PrismaClient when schema is stable
   orderId: string,
   userId: string,
   context: ErrorContext
-): Promise<any | NextResponse> {
+): Promise<T | NextResponse> {
   try {
     // Buscar ordem através da subscription do usuário
     const order = await prisma.order.findFirst({

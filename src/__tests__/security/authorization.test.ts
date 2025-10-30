@@ -449,8 +449,9 @@ describe('Security - Authorization & Ownership Validation', () => {
 
       // Mesmo para recurso inexistente, retornar 403 (não 404)
       expect(response.status).toBe(403)
-      expect(body.message).not.toContain('não encontrado')
-      expect(body.message).toContain('permissão')
+      expect(body.error).toBe(ErrorType.AUTHORIZATION)
+      // Mensagem deve ser genérica sobre autorização, não sobre recurso não encontrado
+      expect(body.message).not.toMatch(/não encontrad[oa]/i)
     })
   })
 })
