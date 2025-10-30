@@ -195,6 +195,12 @@ model User {
   chatbotSessions      ChatbotSession[]
   subscriptionHistory  SubscriptionHistory[]
   auditLogs            AuditLog[]
+  gamificationProfile  GamificationProfile?
+  pointTransactions    PointTransaction[]
+  userAchievements     UserAchievement[]
+  userMissions         UserMission[]
+  rewardClaims         RewardClaim[]
+  gamificationEvents   GamificationEvent[]
 
   @@index([email], name: "idx_users_email")
   @@index([googleId], name: "idx_users_google_id")
@@ -1032,27 +1038,506 @@ model SubscriptionHistory {
   id              String                  @id @default(cuid())
   subscriptionId  String                  @map("subscription_id")
   userId          String                  @map("user_id")
-  
+
   // Change details
   changeType      SubscriptionChangeType  @map("change_type")
   description     String                  @db.Text
   oldValue        Json?                   @map("old_value") @db.JsonB
   newValue        Json?                   @map("new_value") @db.JsonB
   metadata        Json?                   @db.JsonB
-  
+
   // Audit trail
   ipAddress       String?                 @map("ip_address") @db.VarChar(45)
   userAgent       String?                 @map("user_agent") @db.Text
-  
+
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamp(6)
-  
+
   // Relations
   subscription    Subscription            @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([subscriptionId], name: "idx_subscription_history_subscription")
   @@index([userId], name: "idx_subscription_history_user")
   @@index([changeType], name: "idx_subscription_history_change_type")
   @@index([createdAt(sort: Desc)], name: "idx_subscription_history_created_at")
   @@map("subscription_history")
+}
+
+// ==================== GAMIFICATION SYSTEM ====================
+
+enum AchievementCategory {
+  SUBSCRIPTION     // Assinatura e renovação
+  ENGAGEMENT       // Interação com a plataforma
+  LOYALTY          // Fidelidade e tempo de uso
+  MILESTONE        // Marcos importantes
+  SPECIAL          // Conquistas especiais/sazonais
+  REFERRAL         // Indicações
+  HEALTH           // Consultas e prescrições
+}
+
+enum AchievementRarity {
+  COMMON          // Fácil de conseguir
+  RARE            // Requer esforço moderado
+  EPIC            // Difícil de conseguir
+  LEGENDARY       // Extremamente raro
+}
+
+enum MissionCategory {
+  DAILY           // Missões diárias
+  WEEKLY          // Missões semanais
+  MONTHLY         // Missões mensais
+  SPECIAL         // Eventos especiais
+}
+
+enum MissionDifficulty {
+  EASY            // Fácil
+  MEDIUM          // Médio
+  HARD            // Difícil
+}
+
+enum PointTransactionType {
+  EARNED          // Pontos ganhos
+  SPENT           // Pontos gastos
+  BONUS           // Bônus
+  ADJUSTMENT      // Ajuste manual
+  EXPIRED         // Pontos expirados
+  REFUNDED        // Pontos reembolsados
+}
+
+enum RewardCategory {
+  DISCOUNT        // Descontos
+  FREEBIE         // Brindes
+  UPGRADE         // Upgrades de plano
+  EXPERIENCE      // Experiências exclusivas
+  EXCLUSIVE       // Conteúdo exclusivo
+}
+
+enum RewardStatus {
+  AVAILABLE       // Disponível para resgate
+  CLAIMED         // Resgatado pelo usuário
+  REDEEMED        // Utilizado
+  EXPIRED         // Expirado
+  CANCELLED       // Cancelado
+}
+
+// User Gamification Profile - Perfil de gamificação do usuário
+model GamificationProfile {
+  id                      String    @id @default(cuid())
+  userId                  String    @unique @map("user_id")
+
+  // Points & Level
+  totalPoints             Int       @default(0) @map("total_points")
+  availablePoints         Int       @default(0) @map("available_points")
+  currentLevel            Int       @default(1) @map("current_level")
+  experiencePoints        Int       @default(0) @map("experience_points")
+  experienceToNextLevel   Int       @default(100) @map("experience_to_next_level")
+
+  // Time-based points
+  monthlyPoints           Int       @default(0) @map("monthly_points")
+  weeklyPoints            Int       @default(0) @map("weekly_points")
+  dailyPoints             Int       @default(0) @map("daily_points")
+
+  // Streaks & Activity
+  loginStreakDays         Int       @default(0) @map("login_streak_days")
+  longestLoginStreak      Int       @default(0) @map("longest_login_streak")
+  lastLoginDate           DateTime? @map("last_login_date") @db.Date
+  lastActivityAt          DateTime? @map("last_activity_at") @db.Timestamp(6)
+
+  // Achievements & Missions
+  totalAchievements       Int       @default(0) @map("total_achievements")
+  totalMissionsCompleted  Int       @default(0) @map("total_missions_completed")
+
+  // Leaderboard & Privacy
+  leaderboardOptIn        Boolean   @default(false) @map("leaderboard_opt_in")
+  leaderboardRank         Int?      @map("leaderboard_rank")
+  showOnLeaderboard       Boolean   @default(false) @map("show_on_leaderboard")
+
+  // Preferences
+  gamificationEnabled     Boolean   @default(true) @map("gamification_enabled")
+  notificationsEnabled    Boolean   @default(true) @map("notifications_enabled")
+
+  // Statistics
+  totalRewardsClaimed     Int       @default(0) @map("total_rewards_claimed")
+  totalPointsEarned       Int       @default(0) @map("total_points_earned")
+  totalPointsSpent        Int       @default(0) @map("total_points_spent")
+
+  // Metadata
+  customization           Json?     @db.JsonB // Personalizações (tema, avatar, etc.)
+
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pointTransactions       PointTransaction[]
+  userAchievements        UserAchievement[]
+  userMissions            UserMission[]
+  rewardClaims            RewardClaim[]
+
+  @@index([userId], name: "idx_gamification_profile_user")
+  @@index([totalPoints], name: "idx_gamification_profile_points")
+  @@index([currentLevel], name: "idx_gamification_profile_level")
+  @@index([leaderboardRank], name: "idx_gamification_profile_rank")
+  @@index([loginStreakDays], name: "idx_gamification_profile_streak")
+  @@map("gamification_profiles")
+}
+
+// Point Transactions - Histórico de transações de pontos
+model PointTransaction {
+  id              String                @id @default(cuid())
+  userId          String                @map("user_id")
+  profileId       String                @map("profile_id")
+
+  // Transaction details
+  type            PointTransactionType  @map("type")
+  amount          Int                   @map("amount") // Positivo para ganho, negativo para gasto
+  balance         Int                   @map("balance") // Saldo após transação
+
+  // Context
+  reason          String                @db.VarChar(255)
+  description     String?               @db.Text
+  metadata        Json?                 @db.JsonB // Contexto adicional (achievement_id, mission_id, reward_id)
+
+  // References
+  achievementId   String?               @map("achievement_id")
+  missionId       String?               @map("mission_id")
+  rewardClaimId   String?               @map("reward_claim_id")
+
+  // Expiration
+  expiresAt       DateTime?             @map("expires_at") @db.Timestamp(6)
+
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile         GamificationProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  achievement     Achievement?          @relation(fields: [achievementId], references: [id])
+  mission         Mission?              @relation(fields: [missionId], references: [id])
+  rewardClaim     RewardClaim?          @relation(fields: [rewardClaimId], references: [id])
+
+  @@index([userId], name: "idx_point_transactions_user")
+  @@index([profileId], name: "idx_point_transactions_profile")
+  @@index([type], name: "idx_point_transactions_type")
+  @@index([createdAt(sort: Desc)], name: "idx_point_transactions_created")
+  @@index([achievementId], name: "idx_point_transactions_achievement")
+  @@index([missionId], name: "idx_point_transactions_mission")
+  @@index([expiresAt], name: "idx_point_transactions_expires")
+  @@map("point_transactions")
+}
+
+// Achievements - Catálogo de conquistas/badges
+model Achievement {
+  id                String                @id @default(cuid())
+
+  // Basic info
+  name              String                @db.VarChar(255)
+  slug              String                @unique @db.VarChar(255)
+  description       String                @db.Text
+  icon              String                @db.VarChar(255)
+  iconUrl           String?               @db.Text
+
+  // Classification
+  category          AchievementCategory   @map("category")
+  rarity            AchievementRarity     @map("rarity")
+
+  // Rewards
+  pointsAwarded     Int                   @map("points_awarded")
+  experienceAwarded Int                   @default(0) @map("experience_awarded")
+
+  // Requirements
+  requirements      Json                  @db.JsonB // Array de requisitos {type, value, description}
+  maxProgress       Int                   @map("max_progress")
+
+  // Visibility & Availability
+  isSecret          Boolean               @default(false) @map("is_secret")
+  isActive          Boolean               @default(true) @map("is_active")
+  isSeasonal        Boolean               @default(false) @map("is_seasonal")
+  seasonStartDate   DateTime?             @map("season_start_date") @db.Date
+  seasonEndDate     DateTime?             @map("season_end_date") @db.Date
+
+  // Metadata
+  sortOrder         Int                   @default(0) @map("sort_order")
+  metadata          Json?                 @db.JsonB
+
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  userAchievements  UserAchievement[]
+  pointTransactions PointTransaction[]
+
+  @@index([slug], name: "idx_achievements_slug")
+  @@index([category], name: "idx_achievements_category")
+  @@index([rarity], name: "idx_achievements_rarity")
+  @@index([isActive], name: "idx_achievements_active")
+  @@index([sortOrder], name: "idx_achievements_sort")
+  @@map("achievements")
+}
+
+// User Achievements - Conquistas desbloqueadas pelo usuário
+model UserAchievement {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  profileId       String              @map("profile_id")
+  achievementId   String              @map("achievement_id")
+
+  // Progress
+  progress        Int                 @default(0)
+  isCompleted     Boolean             @default(false) @map("is_completed")
+  completedAt     DateTime?           @map("completed_at") @db.Timestamp(6)
+
+  // Tracking
+  firstSeenAt     DateTime            @default(now()) @map("first_seen_at") @db.Timestamp(6)
+  lastProgressAt  DateTime?           @map("last_progress_at") @db.Timestamp(6)
+
+  // Metadata
+  metadata        Json?               @db.JsonB
+
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile         GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  achievement     Achievement         @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId], name: "unique_user_achievement")
+  @@index([userId], name: "idx_user_achievements_user")
+  @@index([profileId], name: "idx_user_achievements_profile")
+  @@index([achievementId], name: "idx_user_achievements_achievement")
+  @@index([isCompleted], name: "idx_user_achievements_completed")
+  @@index([completedAt], name: "idx_user_achievements_completed_at")
+  @@map("user_achievements")
+}
+
+// Missions - Catálogo de missões/quests
+model Mission {
+  id                String              @id @default(cuid())
+
+  // Basic info
+  title             String              @db.VarChar(255)
+  slug              String              @unique @db.VarChar(255)
+  description       String              @db.Text
+  icon              String              @db.VarChar(255)
+
+  // Classification
+  category          MissionCategory     @map("category")
+  difficulty        MissionDifficulty   @map("difficulty")
+
+  // Rewards
+  pointsReward      Int                 @map("points_reward")
+  experienceReward  Int                 @default(0) @map("experience_reward")
+  bonusRewards      Json?               @map("bonus_rewards") @db.JsonB // Recompensas adicionais
+
+  // Requirements
+  requirements      Json                @db.JsonB // Array de requisitos {type, value, description}
+  maxProgress       Int                 @map("max_progress")
+
+  // Availability
+  isActive          Boolean             @default(true) @map("is_active")
+  isRecurring       Boolean             @default(false) @map("is_recurring")
+  recurrencePattern String?             @map("recurrence_pattern") @db.VarChar(50) // daily, weekly, monthly
+
+  // Time constraints
+  startsAt          DateTime?           @map("starts_at") @db.Timestamp(6)
+  endsAt            DateTime?           @map("ends_at") @db.Timestamp(6)
+  duration          Int?                @map("duration") // Duration in hours if applicable
+
+  // Prerequisites
+  requiredLevel     Int?                @map("required_level")
+  prerequisiteMissions String[]         @default([]) @map("prerequisite_missions")
+
+  // Metadata
+  sortOrder         Int                 @default(0) @map("sort_order")
+  metadata          Json?               @db.JsonB
+
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  userMissions      UserMission[]
+  pointTransactions PointTransaction[]
+
+  @@index([slug], name: "idx_missions_slug")
+  @@index([category], name: "idx_missions_category")
+  @@index([difficulty], name: "idx_missions_difficulty")
+  @@index([isActive], name: "idx_missions_active")
+  @@index([startsAt], name: "idx_missions_starts_at")
+  @@index([endsAt], name: "idx_missions_ends_at")
+  @@index([sortOrder], name: "idx_missions_sort")
+  @@map("missions")
+}
+
+// User Missions - Missões do usuário
+model UserMission {
+  id              String              @id @default(cuid())
+  userId          String              @map("user_id")
+  profileId       String              @map("profile_id")
+  missionId       String              @map("mission_id")
+
+  // Progress
+  progress        Int                 @default(0)
+  isActive        Boolean             @default(true) @map("is_active")
+  isCompleted     Boolean             @default(false) @map("is_completed")
+  completedAt     DateTime?           @map("completed_at") @db.Timestamp(6)
+
+  // Time tracking
+  startedAt       DateTime            @default(now()) @map("started_at") @db.Timestamp(6)
+  expiresAt       DateTime?           @map("expires_at") @db.Timestamp(6)
+  lastProgressAt  DateTime?           @map("last_progress_at") @db.Timestamp(6)
+
+  // Metadata
+  metadata        Json?               @db.JsonB
+
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile         GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  mission         Mission             @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId, startedAt], name: "unique_user_mission_attempt")
+  @@index([userId], name: "idx_user_missions_user")
+  @@index([profileId], name: "idx_user_missions_profile")
+  @@index([missionId], name: "idx_user_missions_mission")
+  @@index([isActive], name: "idx_user_missions_active")
+  @@index([isCompleted], name: "idx_user_missions_completed")
+  @@index([expiresAt], name: "idx_user_missions_expires")
+  @@map("user_missions")
+}
+
+// Rewards - Catálogo de recompensas
+model Reward {
+  id                String          @id @default(cuid())
+
+  // Basic info
+  name              String          @db.VarChar(255)
+  slug              String          @unique @db.VarChar(255)
+  description       String          @db.Text
+  icon              String          @db.VarChar(255)
+  imageUrl          String?         @db.Text
+
+  // Classification
+  category          RewardCategory  @map("category")
+
+  // Cost & Value
+  pointsCost        Int             @map("points_cost")
+  value             Decimal?        @db.Decimal(10, 2) // Valor em reais (se aplicável)
+  discountPercent   Int?            @map("discount_percent") // Percentual de desconto
+
+  // Type & Delivery
+  type              String          @db.VarChar(50) // 'percentage', 'fixed', 'item', 'service', 'digital'
+  deliveryMethod    String          @db.VarChar(50) // 'automatic', 'manual', 'code', 'voucher'
+
+  // Availability
+  isAvailable       Boolean         @default(true) @map("is_available")
+  isLimited         Boolean         @default(false) @map("is_limited")
+  limitQuantity     Int?            @map("limit_quantity")
+  remainingQuantity Int?            @map("remaining_quantity")
+
+  // Constraints
+  requiredLevel     Int?            @map("required_level")
+  maxClaimsPerUser  Int?            @map("max_claims_per_user")
+
+  // Time constraints
+  availableFrom     DateTime?       @map("available_from") @db.Timestamp(6)
+  availableUntil    DateTime?       @map("available_until") @db.Timestamp(6)
+  expirationDays    Int?            @map("expiration_days") // Dias até expirar após resgate
+
+  // Terms & Conditions
+  terms             String?         @db.Text
+  excludes          String?         @db.Text
+
+  // Metadata
+  sortOrder         Int             @default(0) @map("sort_order")
+  metadata          Json?           @db.JsonB
+
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  claims            RewardClaim[]
+
+  @@index([slug], name: "idx_rewards_slug")
+  @@index([category], name: "idx_rewards_category")
+  @@index([isAvailable], name: "idx_rewards_available")
+  @@index([pointsCost], name: "idx_rewards_cost")
+  @@index([sortOrder], name: "idx_rewards_sort")
+  @@map("rewards")
+}
+
+// Reward Claims - Resgates de recompensas
+model RewardClaim {
+  id                String        @id @default(cuid())
+  userId            String        @map("user_id")
+  profileId         String        @map("profile_id")
+  rewardId          String        @map("reward_id")
+
+  // Claim details
+  pointsSpent       Int           @map("points_spent")
+  status            RewardStatus  @map("status") @default(CLAIMED)
+
+  // Redemption
+  redemptionCode    String?       @unique @map("redemption_code") @db.VarChar(100)
+  redemptionDetails Json?         @map("redemption_details") @db.JsonB
+
+  // Time tracking
+  claimedAt         DateTime      @default(now()) @map("claimed_at") @db.Timestamp(6)
+  redeemedAt        DateTime?     @map("redeemed_at") @db.Timestamp(6)
+  expiresAt         DateTime?     @map("expires_at") @db.Timestamp(6)
+
+  // Fulfillment
+  fulfillmentStatus String?       @map("fulfillment_status") @db.VarChar(50)
+  fulfillmentNotes  String?       @map("fulfillment_notes") @db.Text
+  fulfilledAt       DateTime?     @map("fulfilled_at") @db.Timestamp(6)
+
+  // Metadata
+  metadata          Json?         @db.JsonB
+
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  // Relations
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile           GamificationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  reward            Reward              @relation(fields: [rewardId], references: [id], onDelete: Restrict)
+  pointTransactions PointTransaction[]
+
+  @@index([userId], name: "idx_reward_claims_user")
+  @@index([profileId], name: "idx_reward_claims_profile")
+  @@index([rewardId], name: "idx_reward_claims_reward")
+  @@index([status], name: "idx_reward_claims_status")
+  @@index([claimedAt], name: "idx_reward_claims_claimed_at")
+  @@index([expiresAt], name: "idx_reward_claims_expires_at")
+  @@map("reward_claims")
+}
+
+// Gamification Events - Eventos de gamificação para analytics
+model GamificationEvent {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+
+  // Event details
+  eventType       String    @db.VarChar(100) // 'points_earned', 'achievement_unlocked', etc.
+  eventData       Json      @db.JsonB
+
+  // Context
+  source          String?   @db.VarChar(100) // Origem do evento
+  sessionId       String?   @map("session_id") @db.VarChar(255)
+
+  // Metadata
+  ipAddress       String?   @map("ip_address") @db.VarChar(45)
+  userAgent       String?   @map("user_agent") @db.Text
+
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_gamification_events_user")
+  @@index([eventType], name: "idx_gamification_events_type")
+  @@index([createdAt(sort: Desc)], name: "idx_gamification_events_created")
+  @@index([sessionId], name: "idx_gamification_events_session")
+  @@map("gamification_events")
 }
