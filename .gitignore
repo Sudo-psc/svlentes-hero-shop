@@ -68,3 +68,9 @@ Thumbs.db
 
 # Stakpak local files
 .stakpak
+
+# Cleanup and backup files
+.cleanup-backup/
+*.backup
+*.backup-*
+build.log
