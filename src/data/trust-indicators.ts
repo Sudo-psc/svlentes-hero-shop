@@ -74,27 +74,31 @@ export const trustBadges = getTrustBadges()
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getSocialProofStats() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedSocialProofStats
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      // Add color property for backward compatibility (not in YAML schema)
-      return appConfig.medical.trust.socialProofStats.map((stat: any) => ({
-        ...stat,
-        color: stat.id === 'patients' ? 'text-primary-600' :
-               stat.id === 'satisfaction' ? 'text-green-600' :
-               stat.id === 'support' ? 'text-blue-600' : 'text-gray-600'
-      }))
-    }
-  } catch (error) {
-    console.warn('[Trust] Error loading social proof stats, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedSocialProofStats
+
+  // TODO: Re-enable centralized config after fixing build
+  // Guard: only try to load config on server-side
+  // if (typeof window !== 'undefined') {
+  //   return hardcodedSocialProofStats
+  // }
+  //
+  // try {
+  //   const appConfig = config.load()
+  //   const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+  //   if (useCentralizedMedical) {
+  //     // Add color property for backward compatibility (not in YAML schema)
+  //     return appConfig.medical.trust.socialProofStats.map((stat: any) => ({
+  //       ...stat,
+  //       color: stat.id === 'patients' ? 'text-primary-600' :
+  //              stat.id === 'satisfaction' ? 'text-green-600' :
+  //              stat.id === 'support' ? 'text-blue-600' : 'text-gray-600'
+  //     }))
+  //   }
+  // } catch (error) {
+  //   console.warn('[Trust] Error loading social proof stats, using fallback:', error)
+  // }
+  // return hardcodedSocialProofStats
 }
 // Hardcoded fallback data
 const hardcodedSocialProofStats = [
@@ -127,21 +131,25 @@ export const socialProofStats = getSocialProofStats()
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getCertifications() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedCertifications
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      return appConfig.medical.trust.certifications
-    }
-  } catch (error) {
-    console.warn('[Trust] Error loading certifications, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedCertifications
+
+  // TODO: Re-enable centralized config after fixing build
+  // Guard: only try to load config on server-side
+  // if (typeof window !== 'undefined') {
+  //   return hardcodedCertifications
+  // }
+  //
+  // try {
+  //   const appConfig = config.load()
+  //   const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+  //   if (useCentralizedMedical) {
+  //     return appConfig.medical.trust.certifications
+  //   }
+  // } catch (error) {
+  //   console.warn('[Trust] Error loading certifications, using fallback:', error)
+  // }
+  // return hardcodedCertifications
 }
 // Hardcoded fallback data
 const hardcodedCertifications = [
@@ -179,21 +187,25 @@ const hardcodedCertifications = [
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getTestimonialHighlights() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedTestimonialHighlights
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      return appConfig.medical.trust.highlights
-    }
-  } catch (error) {
-    console.warn('[Trust] Error loading highlights, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedTestimonialHighlights
+
+  // TODO: Re-enable centralized config after fixing build
+  // Guard: only try to load config on server-side
+  // if (typeof window !== 'undefined') {
+  //   return hardcodedTestimonialHighlights
+  // }
+  //
+  // try {
+  //   const appConfig = config.load()
+  //   const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
+  //   if (useCentralizedMedical) {
+  //     return appConfig.medical.trust.highlights
+  //   }
+  // } catch (error) {
+  //   console.warn('[Trust] Error loading highlights, using fallback:', error)
+  // }
+  // return hardcodedTestimonialHighlights
 }
 // Hardcoded fallback data
 const hardcodedTestimonialHighlights = [

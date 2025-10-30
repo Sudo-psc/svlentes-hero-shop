@@ -126,52 +126,42 @@ function convertYamlPlanToPricingPlan(yamlPlan: any): PricingPlan {
  * Get pricing plans grouped by lens type (new system)
  */
 function getPricingPlanGroups(): PricingPlanGroup[] {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return []
+  // Temporarily disabled centralized config - using hardcoded data only
+  // TODO: Re-enable centralized config after fixing build
+
+  // Group plans by lens type from hardcoded data
+  const plans = getPricingPlans()
+  const groups: PricingPlanGroup[] = []
+
+  // Aspheric lenses group
+  const asphericPlans = plans.filter(plan => plan.lensType === 'asferica')
+  if (asphericPlans.length > 0) {
+    groups.push({
+      id: 'asfericas',
+      name: 'Lentes Asféricas',
+      description: 'Lentes com design avançado para maior conforto e visão nítida',
+      lensType: 'asferica',
+      icon: 'eye',
+      plans: asphericPlans.sort((a, b) => a.sortOrder - b.sortOrder),
+      order: 1
+    })
   }
 
-  try {
-    const appConfig = config.load()
-    const usePricingAsfericos = config.isFeatureEnabled('usePricingAsfericos')
-    const usePricingToricos = config.isFeatureEnabled('usePricingToricos')
-    if (usePricingAsfericos || usePricingToricos) {
-      // Group plans by lens type
-      const plans = getPricingPlans()
-      const groups: PricingPlanGroup[] = []
-      // Aspheric lenses group
-      const asphericPlans = plans.filter(plan => plan.lensType === 'asferica')
-      if (asphericPlans.length > 0) {
-        groups.push({
-          id: 'asfericas',
-          name: 'Lentes Asféricas',
-          description: 'Lentes com design avançado para maior conforto e visão nítida',
-          lensType: 'asferica',
-          icon: 'eye',
-          plans: asphericPlans.sort((a, b) => a.sortOrder - b.sortOrder),
-          order: 1
-        })
-      }
-      // Toric lenses group
-      const toricPlans = plans.filter(plan => plan.lensType === 'torica')
-      if (toricPlans.length > 0) {
-        groups.push({
-          id: 'toricas',
-          name: 'Lentes Tóricas (Astigmatismo)',
-          description: 'Lentes especializadas para correção de astigmatismo com máxima precisão',
-          lensType: 'torica',
-          icon: 'target',
-          plans: toricPlans.sort((a, b) => a.sortOrder - b.sortOrder),
-          order: 2
-        })
-      }
-      // Future groups for other lens types can be added here
-      return groups.sort((a, b) => a.order - b.order)
-    }
-  } catch (error) {
-    console.warn('[Pricing] Error loading plan groups, using fallback:', error)
+  // Toric lenses group
+  const toricPlans = plans.filter(plan => plan.lensType === 'torica')
+  if (toricPlans.length > 0) {
+    groups.push({
+      id: 'toricas',
+      name: 'Lentes Tóricas (Astigmatismo)',
+      description: 'Lentes especializadas para correção de astigmatismo com máxima precisão',
+      lensType: 'torica',
+      icon: 'target',
+      plans: toricPlans.sort((a, b) => a.sortOrder - b.sortOrder),
+      order: 2
+    })
   }
-  return []
+
+  return groups.sort((a, b) => a.order - b.order)
 }
 // Hardcoded fallback data (sincronizado com base.yaml) - Novo formato asférico
 const hardcodedPlans: PricingPlan[] = [

@@ -25,12 +25,23 @@ export default function LoginPage() {
     try {
       await signIn(email, password)
 
-      // Wait a bit for AuthContext to set the firebase-token cookie
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Wait for AuthContext to trigger the server-side cookie set
+      // The onAuthStateChanged callback fires asynchronously and needs time to:
+      // 1. Get the Firebase token
+      // 2. Send POST request to /api/auth/set-token
+      // 3. Receive response with HttpOnly cookie
+      // We wait longer to ensure the cookie is set before redirecting
+      await new Promise(resolve => setTimeout(resolve, 3000))
 
-      // Force redirect to dashboard
-      router.push('/area-assinante/dashboard')
-      router.refresh()
+      // Use a full navigation to ensure server-side rendering reflects
+      // the authenticated session (reads the HttpOnly cookie).
+      if (typeof window !== 'undefined') {
+        window.location.replace('/area-assinante/dashboard')
+      } else {
+        // Fallback to client router when window is not available
+        router.push('/area-assinante/dashboard')
+        router.refresh()
+      }
     } catch (error: any) {
       console.error('[LOGIN] Firebase error:', error)
       // Mapear erros do Firebase para mensagens amigáveis

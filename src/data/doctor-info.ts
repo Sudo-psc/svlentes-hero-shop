@@ -68,55 +68,10 @@ export const doctorInfo = getDoctorInfo()
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getTrustIndicators() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedTrustIndicators
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      // Convert new centralized format to legacy format for backward compatibility
-      const badges = appConfig.medical.trust.badges
-      return {
-        anvisa: {
-          name: badges.find((b: any) => b.id === 'anvisa')?.name || 'ANVISA',
-          description: badges.find((b: any) => b.id === 'anvisa')?.description || 'Produtos aprovados pela ANVISA',
-          logo: '/images/selo-anvisa.png',
-          verified: badges.find((b: any) => b.id === 'anvisa')?.verified || true
-        },
-        crm: {
-          name: 'Conselho Regional de Medicina',
-          description: 'Médico registrado no CRM-SP',
-          number: appConfig.medical.doctor.crm,
-          logo: '/images/selo-crm.png',
-          verified: true
-        },
-        sbo: {
-          name: 'Sociedade Brasileira de Oftalmologia',
-          description: 'Membro ativo da SBO',
-          logo: '/images/selo-sbo.png',
-          verified: true
-        },
-        ssl: {
-          name: badges.find((b: any) => b.id === 'ssl')?.name || 'Certificado SSL',
-          description: badges.find((b: any) => b.id === 'ssl')?.description || 'Conexão segura',
-          logo: '/images/ssl-badge.png',
-          verified: badges.find((b: any) => b.id === 'ssl')?.verified || true
-        },
-        lgpd: {
-          name: badges.find((b: any) => b.id === 'lgpd')?.name || 'Conformidade LGPD',
-          description: badges.find((b: any) => b.id === 'lgpd')?.description || 'Em conformidade com LGPD',
-          logo: '/images/lgpd-badge.png',
-          verified: badges.find((b: any) => b.id === 'lgpd')?.verified || true
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('[Medical] Error loading trust indicators, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedTrustIndicators
+
+  // TODO: Re-enable centralized config after fixing build
 }
 // Hardcoded fallback data
 const hardcodedTrustIndicators = {
@@ -157,21 +112,10 @@ const hardcodedTrustIndicators = {
  * Falls back to hardcoded data if feature flag is disabled
  */
 function getClinicInfo() {
-  // Guard: only try to load config on server-side
-  if (typeof window !== 'undefined') {
-    return hardcodedClinicInfo
-  }
-
-  try {
-    const appConfig = config.load()
-    const useCentralizedMedical = config.isFeatureEnabled('useCentralizedMedical')
-    if (useCentralizedMedical) {
-      return appConfig.medical.clinic
-    }
-  } catch (error) {
-    console.warn('[Medical] Error loading clinic info, using fallback:', error)
-  }
+  // Temporarily use hardcoded data only - will re-enable config loader after fixing client-side import issue
   return hardcodedClinicInfo
+
+  // TODO: Re-enable centralized config after fixing build
 }
 // Hardcoded fallback data
 const hardcodedClinicInfo = {
