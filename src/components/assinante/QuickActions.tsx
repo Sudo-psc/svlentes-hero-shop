@@ -12,7 +12,8 @@ import {
   RefreshCcw,
   Phone,
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  ExternalLink
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -182,6 +183,7 @@ export function createQuickActions({
   onAddressClick,
   onSupportClick,
   onBenefitsClick,
+  onStripePortalClick,
   pendingOrders = 0,
   unreadMessages = 0
 }: {
@@ -193,6 +195,7 @@ export function createQuickActions({
   onAddressClick: () => void
   onSupportClick: () => void
   onBenefitsClick: () => void
+  onStripePortalClick?: () => void
   pendingOrders?: number
   unreadMessages?: number
 }): QuickAction[] {
@@ -231,6 +234,20 @@ export function createQuickActions({
       variant: 'outline',
       onClick: onPaymentClick
     },
+    ...(onStripePortalClick ? [{
+      id: 'stripe-portal',
+      label: 'Portal Stripe',
+      description: 'Gerenciar assinatura no Stripe',
+      icon: (
+        <div className="relative">
+          <Settings className="h-6 w-6" />
+          <ExternalLink className="h-3 w-3 absolute -top-1 -right-1" />
+        </div>
+      ),
+      variant: 'default' as const,
+      onClick: onStripePortalClick,
+      color: 'bg-cyan-50 hover:bg-cyan-100 border-cyan-200 text-cyan-800'
+    }] : []),
     {
       id: 'address',
       label: 'Endereço',

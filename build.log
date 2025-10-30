@@ -1,0 +1,380 @@
+
+> svlentes-landing-page@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.15
+  - Environments: .env.local, .env.production, .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+[Pricing] Error loading plan groups, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/6441.js:1:3137
+    at 6441 (/root/svlentes-hero-shop/.next/server/chunks/6441.js:1:3953)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 7641 (/root/svlentes-hero-shop/.next/server/app/api/asaas/create-payment/route.js:1:555)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at r (/root/svlentes-hero-shop/.next/server/app/api/asaas/create-payment/route.js:1:7145)
+    at /root/svlentes-hero-shop/.next/server/app/api/asaas/create-payment/route.js:1:7188
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+    at /root/svlentes-hero-shop/.next/server/app/api/asaas/create-payment/route.js:1:7158
+    at Object.<anonymous> (/root/svlentes-hero-shop/.next/server/app/api/asaas/create-payment/route.js:1:7215)
+[Pricing] Error loading plan groups, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/6441.js:1:3137
+    at 6441 (/root/svlentes-hero-shop/.next/server/chunks/6441.js:1:3953)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 52218 (/root/svlentes-hero-shop/.next/server/app/api/create-checkout/route.js:1:543)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at s (/root/svlentes-hero-shop/.next/server/app/api/create-checkout/route.js:1:14356)
+    at /root/svlentes-hero-shop/.next/server/app/api/create-checkout/route.js:1:14399
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+    at /root/svlentes-hero-shop/.next/server/app/api/create-checkout/route.js:1:14369
+    at Object.<anonymous> (/root/svlentes-hero-shop/.next/server/app/api/create-checkout/route.js:1:14427)
+[Medical] Error loading trust indicators, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3209
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3728)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 67630 (/root/svlentes-hero-shop/.next/server/app/_not-found/page.js:1:811)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at r (/root/svlentes-hero-shop/.next/server/app/_not-found/page.js:1:3475)
+    at /root/svlentes-hero-shop/.next/server/app/_not-found/page.js:1:3528
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+[Medical] Error loading clinic info, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3758
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3937)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 67630 (/root/svlentes-hero-shop/.next/server/app/_not-found/page.js:1:811)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at r (/root/svlentes-hero-shop/.next/server/app/_not-found/page.js:1:3475)
+    at /root/svlentes-hero-shop/.next/server/app/_not-found/page.js:1:3528
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+[Medical] Error loading trust indicators, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3209
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3728)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 25404 (/root/svlentes-hero-shop/.next/server/app/admin/analytics/page.js:1:1326)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at a (/root/svlentes-hero-shop/.next/server/app/admin/analytics/page.js:6:2478)
+    at /root/svlentes-hero-shop/.next/server/app/admin/analytics/page.js:6:2554
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+[Medical] Error loading clinic info, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3758
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3937)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 25404 (/root/svlentes-hero-shop/.next/server/app/admin/analytics/page.js:1:1326)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at a (/root/svlentes-hero-shop/.next/server/app/admin/analytics/page.js:6:2478)
+    at /root/svlentes-hero-shop/.next/server/app/admin/analytics/page.js:6:2554
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+[Medical] Error loading trust indicators, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3209
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3728)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 1479 (/root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:1325)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at t (/root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:21994)
+    at /root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:22065
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+[Medical] Error loading clinic info, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3758
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3937)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 1479 (/root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:1325)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at t (/root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:21994)
+    at /root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:22065
+    at t.X (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:2214)
+[Pricing] Error loading plan groups, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/6441.js:1:3137
+    at 6441 (/root/svlentes-hero-shop/.next/server/chunks/6441.js:1:3953)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 96748 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:3940)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27416 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:129:362)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 1479 (/root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:1325)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at t (/root/svlentes-hero-shop/.next/server/app/admin/dashboard/page.js:1:21994)
+   Generating static pages (0/108) ...
+Admin auth me error: B [Error]: Dynamic server usage: Route /api/admin/auth/me couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at c (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:4955)
+    at _ (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:5064)
+    at u (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:762)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31) {
+  description: "Route /api/admin/auth/me couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Analytics error: B [Error]: Dynamic server usage: Route /api/admin/dashboard/analytics couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at c (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:4955)
+    at _ (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:5064)
+    at /root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:5721
+    at c (/root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/analytics/route.js:1:811)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46) {
+  description: "Route /api/admin/dashboard/analytics couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Customer growth data error: B [Error]: Dynamic server usage: Route /api/admin/dashboard/customer-growth couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at _ (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:4985)
+    at m (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:5094)
+    at /root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:5751
+    at S (/root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/customer-growth/route.js:1:788)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46) {
+  description: "Route /api/admin/dashboard/customer-growth couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+
+Error occurred prerendering page "/api/admin/dashboard/customer-growth". Read more: https://nextjs.org/docs/messages/prerender-error
+
+ReferenceError: searchParams is not defined
+    at S (/root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/customer-growth/route.js:1:2077)
+    at async /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36957
+    at async eC.execute (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:27552)
+    at async eC.handle (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:38291)
+    at async exportAppRoute (/root/svlentes-hero-shop/node_modules/next/dist/export/routes/app-route.js:77:26)
+    at async exportPageImpl (/root/svlentes-hero-shop/node_modules/next/dist/export/worker.js:175:20)
+    at async Span.traceAsyncFn (/root/svlentes-hero-shop/node_modules/next/dist/trace/trace.js:154:20)
+    at async Object.exportPage (/root/svlentes-hero-shop/node_modules/next/dist/export/worker.js:236:20)
+Export error: B [Error]: Dynamic server usage: Route /api/admin/dashboard/export couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at c (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:4955)
+    at _ (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:5064)
+    at /root/svlentes-hero-shop/.next/server/app/api/admin/auth/me/route.js:1:5721
+    at a2 (/root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/export/route.js:1:434147)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46) {
+  description: "Route /api/admin/dashboard/export couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Recent activity error: B [Error]: Dynamic server usage: Route /api/admin/dashboard/recent-activity couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at I (/root/svlentes-hero-shop/.next/server/chunks/2370.js:1:3284)
+    at T (/root/svlentes-hero-shop/.next/server/chunks/2370.js:1:3393)
+    at /root/svlentes-hero-shop/.next/server/chunks/2370.js:1:4050
+    at c (/root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/recent-activity/route.js:1:790)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46) {
+  description: "Route /api/admin/dashboard/recent-activity couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Dashboard metrics error: B [Error]: Dynamic server usage: Route /api/admin/dashboard/metrics couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at _ (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:4985)
+    at m (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:5094)
+    at /root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:5751
+    at p (/root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/metrics/route.js:1:802)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46) {
+  description: "Route /api/admin/dashboard/metrics couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Admin auth middleware error: n [Error]: Dynamic server usage: Route /api/admin/dashboard/revenue couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (/root/svlentes-hero-shop/.next/server/chunks/9379.js:1:56265)
+    at l (/root/svlentes-hero-shop/.next/server/app/api/webhooks/stripe/route.js:1:5601)
+    at s (/root/svlentes-hero-shop/.next/server/chunks/1756.js:25:20520)
+    at /root/svlentes-hero-shop/.next/server/app/api/admin/dashboard/revenue/route.js:1:9010
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24) {
+  description: "Route /api/admin/dashboard/revenue couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Admin auth middleware error: n [Error]: Dynamic server usage: Route /api/admin/health couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at l (/root/svlentes-hero-shop/.next/server/chunks/9379.js:1:56265)
+    at c (/root/svlentes-hero-shop/.next/server/chunks/3130.js:1:1688)
+    at s (/root/svlentes-hero-shop/.next/server/chunks/1756.js:25:20520)
+    at /root/svlentes-hero-shop/.next/server/chunks/631.js:1:16903
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24) {
+  description: "Route /api/admin/health couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (27/108) 
+Subscriptions analytics error: B [Error]: Dynamic server usage: Route /api/admin/subscriptions/analytics couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at _ (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:4985)
+    at m (/root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:5094)
+    at /root/svlentes-hero-shop/.next/server/app/api/admin/auth/logout/route.js:1:5751
+    at l (/root/svlentes-hero-shop/.next/server/app/api/admin/subscriptions/analytics/route.js:1:806)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46) {
+  description: "Route /api/admin/subscriptions/analytics couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[DeliveryStatus] Error: {
+  error: "Dynamic server usage: Route /api/assinante/delivery-status couldn't be rendered statically because it used `request.url`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  failureCount: 1,
+  responseTime: 0
+}
+{"timestamp":"2025-10-30T11:56:27.287Z","level":"error","category":"api","message":"Error getting stats","metadata":{"duration":0},"stack":"Error: Dynamic server usage: Route /api/debug/stats couldn't be rendered statically because it used `request.url`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)\n    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)\n    at d (/root/svlentes-hero-shop/.next/server/app/api/debug/stats/route.js:1:645)\n    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963\n    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36\n    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)\n    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)\n    at NoopTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)\n    at ProxyTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)\n    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:122:103","environment":"production","service":"svlentes-api","version":"1.0.0"}
+{"timestamp":"2025-10-30T11:56:27.325Z","level":"error","message":"Error getting LangChain stats","stack":"Error: Dynamic server usage: Route /api/monitoring/langchain-stats couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)\n    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)\n    at C (/root/svlentes-hero-shop/.next/server/app/api/monitoring/langchain-stats/route.js:158:1366)\n    at async /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36957\n    at async eC.execute (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:27552)\n    at async eC.handle (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:38291)\n    at async exportAppRoute (/root/svlentes-hero-shop/node_modules/next/dist/export/routes/app-route.js:77:26)\n    at async exportPageImpl (/root/svlentes-hero-shop/node_modules/next/dist/export/worker.js:175:20)\n    at async Span.traceAsyncFn (/root/svlentes-hero-shop/node_modules/next/dist/trace/trace.js:154:20)\n    at async Object.exportPage (/root/svlentes-hero-shop/node_modules/next/dist/export/worker.js:236:20)","environment":"production","service":"svlentes-api","version":"1.0.0"}
+Error fetching subscription history: B [Error]: Dynamic server usage: Route /api/subscription/history couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:29137)
+    at p (/root/svlentes-hero-shop/.next/server/app/api/subscription/history/route.js:1:582)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:122:103 {
+  description: "Route /api/subscription/history couldn't be rendered statically because it used `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (54/108) 
+Get engagement analytics error: B [Error]: Dynamic server usage: Route /api/v1/analytics/engagement couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at V (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:21777)
+    at Object.get (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:28809)
+    at c (/root/svlentes-hero-shop/.next/server/app/api/v1/analytics/engagement/route.js:1:973)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:36963
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/root/svlentes-hero-shop/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at /root/svlentes-hero-shop/node_modules/next/dist/server/lib/trace/tracer.js:122:103 {
+  description: "Route /api/v1/analytics/engagement couldn't be rendered statically because it used `nextUrl.searchParams`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[Medical] Error loading trust indicators, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67195
+    at 84262 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67714)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 2622 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:4545)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+[Medical] Error loading clinic info, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67744
+    at 84262 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67923)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 2622 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:4545)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+[Medical] Error loading trust indicators, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67195
+    at 84262 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67714)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 2622 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:4545)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+[Medical] Error loading clinic info, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67744
+    at 84262 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67923)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 2622 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:4545)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+   Generating static pages (81/108) 
+[Medical] Error loading trust indicators, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67195
+    at 84262 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67714)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 2622 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:4545)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+[Medical] Error loading clinic info, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67744
+    at 84262 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:67923)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 2622 (/root/svlentes-hero-shop/.next/server/chunks/7523.js:1:4545)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+[Pricing] Error loading plan groups, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/5065.js:1:3290
+    at 75065 (/root/svlentes-hero-shop/.next/server/chunks/5065.js:1:4121)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 85109 (/root/svlentes-hero-shop/.next/server/app/assinar/page.js:1:68882)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at I (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:94362)
+    at C (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:92913)
+    at rR (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:33974)
+    at nN (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:62304)
+[Pricing] Error loading plan groups, using fallback: ReferenceError: config is not defined
+    at /root/svlentes-hero-shop/.next/server/chunks/5065.js:1:3290
+    at 75065 (/root/svlentes-hero-shop/.next/server/chunks/5065.js:1:4121)
+    at t (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at 27335 (/root/svlentes-hero-shop/.next/server/app/planos/page.js:1:9830)
+    at Object.t [as require] (/root/svlentes-hero-shop/.next/server/webpack-runtime.js:1:143)
+    at require (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:16:18669)
+    at i (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:88294)
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:98817
+    at /root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:98904
+    at t (/root/svlentes-hero-shop/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:99107)
+ ✓ Generating static pages (108/108)
+
+> Export encountered errors on following paths:
+	/api/admin/dashboard/customer-growth/route: /api/admin/dashboard/customer-growth

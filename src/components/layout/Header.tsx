@@ -7,16 +7,40 @@ import { LogoHeader } from '@/components/ui/logo'
 import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
 import { useConfigValue } from '@/lib/use-config'
+
+interface MenuItem {
+    label: string
+    href: string
+    isAnchor?: boolean
+    icon?: string
+    external?: boolean
+}
+
+interface HeaderMenuConfig {
+    main: MenuItem[]
+    cta: {
+        authenticated: {
+            dashboard: MenuItem
+            logout: MenuItem
+        }
+        unauthenticated: {
+            schedule: MenuItem
+            login: MenuItem
+        }
+    }
+}
+
 interface HeaderProps {
     className?: string
 }
+
 export function Header({ className }: HeaderProps) {
     const router = useRouter()
     const { user, loading, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     // Use centralized configuration for menu items
-    const headerMenu = useConfigValue('menus.header', null)
+    const headerMenu = useConfigValue<HeaderMenuConfig | null>('menus.header', null)
     // Detectar scroll para adicionar sombra no header
     useEffect(() => {
         const handleScroll = () => {
@@ -76,8 +100,8 @@ export function Header({ className }: HeaderProps) {
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
-                    : 'bg-white shadow-sm'
+                ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
+                : 'bg-white shadow-sm'
                 } ${className}`}
         >
             <div className="container-custom">
@@ -85,7 +109,7 @@ export function Header({ className }: HeaderProps) {
                     {/* Logo */}
                     <a
                         href="/"
-                        className="inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl transition-opacity hover:opacity-90 flex-shrink-0"
+                        className="inline-flex h-[80px] w-[80px] items-center justify-center overflow-hidden rounded-xl transition-opacity hover:opacity-90 flex-shrink-0"
                         aria-label="SV Lentes - Voltar para a página inicial"
                     >
                         <LogoHeader className="h-full w-full" />
@@ -180,7 +204,7 @@ export function Header({ className }: HeaderProps) {
                 </div>
                 {/* Mobile Menu */}
                 {isMenuOpen && (
-                    <div 
+                    <div
                         id="mobile-menu"
                         className="md:hidden border-t border-gray-200 bg-white"
                         role="navigation"
@@ -261,6 +285,6 @@ export function Header({ className }: HeaderProps) {
                     </div>
                 )}
             </div>
-            </header>
+        </header>
     )
 }

@@ -14,11 +14,14 @@ import {
   Shield,
   Star,
   Edit,
-  RefreshCcw
+  RefreshCcw,
+  ExternalLink,
+  Settings
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateLong, formatRelativeTime } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel, type SubscriptionStatus } from '@/lib/subscription-helpers'
+import { STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 interface EnhancedSubscriptionCardProps {
   status: SubscriptionStatus
@@ -340,39 +343,59 @@ export function EnhancedSubscriptionCard({
           </div>
         </div>
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t">
-          {isActive && (
-            <>
+        <div className="space-y-3 pt-4 border-t">
+          <div className="flex gap-3">
+            {isActive && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onEditPlan}
+                  className="flex-1"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Mudar Plano
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onRefresh}
+                  disabled={isLoading}
+                  className="flex-1"
+                >
+                  <RefreshCcw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
+                  Atualizar
+                </Button>
+              </>
+            )}
+            {(status === 'cancelled' || status === 'paused') && onReactivate && (
               <Button
-                variant="outline"
                 size="sm"
-                onClick={onEditPlan}
-                className="flex-1"
+                onClick={onReactivate}
+                className="w-full"
               >
-                <Edit className="h-4 w-4 mr-2" />
-                Mudar Plano
+                Reativar Assinatura
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                <RefreshCcw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-                Atualizar
-              </Button>
-            </>
-          )}
-          {(status === 'cancelled' || status === 'paused') && onReactivate && (
-            <Button
-              size="sm"
-              onClick={onReactivate}
-              className="w-full"
+            )}
+          </div>
+          {/* Stripe Portal Button */}
+          <Button
+            asChild
+            variant="default"
+            size="sm"
+            className="w-full bg-cyan-600 hover:bg-cyan-700"
+          >
+            <a
+              href={STRIPE_BILLING_PORTAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2"
             >
-              Reativar Assinatura
-            </Button>
-          )}
+              <Settings className="h-4 w-4" />
+              Gerenciar Assinatura no Stripe
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </Button>
         </div>
       </div>
     </motion.div>

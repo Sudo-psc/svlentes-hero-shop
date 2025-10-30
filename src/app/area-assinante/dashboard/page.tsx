@@ -27,12 +27,15 @@ import { SubscriptionHistoryTimeline } from '@/components/assinante/Subscription
 import { EmergencyContact } from '@/components/assinante/EmergencyContact'
 import { formatDate, formatCurrency } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
+import { STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
 import { motion } from 'framer-motion'
 import { useToast } from '@/components/assinante/ToastFeedback'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings, ClipboardList, Receipt, Truck } from 'lucide-react'
+import { Package, Calendar, CreditCard, MapPin, Edit, RefreshCcw, FileText, Settings, ClipboardList, Receipt, Truck, ExternalLink, Trophy, Star, Target, Award, Zap, Shield } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
+import { GamificationPanel } from '@/components/gamification/GamificationPanel'
+import { RewardSystem } from '@/components/gamification/RewardSystem'
 
 function DashboardContent() {
   const router = useRouter()
@@ -482,26 +485,45 @@ function DashboardContent() {
                       </div>
                     </div>
                   )}
-                  <div className="pt-3 border-t grid grid-cols-2 gap-2">
+                  <div className="pt-3 border-t space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openModal('updatePayment')}
+                        className="w-full"
+                        disabled={isLoading}
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Pagamento
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openModal('updateAddress')}
+                        className="w-full"
+                        disabled={isLoading}
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Endereço
+                      </Button>
+                    </div>
                     <Button
-                      variant="outline"
+                      asChild
+                      variant="default"
                       size="sm"
-                      onClick={() => openModal('updatePayment')}
-                      className="w-full"
-                      disabled={isLoading}
+                      className="w-full bg-cyan-600 hover:bg-cyan-700"
                     >
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Pagamento
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openModal('updateAddress')}
-                      className="w-full"
-                      disabled={isLoading}
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Endereço
+                      <a
+                        href={STRIPE_BILLING_PORTAL_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Gerenciar Assinatura no Stripe
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
                     </Button>
                   </div>
                 </div>
