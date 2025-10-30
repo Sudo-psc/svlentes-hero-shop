@@ -285,6 +285,10 @@ describe('Calculator Functions', () => {
       expect(validateCustomUsageDays('15.5')).toBeNull()
       expect(validateCustomUsageDays('20.1')).toBeNull()
     })
+
+    it('should handle integer values with comma for zero decimal', () => {
+      expect(validateCustomUsageDays('25,0')).toBe(25)
+    })
   })
 
   describe('Edge Cases and Boundary Conditions', () => {
