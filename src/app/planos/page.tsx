@@ -6,6 +6,7 @@ import { CoverageSection } from '@/components/pricing/CoverageSection';
 import { BenefitsGrid } from '@/components/pricing/BenefitsGrid';
 import { PricingFAQ } from '@/components/pricing/PricingFAQ';
 import { serviceBenefits, coverageInfo, pricingFAQ } from '@/data/pricing-plans';
+import { APP_CONFIG } from '@/lib/constants';
 export default function PlanosPage() {
   // Set page metadata dynamically using Head or next/head for client components
   React.useEffect(() => {
@@ -65,8 +66,8 @@ export default function PlanosPage() {
           {/* Stripe Pricing Table */}
           <div id="pricing-table" className="max-w-7xl mx-auto">
             <StripePricingTable
-              pricingTableId="prctbl_1SK1U5Ls8MC0aCdjGBBODqjW"
-              publishableKey="pk_live_51OJdAcLs8MC0aCdjQwfyXkqJQRyRw0Au8D5C2BzxN90ekVz0AFEI6PpG0ELGQzJiRZZkWTu4Rj4BcjNZpiyH3LI800SkEiSITH"
+              pricingTableId={APP_CONFIG.stripe.pricingTableId}
+              publishableKey={APP_CONFIG.stripe.publishableKey}
               className="w-full"
             />
           </div>
