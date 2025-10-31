@@ -4,6 +4,11 @@ export const CONFIDENCE_THRESHOLDS = {
     medium: 0.5
 }
 
+export const SCORING_CONFIDENCE = {
+    critical: 0.9,
+    normal: 0.75
+}
+
 export const RISK_RULES = {
     critical: ['infection-recent', 'acute-trauma'],
     high: ['dry-eye-severe', 'hygiene-poor', 'diabetes-unstable'],

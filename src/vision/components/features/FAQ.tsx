@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import * as Accordion from '@radix-ui/react-accordion'
 import { ChevronDown } from 'lucide-react'
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from './Input'
 import { type FAQItem } from '@/vision-types'
 

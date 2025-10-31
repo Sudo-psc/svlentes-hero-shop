@@ -1,9 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/vision/components/features/Input'
-import { Badge } from '@/vision-components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 import { type GlossaryTerm } from '@/vision-types'
 
 const TERMS: GlossaryTerm[] = [

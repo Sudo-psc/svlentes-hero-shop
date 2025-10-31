@@ -1,8 +1,8 @@
 'use client'
 
 import { AlertTriangle } from 'lucide-react'
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
-import { Badge } from '@/vision-components/ui/Badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { MultipleChoice } from './MultipleChoice'
 import { type QuestionDefinition } from '@/vision-types'
 

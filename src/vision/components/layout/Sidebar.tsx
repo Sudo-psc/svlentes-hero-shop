@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuestionnaireContext } from '@/vision/contexts/QuestionnaireContext'
-import { Badge } from '@/vision-components/ui/Badge'
+import { Badge } from '@/components/ui/badge'
 
 export function Sidebar() {
     const { questions, state } = useQuestionnaireContext()

@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { type ConfidenceMetrics } from '@/vision-types'
 
 interface ConfidenceIndicatorProps {

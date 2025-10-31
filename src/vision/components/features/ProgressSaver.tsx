@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/vision-components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useQuestionnaireContext } from '@/vision/contexts/QuestionnaireContext'
 
 export function ProgressSaver() {

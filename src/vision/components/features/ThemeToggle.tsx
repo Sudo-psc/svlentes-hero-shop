@@ -1,7 +1,7 @@
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
-import { Button } from '@/vision-components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { useThemeContext } from '@/vision/contexts/ThemeContext'
 
 export function ThemeToggle() {
