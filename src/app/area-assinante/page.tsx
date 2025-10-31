@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -69,18 +69,21 @@ export default function AreaAssinantePage() {
   const stripeTableId = APP_CONFIG.stripe.pricingTableId
   const whatsappLink = `https://wa.me/${APP_CONFIG.whatsapp.number}`
   const hasBillingPortal = Boolean(STRIPE_BILLING_PORTAL_URL)
-  const [isRedirecting, setIsRedirecting] = useState(false)
+  const isRedirectingRef = useRef(false)
 
   useEffect(() => {
     if (!loading) {
       router.prefetch('/area-assinante/dashboard')
       
-      if (user && !isRedirecting) {
-        setIsRedirecting(true)
+      if (user && !isRedirectingRef.current) {
+        isRedirectingRef.current = true
         const timeout = window.setTimeout(() => {
           router.replace('/area-assinante/dashboard')
         }, 900)
-        return () => window.clearTimeout(timeout)
+        return () => {
+          window.clearTimeout(timeout)
+          isRedirectingRef.current = false
+        }
       }
     }
     return undefined
