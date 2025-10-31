@@ -84,7 +84,7 @@ export default function AreaAssinantePage() {
       }
     }
     return undefined
-  }, [loading, user, router, isRedirecting])
+  }, [loading, user, router])
 
   if (loading) {
     return (
