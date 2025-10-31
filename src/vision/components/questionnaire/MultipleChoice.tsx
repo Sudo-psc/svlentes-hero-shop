@@ -1,8 +1,8 @@
 'use client'
 
 import { CheckCircle2 } from 'lucide-react'
-import { Badge } from '@/vision-components/ui/Badge'
-import { Tooltip } from '@/vision-components/ui/Tooltip'
+import { Badge } from '@/components/ui/badge'
+import { Tooltip } from '@/components/ui/tooltip'
 import { type QuestionOption } from '@/vision-types'
 
 interface MultipleChoiceProps {
@@ -38,7 +38,7 @@ export function MultipleChoice({ options, value, onChange }: MultipleChoiceProps
                             {option.riskTags && option.riskTags.length > 0 ? (
                                 <div className="mt-2 flex flex-wrap gap-2">
                                     {option.riskTags.map(tag => (
-                                        <Badge key={tag} variant="warning">
+                                        <Badge key={tag} variant="outline">
                                             {tag.replace(/-/g, ' ')}
                                         </Badge>
                                     ))}

@@ -1,7 +1,7 @@
 'use client'
 
-import { Badge } from '@/vision-components/ui/Badge'
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { type FactorExplanation } from '@/vision-types'
 
 interface FactorBreakdownProps {

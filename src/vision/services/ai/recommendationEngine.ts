@@ -192,7 +192,9 @@ function buildFinalResult(
 ): FinalResult {
     const questions = resolveQuestionnaireFlow(answers)
     const references = resolveReferences(recommendation.primary.reasoning)
-    const sessionId = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+    const sessionId = typeof crypto !== 'undefined' && 'randomUUID' in crypto 
+        ? crypto.randomUUID() 
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
     const scoreBreakdown = baseScores.map(score => ({
         category: score.category,
         factor: score.factor,

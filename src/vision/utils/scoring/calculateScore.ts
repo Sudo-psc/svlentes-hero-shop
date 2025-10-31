@@ -1,4 +1,5 @@
 import { CATEGORY_WEIGHTS } from '@/vision/constants/weights'
+import { SCORING_CONFIDENCE } from '@/vision/constants/thresholds'
 import { resolveQuestionnaireFlow } from '@/vision/services/data/questionRepository'
 import { applyInteractions } from '@/vision/utils/scoring/applyInteractions'
 import { normalizeWeights } from '@/vision/utils/scoring/normalizeWeights'
@@ -26,7 +27,7 @@ export function calculateScore(answers: Record<string, string>): ScoreResult {
             return
         }
         const categoryWeight = normalizedWeights[question.category] ?? 0
-        const confidence = question.critical ? 0.9 : 0.75
+        const confidence = question.critical ? SCORING_CONFIDENCE.critical : SCORING_CONFIDENCE.normal
         baseScores.push({
             factor: `${questionId}:${value}`,
             category: question.category,

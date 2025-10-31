@@ -1,8 +1,8 @@
 'use client'
 
-import { Badge } from '@/vision-components/ui/Badge'
-import { Button } from '@/vision-components/ui/Button'
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { type Recommendation } from '@/vision-types'
 
 interface RecommendationCardProps {
@@ -23,7 +23,7 @@ export function RecommendationCard({ recommendation, onDownload }: Recommendatio
                         <p className="text-sm text-slate-600 dark:text-slate-300">Confiança: {primary.confidence.overallConfidence}</p>
                     </div>
                     {onDownload ? (
-                        <Button variant="primary" onClick={onDownload}>
+                        <Button variant="default" onClick={onDownload}>
                             Exportar PDF
                         </Button>
                     ) : null}
@@ -57,7 +57,7 @@ export function RecommendationCard({ recommendation, onDownload }: Recommendatio
                             <h3 className="text-sm font-semibold uppercase text-slate-500">Alertas e considerações</h3>
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {warnings.map(warning => (
-                                    <Badge key={warning} variant="warning">
+                                    <Badge key={warning} variant="outline">
                                         {warning}
                                     </Badge>
                                 ))}

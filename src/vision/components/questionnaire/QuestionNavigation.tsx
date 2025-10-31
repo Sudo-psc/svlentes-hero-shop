@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/vision-components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 interface QuestionNavigationProps {
     canGoBack: boolean
@@ -18,7 +18,7 @@ export function QuestionNavigation({ canGoBack, canGoNext, onPrevious, onNext, o
                 Voltar
             </Button>
             <div className="ml-auto flex gap-3">
-                <Button variant="primary" disabled={!canGoNext} onClick={isFinalStep ? onFinish ?? onNext : onNext}>
+                <Button variant="default" disabled={!canGoNext} onClick={isFinalStep ? onFinish ?? onNext : onNext}>
                     {isFinalStep ? 'Gerar recomendação' : 'Próxima pergunta'}
                 </Button>
             </div>

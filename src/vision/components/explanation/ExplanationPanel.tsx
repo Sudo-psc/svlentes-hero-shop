@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader } from '@/vision-components/ui/Card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { type FinalResult } from '@/vision-types'
 import { FactorBreakdown } from '@/vision/components/results/FactorBreakdown'
 import { ConfidenceIndicator } from './ConfidenceIndicator'

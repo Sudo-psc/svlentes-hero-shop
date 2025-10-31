@@ -21,22 +21,24 @@ export function useQuestionnaire(): QuestionnaireContextValue {
         (updater: (prev: QuestionnaireState) => QuestionnaireState) => {
             setValue(prev => {
                 const nextState = updater(prev)
-                const completed = Object.keys(nextState.answers).length >= questions.length
+                const currentQuestions = resolveQuestionnaireFlow(nextState.answers)
+                const completed = Object.keys(nextState.answers).length >= currentQuestions.length
                 return {
                     ...nextState,
                     isComplete: completed
                 }
             })
         },
-        [questions.length, setValue]
+        [setValue]
     )
 
     const goNext = useCallback(() => {
         updateState(prev => {
-            const nextIndex = Math.min(prev.currentIndex + 1, questions.length - 1)
+            const currentQuestions = resolveQuestionnaireFlow(prev.answers)
+            const nextIndex = Math.min(prev.currentIndex + 1, currentQuestions.length - 1)
             return { ...prev, currentIndex: nextIndex }
         })
-    }, [questions.length, updateState])
+    }, [updateState])
 
     const goPrevious = useCallback(() => {
         updateState(prev => ({ ...prev, currentIndex: Math.max(prev.currentIndex - 1, 0) }))
@@ -46,11 +48,12 @@ export function useQuestionnaire(): QuestionnaireContextValue {
         (questionId: string, value: string) => {
             updateState(prev => {
                 const answers = { ...prev.answers, [questionId]: value }
-                const nextIndex = Math.min(prev.currentIndex + 1, questions.length - 1)
+                const currentQuestions = resolveQuestionnaireFlow(answers)
+                const nextIndex = Math.min(prev.currentIndex + 1, currentQuestions.length - 1)
                 return { ...prev, answers, currentIndex: nextIndex }
             })
         },
-        [questions.length, updateState]
+        [updateState]
     )
 
     const reset = useCallback(() => {
