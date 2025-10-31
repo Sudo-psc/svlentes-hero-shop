@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { StripeScript } from '@/components/payment/StripeScript'
 import { StripePricingTable } from '@/components/payment/StripePricingTable'
 import { useAuth } from '@/contexts/AuthContext'
 import { APP_CONFIG, STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
-import { type LucideIcon, BadgeCheck, CreditCard, Headset, LogIn, ShieldCheck, Sparkles, Truck, Users } from 'lucide-react'
+import { type LucideIcon, BadgeCheck, CreditCard, Headphones, LogIn, ShieldCheck, Sparkles, Truck, Users } from 'lucide-react'
 
 type Highlight = {
   title: string
@@ -35,7 +35,7 @@ const subscriberHighlights: Highlight[] = [
   {
     title: 'Suporte humano dedicado',
     description: 'Nossa equipe acompanha cada etapa por WhatsApp, telefone ou presencialmente na clínica.',
-    icon: Headset
+    icon: Headphones
   }
 ]
 
@@ -69,19 +69,22 @@ export default function AreaAssinantePage() {
   const stripeTableId = APP_CONFIG.stripe.pricingTableId
   const whatsappLink = `https://wa.me/${APP_CONFIG.whatsapp.number}`
   const hasBillingPortal = Boolean(STRIPE_BILLING_PORTAL_URL)
+  const isRedirectingRef = useRef(false)
 
   useEffect(() => {
     if (!loading) {
       router.prefetch('/area-assinante/dashboard')
-    }
-  }, [loading, router])
-
-  useEffect(() => {
-    if (!loading && user) {
-      const timeout = window.setTimeout(() => {
-        router.replace('/area-assinante/dashboard')
-      }, 1200)
-      return () => window.clearTimeout(timeout)
+      
+      if (user && !isRedirectingRef.current) {
+        isRedirectingRef.current = true
+        const timeout = window.setTimeout(() => {
+          router.replace('/area-assinante/dashboard')
+        }, 900)
+        return () => {
+          window.clearTimeout(timeout)
+          isRedirectingRef.current = false
+        }
+      }
     }
   }, [loading, user, router])
 
