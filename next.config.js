@@ -24,9 +24,7 @@ const nextConfig = {
     generateBuildId: async () => {
         return 'build-' + Date.now()
     },
-    // Turbopack configuration (empty to silence warning in Next.js 16)
-    turbopack: {},
-    // Webpack configuration (still used as fallback)
+    // Webpack configuration
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {
@@ -98,7 +96,7 @@ const nextConfig = {
                 "style-src 'self' 'unsafe-inline' data: r2cdn.perplexity.ai *.googleapis.com fonts.googleapis.com *.clerk.accounts.dev *.clerk.com",
                 "img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com *.clerk.accounts.dev *.clerk.com img.clerk.com",
                 "font-src 'self' data: r2cdn.perplexity.ai *.gstatic.com *.googleapis.com fonts.gstatic.com",
-                "connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com api.stripe.com checkout.stripe.com www.google-analytics.com *.facebook.com *.facebook.net www.facebook.com *.clerk.accounts.dev *.clerk.com api.clerk.com clerk.svlentes.com.br",
+                "connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com api.stripe.com m.stripe.com *.stripe.com checkout.stripe.com www.google-analytics.com *.facebook.com *.facebook.net www.facebook.com *.clerk.accounts.dev *.clerk.com api.clerk.com clerk.svlentes.com.br",
                 "frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com checkout.stripe.com *.clerk.accounts.dev *.clerk.com",
                 "frame-ancestors 'self'",
                 "form-action 'self' accounts.google.com",
@@ -111,7 +109,7 @@ const nextConfig = {
                 "style-src 'self' 'unsafe-inline' r2cdn.perplexity.ai *.googleapis.com fonts.googleapis.com *.clerk.accounts.dev *.clerk.com",
                 "img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com *.clerk.accounts.dev *.clerk.com img.clerk.com",
                 "font-src 'self' data: r2cdn.perplexity.ai *.gstatic.com *.googleapis.com fonts.gstatic.com",
-                "connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com api.stripe.com checkout.stripe.com www.google-analytics.com *.facebook.com *.facebook.net www.facebook.com *.clerk.accounts.dev *.clerk.com api.clerk.com clerk.svlentes.com.br",
+                "connect-src 'self' *.asaas.com api.whatsapp.com accounts.google.com apis.google.com oauth2.googleapis.com www.googleapis.com *.googleapis.com *.gstatic.com securetoken.googleapis.com firebase.googleapis.com api.stripe.com m.stripe.com *.stripe.com checkout.stripe.com www.google-analytics.com *.facebook.com *.facebook.net www.facebook.com *.clerk.accounts.dev *.clerk.com api.clerk.com clerk.svlentes.com.br",
                 "frame-src 'self' *.firebaseapp.com accounts.google.com oauth2.googleapis.com js.stripe.com *.facebook.com www.facebook.com checkout.stripe.com *.clerk.accounts.dev *.clerk.com",
                 "frame-ancestors 'self'",
                 "form-action 'self' accounts.google.com",
@@ -142,7 +140,7 @@ const nextConfig = {
                     },
                     {
                         key: 'Permissions-Policy',
-                        value: 'camera=(), microphone=(), geolocation=()',
+                        value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com" "https://checkout.stripe.com")',
                     },
                     {
                         key: 'Strict-Transport-Security',

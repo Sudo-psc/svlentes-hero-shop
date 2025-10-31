@@ -96,10 +96,10 @@ class SystemMonitor {
     const checks: HealthCheck[] = []
     // 1. Verificar API principal
     checks.push(await this.checkAPIHealth('/api/health-check'))
-    // 2. Verificar API de assinante
-    checks.push(await this.checkAPIHealth('/api/assinante/subscription'))
-    // 3. Verificar API de autenticação
-    checks.push(await this.checkAPIHealth('/api/auth/me'))
+    // 2. Verificar API de assinante - DISABLED: requires authentication
+    // checks.push(await this.checkAPIHealth('/api/assinante/subscription'))
+    // 3. Verificar API de autenticação - DISABLED: requires authentication
+    // checks.push(await this.checkAPIHealth('/api/auth/me'))
     // 4. Verificar conexão WebSocket (se aplicável)
     checks.push(await this.checkWebSocketHealth())
     // 5. Verificar IndexedDB

@@ -10,7 +10,7 @@ export const APP_CONFIG = {
   },
   urls: {
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://svlentes.com.br',
-    stripeBillingPortal: process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL || 'https://billing.stripe.com/p/login/test00000000000000000',
+    stripeBillingPortal: process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL || 'https://billing.stripe.com/p/login/cNifZigA86ycek14ascQU00',
   },
 } as const
 

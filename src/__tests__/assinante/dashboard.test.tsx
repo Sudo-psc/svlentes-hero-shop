@@ -8,7 +8,7 @@ import BenefitsDisplay from '@/components/assinante/BenefitsDisplay'
 import ShippingAddressCard from '@/components/assinante/ShippingAddress'
 import EmergencyContactCard from '@/components/assinante/EmergencyContact'
 import { useSubscriptionData } from '@/hooks/useSubscriptionData'
-import { SubscriptionBenefit } from '@/types/assinante'
+import { SubscriptionBenefit } from '@/types/subscription'
 
 // Mock NextAuth
 vi.mock('next-auth/react')
@@ -66,6 +66,8 @@ const mockSubscriptionData = {
       zipCode: '35300-000',
       complement: 'Apto 101'
     },
+    paymentMethod: 'CREDIT_CARD',
+    paymentMethodLast4: '4242',
     createdAt: new Date('2025-10-14'),
     updatedAt: new Date('2025-10-14')
   },
@@ -103,9 +105,8 @@ describe('DashboardPage', () => {
       user: mockSubscriptionData.user,
       loading: false,
       error: null,
-      refreshData: vi.fn(),
       updateShippingAddress: vi.fn()
-    })
+    } as any)
   })
 
   it('should render dashboard with subscription data', () => {
@@ -121,12 +122,11 @@ describe('DashboardPage', () => {
   it('should show loading state', () => {
     vi.mocked(useSubscriptionData).mockReturnValue({
       subscription: null,
-      user: { id: '', name: '', email: '' },
+      user: { id: '', name: '', email: '', avatarUrl: null },
       loading: true,
       error: null,
-      refreshData: vi.fn(),
       updateShippingAddress: vi.fn()
-    })
+    } as any)
 
     renderWithProviders(<DashboardPage />)
 
@@ -136,12 +136,11 @@ describe('DashboardPage', () => {
   it('should show error state', () => {
     vi.mocked(useSubscriptionData).mockReturnValue({
       subscription: null,
-      user: { id: '', name: '', email: '' },
+      user: { id: '', name: '', email: '', avatarUrl: null },
       loading: false,
       error: 'API Error',
-      refreshData: vi.fn(),
       updateShippingAddress: vi.fn()
-    })
+    } as any)
 
     renderWithProviders(<DashboardPage />)
 
@@ -156,9 +155,8 @@ describe('DashboardPage', () => {
       user: mockSubscriptionData.user,
       loading: false,
       error: null,
-      refreshData: vi.fn(),
       updateShippingAddress: vi.fn()
-    })
+    } as any)
 
     renderWithProviders(<DashboardPage />)
 

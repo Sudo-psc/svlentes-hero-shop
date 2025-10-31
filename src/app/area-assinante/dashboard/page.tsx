@@ -284,8 +284,8 @@ function DashboardContent() {
     }
   }
   const handlePortalAccess = () => {
-    if (!STRIPE_BILLING_PORTAL_URL || STRIPE_BILLING_PORTAL_URL.includes('test00000000000000000')) {
-      showInfo('Portal indisponível', 'Entre em contato com o suporte para ajustar sua cobrança.')
+    if (!STRIPE_BILLING_PORTAL_URL) {
+      showError('Portal indisponível', 'Configuração do portal de pagamento não encontrada. Entre em contato com o suporte.')
       return
     }
     window.open(STRIPE_BILLING_PORTAL_URL, '_blank', 'noopener,noreferrer')

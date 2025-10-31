@@ -242,11 +242,11 @@ export const mockPayment = {
 
 // Helper functions for tests
 export const createMockDeliveryResponse = (status: string) => {
-  const statusMap: Record<string, typeof mockDeliveryStatus.current> = {
+  const statusMap = {
     in_transit: mockDeliveryStatus.current,
     pending_payment: mockDeliveryStatus.pending,
     delivered: mockDeliveryStatus.delivered
-  }
+  } as const
 
   return {
     delivery: statusMap[status] || mockDeliveryStatus.current,
@@ -258,13 +258,13 @@ export const createMockDeliveryResponse = (status: string) => {
 }
 
 export const createMockActionsResponse = (scenarios: string[]) => {
-  const actionMap: Record<string, typeof mockContextualActions.renewal> = {
+  const actionMap = {
     renewal: mockContextualActions.renewal,
     evaluation: mockContextualActions.evaluation,
     payment: mockContextualActions.payment,
     reactivate: mockContextualActions.reactivate,
     whatsapp: mockContextualActions.whatsapp
-  }
+  } as const
 
   return {
     actions: scenarios.map(scenario => actionMap[scenario]).filter(Boolean),

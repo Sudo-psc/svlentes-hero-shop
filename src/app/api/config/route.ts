@@ -7,6 +7,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { config } from '@/config/loader'
 import { DEFAULT_CLIENT_CONFIG } from '@/lib/use-server-config'
 import { withCache } from '@/lib/api-cache'
+
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
 export function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const section = searchParams.get('section') // 'site', 'content', 'contact', etc.

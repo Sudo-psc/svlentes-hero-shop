@@ -69,11 +69,21 @@ async function seedTestDatabase() {
         order.status === 'CANCELLED' ? 'refunded' :
         'pending'
 
+      // Map fixture status to Prisma DeliveryStatus enum
+      const deliveryStatus =
+        order.status === 'pending_payment' ? 'PENDING' :
+        order.status === 'PROCESSING' ? 'PENDING' :
+        order.status === 'SHIPPED' ? 'SHIPPED' :
+        order.status === 'IN_TRANSIT' ? 'IN_TRANSIT' :
+        order.status === 'DELIVERED' ? 'DELIVERED' :
+        order.status === 'CANCELLED' ? 'CANCELLED' :
+        'PENDING'
+
       await prisma.order.create({
         data: {
           id: order.id,
           subscriptionId: order.subscriptionId,
-          deliveryStatus: order.status,  // Use fixture status as delivery status
+          deliveryStatus,  // Use mapped delivery status
           type: 'subscription',  // All test orders are subscription orders
           paymentStatus,  // Based on order status
           totalAmount: order.totalPrice,
@@ -110,7 +120,8 @@ async function seedTestDatabase() {
           asaasPaymentId: payment.transactionId,
           asaasCustomerId: `asaas_cust_${payment.userId.slice(-3)}`,  // Generate test customer ID
           amount: payment.amount,
-          status: payment.status === 'CONFIRMED' ? 'RECEIVED' : payment.status,
+          status: payment.status === 'CONFIRMED' ? 'RECEIVED' :
+                  payment.status === 'FAILED' ? 'CANCELLED' : payment.status,
           billingType,  // Asaas billing type (replaces paymentMethod)
           dueDate,  // Payment due date
           createdAt: payment.createdAt

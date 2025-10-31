@@ -14,13 +14,14 @@ import {
   GithubAuthProvider,
 } from 'firebase/auth'
 import { getFirebaseAuth, OAUTH_CLIENT_ID } from '@/lib/firebase'
-import { devLog } from '@/lib/devLogger'
-import { FallbackAuthManager } from '@/lib/auth/fallback-auth-manager'
-import type { AuthStatus, FallbackSession, AuthErrorResolution } from '@/lib/auth/types'
+import { EnhancedFallbackAuthManager } from '@/lib/auth/enhanced-fallback-manager'
 import { resolveAuthError } from '@/lib/auth/error-map'
+import type { AuthStatus, FallbackSession, AuthErrorResolution } from '@/lib/auth/types'
+import { devLog } from '@/lib/devLogger'
 
 // Get auth instance
 const auth = typeof window !== 'undefined' ? getFirebaseAuth() : null
+
 interface AuthContextType {
   user: User | null
   loading: boolean
@@ -38,7 +39,9 @@ interface AuthContextType {
   activateGuestAccess: () => void
   clearFallback: () => void
 }
+
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
+
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {
@@ -46,9 +49,11 @@ export function useAuth() {
   }
   return context
 }
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+
   const defaultStatus: AuthStatus = {
     health: 'unavailable',
     isOffline: typeof window !== 'undefined' ? !navigator.onLine : false,
@@ -60,7 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>(defaultStatus)
   const [fallbackSession, setFallbackSession] = useState<FallbackSession | null>(null)
   const [lastResolution, setLastResolution] = useState<AuthErrorResolution | null>(null)
-  const fallbackManagerRef = useRef<FallbackAuthManager | null>(null)
+
+  const fallbackManagerRef = useRef<EnhancedFallbackAuthManager | null>(null)
 
   useEffect(() => {
     if (!auth) {
@@ -69,46 +75,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!fallbackManagerRef.current) {
-      fallbackManagerRef.current = new FallbackAuthManager(auth)
+      fallbackManagerRef.current = new EnhancedFallbackAuthManager(auth, {
+        enableAdaptiveRetry: true,
+        enableDeviceBinding: true,
+        enableIntegrityChecks: true,
+        maxRetryAttempts: 5
+      })
       fallbackManagerRef.current.start()
-    }
 
-    const manager = fallbackManagerRef.current
-    const unsubscribe = manager.subscribe((newStatus) => {
-      setStatus(newStatus)
-      if (newStatus.fallbackActive) {
-        setFallbackSession(manager.getFallbackSession())
-      } else {
-        setFallbackSession(null)
+      return () => {
+        fallbackManagerRef.current?.stop()
+        fallbackManagerRef.current = null
       }
+    }
+  }, [])
+
+  const manager = fallbackManagerRef.current
+
+  useEffect(() => {
+    const unsubscribe = manager?.subscribe((newStatus) => {
+      setStatus(newStatus)
+      setFallbackSession(newStatus.fallbackActive ? manager.getFallbackSession() : null)
     })
 
-    const cachedSession = manager.restoreFromCache()
+    return unsubscribe
+  }, [manager])
+
+  useEffect(() => {
+    if (!auth) {
+      setLoading(false)
+      return
+    }
+
+    if (!fallbackManagerRef.current) {
+      return
+    }
+
+    const cachedSession = manager?.restoreFromCache()
     if (cachedSession) {
       setFallbackSession(cachedSession)
     }
+  }, [manager])
 
-    return () => {
-      unsubscribe()
-      manager.stop()
-      fallbackManagerRef.current = null
-    }
-  }, [])
   useEffect(() => {
     // Only set up auth listener on client side
     if (!auth) {
       setLoading(false)
       return
     }
+
     if (!fallbackManagerRef.current) {
-      fallbackManagerRef.current = new FallbackAuthManager(auth)
-      fallbackManagerRef.current.start()
+      return
     }
-    const fallbackManager = fallbackManagerRef.current
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
-      await fallbackManager?.handleAuthStateChange(user)
+      await manager?.handleAuthStateChange(user)
 
       // Store Firebase token securely via server-side API
       if (user) {
@@ -150,52 +172,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('[AUTH] Auth state change error:', error)
       setLoading(false)
     })
+  }, [auth, manager])
 
-    return unsubscribe
-  }, [])
   const signIn = async (email: string, password: string) => {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
     }
 
-    try {
-      const fallbackManager = fallbackManagerRef.current
-      if (!fallbackManager) {
-        throw new Error('Sistema de fallback não inicializado. Atualize a página e tente novamente.')
-      }
-      const result = await fallbackManager.signInWithEmailPassword(email, password)
-      setLastResolution(result.failureResolution ?? null)
-
-      if (result.success) {
-        if (result.user) {
-          // Check if email is verified
-          if (!result.user.emailVerified) {
-            throw new Error('EMAIL_NOT_VERIFIED')
-          }
-          setUser(result.user)
-          setFallbackSession(null)
-          setLastResolution(null)
-          return
-        }
-        if (result.fallbackSession) {
-          setFallbackSession(result.fallbackSession)
-          return
-        }
-      }
-
-      const resolution = result.failureResolution
-      const baseMessage = resolution?.message || 'Erro ao fazer login. Tente novamente.'
-      const authError: any = new Error(baseMessage)
-      if (resolution?.code) {
-        authError.code = resolution.code
-      }
-      throw authError
-    } catch (error: any) {
-      console.error('[AUTH] Sign in error:', error)
-      setLastResolution(resolveAuthError(error))
-      throw error
+    const manager = fallbackManagerRef.current
+    if (!manager) {
+      throw new Error('Sistema de fallback não inicializado. Atualize a página e tente novamente.')
     }
+
+    const result = await manager.signInWithEmailPassword(email, password)
+    setLastResolution(result.failureResolution ?? null)
+
+    if (result.success && result.user) {
+      if (!result.user.emailVerified) {
+        throw new Error('EMAIL_NOT_VERIFIED')
+      }
+      setUser(result.user)
+      setFallbackSession(null)
+      setLastResolution(null)
+      return
+    }
+
+    if (result.fallbackSession) {
+      setFallbackSession(result.fallbackSession)
+      return
+    }
+
+    const resolution = result.failureResolution
+    const baseMessage = resolution?.message || 'Erro ao fazer login. Tente novamente.'
+    const authError: any = new Error(baseMessage)
+    if (resolution?.code) {
+      authError.code = resolution.code
+    }
+    throw authError
   }
+
   const signUp = async (email: string, password: string, displayName: string) => {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
@@ -211,7 +226,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login?verified=true`,
           handleCodeInApp: false,
         })
-        await fallbackManagerRef.current?.cacheUserSession(result.user)
+        await manager?.cacheUserSession(result.user)
+        setUser(result.user)
+        setFallbackSession(null)
+        setLastResolution(null)
+        return
       }
     } catch (error: any) {
       console.error('[AUTH] Sign up error:', error)
@@ -219,11 +238,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error
     }
   }
+
   const signOut = async () => {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível.')
     }
+
     devLog.auth('sign-out-initiated')
+
     // Clear the Firebase token cookie securely via server-side API
     try {
       await fetch('/api/auth/set-token', {
@@ -235,9 +257,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('[AUTH] Failed to clear token on sign out:', error)
     }
+
     if (fallbackManagerRef.current) {
       await fallbackManagerRef.current.signOut()
       setFallbackSession(null)
+      setUser(null)
       setLastResolution(null)
       setStatus(prev => ({
         ...prev,
@@ -247,24 +271,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }))
     } else {
       await firebaseSignOut(auth)
+      setUser(null)
     }
   }
+
   const sendVerificationEmail = async () => {
-    if (!user) throw new Error('No user logged in')
-    await sendEmailVerification(user, {
-      url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login?verified=true`,
-      handleCodeInApp: false,
-    })
+    if (!user) {
+      throw new Error('No user logged in')
+    }
+
+    try {
+      await sendEmailVerification(user, {
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login?verified=true`,
+        handleCodeInApp: false,
+      })
+    } catch (error) {
+      console.error('[AUTH] Failed to send verification email:', error)
+      throw error
+    }
   }
+
   const sendPasswordReset = async (email: string) => {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível.')
     }
-    await sendPasswordResetEmail(auth, email, {
-      url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login`,
-      handleCodeInApp: false,
-    })
+
+    try {
+      await sendPasswordResetEmail(auth, email, {
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/area-assinante/login`,
+        handleCodeInApp: false,
+      })
+    } catch (error) {
+      console.error('[AUTH] Failed to send password reset email:', error)
+      throw error
+    }
   }
+
   const signInWithGoogle = async () => {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
@@ -276,15 +318,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Explicitly use the correct OAuth Client ID
       client_id: OAUTH_CLIENT_ID,
     })
+
     try {
       const result = await signInWithPopup(auth, provider)
       devLog.auth('google-signin-success', { uid: result.user?.uid })
+
       // Google accounts are automatically verified
       // No need to check emailVerified for social logins
       if (result.user) {
-        await fallbackManagerRef.current?.cacheUserSession(result.user)
+        await manager?.cacheUserSession(result.user)
+        setUser(result.user)
+        setFallbackSession(null)
         setLastResolution(null)
       }
+
       return
     } catch (error: any) {
       setLastResolution(resolveAuthError(error))
@@ -292,6 +339,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         code: error.code,
         message: error.message,
       })
+
       // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {
         throw new Error('Login cancelado pelo usuário')
@@ -309,10 +357,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Enhanced error message for network issues
         throw new Error('Erro de conexão com Google. Verifique se o OAuth Client ID está configurado corretamente no Google Cloud Console.')
       }
+
       // For any other error, throw with detailed message
       throw new Error(`Erro de autenticação: ${error.code || error.message}`)
     }
   }
+
   const signInWithFacebook = async () => {
     if (!auth) {
       throw new Error('Firebase Auth não está disponível. Por favor, recarregue a página.')
@@ -322,17 +372,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.setCustomParameters({
       display: 'popup',
     })
+
     try {
       const result = await signInWithPopup(auth, provider)
       // Facebook accounts are automatically verified
       // No need to check emailVerified for social logins
       if (result.user) {
-        await fallbackManagerRef.current?.cacheUserSession(result.user)
+        await manager?.cacheUserSession(result.user)
+        setUser(result.user)
+        setFallbackSession(null)
         setLastResolution(null)
       }
+
       return
     } catch (error: any) {
       setLastResolution(resolveAuthError(error))
+
       // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {
         throw new Error('Login cancelado pelo usuário')
@@ -343,9 +398,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error.code === 'auth/account-exists-with-different-credential') {
         throw new Error('Já existe uma conta com este email usando outro método de login')
       }
+
       throw error
     }
   }
+
   // GitHub Authentication (Feature Flag controlled)
   const signInWithGitHub = async () => {
     if (!auth) {
@@ -362,15 +419,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.setCustomParameters({
       allow_signup: 'false',
     })
+
     try {
       const result = await signInWithPopup(auth, provider)
       devLog.auth('github-signin-success', { uid: result.user?.uid })
+
       // GitHub accounts are automatically verified
       // No need to check emailVerified for social logins
       if (result.user) {
-        await fallbackManagerRef.current?.cacheUserSession(result.user)
+        await manager?.cacheUserSession(result.user)
+        setUser(result.user)
+        setFallbackSession(null)
         setLastResolution(null)
       }
+
       return
     } catch (error: any) {
       setLastResolution(resolveAuthError(error))
@@ -378,6 +440,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         code: error.code,
         message: error.message,
       })
+
       // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {
         throw new Error('Login cancelado pelo usuário')
@@ -391,24 +454,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error.code === 'auth/unauthorized-domain') {
         throw new Error('Domínio não autorizado. Entre em contato com o suporte.')
       }
+
       // For any other error, throw with detailed message
       throw new Error(`Erro de autenticação GitHub: ${error.code || error.message}`)
     }
   }
+
   const activateGuestAccess = () => {
     const manager = fallbackManagerRef.current
     if (!manager) return
+
     const result = manager.activateGuestFallback('Modo convidado ativado')
     if (result.fallbackSession) {
       setFallbackSession(result.fallbackSession)
     }
     setLastResolution(result.failureResolution ?? null)
   }
+
   const clearFallback = () => {
     fallbackManagerRef.current?.clearFallbackSession()
     setFallbackSession(null)
     setLastResolution(null)
   }
+
   const value = {
     user,
     loading,
@@ -426,5 +494,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     activateGuestAccess,
     clearFallback,
   }
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

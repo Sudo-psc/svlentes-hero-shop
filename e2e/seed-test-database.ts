@@ -69,29 +69,31 @@ async function seedTestDatabase() {
     console.log(`✅ Seeded ${ALL_TEST_SUBSCRIPTIONS.length} subscriptions\n`)
 
     // 4. Seed Prescriptions
-    console.log('📄 Seeding test prescriptions...')
-    for (const prescription of ALL_TEST_PRESCRIPTIONS) {
-      await prisma.prescription.create({
-        data: {
-          id: prescription.id,
-          userId: prescription.userId,
-          subscriptionId: prescription.subscriptionId,
-          fileName: prescription.fileName,
-          fileUrl: prescription.fileUrl,
-          fileType: prescription.fileType,
-          fileSize: prescription.fileSize,
-          doctorName: prescription.doctorName,
-          doctorCRM: prescription.doctorCRM,
-          issueDate: prescription.issueDate,
-          expiryDate: prescription.expiryDate,
-          rightEye: prescription.rightEye,
-          leftEye: prescription.leftEye,
-          status: prescription.status
-        }
-      })
-      console.log(`  ✓ Created prescription: ${prescription.id} for user ${prescription.userId}`)
-    }
-    console.log(`✅ Seeded ${ALL_TEST_PRESCRIPTIONS.length} prescriptions\n`)
+    // NOTE: Prescription model not yet implemented in schema - commenting out for now
+    console.log('📄 Skipping prescriptions (model not yet in schema)...')
+    // console.log('📄 Seeding test prescriptions...')
+    // for (const prescription of ALL_TEST_PRESCRIPTIONS) {
+    //   await prisma.prescription.create({
+    //     data: {
+    //       id: prescription.id,
+    //       userId: prescription.userId,
+    //       subscriptionId: prescription.subscriptionId,
+    //       fileName: prescription.fileName,
+    //       fileUrl: prescription.fileUrl,
+    //       fileType: prescription.fileType,
+    //       fileSize: prescription.fileSize,
+    //       doctorName: prescription.doctorName,
+    //       doctorCRM: prescription.doctorCRM,
+    //       issueDate: prescription.issueDate,
+    //       expiryDate: prescription.expiryDate,
+    //       rightEye: prescription.rightEye,
+    //       leftEye: prescription.leftEye,
+    //       status: prescription.status
+    //     }
+    //   })
+    //   console.log(`  ✓ Created prescription: ${prescription.id} for user ${prescription.userId}`)
+    // }
+    // console.log(`✅ Seeded ${ALL_TEST_PRESCRIPTIONS.length} prescriptions\n`)
 
     // 5. Seed Orders
     console.log('📦 Seeding test orders...')
@@ -126,7 +128,7 @@ async function seedTestDatabase() {
           subscriptionId: payment.subscriptionId,
           orderId: payment.orderId,
           transactionId: payment.transactionId,
-          status: payment.status,
+          status: payment.status === 'FAILED' ? 'CANCELLED' : payment.status,
           paymentMethod: payment.paymentMethod,
           amount: payment.amount,
           currency: payment.currency,
@@ -143,23 +145,25 @@ async function seedTestDatabase() {
     console.log(`✅ Seeded ${ALL_TEST_PAYMENTS.length} payments\n`)
 
     // 7. Create DeliveryPreferences for test users
-    console.log('🚚 Seeding delivery preferences...')
-    for (const subscription of ALL_TEST_SUBSCRIPTIONS) {
-      await prisma.deliveryPreferences.create({
-        data: {
-          subscriptionId: subscription.id,
-          preferredDeliveryDay: 'ANY',
-          deliveryInstructions: 'Deixar com porteiro',
-          notificationPreferences: {
-            email: true,
-            sms: true,
-            whatsapp: true
-          }
-        }
-      })
-      console.log(`  ✓ Created delivery preferences for subscription ${subscription.id}`)
-    }
-    console.log(`✅ Seeded delivery preferences\n`)
+    // NOTE: DeliveryPreferences model not yet implemented in schema - commenting out for now
+    console.log('🚚 Skipping delivery preferences (model not yet in schema)...')
+    // console.log('🚚 Seeding delivery preferences...')
+    // for (const subscription of ALL_TEST_SUBSCRIPTIONS) {
+    //   await prisma.deliveryPreferences.create({
+    //     data: {
+    //       subscriptionId: subscription.id,
+    //       preferredDeliveryDay: 'ANY',
+    //       deliveryInstructions: 'Deixar com porteiro',
+    //       notificationPreferences: {
+    //         email: true,
+    //         sms: true,
+    //         whatsapp: true
+    //       }
+    //     }
+    //   })
+    //   console.log(`  ✓ Created delivery preferences for subscription ${subscription.id}`)
+    // }
+    // console.log(`✅ Seeded delivery preferences\n`)
 
     console.log('🎉 Test database seeding completed successfully!')
     console.log('\n📊 Summary:')
