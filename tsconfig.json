@@ -38,6 +38,24 @@
       ],
       "@/data/*": [
         "./src/data/*"
+      ],
+      "@/vision/*": [
+        "./src/vision/*"
+      ],
+      "@/vision-components/*": [
+        "./src/vision/components/*"
+      ],
+      "@/vision-hooks/*": [
+        "./src/vision/hooks/*"
+      ],
+      "@/vision-services/*": [
+        "./src/vision/services/*"
+      ],
+      "@/vision-types/*": [
+        "./src/vision/types/*"
+      ],
+      "@/vision-utils/*": [
+        "./src/vision/utils/*"
       ]
     },
     "forceConsistentCasingInFileNames": true
