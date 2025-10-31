@@ -56,12 +56,12 @@ export function Footer({ className }: FooterProps) {
                 action: item.action ? actionMap[item.action] : undefined
             }
         })
-        : null
+         : null
     const legalLinks = legalLinksFromConfig || [
-        {
-            name: 'Política de Privacidade',
-            action: () => setShowPrivacyPolicy(true)
-        },
+        { name: 'Termos de Uso', href: '/termos-uso' },
+        { name: 'Política de Privacidade', href: '/politica-privacidade' },
+        { name: 'Política de Troca e Devolução', href: '/politica-troca-devolucao' },
+        { name: 'Política de Cancelamento', href: '/politica-cancelamento' },
         {
             name: 'Configurações de Privacidade',
             action: () => setShowPrivacySettings(true)
@@ -70,7 +70,6 @@ export function Footer({ className }: FooterProps) {
             name: 'Meus Dados (LGPD)',
             action: () => setShowDataControl(true)
         },
-        { name: 'Termos de Uso', href: '/termos-uso' },
     ]
     return (
         <footer className={`bg-white text-gray-800 ${className}`}>
