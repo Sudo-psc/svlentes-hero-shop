@@ -80,3 +80,4 @@ build.log
 
 # TestSprite temporary files
 testsprite_tests/
+.log
