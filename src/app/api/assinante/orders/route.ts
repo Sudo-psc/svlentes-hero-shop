@@ -55,9 +55,11 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       )
     }
-    // Buscar todas as assinaturas do usuário
+    // Buscar todas as assinaturas do usuário (OWNERSHIP VALIDATION)
     const subscriptions = await prisma.subscription.findMany({
-      where: { userId: user.id },
+      where: { 
+        userId: user.id  // CRITICAL: Only fetch user's own subscriptions
+      },
       select: { id: true }
     })
     if (subscriptions.length === 0) {
@@ -99,12 +101,12 @@ export async function GET(request: NextRequest) {
       orders: orders.map(order => ({
         id: order.id,
         subscriptionId: order.subscriptionId,
-        status: order.status.toLowerCase(),
+        status: order.deliveryStatus.toLowerCase(),
         planName: order.subscription.planType,
         amount: Number(order.totalAmount),
         trackingCode: order.trackingCode,
         shippingDate: order.shippingDate?.toISOString(),
-        deliveryDate: order.deliveryDate?.toISOString(),
+        deliveryDate: order.deliveredAt?.toISOString(),
         createdAt: order.createdAt.toISOString(),
         updatedAt: order.updatedAt.toISOString()
       })),
