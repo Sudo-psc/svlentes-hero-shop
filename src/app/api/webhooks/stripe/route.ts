@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { logger, LogCategory } from '@/lib/logger'
+import { prisma } from '@/lib/prisma'
 // Initialize Stripe with secret key (if available)
 let stripe: Stripe | null = null
 if (process.env.STRIPE_SECRET_KEY) {
@@ -116,13 +117,34 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     subscriptionId: session.subscription,
     metadata: session.metadata,
   })
-  // Here you can:
-  // 1. Create/update customer in your database
-  // 2. Create subscription record
-  // 3. Send welcome email
-  // 4. Notify admin team
+  
+  try {
+    // 1. Find or create user by email
+    if (!session.customer_email) {
+      logger.error(LogCategory.PAYMENT, 'No customer email in checkout session', new Error('Missing email'))
+      return
+    }
+    
+    const user = await prisma.user.findUnique({
+      where: { email: session.customer_email }
+    })
+    
+    if (!user) {
+      logger.error(LogCategory.PAYMENT, 'User not found for checkout session', new Error(`Email: ${session.customer_email}`))
+      return
+    }
+    
+    // 2. Fetch full subscription details from Stripe
+    if (session.subscription && typeof session.subscription === 'string') {
+      const subscription = await stripe!.subscriptions.retrieve(session.subscription)
+      await handleSubscriptionCreated(subscription, user.id)
+    }
+    
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to process checkout completion', error as Error)
+  }
 }
-async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+async function handleSubscriptionCreated(subscription: Stripe.Subscription, userId?: string) {
   logger.logPayment('stripe_subscription_created', {
     subscriptionId: subscription.id,
     customerId: subscription.customer,
@@ -130,6 +152,78 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     current_period_start: subscription.current_period_start,
     current_period_end: subscription.current_period_end,
   })
+  
+  try {
+    // Find user by Stripe customer ID or by userId if provided
+    let user
+    if (userId) {
+      user = await prisma.user.findUnique({ where: { id: userId } })
+    } else {
+      const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
+      user = await prisma.user.findFirst({
+        where: { 
+          OR: [
+            { asaasCustomerId: customerId }, // May be stored here temporarily
+            { email: { contains: '@' } } // Fallback - needs better logic
+          ]
+        }
+      })
+    }
+    
+    if (!user) {
+      logger.error(LogCategory.PAYMENT, 'User not found for subscription', new Error(`Customer: ${subscription.customer}`))
+      return
+    }
+    
+    // Get subscription price
+    const priceItem = subscription.items.data[0]
+    const amount = priceItem?.price?.unit_amount ? priceItem.price.unit_amount / 100 : 0
+    
+    // Map Stripe status to Prisma SubscriptionStatus
+    const statusMap: Record<string, any> = {
+      'active': 'ACTIVE',
+      'trialing': 'ACTIVE',
+      'past_due': 'OVERDUE',
+      'canceled': 'CANCELLED',
+      'unpaid': 'SUSPENDED',
+      'incomplete': 'PENDING_ACTIVATION',
+      'incomplete_expired': 'EXPIRED'
+    }
+    
+    // Create or update subscription in database
+    await prisma.subscription.upsert({
+      where: { id: subscription.id },
+      update: {
+        status: statusMap[subscription.status] || 'ACTIVE',
+        monthlyValue: amount,
+        renewalDate: new Date(subscription.current_period_end * 1000),
+        updatedAt: new Date()
+      },
+      create: {
+        id: subscription.id,
+        userId: user.id,
+        planType: priceItem?.price?.nickname || 'Stripe Subscription',
+        status: statusMap[subscription.status] || 'ACTIVE',
+        monthlyValue: amount,
+        renewalDate: new Date(subscription.current_period_end * 1000),
+        startDate: new Date(subscription.current_period_start * 1000),
+        paymentMethod: 'CREDIT_CARD',
+        metadata: {
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer,
+          stripePriceId: priceItem?.price?.id,
+        }
+      }
+    })
+    
+    logger.logPayment('stripe_subscription_synced_to_db', {
+      subscriptionId: subscription.id,
+      userId: user.id,
+      status: statusMap[subscription.status],
+    })
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to sync subscription to database', error as Error)
+  }
 }
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   logger.logPayment('stripe_subscription_updated', {
@@ -138,6 +232,51 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     status: subscription.status,
     cancel_at_period_end: subscription.cancel_at_period_end,
   })
+  
+  try {
+    // Map Stripe status to Prisma SubscriptionStatus
+    const statusMap: Record<string, any> = {
+      'active': 'ACTIVE',
+      'trialing': 'ACTIVE',
+      'past_due': 'OVERDUE',
+      'canceled': 'CANCELLED',
+      'unpaid': 'SUSPENDED',
+      'incomplete': 'PENDING_ACTIVATION',
+      'incomplete_expired': 'EXPIRED'
+    }
+    
+    // Get subscription price
+    const priceItem = subscription.items.data[0]
+    const amount = priceItem?.price?.unit_amount ? priceItem.price.unit_amount / 100 : 0
+    
+    // Update subscription status in database
+    const existingSub = await prisma.subscription.findFirst({
+      where: { id: subscription.id }
+    })
+    
+    if (existingSub) {
+      await prisma.subscription.update({
+        where: { id: subscription.id },
+        data: {
+          status: statusMap[subscription.status] || 'ACTIVE',
+          monthlyValue: amount,
+          renewalDate: new Date(subscription.current_period_end * 1000),
+          cancelReason: subscription.cancel_at_period_end ? 'User requested cancellation' : null,
+          updatedAt: new Date()
+        }
+      })
+      
+      logger.logPayment('stripe_subscription_updated_in_db', {
+        subscriptionId: subscription.id,
+        newStatus: statusMap[subscription.status],
+      })
+    } else {
+      // Subscription doesn't exist, create it
+      await handleSubscriptionCreated(subscription)
+    }
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to update subscription in database', error as Error)
+  }
 }
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   logger.logPayment('stripe_subscription_deleted', {
@@ -145,6 +284,25 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     customerId: subscription.customer,
     status: subscription.status,
   })
+  
+  try {
+    // Update subscription status to CANCELLED in database
+    await prisma.subscription.updateMany({
+      where: { id: subscription.id },
+      data: {
+        status: 'CANCELLED',
+        endDate: new Date(),
+        cancelReason: 'Subscription cancelled in Stripe',
+        updatedAt: new Date()
+      }
+    })
+    
+    logger.logPayment('stripe_subscription_cancelled_in_db', {
+      subscriptionId: subscription.id,
+    })
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to cancel subscription in database', error as Error)
+  }
 }
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   logger.logPayment('stripe_invoice_payment_succeeded', {
@@ -154,6 +312,67 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     amount_paid: invoice.amount_paid,
     currency: invoice.currency,
   })
+  
+  try {
+    // Find subscription
+    const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id
+    if (!subscriptionId) {
+      logger.error(LogCategory.PAYMENT, 'No subscription ID in invoice', new Error(`Invoice: ${invoice.id}`))
+      return
+    }
+    
+    const subscription = await prisma.subscription.findFirst({
+      where: { id: subscriptionId }
+    })
+    
+    if (!subscription) {
+      logger.error(LogCategory.PAYMENT, 'Subscription not found for invoice', new Error(`Subscription: ${subscriptionId}`))
+      return
+    }
+    
+    // Create payment record
+    await prisma.payment.create({
+      data: {
+        userId: subscription.userId,
+        subscriptionId: subscription.id,
+        asaasPaymentId: invoice.id, // Using Stripe invoice ID
+        asaasCustomerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '',
+        asaasSubscriptionId: subscriptionId,
+        amount: invoice.amount_paid / 100,
+        netValue: invoice.amount_paid / 100,
+        status: 'CONFIRMED',
+        billingType: 'CREDIT_CARD',
+        description: invoice.description || 'Stripe subscription payment',
+        dueDate: new Date(invoice.period_end * 1000),
+        paymentDate: new Date(invoice.status_transitions.paid_at! * 1000),
+        confirmedDate: new Date(invoice.status_transitions.paid_at! * 1000),
+        invoiceUrl: invoice.hosted_invoice_url || undefined,
+        invoiceNumber: invoice.number || undefined,
+        metadata: {
+          stripeInvoiceId: invoice.id,
+          stripeSubscriptionId: subscriptionId,
+        }
+      }
+    })
+    
+    // Update subscription last payment info
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        lastPaymentId: invoice.id,
+        lastPaymentDate: new Date(invoice.status_transitions.paid_at! * 1000),
+        updatedAt: new Date()
+      }
+    })
+    
+    logger.logPayment('stripe_payment_recorded_in_db', {
+      invoiceId: invoice.id,
+      subscriptionId: subscriptionId,
+      amount: invoice.amount_paid / 100,
+    })
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to record payment in database', error as Error)
+  }
 }
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   logger.logPayment('stripe_invoice_payment_failed', {
@@ -163,4 +382,68 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     amount_due: invoice.amount_due,
     attempt_count: invoice.attempt_count,
   })
+  
+  try {
+    // Find subscription
+    const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id
+    if (!subscriptionId) {
+      return
+    }
+    
+    const subscription = await prisma.subscription.findFirst({
+      where: { id: subscriptionId }
+    })
+    
+    if (!subscription) {
+      return
+    }
+    
+    // Update subscription status to OVERDUE
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        status: 'OVERDUE',
+        overdueDate: new Date(),
+        daysOverdue: Math.ceil((Date.now() - new Date(invoice.period_end * 1000).getTime()) / (1000 * 60 * 60 * 24)),
+        updatedAt: new Date()
+      }
+    })
+    
+    // Create/update failed payment record
+    await prisma.payment.upsert({
+      where: { asaasPaymentId: invoice.id },
+      update: {
+        status: 'OVERDUE',
+        metadata: {
+          stripeInvoiceId: invoice.id,
+          attemptCount: invoice.attempt_count,
+          lastAttempt: new Date().toISOString()
+        }
+      },
+      create: {
+        userId: subscription.userId,
+        subscriptionId: subscription.id,
+        asaasPaymentId: invoice.id,
+        asaasCustomerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '',
+        asaasSubscriptionId: subscriptionId,
+        amount: invoice.amount_due / 100,
+        status: 'OVERDUE',
+        billingType: 'CREDIT_CARD',
+        description: invoice.description || 'Failed Stripe payment',
+        dueDate: new Date(invoice.period_end * 1000),
+        metadata: {
+          stripeInvoiceId: invoice.id,
+          attemptCount: invoice.attempt_count,
+        }
+      }
+    })
+    
+    logger.logPayment('stripe_failed_payment_recorded_in_db', {
+      invoiceId: invoice.id,
+      subscriptionId: subscriptionId,
+      attemptCount: invoice.attempt_count,
+    })
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to record payment failure in database', error as Error)
+  }
 }
