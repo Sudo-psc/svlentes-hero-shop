@@ -160,14 +160,17 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, user
       user = await prisma.user.findUnique({ where: { id: userId } })
     } else {
       const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
+      
+      // Try to find user by customer ID stored in metadata
+      // Note: This requires customer ID to be explicitly linked to user during checkout
       user = await prisma.user.findFirst({
         where: { 
-          OR: [
-            { asaasCustomerId: customerId }, // May be stored here temporarily
-            { email: { contains: '@' } } // Fallback - needs better logic
-          ]
+          asaasCustomerId: customerId // Stripe customer ID may be stored here
         }
       })
+      
+      // If not found, we cannot safely assign the subscription
+      // Log error and skip - manual intervention required
     }
     
     if (!user) {
@@ -330,7 +333,15 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       return
     }
     
-    // Create payment record
+    // Create payment record with standardized metadata
+    const standardizedMetadata = {
+      stripeInvoiceId: invoice.id,
+      stripeSubscriptionId: subscriptionId,
+      attemptCount: invoice.attempt_count || 1,
+      lastAttempt: new Date().toISOString(),
+      status: 'success'
+    }
+    
     await prisma.payment.create({
       data: {
         userId: subscription.userId,
@@ -348,10 +359,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         confirmedDate: new Date(invoice.status_transitions.paid_at! * 1000),
         invoiceUrl: invoice.hosted_invoice_url || undefined,
         invoiceNumber: invoice.number || undefined,
-        metadata: {
-          stripeInvoiceId: invoice.id,
-          stripeSubscriptionId: subscriptionId,
-        }
+        metadata: standardizedMetadata
       }
     })
     
@@ -399,26 +407,33 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     }
     
     // Update subscription status to OVERDUE
+    const periodEnd = new Date(invoice.period_end * 1000)
+    const daysOverdue = Math.max(0, Math.ceil((Date.now() - periodEnd.getTime()) / (1000 * 60 * 60 * 24)))
+    
     await prisma.subscription.update({
       where: { id: subscription.id },
       data: {
         status: 'OVERDUE',
         overdueDate: new Date(),
-        daysOverdue: Math.ceil((Date.now() - new Date(invoice.period_end * 1000).getTime()) / (1000 * 60 * 60 * 24)),
+        daysOverdue,
         updatedAt: new Date()
       }
     })
     
-    // Create/update failed payment record
+    // Create/update failed payment record with standardized metadata
+    const standardizedMetadata = {
+      stripeInvoiceId: invoice.id,
+      stripeSubscriptionId: subscriptionId,
+      attemptCount: invoice.attempt_count,
+      lastAttempt: new Date().toISOString(),
+      failureReason: 'payment_failed'
+    }
+    
     await prisma.payment.upsert({
       where: { asaasPaymentId: invoice.id },
       update: {
         status: 'OVERDUE',
-        metadata: {
-          stripeInvoiceId: invoice.id,
-          attemptCount: invoice.attempt_count,
-          lastAttempt: new Date().toISOString()
-        }
+        metadata: standardizedMetadata
       },
       create: {
         userId: subscription.userId,
@@ -431,10 +446,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         billingType: 'CREDIT_CARD',
         description: invoice.description || 'Failed Stripe payment',
         dueDate: new Date(invoice.period_end * 1000),
-        metadata: {
-          stripeInvoiceId: invoice.id,
-          attemptCount: invoice.attempt_count,
-        }
+        metadata: standardizedMetadata
       }
     })
     

@@ -75,8 +75,8 @@ export async function GET(request: NextRequest) {
       include: {
         subscriptions: {
           where: { 
-            status: 'ACTIVE',
-            userId: undefined  // Será automaticamente filtrado pelo relation
+            status: 'ACTIVE'
+            // userId is automatically filtered by the relation
           },
           include: {
             benefits: true,
