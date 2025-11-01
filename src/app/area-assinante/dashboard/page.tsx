@@ -50,7 +50,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { Logo } from '@/components/ui/logo'
+
 import { formatCurrency, formatDate } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
 import { STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
@@ -341,28 +341,25 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-[#F5F7FB] text-gray-900">
       <div className="flex min-h-screen">
-        <aside className="hidden xl:flex w-72 bg-white border-r border-gray-200 flex-col">
-          <div className="px-6 pt-8 pb-6 border-b border-gray-200">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10">
-                <Logo size="md" variant="header" />
-              </div>
-              <div>
-                <p className="text-xs uppercase text-gray-400 tracking-wide">SV Lentes</p>
-                <p className="text-lg font-semibold text-gray-900">Área do Assinante</p>
-              </div>
-            </Link>
-            <div className="mt-6 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-lg font-semibold overflow-hidden">
+        <aside className="hidden xl:flex w-72 bg-gradient-to-b from-white to-gray-50 border-r border-gray-200/80 flex-col shadow-sm">
+          <div className="px-6 pt-8 pb-6 border-b border-gray-200/80">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 bg-clip-text text-transparent">
+                Área do Assinante
+              </h2>
+              <p className="text-xs uppercase text-gray-500 tracking-wider mt-1">SV Lentes</p>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 text-white flex items-center justify-center text-lg font-semibold overflow-hidden shadow-md">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={userName} className="h-full w-full object-cover" />
                 ) : (
                   <span>{avatarInitials}</span>
                 )}
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">{userName}</p>
-                <p className="text-sm text-gray-500">{userEmail}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 truncate">{userName}</p>
+                <p className="text-xs text-gray-500 truncate">{userEmail}</p>
               </div>
             </div>
           </div>
@@ -372,56 +369,60 @@ function DashboardContent() {
                 key={item.label}
                 onClick={item.onClick}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300',
                   item.active
-                    ? 'bg-cyan-50 text-cyan-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-md shadow-cyan-200 scale-[1.02]'
+                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 hover:shadow-sm hover:scale-[1.01]'
                 )}
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-                {item.active && <span className="ml-auto h-2 w-2 rounded-full bg-cyan-600" />}
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.active && <span className="ml-auto h-2 w-2 rounded-full bg-white animate-pulse" />}
               </button>
             ))}
-            <Separator className="my-6" />
+            <Separator className="my-6 bg-gray-200" />
             <button
               onClick={() => signOut()}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:shadow-sm hover:scale-[1.01] transition-all duration-300"
             >
-              <LogOut className="h-4 w-4" />
-              Sair
+              <LogOut className="h-5 w-5 flex-shrink-0" />
+              <span className="flex-1 text-left">Sair</span>
             </button>
           </nav>
-          <div className="px-6 py-6 border-t border-gray-200">
-            <div className="rounded-xl bg-cyan-50 p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-white text-cyan-600">
-                  <LifeBuoy className="h-4 w-4" />
+          <div className="px-6 py-6 border-t border-gray-200/80">
+            <div className="rounded-2xl bg-gradient-to-br from-cyan-50 to-cyan-100/50 p-5 shadow-sm border border-cyan-200/50 hover:shadow-md transition-all duration-300">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="p-2.5 rounded-xl bg-white text-cyan-600 shadow-sm">
+                  <LifeBuoy className="h-5 w-5" />
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-cyan-900">Precisa de ajuda?</p>
-                  <p className="text-sm text-cyan-700 leading-relaxed">
+                <div className="space-y-1 flex-1">
+                  <p className="text-sm font-bold text-cyan-900">Precisa de ajuda?</p>
+                  <p className="text-xs text-cyan-700 leading-relaxed">
                     Fale com nossa equipe de suporte e receba atendimento prioritário.
                   </p>
                 </div>
               </div>
-              <Button size="sm" variant="outline" className="mt-4 w-full" onClick={handleSupportWhatsApp}>
+              <Button 
+                size="sm" 
+                className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 text-white shadow-md hover:shadow-lg transition-all duration-300" 
+                onClick={handleSupportWhatsApp}
+              >
                 <MessageCircle className="h-4 w-4 mr-2" /> Falar no WhatsApp
               </Button>
             </div>
           </div>
         </aside>
         <div className="flex-1 flex flex-col">
-          <header className="bg-white border-b border-gray-200">
+          <header className="bg-gradient-to-r from-white via-gray-50 to-white border-b border-gray-200/80 shadow-sm">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-gray-500">Bem-vindo de volta, {userName.split(' ')[0]}!</p>
-                <h1 className="text-3xl font-bold text-gray-900">Meu Dashboard</h1>
+                <p className="text-sm font-medium text-cyan-600">Bem-vindo de volta, {userName.split(' ')[0]}! 👋</p>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Meu Dashboard</h1>
               </div>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
-                  className="hidden sm:inline-flex"
+                  className="hidden sm:inline-flex border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 transition-all duration-300 shadow-sm hover:shadow-md"
                   onClick={() => router.push('/area-assinante/configuracoes')}
                 >
                   <SettingsIcon className="h-4 w-4 mr-2" /> Configurações
@@ -432,19 +433,21 @@ function DashboardContent() {
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
               {!subscription && (
-                <Card className="border-dashed border-2 border-cyan-200 bg-white">
-                  <CardContent className="py-12 flex flex-col items-center text-center gap-4">
-                    <Wallet className="h-12 w-12 text-cyan-500" />
-                    <h2 className="text-2xl font-semibold text-gray-900">Você ainda não possui uma assinatura ativa</h2>
-                    <p className="text-gray-600 max-w-xl">
+                <Card className="border-dashed border-2 border-cyan-300 bg-gradient-to-br from-cyan-50 to-white shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardContent className="py-16 flex flex-col items-center text-center gap-6">
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-2xl">
+                      <Wallet className="h-16 w-16" />
+                    </div>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Você ainda não possui uma assinatura ativa</h2>
+                    <p className="text-gray-700 max-w-xl text-lg font-medium leading-relaxed">
                       Escolha o plano ideal para receber suas lentes com acompanhamento médico e benefícios exclusivos.
                     </p>
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      <Button size="lg" onClick={() => router.push('/planos')}>
-                        <ArrowRight className="h-4 w-4 mr-2" /> Conhecer planos
+                    <div className="flex flex-wrap gap-4 justify-center mt-4">
+                      <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8" onClick={() => router.push('/planos')}>
+                        <ArrowRight className="h-5 w-5 mr-2" /> Conhecer planos
                       </Button>
-                      <Button size="lg" variant="outline" onClick={handleSupportWhatsApp}>
-                        <MessageCircle className="h-4 w-4 mr-2" /> Falar com um especialista
+                      <Button size="lg" variant="outline" className="border-2 border-cyan-600 text-cyan-700 hover:bg-cyan-50 shadow-md hover:shadow-lg transition-all duration-300 text-base px-8" onClick={handleSupportWhatsApp}>
+                        <MessageCircle className="h-5 w-5 mr-2" /> Falar com um especialista
                       </Button>
                     </div>
                   </CardContent>
@@ -454,100 +457,106 @@ function DashboardContent() {
                 <div className="space-y-8">
                   <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
-                      <Card className="bg-white shadow-sm border border-gray-100">
+                      <Card className="bg-white shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:border-cyan-200">
                         <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                           <div>
-                            <CardTitle className="text-2xl flex items-center gap-2">
-                              <CreditCard className="h-5 w-5 text-cyan-600" /> Pagamentos
+                            <CardTitle className="text-2xl flex items-center gap-3 font-bold">
+                              <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md">
+                                <CreditCard className="h-5 w-5" />
+                              </div>
+                              Pagamentos
                             </CardTitle>
-                            <CardDescription>Veja o status da sua assinatura e gerencie suas cobranças.</CardDescription>
+                            <CardDescription className="text-gray-600 mt-2">Veja o status da sua assinatura e gerencie suas cobranças.</CardDescription>
                           </div>
-                          <Badge className={cn('px-3 py-1 text-xs font-semibold', getSubscriptionStatusColor(subscription.status))}>
+                          <Badge className={cn('px-4 py-2 text-xs font-bold shadow-sm', getSubscriptionStatusColor(subscription.status))}>
                             {getSubscriptionStatusLabel(subscription.status)}
                           </Badge>
                         </CardHeader>
                         <CardContent className="space-y-6">
                           <div className="grid gap-4 lg:grid-cols-2">
-                            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-100 bg-gray-50">
-                              <div className="p-2 rounded-full bg-cyan-100 text-cyan-700">
+                            <div className="flex items-start gap-3 p-5 rounded-2xl border border-cyan-200/50 bg-gradient-to-br from-cyan-50 to-white shadow-sm hover:shadow-md transition-all duration-300 hover:border-cyan-300">
+                              <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md">
                                 <Wallet className="h-5 w-5" />
                               </div>
                               <div>
-                                <p className="text-sm text-gray-500">Plano atual</p>
-                                <p className="text-lg font-semibold text-gray-900">{subscription.plan.name}</p>
-                                <p className="text-sm text-gray-600">{formatCurrency(subscription.plan.price)} · {billingLabel}</p>
+                                <p className="text-xs font-medium text-cyan-700 uppercase tracking-wide">Plano atual</p>
+                                <p className="text-lg font-bold text-gray-900 mt-1">{subscription.plan.name}</p>
+                                <p className="text-sm font-medium text-gray-600 mt-0.5">{formatCurrency(subscription.plan.price)} · {billingLabel}</p>
                               </div>
                             </div>
-                            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-100 bg-gray-50">
-                              <div className="p-2 rounded-full bg-purple-100 text-purple-700">
+                            <div className="flex items-start gap-3 p-5 rounded-2xl border border-purple-200/50 bg-gradient-to-br from-purple-50 to-white shadow-sm hover:shadow-md transition-all duration-300 hover:border-purple-300">
+                              <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md">
                                 <Calendar className="h-5 w-5" />
                               </div>
                               <div>
-                                <p className="text-sm text-gray-500">Próxima cobrança</p>
-                                <p className="text-lg font-semibold text-gray-900">
+                                <p className="text-xs font-medium text-purple-700 uppercase tracking-wide">Próxima cobrança</p>
+                                <p className="text-lg font-bold text-gray-900 mt-1">
                                   {formatDate(subscription.nextBillingDate)}
                                 </p>
-                                <p className="text-sm text-gray-600">Ciclo atual até {formatDate(subscription.currentPeriodEnd)}</p>
+                                <p className="text-sm font-medium text-gray-600 mt-0.5">Ciclo atual até {formatDate(subscription.currentPeriodEnd)}</p>
                               </div>
                             </div>
                           </div>
                           <div className="grid gap-4 lg:grid-cols-2">
-                            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-100 bg-gray-50">
-                              <div className="p-2 rounded-full bg-amber-100 text-amber-700">
+                            <div className="flex items-start gap-3 p-5 rounded-2xl border border-amber-200/50 bg-gradient-to-br from-amber-50 to-white shadow-sm hover:shadow-md transition-all duration-300 hover:border-amber-300">
+                              <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-md">
                                 <CreditCard className="h-5 w-5" />
                               </div>
-                              <div>
-                                <p className="text-sm text-gray-500">Forma de pagamento</p>
-                                <p className="text-lg font-semibold text-gray-900">{paymentLabel}</p>
-                                <Button variant="ghost" className="mt-2 px-0 text-sm text-cyan-600 hover:text-cyan-700" onClick={() => openModal('updatePayment')}>
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-amber-700 uppercase tracking-wide">Forma de pagamento</p>
+                                <p className="text-lg font-bold text-gray-900 mt-1">{paymentLabel}</p>
+                                <Button variant="ghost" className="mt-2 px-0 h-auto text-sm font-semibold text-cyan-600 hover:text-cyan-700 hover:bg-transparent transition-colors" onClick={() => openModal('updatePayment')}>
                                   Atualizar pagamento <ChevronRight className="h-4 w-4 ml-1" />
                                 </Button>
                               </div>
                             </div>
-                            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-100 bg-gray-50">
-                              <div className="p-2 rounded-full bg-green-100 text-green-700">
+                            <div className="flex items-start gap-3 p-5 rounded-2xl border border-green-200/50 bg-gradient-to-br from-green-50 to-white shadow-sm hover:shadow-md transition-all duration-300 hover:border-green-300">
+                              <div className="p-2.5 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white shadow-md">
                                 <MapPin className="h-5 w-5" />
                               </div>
-                              <div>
-                                <p className="text-sm text-gray-500">Endereço de entrega</p>
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Endereço de entrega</p>
                                 {subscription.shippingAddress ? (
-                                  <p className="text-sm text-gray-700 leading-relaxed">
+                                  <p className="text-sm font-medium text-gray-700 leading-relaxed mt-1">
                                     {subscription.shippingAddress.street}, {subscription.shippingAddress.number}
                                     {subscription.shippingAddress.complement ? `, ${subscription.shippingAddress.complement}` : ''}
                                     <br />
                                     {subscription.shippingAddress.city} - {subscription.shippingAddress.state}
                                   </p>
                                 ) : (
-                                  <p className="text-sm text-gray-600">Nenhum endereço cadastrado</p>
+                                  <p className="text-sm font-medium text-gray-600 mt-1">Nenhum endereço cadastrado</p>
                                 )}
-                                <Button variant="ghost" className="mt-2 px-0 text-sm text-cyan-600 hover:text-cyan-700" onClick={() => openModal('updateAddress')}>
+                                <Button variant="ghost" className="mt-2 px-0 h-auto text-sm font-semibold text-cyan-600 hover:text-cyan-700 hover:bg-transparent transition-colors" onClick={() => openModal('updateAddress')}>
                                   Atualizar endereço <ChevronRight className="h-4 w-4 ml-1" />
                                 </Button>
                               </div>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-3">
-                            <Button variant="outline" onClick={() => openModal('invoices')}>
+                            <Button variant="outline" className="border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 shadow-sm hover:shadow-md transition-all duration-300" onClick={() => openModal('invoices')}>
                               <FileText className="h-4 w-4 mr-2" /> Histórico de transações
                             </Button>
-                            <Button variant="outline" onClick={() => openModal('orders')}>
+                            <Button variant="outline" className="border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 shadow-sm hover:shadow-md transition-all duration-300" onClick={() => openModal('orders')}>
                               <ShoppingBag className="h-4 w-4 mr-2" /> Meus pedidos
                             </Button>
-                            <Button onClick={() => openModal('changePlan')}>
+                            <Button className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 shadow-md hover:shadow-lg transition-all duration-300" onClick={() => openModal('changePlan')}>
                               <Layers className="h-4 w-4 mr-2" /> Alterar plano
                             </Button>
-                            <Button variant="ghost" onClick={handlePortalAccess}>
+                            <Button variant="ghost" className="hover:bg-gray-100 transition-all duration-300" onClick={handlePortalAccess}>
                               <CreditCard className="h-4 w-4 mr-2" /> Portal de pagamento
                             </Button>
                           </div>
                         </CardContent>
                       </Card>
-                      <Card className="border border-gray-100">
+                      <Card className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2 text-gray-900">
-                            <ClipboardList className="h-5 w-5 text-cyan-600" /> Ações rápidas
+                          <CardTitle className="flex items-center gap-3 text-gray-900 font-bold">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md">
+                              <ClipboardList className="h-5 w-5" />
+                            </div>
+                            Ações rápidas
                           </CardTitle>
-                          <CardDescription>Gerencie suas informações com poucos cliques.</CardDescription>
+                          <CardDescription className="text-gray-600 mt-2">Gerencie suas informações com poucos cliques.</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="grid gap-4 sm:grid-cols-2">
@@ -555,24 +564,27 @@ function DashboardContent() {
                               <button
                                 key={action.label}
                                 onClick={action.onClick}
-                                className="group flex flex-col items-start gap-2 rounded-lg border border-gray-100 p-4 text-left hover:border-cyan-200 hover:bg-cyan-50 transition-colors"
+                                className="group flex flex-col items-start gap-3 rounded-2xl border border-gray-200 p-5 text-left hover:border-cyan-300 hover:bg-gradient-to-br hover:from-cyan-50 hover:to-white hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                               >
-                                <div className="p-2 rounded-full bg-cyan-100 text-cyan-700">
-                                  <action.icon className="h-4 w-4" />
+                                <div className="p-2.5 rounded-xl bg-cyan-100 text-cyan-700 group-hover:bg-gradient-to-br group-hover:from-cyan-500 group-hover:to-cyan-600 group-hover:text-white group-hover:shadow-md transition-all duration-300">
+                                  <action.icon className="h-5 w-5" />
                                 </div>
-                                <p className="text-sm font-semibold text-gray-900 group-hover:text-cyan-700">{action.label}</p>
-                                <p className="text-sm text-gray-600 leading-relaxed">{action.description}</p>
+                                <p className="text-sm font-bold text-gray-900 group-hover:text-cyan-700 transition-colors">{action.label}</p>
+                                <p className="text-xs text-gray-600 leading-relaxed">{action.description}</p>
                               </button>
                             ))}
                           </div>
                         </CardContent>
                       </Card>
-                      <Card id="gamificacao" className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg border-none">
+                      <Card id="gamificacao" className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white shadow-2xl border-none hover:shadow-3xl transition-all duration-300 hover:scale-[1.01]">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2 text-white">
-                            <Sparkles className="h-5 w-5" /> Gamificação
+                          <CardTitle className="flex items-center gap-3 text-white font-bold text-2xl">
+                            <div className="p-2 rounded-xl bg-white/20 backdrop-blur-sm">
+                              <Sparkles className="h-6 w-6" />
+                            </div>
+                            Gamificação
                           </CardTitle>
-                          <CardDescription className="text-white/80">
+                          <CardDescription className="text-white/90 text-base mt-2">
                             Acompanhe sua evolução e desbloqueie benefícios exclusivos.
                           </CardDescription>
                         </CardHeader>
@@ -598,48 +610,51 @@ function DashboardContent() {
                             <Progress value={gamificationProgress} className="h-2 bg-white/20" />
                           </div>
                           <div className="grid gap-4 sm:grid-cols-3">
-                            <div className="rounded-xl bg-white/15 p-4">
-                              <p className="text-sm text-white/80">Sequência atual</p>
-                              <p className="text-xl font-semibold">{gamificationProfile?.points.streakDays ?? 0} dias 🔥</p>
+                            <div className="rounded-2xl bg-white/20 backdrop-blur-sm p-5 shadow-lg hover:bg-white/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.05]">
+                              <p className="text-xs font-semibold text-white/90 uppercase tracking-wide">Sequência atual</p>
+                              <p className="text-2xl font-bold mt-2">{gamificationProfile?.points.streakDays ?? 0} dias 🔥</p>
                             </div>
-                            <div className="rounded-xl bg-white/15 p-4">
-                              <p className="text-sm text-white/80">Missões ativas</p>
-                              <p className="text-xl font-semibold">{gamificationProfile?.missions?.filter(m => !m.completedAt && m.isActive).length ?? 0}</p>
+                            <div className="rounded-2xl bg-white/20 backdrop-blur-sm p-5 shadow-lg hover:bg-white/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.05]">
+                              <p className="text-xs font-semibold text-white/90 uppercase tracking-wide">Missões ativas</p>
+                              <p className="text-2xl font-bold mt-2">{gamificationProfile?.missions?.filter(m => !m.completedAt && m.isActive).length ?? 0}</p>
                             </div>
-                            <div className="rounded-xl bg-white/15 p-4">
-                              <p className="text-sm text-white/80">Conquistas</p>
-                              <p className="text-xl font-semibold">{gamificationProfile?.achievements?.filter(a => a.unlockedAt).length ?? 0} desbloqueadas</p>
+                            <div className="rounded-2xl bg-white/20 backdrop-blur-sm p-5 shadow-lg hover:bg-white/30 hover:shadow-xl transition-all duration-300 hover:scale-[1.05]">
+                              <p className="text-xs font-semibold text-white/90 uppercase tracking-wide">Conquistas</p>
+                              <p className="text-2xl font-bold mt-2">{gamificationProfile?.achievements?.filter(a => a.unlockedAt).length ?? 0} desbloqueadas</p>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                      <Card className="border border-gray-100">
+                      <Card className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Trophy className="h-5 w-5 text-cyan-600" /> Minhas conquistas
+                          <CardTitle className="flex items-center gap-3 font-bold">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 text-white shadow-md">
+                              <Trophy className="h-5 w-5" />
+                            </div>
+                            Minhas conquistas
                           </CardTitle>
-                          <CardDescription>Continue avançando para desbloquear mais recompensas.</CardDescription>
+                          <CardDescription className="text-gray-600 mt-2">Continue avançando para desbloquear mais recompensas.</CardDescription>
                         </CardHeader>
                         <CardContent>
                           {gamificationLoading && (
-                            <div className="flex items-center justify-center py-6 text-gray-500">Carregando conquistas...</div>
+                            <div className="flex items-center justify-center py-6 text-gray-500 font-medium">Carregando conquistas...</div>
                           )}
                           {!gamificationLoading && gamificationError && (
-                            <div className="py-6 text-sm text-red-500">{gamificationError}</div>
+                            <div className="py-6 text-sm font-medium text-red-600">{gamificationError}</div>
                           )}
                           {!gamificationLoading && !gamificationError && (
                             <div className="grid gap-4 sm:grid-cols-3">
                               {achievements.map(achievement => (
-                                <div key={achievement.id} className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <div className="text-2xl">{achievement.icon}</div>
-                                    <p className="font-semibold text-gray-900">{achievement.name}</p>
+                                <div key={achievement.id} className="rounded-2xl border border-gray-200 p-5 bg-gradient-to-br from-gray-50 to-white shadow-sm hover:shadow-md hover:border-yellow-300 transition-all duration-300 hover:scale-[1.05]">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="text-3xl">{achievement.icon}</div>
+                                    <p className="font-bold text-gray-900 text-sm">{achievement.name}</p>
                                   </div>
-                                  <p className="text-sm text-gray-600 leading-relaxed">{achievement.description}</p>
+                                  <p className="text-xs text-gray-600 leading-relaxed">{achievement.description}</p>
                                 </div>
                               ))}
                               {achievements.length === 0 && (
-                                <div className="col-span-full py-6 text-center text-sm text-gray-500">
+                                <div className="col-span-full py-8 text-center text-sm font-medium text-gray-500">
                                   Nenhuma conquista disponível no momento. Conclua missões para desbloquear.
                                 </div>
                               )}
@@ -647,12 +662,15 @@ function DashboardContent() {
                           )}
                         </CardContent>
                       </Card>
-                      <Card className="border border-gray-100">
+                      <Card className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Clock className="h-5 w-5 text-cyan-600" /> Histórico da assinatura
+                          <CardTitle className="flex items-center gap-3 font-bold">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md">
+                              <Clock className="h-5 w-5" />
+                            </div>
+                            Histórico da assinatura
                           </CardTitle>
-                          <CardDescription>Acompanhe os principais eventos e atualizações.</CardDescription>
+                          <CardDescription className="text-gray-600 mt-2">Acompanhe os principais eventos e atualizações.</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <SubscriptionHistoryTimeline userId={authUser.uid} />
@@ -660,97 +678,107 @@ function DashboardContent() {
                       </Card>
                     </div>
                     <div className="space-y-6">
-                      <Card className="border border-gray-100">
+                      <Card className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Bell className="h-5 w-5 text-cyan-600" /> Lembretes
+                          <CardTitle className="flex items-center gap-3 font-bold">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md">
+                              <Bell className="h-5 w-5" />
+                            </div>
+                            Lembretes
                           </CardTitle>
-                          <CardDescription>Mantenha-se em dia com sua rotina de cuidados.</CardDescription>
+                          <CardDescription className="text-gray-600 mt-2">Mantenha-se em dia com sua rotina de cuidados.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-                            <p className="text-sm font-semibold text-gray-900">Renovação do plano</p>
-                            <p className="text-sm text-gray-600">Renovar até {formatDate(subscription.nextBillingDate)}</p>
+                          <div className="rounded-2xl border border-cyan-200/50 p-4 bg-gradient-to-br from-cyan-50 to-white shadow-sm hover:shadow-md transition-all duration-300">
+                            <p className="text-sm font-bold text-gray-900">Renovação do plano</p>
+                            <p className="text-xs text-gray-600 mt-1">Renovar até {formatDate(subscription.nextBillingDate)}</p>
                           </div>
-                          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50">
-                            <p className="text-sm font-semibold text-gray-900">Consulta médica</p>
-                            <p className="text-sm text-gray-600">Agende um acompanhamento antes de {formatDate(subscription.currentPeriodEnd)}</p>
+                          <div className="rounded-2xl border border-blue-200/50 p-4 bg-gradient-to-br from-blue-50 to-white shadow-sm hover:shadow-md transition-all duration-300">
+                            <p className="text-sm font-bold text-gray-900">Consulta médica</p>
+                            <p className="text-xs text-gray-600 mt-1">Agende um acompanhamento antes de {formatDate(subscription.currentPeriodEnd)}</p>
                           </div>
-                          <Button variant="outline" className="w-full" onClick={() => router.push('/area-assinante/configuracoes')}>
+                          <Button variant="outline" className="w-full border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 shadow-sm hover:shadow-md transition-all duration-300" onClick={() => router.push('/area-assinante/configuracoes')}>
                             <Bell className="h-4 w-4 mr-2" /> Configurar notificações
                           </Button>
                         </CardContent>
                       </Card>
-                      <Card className="border border-gray-100">
+                      <Card className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <MessageCircle className="h-5 w-5 text-cyan-600" /> Contato
+                          <CardTitle className="flex items-center gap-3 font-bold">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-md">
+                              <MessageCircle className="h-5 w-5" />
+                            </div>
+                            Contato
                           </CardTitle>
-                          <CardDescription>Nossa equipe está pronta para ajudar você.</CardDescription>
+                          <CardDescription className="text-gray-600 mt-2">Nossa equipe está pronta para ajudar você.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">WhatsApp</p>
-                              <p className="text-sm text-gray-600">(33) 98606-1427</p>
+                          <div className="rounded-2xl border border-green-200/50 p-4 bg-gradient-to-br from-green-50 to-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900">WhatsApp</p>
+                              <p className="text-xs text-gray-600">(33) 98606-1427</p>
                             </div>
-                            <Button size="sm" onClick={handleSupportWhatsApp}>
-                              <MessageCircle className="h-4 w-4 mr-2" /> Enviar mensagem
+                            <Button size="sm" className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 shadow-sm hover:shadow-md transition-all duration-300 flex-shrink-0" onClick={handleSupportWhatsApp}>
+                              <MessageCircle className="h-4 w-4" />
                             </Button>
                           </div>
-                          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">Telefone</p>
-                              <p className="text-sm text-gray-600">(33) 98606-1427</p>
+                          <div className="rounded-2xl border border-blue-200/50 p-4 bg-gradient-to-br from-blue-50 to-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900">Telefone</p>
+                              <p className="text-xs text-gray-600">(33) 98606-1427</p>
                             </div>
-                            <Button size="sm" variant="outline" onClick={handleSupportCall}>
-                              <Phone className="h-4 w-4 mr-2" /> Ligar agora
+                            <Button size="sm" variant="outline" className="border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 shadow-sm hover:shadow-md transition-all duration-300 flex-shrink-0" onClick={handleSupportCall}>
+                              <Phone className="h-4 w-4" />
                             </Button>
                           </div>
-                          <div className="rounded-lg border border-gray-100 p-4 bg-gray-50 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900">E-mail</p>
-                              <p className="text-sm text-gray-600">oi@svlentes.com.br</p>
+                          <div className="rounded-2xl border border-purple-200/50 p-4 bg-gradient-to-br from-purple-50 to-white shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900">E-mail</p>
+                              <p className="text-xs text-gray-600 truncate">oi@svlentes.com.br</p>
                             </div>
-                            <Button size="sm" variant="ghost" onClick={handleSupportEmail}>
-                              <Mail className="h-4 w-4 mr-2" /> Enviar e-mail
+                            <Button size="sm" variant="ghost" className="hover:bg-purple-100 transition-all duration-300 flex-shrink-0" onClick={handleSupportEmail}>
+                              <Mail className="h-4 w-4" />
                             </Button>
                           </div>
-                          <Button variant="outline" className="w-full" onClick={() => router.push('/contato')}>
+                          <Button variant="outline" className="w-full border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-700 shadow-sm hover:shadow-md transition-all duration-300" onClick={() => router.push('/contato')}>
                             <LifeBuoy className="h-4 w-4 mr-2" /> Abrir ticket de suporte
                           </Button>
                         </CardContent>
                       </Card>
-                      <Card className="border border-gray-100">
+                      <Card className="border border-gray-100 shadow-md hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Gift className="h-5 w-5 text-cyan-600" /> Suas recompensas
+                          <CardTitle className="flex items-center gap-3 font-bold">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-md">
+                              <Gift className="h-5 w-5" />
+                            </div>
+                            Suas recompensas
                           </CardTitle>
-                          <CardDescription>Resgate benefícios exclusivos com seus pontos.</CardDescription>
+                          <CardDescription className="text-gray-600 mt-2">Resgate benefícios exclusivos com seus pontos.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           {availableRewards.map(reward => {
                             const isClaimed = claimedRewards.includes(reward.id)
                             const canClaim = (gamificationProfile?.points.totalPoints ?? 0) >= reward.pointsCost
                             return (
-                              <div key={reward.id} className="rounded-lg border border-gray-100 p-4 bg-gray-50 space-y-3">
+                              <div key={reward.id} className="rounded-2xl border border-pink-200/50 p-5 bg-gradient-to-br from-pink-50 to-white shadow-sm hover:shadow-md transition-all duration-300 space-y-4">
                                 <div className="flex items-start gap-3">
-                                  <div className="p-2 rounded-full bg-cyan-100 text-cyan-700">
+                                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-md">
                                     {reward.icon ? (
                                       <reward.icon className="h-5 w-5" />
                                     ) : null}
                                   </div>
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">{reward.name}</p>
-                                    <p className="text-sm text-gray-600 leading-relaxed">{reward.description}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-gray-900">{reward.name}</p>
+                                    <p className="text-xs text-gray-600 leading-relaxed mt-1">{reward.description}</p>
                                   </div>
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-xs font-bold border-pink-300 text-pink-700 flex-shrink-0">
                                     {reward.pointsCost.toLocaleString('pt-BR')} pts
                                   </Badge>
                                 </div>
-                                <div className="flex flex-wrap gap-3">
+                                <div className="flex flex-wrap gap-2">
                                   <Button
                                     size="sm"
+                                    className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 shadow-sm hover:shadow-md transition-all duration-300"
                                     onClick={() => handleClaimReward(reward.id)}
                                     disabled={!canClaim || isClaimed || claimingReward === reward.id}
                                   >
@@ -760,13 +788,14 @@ function DashboardContent() {
                                       </>
                                     ) : (
                                       <>
-                                        <ShoppingCart className="h-4 w-4 mr-2" /> Adicionar ao carrinho
+                                        <ShoppingCart className="h-4 w-4 mr-2" /> Resgatar
                                       </>
                                     )}
                                   </Button>
                                   <Button
                                     size="sm"
                                     variant="outline"
+                                    className="border-gray-300 hover:border-pink-500 hover:bg-pink-50 hover:text-pink-700 shadow-sm hover:shadow-md transition-all duration-300"
                                     onClick={() => handleCopyRewardCode(reward.code)}
                                   >
                                     <Copy className="h-4 w-4 mr-2" /> Copiar código
@@ -776,7 +805,7 @@ function DashboardContent() {
                             )
                           })}
                           {availableRewards.length === 0 && (
-                            <p className="text-sm text-gray-500">Nenhuma recompensa disponível no momento.</p>
+                            <p className="text-sm font-medium text-gray-500 text-center py-4">Nenhuma recompensa disponível no momento.</p>
                           )}
                         </CardContent>
                       </Card>

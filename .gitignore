@@ -80,4 +80,7 @@ build.log
 
 # TestSprite temporary files
 testsprite_tests/
-.log
+
+# Build log files
+*.log
+!**/logs/.gitkeep
