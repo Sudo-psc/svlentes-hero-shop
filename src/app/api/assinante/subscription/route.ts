@@ -69,11 +69,15 @@ export async function GET(request: NextRequest) {
       )
     }
     // Buscar usuário com assinaturas ativas usando o UID do Firebase
+    // OWNERSHIP: Busca é feita pelo firebaseUid, garantindo que só dados do próprio usuário sejam retornados
     const user = await prisma.user.findUnique({
       where: { firebaseUid: firebaseUser.uid },
       include: {
         subscriptions: {
-          where: { status: 'ACTIVE' },
+          where: { 
+            status: 'ACTIVE',
+            userId: undefined  // Será automaticamente filtrado pelo relation
+          },
           include: {
             benefits: true,
             orders: {
@@ -244,9 +248,10 @@ export async function PUT(request: NextRequest) {
       )
     }
     // Buscar assinatura ativa do usuário (capturar estado anterior para auditoria)
+    // OWNERSHIP VALIDATION: Only fetch subscriptions belonging to authenticated user
     const subscription = await prisma.subscription.findFirst({
       where: {
-        userId: user.id,
+        userId: user.id,  // CRITICAL: Ensures user can only access their own data
         status: 'ACTIVE'
       }
     })
@@ -254,6 +259,14 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         { error: 'NOT_FOUND', message: 'Assinatura não encontrada' },
         { status: 404 }
+      )
+    }
+    
+    // Double-check ownership (defense in depth)
+    if (subscription.userId !== user.id) {
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Acesso negado' },
+        { status: 403 }
       )
     }
 

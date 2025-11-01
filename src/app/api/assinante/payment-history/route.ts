@@ -223,10 +223,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Buscar assinatura ativa
+    // Buscar assinatura ativa (OWNERSHIP VALIDATION)
     const subscription = await prisma.subscription.findFirst({
       where: {
-        userId: user.id,
+        userId: user.id,  // CRITICAL: Only fetch user's own subscription
         status: 'ACTIVE',
       },
     })
@@ -238,11 +238,20 @@ export async function GET(request: NextRequest) {
         { ...context, userId: user.id }
       )
     }
+    
+    // Double-check ownership (defense in depth)
+    if (subscription.userId !== user.id) {
+      return ApiErrorHandler.handleError(
+        ErrorType.FORBIDDEN,
+        'Acesso negado aos dados de pagamento',
+        { ...context, userId: user.id, subscriptionUserId: subscription.userId }
+      )
+    }
 
-    // Construir filtros dinâmicos
+    // Construir filtros dinâmicos (OWNERSHIP: both userId AND subscriptionId for extra safety)
     const whereClause: any = {
-      userId: user.id,
-      subscriptionId: subscription.id,
+      userId: user.id,              // CRITICAL: User's payments only
+      subscriptionId: subscription.id, // CRITICAL: Validated subscription only
     }
 
     // Filtro de data
