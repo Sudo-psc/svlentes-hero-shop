@@ -1,23 +1,43 @@
 'use client'
 import { Button } from '@/components/ui/button'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Phone, Calculator, MessageCircle } from 'lucide-react'
 import { useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { openWhatsAppWithContext } from '@/lib/whatsapp'
 interface VideoHeroSectionProps {
     className?: string
 }
 export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
     const videoRef = useRef<HTMLVideoElement>(null)
+    const router = useRouter()
+
     useEffect(() => {
         // Garantir que o vídeo toque automaticamente
         if (videoRef.current) {
-            videoRef.current.play().catch((error) => {
+            videoRef.current.play().catch(() => {
+                // Autoplay pode falhar em alguns navegadores - ignorar silenciosamente
             })
         }
     }, [])
+
     const handleScrollDown = useCallback(() => {
         window.scrollTo({
             top: window.innerHeight,
             behavior: 'smooth'
+        })
+    }, [])
+
+    const handleAgendarConsulta = useCallback(() => {
+        router.push('/agendar-consulta')
+    }, [router])
+
+    const handleCalculadora = useCallback(() => {
+        router.push('/calculadora')
+    }, [router])
+
+    const handleWhatsApp = useCallback(() => {
+        openWhatsAppWithContext('landing_hero', {
+            message: 'Olá! Vi o site da SV Lentes e gostaria de saber mais sobre a assinatura de lentes.'
         })
     }, [])
     return (
@@ -49,6 +69,38 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
                     <p className="text-lg sm:text-xl md:text-2xl text-white leading-relaxed max-w-3xl mx-auto drop-shadow-lg">
                         Assinatura de lentes com acompanhamento do Dr. Philipe Saraiva Cruz
                     </p>
+
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                        <Button
+                            onClick={handleAgendarConsulta}
+                            size="lg"
+                            className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-6 text-lg shadow-2xl hover:shadow-cyan-500/50 hover:scale-105 active:scale-95 transition-all duration-300 group"
+                        >
+                            <Phone className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
+                            Agendar Consulta
+                        </Button>
+
+                        <Button
+                            onClick={handleCalculadora}
+                            size="lg"
+                            variant="outline"
+                            className="w-full sm:w-auto bg-white/10 backdrop-blur-md border-2 border-white/30 text-white font-semibold px-8 py-6 text-lg hover:bg-white/20 hover:border-white/50 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 group"
+                        >
+                            <Calculator className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                            Calcular Economia
+                        </Button>
+
+                        <Button
+                            onClick={handleWhatsApp}
+                            size="lg"
+                            variant="outline"
+                            className="w-full sm:w-auto bg-green-600/20 backdrop-blur-md border-2 border-green-400/50 text-white font-semibold px-8 py-6 text-lg hover:bg-green-600/30 hover:border-green-400/70 shadow-xl hover:shadow-green-500/30 hover:scale-105 active:scale-95 transition-all duration-300 group"
+                        >
+                            <MessageCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                            WhatsApp
+                        </Button>
+                    </div>
                   </div>
                 {/* Indicador de scroll para baixo */}
                 <button

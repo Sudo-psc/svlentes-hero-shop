@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { LogoHeader } from '@/components/ui/logo'
-import { scrollToSection, generateWhatsAppLink } from '@/lib/utils'
+import { scrollToSection } from '@/lib/utils'
 import { Menu, X, Phone, User, LayoutDashboard, LogOut } from 'lucide-react'
 import { useConfigValue } from '@/lib/use-config'
 
@@ -36,7 +36,7 @@ interface HeaderProps {
 
 export function Header({ className }: HeaderProps) {
     const router = useRouter()
-    const { user, loading, signOut } = useAuth()
+    const { user, signOut } = useAuth()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     // Use centralized configuration for menu items
@@ -96,7 +96,7 @@ export function Header({ className }: HeaderProps) {
     const handleLogout = useCallback(async () => {
         await signOut()
         router.push('/')
-    }, [signOut])
+    }, [signOut, router])
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
@@ -243,7 +243,7 @@ export function Header({ className }: HeaderProps) {
                                         <Button
                                             onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                             variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
                                             <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
@@ -252,7 +252,7 @@ export function Header({ className }: HeaderProps) {
                                         <Button
                                             onClick={handleLogout}
                                             variant="ghost"
-                                            className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800"
+                                            className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
                                             <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
@@ -263,16 +263,16 @@ export function Header({ className }: HeaderProps) {
                                     <>
                                         <Button
                                             onClick={handleAgendarConsulta}
-                                            className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
+                                            className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
-                                            <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                            <Phone className="w-4 h-4 transition-transform group-hover:rotate-12" style={{ display: 'block', width: '1rem', height: '1rem' }} />
                                             <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                         </Button>
                                         <Button
                                             onClick={handleLogin}
                                             variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
                                             <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
