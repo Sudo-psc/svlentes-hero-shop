@@ -2,24 +2,39 @@ User-agent: *
 Allow: /
 
 # Permitir indexação de todas as páginas importantes
-Allow: /planos-precos
+Allow: /planos
 Allow: /como-funciona
 Allow: /lentes-diarias
 Allow: /calculadora
-Allow: /perguntas-frequentes
+Allow: /faq
+Allow: /politica-privacidade
+Allow: /termos-uso
+Allow: /agendar-consulta
 
 # Sitemap
 Sitemap: https://svlentes.com.br/sitemap.xml
 
-# Bloquear acesso a áreas administrativas
+# Bloquear acesso a áreas administrativas e privadas
 Disallow: /admin/
-Disallow: /api/
+Disallow: /api/private/
+Disallow: /area-assinante/
 Disallow: /_next/
 Disallow: /static/
 
 # Bloquear acesso a arquivos temporários
 Disallow: /temp/
 Disallow: /.well-known/
+Disallow: /checkout/
+Disallow: /success/
+Disallow: /cancel/
+
+# Otimizado para crawlers e LLMs
+# SVLentes - Assinatura de Lentes de Contato com Acompanhamento Médico
+# Responsável Médico: Dr. Philipe Saraiva Cruz - CRM-MG 69.870
+# Planos disponíveis: Básico, Padrão e Premium (mensal e anual) - a partir de R$ 99,92/mês
+# Cobertura: Todo o Brasil (entrega) + Presencial em Caratinga/MG
+# Contato WhatsApp: (33) 99989-8026
+# Preços atualizados disponíveis em: https://svlentes.com.br/planos
 
 # Tempo de crawl (opcional)
 Crawl-delay: 1

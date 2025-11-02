@@ -7,6 +7,8 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { WhatsAppFloat } from '@/components/layout/WhatsAppFloat'
 // import { StructuredData } from '@/components/seo/StructuredData'
+import { ServiceSchema } from '@/components/seo/ServiceSchema'
+import { PhysicianSchema } from '@/components/seo/PhysicianSchema'
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor'
 import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
 import { ServiceWorkerCleanup } from '@/components/performance/ServiceWorkerCleanup'
@@ -42,8 +44,8 @@ export default function RootLayout({
 }) {
     // Simplificado - CSP gerenciado pelo next.config.js sem nonce
 
-    // const organizationData = generateOrganizationStructuredData()
-    // const websiteData = generateWebSiteStructuredData()
+    const organizationData = generateOrganizationStructuredData()
+    const websiteData = generateWebSiteStructuredData()
 
     return (
         <html lang="pt-BR"  className="font-sans">{/* Temporariamente usando fontes do sistema */}
@@ -58,20 +60,31 @@ export default function RootLayout({
                 <link rel="icon" href="/images/favicon-512.png" sizes="512x512" type="image/png" />
                 <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png" />
                 <link rel="manifest" href="/site.webmanifest" />
-                  <link rel="dns-prefetch" href="https://api.whatsapp.com" />
+                <link rel="dns-prefetch" href="https://api.whatsapp.com" />
                 <link rel="dns-prefetch" href="https://js.stripe.com" />
                 <meta name="theme-color" content="#0f4c75" />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
                 <meta name="format-detection" content="telephone=no" />
                 {/* CSP gerenciado pelo next.config.js - sem nonce necessário */}
+
+                {/* Structured Data for SEO and LLM indexing */}
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData, null, 0) }}
+                />
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData, null, 0) }}
+                />
+                <ServiceSchema />
+                <PhysicianSchema />
             </head>
             <body className="antialiased">
                 <ClientProviders>
                     <ServiceWorkerCleanup />
                     <PerformanceMonitor />
                     <ResourcePreloader />
-                    {/* <StructuredData data={[organizationData, websiteData]} /> */}
                     <Header />
                     <main className="pt-16 lg:pt-20">
                         {children}

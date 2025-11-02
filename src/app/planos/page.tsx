@@ -63,10 +63,10 @@ export default function PlanosPage() {
             </p>
           </div>
           {/* Stripe Pricing Table */}
-          <div id="pricing-table" className="max-w-7xl mx-auto">
+          <div id="pricing-table" className="max-w-7xl mx-auto px-2 md:px-4">
             <StripePricingTable
               pricingTableId="prctbl_1SK1U5Ls8MC0aCdjGBBODqjW"
-              publishableKey="pk_live_51OJdAcLs8MC0aCdjQwfyXkqJQRyRw0Au8D5C2BzxN90ekVz0AFEI6PpG0ELGQzJiRZZkWTu4Rj4BcjNZpiyH3LI800SkEiSITH"
+              publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
               className="w-full"
             />
           </div>
