@@ -72,7 +72,7 @@ export function Header({ className }: HeaderProps) {
             { name: 'Calculadora', href: '/calculadora', isAnchor: false },
             { name: 'Planos', href: 'https://svlentes.com.br/planos', isAnchor: false },
             { name: 'Como Funciona', href: '/como-funciona', isAnchor: false },
-            { name: 'FAQ', href: '#perguntas-frequentes', isAnchor: true },
+            { name: 'FAQ', href: '/faq', isAnchor: false },
             { name: 'Contato', href: '#contato', isAnchor: true },
         ]
     }, [headerMenu])

@@ -40,8 +40,8 @@ menus:
         href: "/como-funciona"
         isAnchor: false
       - label: "FAQ"
-        href: "#perguntas-frequentes"
-        isAnchor: true
+        href: "/faq"
+        isAnchor: false
       - label: "Contato"
         href: "#contato"
         isAnchor: true
