@@ -18,6 +18,9 @@ const relevantEvents = [
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
+  'payment_intent.succeeded', // Pix payment succeeded
+  'payment_intent.payment_failed', // Pix payment failed
+  'payment_intent.canceled', // Pix payment canceled/expired
 ]
 export async function POST(request: NextRequest) {
   try {
@@ -71,7 +74,7 @@ export async function POST(request: NextRequest) {
   }
 }
 async function handleStripeEvent(event: Stripe.Event) {
-  const session = event.data.object as Stripe.Checkout.Session | Stripe.Subscription | Stripe.Invoice
+  const session = event.data.object as Stripe.Checkout.Session | Stripe.Subscription | Stripe.Invoice | Stripe.PaymentIntent
   switch (event.type) {
     case 'checkout.session.completed': {
       const completedSession = session as Stripe.Checkout.Session
@@ -101,6 +104,21 @@ async function handleStripeEvent(event: Stripe.Event) {
     case 'invoice.payment_failed': {
       const failedInvoice = session as Stripe.Invoice
       await handleInvoicePaymentFailed(failedInvoice)
+      break
+    }
+    case 'payment_intent.succeeded': {
+      const succeededPaymentIntent = session as Stripe.PaymentIntent
+      await handlePixPaymentSucceeded(succeededPaymentIntent)
+      break
+    }
+    case 'payment_intent.payment_failed': {
+      const failedPaymentIntent = session as Stripe.PaymentIntent
+      await handlePixPaymentFailed(failedPaymentIntent)
+      break
+    }
+    case 'payment_intent.canceled': {
+      const canceledPaymentIntent = session as Stripe.PaymentIntent
+      await handlePixPaymentCanceled(canceledPaymentIntent)
       break
     }
     default:
@@ -160,17 +178,28 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, user
       user = await prisma.user.findUnique({ where: { id: userId } })
     } else {
       const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
-      
-      // Try to find user by customer ID stored in metadata
-      // Note: This requires customer ID to be explicitly linked to user during checkout
+
+      // ✅ FIX: Search in correct Stripe customer ID field
       user = await prisma.user.findFirst({
-        where: { 
-          asaasCustomerId: customerId // Stripe customer ID may be stored here
+        where: {
+          stripeCustomerId: customerId
         }
       })
-      
-      // If not found, we cannot safely assign the subscription
-      // Log error and skip - manual intervention required
+
+      // If not found by Stripe ID, try to find by subscription metadata email
+      if (!user && subscription.metadata?.email) {
+        user = await prisma.user.findUnique({
+          where: { email: subscription.metadata.email }
+        })
+
+        // Update user with Stripe customer ID for future lookups
+        if (user) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { stripeCustomerId: customerId }
+          })
+        }
+      }
     }
     
     if (!user) {
@@ -193,7 +222,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, user
       'incomplete_expired': 'EXPIRED'
     }
     
-    // Create or update subscription in database
+    // Create or update subscription in database with Stripe-specific fields
     await prisma.subscription.upsert({
       where: { id: subscription.id },
       update: {
@@ -205,6 +234,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, user
       create: {
         id: subscription.id,
         userId: user.id,
+        stripeSubscriptionId: subscription.id,
+        provider: 'stripe',
         planType: priceItem?.price?.nickname || 'Stripe Subscription',
         status: statusMap[subscription.status] || 'ACTIVE',
         monthlyValue: amount,
@@ -342,13 +373,16 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       status: 'success'
     }
     
+    // ✅ FIX: Create payment record with correct Stripe fields
     await prisma.payment.create({
       data: {
         userId: subscription.userId,
         subscriptionId: subscription.id,
-        asaasPaymentId: invoice.id, // Using Stripe invoice ID
-        asaasCustomerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '',
-        asaasSubscriptionId: subscriptionId,
+        provider: 'stripe',
+        stripePaymentId: invoice.payment_intent as string || invoice.id,
+        stripeCustomerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '',
+        stripeSubscriptionId: subscriptionId,
+        stripeInvoiceId: invoice.id,
         amount: invoice.amount_paid / 100,
         netValue: invoice.amount_paid / 100,
         status: 'CONFIRMED',
@@ -429,8 +463,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       failureReason: 'payment_failed'
     }
     
+    // ✅ FIX: Upsert payment with correct Stripe fields
     await prisma.payment.upsert({
-      where: { asaasPaymentId: invoice.id },
+      where: { stripeInvoiceId: invoice.id },
       update: {
         status: 'OVERDUE',
         metadata: standardizedMetadata
@@ -438,9 +473,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       create: {
         userId: subscription.userId,
         subscriptionId: subscription.id,
-        asaasPaymentId: invoice.id,
-        asaasCustomerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '',
-        asaasSubscriptionId: subscriptionId,
+        provider: 'stripe',
+        stripePaymentId: invoice.payment_intent as string || invoice.id,
+        stripeCustomerId: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || '',
+        stripeSubscriptionId: subscriptionId,
+        stripeInvoiceId: invoice.id,
         amount: invoice.amount_due / 100,
         status: 'OVERDUE',
         billingType: 'CREDIT_CARD',
@@ -458,4 +495,250 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   } catch (error) {
     logger.error(LogCategory.PAYMENT, 'Failed to record payment failure in database', error as Error)
   }
+}
+
+/**
+ * Handle Pix payment success (PaymentIntent succeeded)
+ * This is triggered when a customer successfully pays via Pix
+ */
+async function handlePixPaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  logger.logPayment('stripe_pix_payment_succeeded', {
+    paymentIntentId: paymentIntent.id,
+    customerId: paymentIntent.customer,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency,
+    paymentMethod: paymentIntent.payment_method,
+  })
+
+  try {
+    // Find user by Stripe customer ID
+    const customerId = typeof paymentIntent.customer === 'string'
+      ? paymentIntent.customer
+      : paymentIntent.customer?.id
+
+    if (!customerId) {
+      logger.error(LogCategory.PAYMENT, 'No customer ID in Pix PaymentIntent', new Error(`PaymentIntent: ${paymentIntent.id}`))
+      return
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { stripeCustomerId: customerId }
+    })
+
+    // If not found by Stripe ID, try metadata email
+    let finalUser = user
+    if (!user && paymentIntent.metadata?.customerEmail) {
+      finalUser = await prisma.user.findUnique({
+        where: { email: paymentIntent.metadata.customerEmail }
+      })
+
+      // Update user with Stripe customer ID for future lookups
+      if (finalUser) {
+        await prisma.user.update({
+          where: { id: finalUser.id },
+          data: { stripeCustomerId: customerId }
+        })
+      }
+    }
+
+    if (!finalUser) {
+      logger.error(LogCategory.PAYMENT, 'User not found for Pix payment', new Error(`Customer: ${customerId}`))
+      return
+    }
+
+    // Create payment record for Pix transaction
+    await prisma.payment.create({
+      data: {
+        userId: finalUser.id,
+        provider: 'stripe',
+        stripePaymentId: paymentIntent.id,
+        stripeCustomerId: customerId,
+        amount: paymentIntent.amount / 100,
+        netValue: paymentIntent.amount / 100,
+        status: 'CONFIRMED',
+        billingType: 'PIX', // Pix payment method
+        description: paymentIntent.description || 'Pix payment',
+        paymentDate: new Date(),
+        confirmedDate: new Date(),
+        metadata: {
+          stripePaymentIntentId: paymentIntent.id,
+          paymentMethod: 'pix',
+          pixData: paymentIntent.next_action?.pix_display_qr_code || null,
+          charges: paymentIntent.charges.data.map(charge => ({
+            id: charge.id,
+            amount: charge.amount,
+            status: charge.status,
+            created: charge.created,
+          })),
+          ...paymentIntent.metadata,
+        }
+      }
+    })
+
+    logger.logPayment('stripe_pix_payment_recorded_in_db', {
+      paymentIntentId: paymentIntent.id,
+      userId: finalUser.id,
+      amount: paymentIntent.amount / 100,
+    })
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to record Pix payment in database', error as Error)
+  }
+}
+
+/**
+ * Handle Pix payment failure
+ * This is triggered when a Pix payment fails for any reason
+ */
+async function handlePixPaymentFailed(paymentIntent: Stripe.PaymentIntent) {
+  logger.logPayment('stripe_pix_payment_failed', {
+    paymentIntentId: paymentIntent.id,
+    customerId: paymentIntent.customer,
+    amount: paymentIntent.amount,
+    lastPaymentError: paymentIntent.last_payment_error,
+  })
+
+  try {
+    const customerId = typeof paymentIntent.customer === 'string'
+      ? paymentIntent.customer
+      : paymentIntent.customer?.id
+
+    if (!customerId) return
+
+    const user = await prisma.user.findFirst({
+      where: { stripeCustomerId: customerId }
+    })
+
+    if (!user) {
+      // Try to find by metadata email
+      if (paymentIntent.metadata?.customerEmail) {
+        const userByEmail = await prisma.user.findUnique({
+          where: { email: paymentIntent.metadata.customerEmail }
+        })
+
+        if (!userByEmail) return
+
+        // Create failed payment record
+        await createFailedPixPayment(paymentIntent, userByEmail.id, customerId)
+      }
+      return
+    }
+
+    await createFailedPixPayment(paymentIntent, user.id, customerId)
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to record Pix payment failure in database', error as Error)
+  }
+}
+
+/**
+ * Handle Pix payment cancellation/expiration
+ * This is triggered when a Pix payment is canceled or the QR code expires
+ */
+async function handlePixPaymentCanceled(paymentIntent: Stripe.PaymentIntent) {
+  logger.logPayment('stripe_pix_payment_canceled', {
+    paymentIntentId: paymentIntent.id,
+    customerId: paymentIntent.customer,
+    amount: paymentIntent.amount,
+    cancellationReason: paymentIntent.cancellation_reason,
+  })
+
+  try {
+    const customerId = typeof paymentIntent.customer === 'string'
+      ? paymentIntent.customer
+      : paymentIntent.customer?.id
+
+    if (!customerId) return
+
+    const user = await prisma.user.findFirst({
+      where: { stripeCustomerId: customerId }
+    })
+
+    if (!user) {
+      // Try metadata email
+      if (paymentIntent.metadata?.customerEmail) {
+        const userByEmail = await prisma.user.findUnique({
+          where: { email: paymentIntent.metadata.customerEmail }
+        })
+
+        if (!userByEmail) return
+
+        await createCanceledPixPayment(paymentIntent, userByEmail.id, customerId)
+      }
+      return
+    }
+
+    await createCanceledPixPayment(paymentIntent, user.id, customerId)
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Failed to record Pix payment cancellation in database', error as Error)
+  }
+}
+
+/**
+ * Helper: Create failed Pix payment record
+ */
+async function createFailedPixPayment(
+  paymentIntent: Stripe.PaymentIntent,
+  userId: string,
+  customerId: string
+) {
+  await prisma.payment.create({
+    data: {
+      userId,
+      provider: 'stripe',
+      stripePaymentId: paymentIntent.id,
+      stripeCustomerId: customerId,
+      amount: paymentIntent.amount / 100,
+      status: 'REFUNDED', // Using REFUNDED as closest enum for failed
+      billingType: 'PIX',
+      description: paymentIntent.description || 'Failed Pix payment',
+      metadata: {
+        stripePaymentIntentId: paymentIntent.id,
+        paymentMethod: 'pix',
+        status: 'failed',
+        failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
+        failureCode: paymentIntent.last_payment_error?.code || 'unknown',
+        ...paymentIntent.metadata,
+      }
+    }
+  })
+
+  logger.logPayment('stripe_failed_pix_payment_recorded_in_db', {
+    paymentIntentId: paymentIntent.id,
+    userId,
+    failureReason: paymentIntent.last_payment_error?.message,
+  })
+}
+
+/**
+ * Helper: Create canceled Pix payment record
+ */
+async function createCanceledPixPayment(
+  paymentIntent: Stripe.PaymentIntent,
+  userId: string,
+  customerId: string
+) {
+  await prisma.payment.create({
+    data: {
+      userId,
+      provider: 'stripe',
+      stripePaymentId: paymentIntent.id,
+      stripeCustomerId: customerId,
+      amount: paymentIntent.amount / 100,
+      status: 'REFUNDED', // Using REFUNDED as closest enum for canceled
+      billingType: 'PIX',
+      description: paymentIntent.description || 'Canceled Pix payment',
+      metadata: {
+        stripePaymentIntentId: paymentIntent.id,
+        paymentMethod: 'pix',
+        status: 'canceled',
+        cancellationReason: paymentIntent.cancellation_reason || 'User canceled or QR code expired',
+        ...paymentIntent.metadata,
+      }
+    }
+  })
+
+  logger.logPayment('stripe_canceled_pix_payment_recorded_in_db', {
+    paymentIntentId: paymentIntent.id,
+    userId,
+    cancellationReason: paymentIntent.cancellation_reason,
+  })
 }
