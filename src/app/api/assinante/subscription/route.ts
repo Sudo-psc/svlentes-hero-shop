@@ -70,11 +70,11 @@ export async function GET(request: NextRequest) {
     }
     // Buscar usuário com assinaturas ativas usando o UID do Firebase
     // OWNERSHIP: Busca é feita pelo firebaseUid, garantindo que só dados do próprio usuário sejam retornados
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { firebaseUid: firebaseUser.uid },
       include: {
         subscriptions: {
-          where: { 
+          where: {
             status: 'ACTIVE'
             // userId is automatically filtered by the relation
           },
@@ -90,6 +90,55 @@ export async function GET(request: NextRequest) {
         }
       }
     })
+
+    // Fallback: buscar por email se não encontrou por firebaseUid
+    // Útil para usuários criados manualmente com UIDs de teste
+    if (!user && firebaseUser.email) {
+      console.log('[API /api/assinante/subscription] Usuário não encontrado por firebaseUid, tentando por email:', firebaseUser.email)
+
+      user = await prisma.user.findUnique({
+        where: { email: firebaseUser.email },
+        include: {
+          subscriptions: {
+            where: { status: 'ACTIVE' },
+            include: {
+              benefits: true,
+              orders: {
+                orderBy: { createdAt: 'desc' },
+                take: 1
+              }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
+        }
+      })
+
+      // Se encontrou por email, atualizar firebaseUid automaticamente
+      if (user) {
+        console.log('[API /api/assinante/subscription] Usuário encontrado por email, sincronizando firebaseUid')
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { firebaseUid: firebaseUser.uid },
+          include: {
+            subscriptions: {
+              where: { status: 'ACTIVE' },
+              include: {
+                benefits: true,
+                orders: {
+                  orderBy: { createdAt: 'desc' },
+                  take: 1
+                }
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 1
+            }
+          }
+        })
+        console.log('[API /api/assinante/subscription] Firebase UID sincronizado com sucesso:', firebaseUser.uid)
+      }
+    }
+
     if (!user) {
       return NextResponse.json(
         { error: 'NOT_FOUND', message: 'Usuário não encontrado' },

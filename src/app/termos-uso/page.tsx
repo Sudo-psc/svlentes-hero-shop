@@ -66,14 +66,34 @@ export default function TermosUsoPage() {
                             </p>
                         </section>
                         <section className="mb-8">
-                            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Cancelamento e Reembolso</h2>
+                            <h2 className="text-2xl font-semibold text-gray-900 mb-4">5. Cancelamento e Política de Não Reembolso</h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
                                 Você pode cancelar sua assinatura a qualquer momento através do nosso WhatsApp ou área do cliente.
                                 O cancelamento será efetivo no final do período de cobrança atual.
                             </p>
+
+                            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4">
+                                <h3 className="text-lg font-semibold text-amber-900 mb-2">
+                                    ⚠️ Política de Não Reembolso
+                                </h3>
+                                <p className="text-amber-800 leading-relaxed">
+                                    Por se tratar de produtos de saúde e higiene pessoal, <strong>NÃO realizamos reembolsos</strong> após
+                                    o período legal de arrependimento, exceto o previsto no Art. 49 do CDC (7 dias corridos da contratação).
+                                </p>
+                            </div>
+
+                            <p className="text-gray-700 leading-relaxed mb-2">
+                                <strong>Período de Arrependimento Legal (CDC Art. 49):</strong>
+                            </p>
+                            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">
+                                <li>Até 7 dias corridos da contratação ou recebimento do produto</li>
+                                <li>Reembolso integral garantido por lei</li>
+                                <li>Produtos devem estar lacrados e em embalagem original</li>
+                            </ul>
+
                             <p className="text-gray-700 leading-relaxed">
-                                Reembolsos são processados conforme o Código de Defesa do Consumidor brasileiro,
-                                especialmente nos casos de arrependimento em até 7 dias da contratação.
+                                <strong>Após o período de 7 dias:</strong> Não há direito a reembolso. O cancelamento da assinatura
+                                interrompe cobranças futuras, mas você utilizará os serviços até o final do período já pago.
                             </p>
                         </section>
                         <section className="mb-8">

@@ -20,18 +20,51 @@ export default function PoliticaTrocaDevolucaoPage() {
                             <strong>Última atualização:</strong> {new Date().toLocaleDateString('pt-BR')}
                         </p>
 
+                        <div className="bg-red-50 border-l-4 border-red-500 p-6 mb-8">
+                            <h2 className="text-xl font-bold text-red-900 mb-3">
+                                ⚠️ POLÍTICA DE NÃO DEVOLUÇÃO E NÃO REEMBOLSO
+                            </h2>
+                            <p className="text-red-800 leading-relaxed font-semibold mb-2">
+                                Por se tratar de produtos de saúde e higiene pessoal (lentes de contato),
+                                <strong> NÃO realizamos devoluções nem reembolsos</strong>, exceto nas condições
+                                legais abaixo descritas.
+                            </p>
+                            <p className="text-red-700 leading-relaxed">
+                                Esta política segue as normas sanitárias da ANVISA e regulamentos de saúde
+                                que proíbem a reutilização ou revenda de produtos de contato direto com os olhos.
+                            </p>
+                        </div>
+
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                                1. Direito de Arrependimento
+                                1. Direito de Arrependimento (Única Exceção Legal)
                             </h2>
                             <p className="text-gray-700 leading-relaxed mb-4">
                                 Conforme o Art. 49 do Código de Defesa do Consumidor (CDC), você tem direito
                                 de desistir da contratação no prazo de <strong>7 (sete) dias corridos</strong>,
                                 contados a partir da assinatura do contrato ou do recebimento do produto.
                             </p>
-                            <p className="text-gray-700 leading-relaxed">
+
+                            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4">
+                                <h3 className="text-lg font-semibold text-amber-900 mb-2">
+                                    📋 Condições Obrigatórias para Devolução:
+                                </h3>
+                                <ul className="list-disc list-inside text-amber-800 space-y-1">
+                                    <li><strong>Prazo máximo:</strong> 7 dias corridos</li>
+                                    <li><strong>Embalagem:</strong> Lacrada e intacta (não pode ter sido aberta)</li>
+                                    <li><strong>Estado:</strong> Produto sem uso e em condição de revenda</li>
+                                    <li><strong>Nota fiscal:</strong> Original acompanhando o produto</li>
+                                </ul>
+                            </div>
+
+                            <p className="text-gray-700 leading-relaxed font-semibold">
+                                ⚠️ IMPORTANTE: Produtos com embalagem aberta ou usados NÃO serão aceitos,
+                                mesmo dentro do prazo de 7 dias, por questões de segurança sanitária.
+                            </p>
+
+                            <p className="text-gray-700 leading-relaxed mt-4">
                                 Para exercer o direito de arrependimento, entre em contato através do nosso
-                                WhatsApp ou área do assinante. O reembolso será processado em até 10 dias úteis.
+                                WhatsApp (33) 99989-8026 ou área do assinante. O reembolso será processado em até 10 dias úteis.
                             </p>
                         </section>
 
@@ -81,33 +114,43 @@ export default function PoliticaTrocaDevolucaoPage() {
 
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                                3. Devolução de Produto
+                                3. Política de Devolução Restritiva
                             </h2>
-                            
-                            <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                                3.1. Condições para Devolução
-                            </h3>
-                            <p className="text-gray-700 leading-relaxed mb-4">
-                                A devolução será aceita nas seguintes condições:
-                            </p>
-                            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                                <li>Produto em embalagem original lacrada</li>
-                                <li>Sem sinais de uso ou dano</li>
-                                <li>Acompanhado da nota fiscal</li>
-                                <li>Dentro do prazo de 7 dias (arrependimento) ou 30 dias (defeito)</li>
-                            </ul>
+
+                            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                                <h3 className="text-lg font-semibold text-red-900 mb-2">
+                                    🚫 NÃO Aceitamos Devolução
+                                </h3>
+                                <p className="text-red-800 leading-relaxed mb-2">
+                                    Por motivos de higiene, segurança sanitária e normas da ANVISA,
+                                    <strong> NÃO aceitamos devolução</strong> de:
+                                </p>
+                                <ul className="list-disc list-inside text-red-800 space-y-2">
+                                    <li><strong>Lentes com embalagem aberta ou violada</strong></li>
+                                    <li><strong>Lentes usadas, mesmo que uma única vez</strong></li>
+                                    <li><strong>Produtos de higiene e soluções abertas</strong></li>
+                                    <li><strong>Lentes danificadas por uso inadequado</strong></li>
+                                    <li><strong>Produtos fora do prazo de 7 dias</strong></li>
+                                </ul>
+                            </div>
 
                             <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                                3.2. Produtos NÃO Elegíveis para Devolução
+                                3.1. Única Exceção: Arrependimento Legal (7 dias)
                             </h3>
                             <p className="text-gray-700 leading-relaxed mb-4">
-                                Por motivos de higiene e segurança sanitária, NÃO aceitamos devolução de:
+                                A devolução será aceita APENAS nas seguintes condições:
                             </p>
                             <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                                <li>Lentes com embalagem aberta e/ou usadas (exceto defeito de fabricação)</li>
-                                <li>Lentes danificadas por uso inadequado</li>
-                                <li>Produtos de higiene e soluções abertas</li>
+                                <li>✅ Produto em <strong>embalagem original lacrada</strong></li>
+                                <li>✅ <strong>Sem sinais de uso ou violação</strong></li>
+                                <li>✅ Acompanhado da <strong>nota fiscal original</strong></li>
+                                <li>✅ Dentro do prazo de <strong>7 dias corridos</strong> (CDC Art. 49)</li>
                             </ul>
+
+                            <p className="text-gray-700 leading-relaxed font-semibold bg-yellow-50 p-3 rounded">
+                                ⚠️ Atenção: Se qualquer uma dessas condições não for atendida, a devolução será recusada.
+                                Não há exceções além do previsto em lei.
+                            </p>
                         </section>
 
                         <section className="mb-8">
@@ -143,16 +186,50 @@ export default function PoliticaTrocaDevolucaoPage() {
 
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                                6. Reembolso
+                                6. Política de Reembolso
                             </h2>
+
+                            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                                <h3 className="text-lg font-semibold text-red-900 mb-2">
+                                    💰 Reembolso APENAS no Período Legal de 7 Dias
+                                </h3>
+                                <p className="text-red-800 leading-relaxed font-semibold">
+                                    <strong>NÃO realizamos reembolsos</strong> após o período de arrependimento legal
+                                    de 7 dias (CDC Art. 49), mesmo em caso de cancelamento da assinatura.
+                                </p>
+                            </div>
+
+                            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                                6.1. Reembolso no Período de Arrependimento (7 dias)
+                            </h3>
                             <p className="text-gray-700 leading-relaxed mb-4">
-                                O reembolso será processado da seguinte forma:
+                                Se você exercer o direito de arrependimento dentro de 7 dias E o produto
+                                estiver em embalagem lacrada, o reembolso será processado da seguinte forma:
                             </p>
                             <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                                <li><strong>Cartão de crédito:</strong> estorno em até 2 faturas após confirmação</li>
+                                <li><strong>Cartão de crédito:</strong> estorno em até 2 faturas após confirmação da devolução</li>
                                 <li><strong>Outros meios:</strong> transferência bancária em até 10 dias úteis</li>
-                                <li>Valor integral devolvido (produto + frete pago, quando aplicável)</li>
+                                <li><strong>Valor:</strong> integral do produto (frete de devolução por conta do cliente)</li>
                             </ul>
+
+                            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                                6.2. Após 7 Dias: SEM Reembolso
+                            </h3>
+                            <p className="text-gray-700 leading-relaxed mb-4">
+                                Após o período de 7 dias, <strong>não há direito a reembolso</strong> em nenhuma circunstância, incluindo:
+                            </p>
+                            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                                <li>❌ Cancelamento de assinatura</li>
+                                <li>❌ Desistência do serviço</li>
+                                <li>❌ Mudança de endereço ou localidade</li>
+                                <li>❌ Troca de plano ou preferências</li>
+                                <li>❌ Qualquer outro motivo pessoal</li>
+                            </ul>
+
+                            <p className="text-gray-700 leading-relaxed bg-amber-50 p-3 rounded font-semibold">
+                                ℹ️ Cancelamento de Assinatura: Ao cancelar, você utiliza os serviços até o final do
+                                período já pago. Não há reembolso proporcional de dias não utilizados.
+                            </p>
                         </section>
 
                         <section className="mb-8">

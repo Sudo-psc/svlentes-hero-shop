@@ -277,7 +277,7 @@ const isProtectedRoute = routeMatcher([
 ]);
 
 // Firebase Authentication Middleware
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Perform logging and monitoring
   const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
 
@@ -297,7 +297,7 @@ export async function middleware(request: NextRequest) {
         logRateLimitViolation,
       } = await import('./lib/rate-limiter');
 
-      const limiter = selectRateLimiter(pathname);
+      const limiter = await selectRateLimiter(pathname);
 
       if (limiter) {
         // Get user ID from token if available (for subscriber routes)
@@ -417,7 +417,7 @@ export async function middleware(request: NextRequest) {
         checkRateLimit,
       } = await import('./lib/rate-limiter');
 
-      const limiter = selectRateLimiter(pathname);
+      const limiter = await selectRateLimiter(pathname);
 
       if (limiter) {
         // Get user ID and IP (same logic as above)

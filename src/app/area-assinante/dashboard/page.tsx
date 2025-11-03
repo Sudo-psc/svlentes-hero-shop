@@ -45,6 +45,8 @@ import { UpdatePaymentModal } from '@/components/assinante/UpdatePaymentModal'
 import { OrdersModal } from '@/components/assinante/OrdersModal'
 import { InvoicesModal } from '@/components/assinante/InvoicesModal'
 import { SubscriptionHistoryTimeline } from '@/components/assinante/SubscriptionHistoryTimeline'
+import { EnhancedNoSubscriptionState } from './components/EnhancedNoSubscriptionState'
+import { SubscriberStatusWidgets } from './components/SubscriberStatusWidgets'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -83,6 +85,13 @@ function DashboardContent() {
       router.push('/area-assinante/login')
     }
   }, [authLoading, authUser, router])
+
+  // Redirect to plans page if user is authenticated but has no active subscription
+  useEffect(() => {
+    if (!authLoading && authUser && !subLoading && !subscription) {
+      router.push('/planos')
+    }
+  }, [authLoading, authUser, subLoading, subscription, router])
   const userName = user?.name || authUser?.displayName || 'Assinante'
   const userEmail = user?.email || authUser?.email || 'sem-email@svlentes.com.br'
   const avatarUrl = user?.avatarUrl || authUser?.photoURL || ''
@@ -178,16 +187,6 @@ function DashboardContent() {
       icon: Eye,
       active: false,
       onClick: () => router.push('/area-assinante/configuracoes')
-    },
-    {
-      label: 'Gamificação',
-      icon: Trophy,
-      active: false,
-      onClick: () => {
-        const section = document.getElementById('gamificacao')
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        section?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
-      }
     },
     {
       label: 'Configurações',
@@ -433,28 +432,22 @@ function DashboardContent() {
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
               {!subscription && (
-                <Card className="border-dashed border-2 border-cyan-300 bg-gradient-to-br from-cyan-50 to-white shadow-lg hover:shadow-xl transition-all duration-300">
-                  <CardContent className="py-16 flex flex-col items-center text-center gap-6">
-                    <div className="p-6 rounded-3xl bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-2xl">
-                      <Wallet className="h-16 w-16" />
-                    </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Você ainda não possui uma assinatura ativa</h2>
-                    <p className="text-gray-700 max-w-xl text-lg font-medium leading-relaxed">
-                      Escolha o plano ideal para receber suas lentes com acompanhamento médico e benefícios exclusivos.
-                    </p>
-                    <div className="flex flex-wrap gap-4 justify-center mt-4">
-                      <Button size="lg" className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 text-base px-8" onClick={() => router.push('/planos')}>
-                        <ArrowRight className="h-5 w-5 mr-2" /> Conhecer planos
-                      </Button>
-                      <Button size="lg" variant="outline" className="border-2 border-cyan-600 text-cyan-700 hover:bg-cyan-50 shadow-md hover:shadow-lg transition-all duration-300 text-base px-8" onClick={handleSupportWhatsApp}>
-                        <MessageCircle className="h-5 w-5 mr-2" /> Falar com um especialista
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <EnhancedNoSubscriptionState
+                  onViewPlans={() => router.push('/planos')}
+                  onContactSpecialist={handleSupportWhatsApp}
+                />
               )}
               {subscription && (
                 <div className="space-y-8">
+                  {/* Subscriber Status Widgets - Conditional based on subscription status */}
+                  <SubscriberStatusWidgets
+                    subscription={subscription}
+                    gamificationProfile={gamificationProfile}
+                    onRegularizePayment={() => openModal('updatePayment')}
+                    onUpdatePrescription={() => router.push('/area-assinante/configuracoes')}
+                    onScheduleConsultation={() => router.push('/agendar-consulta')}
+                  />
+
                   <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
                       <Card className="bg-white shadow-md border border-gray-100 hover:shadow-xl transition-all duration-300 hover:border-cyan-200">

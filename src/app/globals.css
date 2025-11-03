@@ -398,4 +398,52 @@
         ring-color: #2563eb;
         ring-offset: 2px;
     }
+
+    /* Stripe Pricing Table Mobile Responsiveness */
+    stripe-pricing-table {
+        width: 100%;
+        max-width: 100%;
+        display: block;
+    }
+
+    /* Ensure Stripe iframe is responsive */
+    stripe-pricing-table iframe {
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none;
+    }
+
+    /* Mobile-specific adjustments for Stripe pricing table */
+    @media (max-width: 768px) {
+        .stripe-pricing-table-container {
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        stripe-pricing-table {
+            min-height: 400px;
+        }
+
+        stripe-pricing-table iframe {
+            min-height: 400px !important;
+        }
+    }
+
+    /* Extra small devices - ensure readability */
+    @media (max-width: 480px) {
+        .stripe-pricing-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        stripe-pricing-table {
+            min-height: 500px;
+        }
+
+        stripe-pricing-table iframe {
+            min-height: 500px !important;
+        }
+    }
 }

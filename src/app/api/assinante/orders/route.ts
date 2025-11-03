@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth } from '@/lib/firebase-admin'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import { logAudit, AuditAction } from '@/lib/audit-logger'
 /**
  * GET /api/assinante/orders
  * Retorna histórico de pedidos do usuário autenticado
@@ -97,6 +98,29 @@ export async function GET(request: NextRequest) {
       skip,
       take: limit
     })
+
+    // === LGPD AUDIT LOG ===
+    // Registrar acesso ao histórico de pedidos (LGPD Art. 7 - dados financeiros)
+    await logAudit({
+      userId: user.id,
+      action: AuditAction.ACCESS_ORDER_HISTORY,
+      entityType: 'Order',
+      entityId: null, // Null para listagens
+      oldValue: null,
+      newValue: {
+        accessType: 'history',
+        recordCount: orders.length,
+        totalRecords: totalOrders,
+        pagination: {
+          page,
+          limit,
+          skip,
+        },
+        // Sanitização automática de valores financeiros pelo audit-logger
+      },
+      request,
+    })
+
     return NextResponse.json({
       orders: orders.map(order => ({
         id: order.id,

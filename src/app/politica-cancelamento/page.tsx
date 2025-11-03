@@ -91,49 +91,85 @@ export default function PoliticaCancelamentoPage() {
                             </ul>
 
                             <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                                3.2. Cancelamento Imediato
+                                3.2. Cancelamento Imediato (Situações Especiais)
                             </h3>
                             <p className="text-gray-700 leading-relaxed mb-4">
-                                Em casos específicos, você pode solicitar cancelamento imediato:
+                                Em casos excepcionais, você pode solicitar análise para cancelamento imediato:
                             </p>
                             <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                                <li>Problemas de saúde que impedem o uso de lentes (com atestado médico)</li>
+                                <li>Problemas de saúde graves que impedem o uso de lentes (com atestado médico)</li>
                                 <li>Mudança de localidade para região sem cobertura de entrega</li>
-                                <li>Outras situações especiais analisadas caso a caso</li>
+                                <li>Outras situações excepcionais analisadas caso a caso</li>
                             </ul>
-                            <p className="text-gray-700 leading-relaxed">
-                                Nesses casos, faremos o reembolso proporcional dos dias não utilizados.
-                            </p>
+
+                            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4">
+                                <p className="text-amber-800 leading-relaxed font-semibold">
+                                    ⚠️ Importante: Mesmo em situações especiais, <strong>não há garantia de reembolso</strong>.
+                                    Cada caso será analisado individualmente pela equipe médica e administrativa.
+                                    A decisão final sobre reembolso fica a critério da SV Lentes.
+                                </p>
+                            </div>
                         </section>
 
                         <section className="mb-8">
                             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                                4. Reembolso Após Cancelamento
+                                4. Política de Não Reembolso Após Cancelamento
                             </h2>
-                            
-                            <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                                4.1. Cancelamento no Período de Arrependimento (7 dias)
-                            </h3>
-                            <p className="text-gray-700 leading-relaxed mb-4">
-                                Conforme o Art. 49 do Código de Defesa do Consumidor:
-                            </p>
-                            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                                <li>Reembolso integral em até 10 dias úteis</li>
-                                <li>Devolução de produtos não utilizados (se aplicável)</li>
-                                <li>Sem questionamentos ou justificativas necessárias</li>
-                            </ul>
+
+                            <div className="bg-red-50 border-l-4 border-red-500 p-6 mb-4">
+                                <h3 className="text-xl font-bold text-red-900 mb-3">
+                                    ⚠️ IMPORTANTE: NÃO FAZEMOS REEMBOLSO
+                                </h3>
+                                <p className="text-red-800 leading-relaxed font-semibold mb-3">
+                                    Por se tratar de produtos de saúde e higiene pessoal (lentes de contato),
+                                    <strong> NÃO realizamos reembolsos</strong> após o cancelamento da assinatura,
+                                    exceto no período legal de arrependimento de 7 dias.
+                                </p>
+                                <p className="text-red-700 leading-relaxed">
+                                    Ao cancelar, você continua com acesso aos serviços até o final do período
+                                    já pago. Não há reembolso proporcional de dias não utilizados.
+                                </p>
+                            </div>
 
                             <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                                4.2. Cancelamento Após 7 Dias
+                                4.1. Cancelamento no Período de Arrependimento (7 dias) - ÚNICA EXCEÇÃO
                             </h3>
                             <p className="text-gray-700 leading-relaxed mb-4">
-                                Após o período de arrependimento:
+                                Conforme o Art. 49 do Código de Defesa do Consumidor, APENAS no período
+                                de 7 dias corridos você tem direito a:
                             </p>
                             <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
-                                <li>Você utiliza os serviços até o final do período pago</li>
-                                <li>Não há reembolso proporcional (exceto casos especiais mencionados)</li>
-                                <li>Cancelamento de cobranças futuras garantido</li>
+                                <li>✅ Reembolso integral em até 10 dias úteis</li>
+                                <li>✅ Devolução de produtos <strong>não abertos e lacrados</strong></li>
+                                <li>✅ Sem questionamentos ou justificativas necessárias</li>
                             </ul>
+
+                            <p className="text-gray-700 leading-relaxed bg-amber-50 p-3 rounded font-semibold mb-4">
+                                ⚠️ Condição obrigatória: Produtos devem estar em embalagem original lacrada.
+                                Produtos com embalagem violada ou usados NÃO serão aceitos, mesmo dentro dos 7 dias.
+                            </p>
+
+                            <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                                4.2. Cancelamento Após 7 Dias - SEM REEMBOLSO
+                            </h3>
+                            <p className="text-gray-700 leading-relaxed mb-4">
+                                Após o período de arrependimento de 7 dias:
+                            </p>
+                            <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                                <li>❌ <strong>NÃO há reembolso</strong> em nenhuma circunstância</li>
+                                <li>✅ Você utiliza os serviços até o final do período pago</li>
+                                <li>✅ Cancelamento de cobranças futuras garantido</li>
+                                <li>❌ <strong>Sem reembolso proporcional</strong> de dias não utilizados</li>
+                            </ul>
+
+                            <div className="bg-gray-100 p-4 rounded mt-4">
+                                <h4 className="font-semibold text-gray-900 mb-2">📌 Exemplo Prático:</h4>
+                                <p className="text-gray-700 text-sm">
+                                    Se você assinou em 1º de novembro e cancelar em 15 de novembro (após os 7 dias),
+                                    você continua tendo acesso aos serviços até 30 de novembro (final do período mensal pago).
+                                    Não haverá cobrança em dezembro, mas também não haverá reembolso dos dias restantes de novembro.
+                                </p>
+                            </div>
                         </section>
 
                         <section className="mb-8">

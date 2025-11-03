@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'standalone',
+    // Temporarily disabled 'standalone' output - using default Next.js server mode
+    // output: 'standalone',
     experimental: {
         optimizePackageImports: [
             '@heroicons/react',
@@ -18,12 +19,14 @@ const nextConfig = {
         // Allow production builds with type errors - errors will be caught in IDE and CI
         ignoreBuildErrors: true,
     },
-    // Next.js 16: eslint config moved to .eslintrc or eslint.config.mjs
-    // ESLint is now configured via eslint.config.mjs
-    // Skip failing paths during build
+    // Next.js 16: ESLint config now handled via .eslintrc.json or eslint.config.mjs
+    // Removed eslint.ignoreDuringBuilds - configure ESLint separately
     generateBuildId: async () => {
         return 'build-' + Date.now()
     },
+    // Next.js 16: Turbopack is default bundler
+    // Empty config allows webpack config to coexist during migration
+    turbopack: {},
     // Webpack configuration
     webpack: (config, { isServer }) => {
         if (!isServer) {

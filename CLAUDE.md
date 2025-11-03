@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SV Lentes Landing Page** is a Next.js 15 application for a contact lens subscription service with medical oversight. This is a production healthcare platform serving Saraiva Vision clinic in Caratinga/MG, Brazil.
+**SV Lentes Landing Page** is a Next.js 16.0.1 application for a contact lens subscription service with medical oversight. This is a production healthcare platform serving Saraiva Vision clinic in Caratinga/MG, Brazil.
 
 **Business Context:**
 - Contact lens subscription service with ophthalmological monitoring
@@ -115,7 +115,7 @@ npm run lighthouse       # Run Lighthouse CI performance audit
 - 🔧 [Troubleshooting](./claudedocs/SUBSCRIBER_DASHBOARD_TROUBLESHOOTING.md)
 - 📋 [Changelog](./claudedocs/CHANGELOG.md)
 
-### Next.js 15 App Router Structure
+### Next.js 16 App Router Structure
 ```
 src/
 ├── app/                    # Next.js App Router
@@ -170,12 +170,13 @@ src/
 ```
 
 ### Key Technologies
-- **Next.js 15** with App Router and TypeScript
+- **Next.js 16.0.1** with App Router, TypeScript, and Turbopack
 - **Tailwind CSS v4** with custom cyan/silver color scheme
 - **shadcn/ui** component library with Radix UI primitives
 - **React Hook Form** with Zod validation
 - **Framer Motion** for animations
-- **Clerk** for modern authentication (alongside Firebase)
+- **Firebase Authentication** - Primary authentication system (ID tokens)
+- **Clerk** - Secondary authentication option (integrated but not primary)
 - **Asaas API v3** for payment processing (Brazilian market)
 - **SendPulse** for WhatsApp Business integration
 - **LangChain + OpenAI** for AI-powered customer support
@@ -184,6 +185,120 @@ src/
 - **Vitest** for resilience and integration testing
 - **Playwright** for E2E testing
 - **Lighthouse CI** for performance monitoring
+
+### Firebase Authentication (Primary)
+
+**Implementation:**
+Firebase Authentication is the primary authentication system used throughout the application. Token-based authentication with Firebase ID tokens protects all subscriber routes.
+
+**Key Components:**
+- **Client SDK**: `src/lib/firebase.ts` - Client-side Firebase configuration
+- **Admin SDK**: `src/lib/firebase-admin.ts` - Server-side Firebase Admin for token verification
+- **Middleware**: `src/middleware.ts:280-404` - Route protection and token validation
+
+**Protected Routes:**
+- `/area-assinante/*` - All subscriber dashboard pages
+- `/api/assinante/*` - All subscriber API endpoints
+
+**Public Routes (excluded from protection):**
+- `/area-assinante/login` - Login page
+- `/area-assinante/registro` - Registration page
+- `/api/assinante/register` - Registration API endpoint
+
+**Authentication Flow:**
+1. User logs in → Firebase Client SDK generates ID token
+2. Token stored in cookie (`firebase-token`) or localStorage
+3. Middleware checks for token on protected routes
+4. Token sent via `Authorization: Bearer <token>` header or cookie
+5. API routes verify token using Firebase Admin SDK
+6. Successful verification extracts `firebaseUid` for database queries
+
+**Token Storage:**
+- **Cookie**: `firebase-token` (preferred for SSR)
+- **Header**: `Authorization: Bearer <token>` (for API calls)
+- **Validation**: Middleware at `src/middleware.ts:368-404`
+
+**Environment Variables:**
+```bash
+# Firebase Admin SDK (server-side)
+FIREBASE_PROJECT_ID=<your-project-id>
+FIREBASE_CLIENT_EMAIL=<service-account-email>
+FIREBASE_PRIVATE_KEY=<service-account-private-key>
+
+# Firebase Client SDK (client-side)
+NEXT_PUBLIC_FIREBASE_API_KEY=<firebase-api-key>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<project-id>
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<project-id>.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<sender-id>
+NEXT_PUBLIC_FIREBASE_APP_ID=<app-id>
+```
+
+**API Route Pattern with Firebase Auth:**
+```typescript
+import { adminAuth } from '@/lib/firebase-admin';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+  // 1. Extract token
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
+
+  if (!token) {
+    return NextResponse.json(
+      { error: 'UNAUTHORIZED', message: 'Token não fornecido' },
+      { status: 401 }
+    );
+  }
+
+  // 2. Verify token with Firebase Admin
+  try {
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const firebaseUid = decodedToken.uid;
+
+    // 3. Use firebaseUid for database queries
+    const data = await prisma.model.findMany({
+      where: { firebaseUid }
+    });
+
+    return NextResponse.json({ data }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'UNAUTHORIZED', message: 'Token inválido' },
+      { status: 401 }
+    );
+  }
+}
+```
+
+### Clerk Authentication (Secondary/Optional)
+
+**Overview:**
+- Modern authentication platform available as alternative to Firebase
+- Built-in support for social logins, email/password, passwordless authentication
+- Currently integrated but **not the primary authentication system**
+- Can be used for new features while maintaining Firebase for existing functionality
+
+**Implementation Details:**
+- **Middleware**: `src/middleware.ts` - Clerk middleware integrated alongside Firebase
+- **Layout**: `ClerkProvider` wraps application in `src/app/layout.tsx`
+- **Demo**: `/clerk-demo` page for testing Clerk authentication flow
+
+**Components Available:**
+- `<SignInButton>` - Trigger sign-in modal or redirect
+- `<SignUpButton>` - Trigger sign-up modal or redirect
+- `<UserButton>` - User profile dropdown with account management
+- `<SignedIn>` - Conditional rendering for authenticated users
+- `<SignedOut>` - Conditional rendering for unauthenticated users
+
+**Configuration:**
+```bash
+# Clerk Authentication (Optional - Firebase is primary)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<clerk-publishable-key>
+CLERK_SECRET_KEY=<clerk-secret-key>
+```
+
+**Note**: Middleware preserves all existing security headers and logging. Error handling prevents authentication failures from crashing the application.
 
 ### Payment Integration
 
@@ -218,41 +333,33 @@ src/
 - Automatic ticket creation for complex issues
 - Response templates with personalization
 
-### Clerk Authentication Integration
+**Phone Number Management:**
+All phone numbers throughout the codebase are managed centrally via `src/lib/phone-utils.ts`:
 
-**Overview:**
-- Modern authentication platform integrated alongside Firebase
-- Built-in support for social logins, email/password, and passwordless authentication
-- Integrated via middleware for route protection
-- Demo page available at `/clerk-demo`
+```typescript
+import { CHATBOT_PHONE, SUPPORT_PHONE, formatPhoneDisplay, getWhatsAppURL } from '@/lib/phone-utils';
 
-**Implementation Details:**
-- **Middleware**: `src/middleware.ts` - Integrated `clerkMiddleware()` with existing logging and monitoring, includes error handling
-- **Layout**: `ClerkProvider` wraps the entire application in `src/app/layout.tsx`
-- **Protected Routes**: `/area-assinante/*` and `/api/assinante/*` require authentication
-- **Public Routes** (excluded from protection):
-  - `/area-assinante/login` - Login page
-  - `/area-assinante/register` - Registration page
-  - `/api/assinante/register` - Registration API
-  - `/clerk-demo` - Demo/testing page
-- **Components**: Standard Clerk components available:
-  - `<SignInButton>` - Trigger sign-in modal or redirect
-  - `<SignUpButton>` - Trigger sign-up modal or redirect
-  - `<UserButton>` - User profile dropdown with account management
-  - `<SignedIn>` - Conditional rendering for authenticated users
-  - `<SignedOut>` - Conditional rendering for unauthenticated users
+// Display formatted phone numbers
+const chatbotDisplay = formatPhoneDisplay(CHATBOT_PHONE);    // "(33) 99989-8026"
+const supportDisplay = formatPhoneDisplay(SUPPORT_PHONE);    // "(33) 98606-1427"
 
-**Configuration:**
-- Environment variables required (see Environment Variables section)
-- Compatible with existing Firebase authentication flow
-- Can be used for new features while maintaining Firebase for legacy functionality
-- Middleware preserves all existing security headers and logging
-- Error handling prevents authentication failures from crashing the application
+// Generate WhatsApp link
+const whatsappLink = getWhatsAppURL(CHATBOT_PHONE, "Olá! Preciso de ajuda.");
+// Returns: "https://wa.me/5533999898026?text=Olá%21%20Preciso%20de%20ajuda."
 
-**Testing:**
-- Visit `/clerk-demo` to test authentication flow
-- Sign in/sign up modals integrated
-- User session management handled automatically
+// Generate tel link
+const telLink = getTelURL(SUPPORT_PHONE);
+// Returns: "tel:+5533986061427"
+```
+
+**Phone Numbers:**
+- **WhatsApp Chatbot**: `NEXT_PUBLIC_WHATSAPP_NUMBER` (5533999898026)
+  - Display format: `(33) 99989-8026`
+  - For automated customer support via SendPulse
+
+- **Direct Support**: `NEXT_PUBLIC_SUPPORT_PHONE` (5533986061427)
+  - Display format: `(33) 98606-1427`
+  - For human escalation and complex issues
 
 ### Database Schema (Prisma + PostgreSQL)
 
@@ -321,10 +428,11 @@ src/
 - SVG support with sandboxing
 
 **API Security:**
+- Firebase token validation on protected routes
 - Asaas webhook token validation
 - SendPulse webhook authentication
 - CORS configuration for payment providers
-- **Rate Limiting**: Comprehensive rate limiting on all API routes (see Rate Limiting section below)
+- **Rate Limiting**: Comprehensive rate limiting on all API routes
 - No sensitive data in client-side code
 
 ### Rate Limiting
@@ -336,16 +444,16 @@ src/
 - Returns HTTP 429 with proper headers when limit exceeded
 
 **Rate Limits by Endpoint:**
-- `/api/assinante/*` - 100 requests/hour per authenticated user
+- `/api/assinante/*` - 100 requests/hour per authenticated user (via Firebase UID)
 - `/api/webhooks/*` - 1000 requests/hour per webhook source (IP or token)
 - `/api/asaas/*` - 50 requests/hour per IP address
 - All other `/api/*` - 200 requests/hour per IP
 
 **Rate Limit Headers:**
-- `X-RateLimit-Limit` - Maximum requests allowed
+- `X-RateLimit-Limit` - Maximum requests allowed in current window
 - `X-RateLimit-Remaining` - Requests remaining in current window
 - `X-RateLimit-Reset` - Unix timestamp when limit resets
-- `Retry-After` - Seconds until rate limit resets (on 429 response)
+- `Retry-After` - Seconds until rate limit resets (included in 429 response)
 
 **Configuration:**
 ```bash
@@ -358,6 +466,10 @@ UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token_here
 - Rate limit violations logged to console with identifier, pathname, and limit
 - All rate limit checks logged for monitoring and analytics
 - Fail-open policy: errors don't block requests (logged and allowed)
+
+**Key Files:**
+- `src/middleware.ts:288-446` - Rate limiting middleware implementation
+- `src/lib/rate-limiter.ts` - Rate limiter configuration and utilities
 
 ## Important Implementation Details
 
@@ -384,6 +496,17 @@ NEXT_PUBLIC_APP_URL=https://svlentes.shop
 NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # Chatbot: (33) 99989-8026
 NEXT_PUBLIC_SUPPORT_PHONE=5533986061427     # Direct Support: (33) 98606-1427
 
+# Firebase Authentication (Primary - Required)
+FIREBASE_PROJECT_ID=<your-project-id>
+FIREBASE_CLIENT_EMAIL=<service-account-email>
+FIREBASE_PRIVATE_KEY=<service-account-private-key>
+NEXT_PUBLIC_FIREBASE_API_KEY=<firebase-api-key>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<project-id>.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<project-id>
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<project-id>.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<sender-id>
+NEXT_PUBLIC_FIREBASE_APP_ID=<app-id>
+
 # Asaas Payment (Required for production)
 ASAAS_ENV=production
 ASAAS_API_KEY_PROD=<production-key>
@@ -404,15 +527,13 @@ LANGCHAIN_API_KEY=<langchain-key>
 
 # Database (Prisma)
 DATABASE_URL=<postgresql-url>
+DATABASE_DIRECT_URL=<postgresql-direct-url>  # Optional: for migrations
 
-# Clerk Authentication (Available as alternative/addition to Firebase)
-# Get your keys from https://dashboard.clerk.com
-# Note: Clerk is integrated but runs alongside Firebase authentication
+# Clerk Authentication (Optional - Firebase is primary)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<clerk-publishable-key>
 CLERK_SECRET_KEY=<clerk-secret-key>
 
 # Rate Limiting (Optional - defaults to in-memory if not configured)
-# Get your Upstash Redis credentials from https://upstash.com
 UPSTASH_REDIS_REST_URL=https://your-redis-instance.upstash.io
 UPSTASH_REDIS_REST_TOKEN=<upstash-redis-token>
 
@@ -473,18 +594,385 @@ NEXTAUTH_URL=https://svlentes.shop
   - `"reativar assinatura"` - Reactivate paused subscription
   - `"próxima entrega"` - Check next delivery details
 
+## Common Development Patterns
+
+### API Route Structure with Firebase Authentication
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { adminAuth } from '@/lib/firebase-admin';
+import { prisma } from '@/lib/prisma';
+
+export async function GET(request: NextRequest) {
+  try {
+    // 1. Extract and verify Firebase token
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'UNAUTHORIZED', message: 'Token não fornecido' },
+        { status: 401 }
+      );
+    }
+
+    // 2. Verify token with Firebase Admin SDK
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const firebaseUid = decodedToken.uid;
+
+    // 3. Fetch data from database using firebaseUid
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        user: { firebaseUid }
+      },
+      include: {
+        user: true,
+        orders: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }
+      }
+    });
+
+    if (!subscription) {
+      return NextResponse.json(
+        { error: 'NOT_FOUND', message: 'Assinatura não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // 4. Return response
+    return NextResponse.json({
+      subscription
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('[API Error]:', error);
+
+    // Firebase auth errors
+    if (error.code === 'auth/id-token-expired') {
+      return NextResponse.json(
+        { error: 'TOKEN_EXPIRED', message: 'Token expirado' },
+        { status: 401 }
+      );
+    }
+
+    // Generic error
+    return NextResponse.json(
+      { error: 'INTERNAL_ERROR', message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    // 1. Extract and verify token (same as GET)
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'UNAUTHORIZED' },
+        { status: 401 }
+      );
+    }
+
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const firebaseUid = decodedToken.uid;
+
+    // 2. Parse and validate request body
+    const body = await request.json();
+
+    // Use Zod for validation (optional but recommended)
+    const { address, city, state, zipCode } = body;
+
+    // 3. Update database
+    const updatedSubscription = await prisma.subscription.update({
+      where: {
+        user: { firebaseUid }
+      },
+      data: {
+        shippingAddress: address,
+        shippingCity: city,
+        shippingState: state,
+        shippingZipCode: zipCode,
+        updatedAt: new Date()
+      }
+    });
+
+    // 4. Return updated data
+    return NextResponse.json({
+      subscription: updatedSubscription
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('[API Error]:', error);
+    return NextResponse.json(
+      { error: 'INTERNAL_ERROR', message: error.message },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### Form Validation Pattern
+```typescript
+'use client';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// 1. Define Zod schema with Brazilian-specific validations
+const addressFormSchema = z.object({
+  zipCode: z.string()
+    .regex(/^\d{5}-?\d{3}$/, 'CEP deve ter formato 12345-678'),
+  street: z.string().min(3, 'Endereço deve ter no mínimo 3 caracteres'),
+  number: z.string().min(1, 'Número é obrigatório'),
+  complement: z.string().optional(),
+  neighborhood: z.string().min(2, 'Bairro é obrigatório'),
+  city: z.string().min(2, 'Cidade é obrigatória'),
+  state: z.string().length(2, 'Estado deve ter 2 caracteres (ex: MG)'),
+});
+
+type AddressFormData = z.infer<typeof addressFormSchema>;
+
+// 2. Use in component
+function AddressForm() {
+  const form = useForm<AddressFormData>({
+    resolver: zodResolver(addressFormSchema),
+    defaultValues: {
+      zipCode: '',
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: ''
+    }
+  });
+
+  const onSubmit = async (data: AddressFormData) => {
+    try {
+      // Get Firebase token
+      const token = await getFirebaseToken(); // Your auth helper
+
+      // Submit to API
+      const response = await fetch('/api/assinante/subscription', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Failed to update address');
+
+      const result = await response.json();
+      console.log('Address updated:', result);
+
+    } catch (error) {
+      console.error('Error updating address:', error);
+      form.setError('root', {
+        message: 'Erro ao atualizar endereço. Tente novamente.'
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      {/* Form fields using form.register() */}
+      <input {...form.register('zipCode')} placeholder="CEP" />
+      {form.formState.errors.zipCode && (
+        <p className="text-red-500">{form.formState.errors.zipCode.message}</p>
+      )}
+
+      {/* ... other fields ... */}
+
+      <button type="submit" disabled={form.formState.isSubmitting}>
+        {form.formState.isSubmitting ? 'Salvando...' : 'Salvar'}
+      </button>
+    </form>
+  );
+}
+```
+
+### Database Query Pattern
+```typescript
+import { prisma } from '@/lib/prisma';
+
+// Always import Prisma client from singleton instance
+
+// Example: Find subscription with related data
+const subscription = await prisma.subscription.findFirst({
+  where: {
+    user: { firebaseUid: 'firebase-uid-here' },
+    status: 'ACTIVE'
+  },
+  include: {
+    user: true,  // Include user data
+    orders: {
+      where: { status: 'DELIVERED' },
+      orderBy: { createdAt: 'desc' },
+      take: 10  // Last 10 delivered orders
+    },
+    payments: {
+      where: { status: 'PAID' },
+      orderBy: { paidAt: 'desc' }
+    }
+  }
+});
+
+// Example: Create new order with transaction
+const newOrder = await prisma.$transaction(async (tx) => {
+  // 1. Create order
+  const order = await tx.order.create({
+    data: {
+      subscriptionId: subscription.id,
+      totalAmount: 150.00,
+      status: 'PENDING',
+      deliveryDate: new Date('2025-12-01')
+    }
+  });
+
+  // 2. Update subscription next delivery date
+  await tx.subscription.update({
+    where: { id: subscription.id },
+    data: { nextDeliveryDate: new Date('2025-12-01') }
+  });
+
+  return order;
+});
+
+// Example: Complex query with aggregations
+const analytics = await prisma.subscription.aggregate({
+  where: { status: 'ACTIVE' },
+  _count: { id: true },
+  _avg: { monthlyPrice: true },
+  _sum: { monthlyPrice: true }
+});
+```
+
+### Client-Side Firebase Authentication
+```typescript
+'use client';
+
+import { useState } from 'react';
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+
+function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      // Sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Get ID token
+      const token = await userCredential.user.getIdToken();
+
+      // Store token in cookie for server-side access
+      document.cookie = `firebase-token=${token}; path=/; max-age=3600; secure; samesite=strict`;
+
+      // Redirect to dashboard
+      window.location.href = '/area-assinante/dashboard';
+
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Email ou senha incorretos');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      document.cookie = 'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleLogin}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Senha"
+        required
+      />
+      {error && <p className="text-red-500">{error}</p>}
+      <button type="submit">Entrar</button>
+    </form>
+  );
+}
+```
+
+### Phone Number Utilities Usage
+```typescript
+import {
+  CHATBOT_PHONE,
+  SUPPORT_PHONE,
+  formatPhoneDisplay,
+  getWhatsAppURL,
+  getTelURL
+} from '@/lib/phone-utils';
+
+// In a component
+function ContactSection() {
+  return (
+    <div>
+      {/* WhatsApp Chatbot Link */}
+      <a href={getWhatsAppURL(CHATBOT_PHONE, "Olá! Preciso de ajuda com minha assinatura.")}>
+        <WhatsAppIcon />
+        {formatPhoneDisplay(CHATBOT_PHONE)}
+      </a>
+
+      {/* Direct Phone Support Link */}
+      <a href={getTelURL(SUPPORT_PHONE)}>
+        <PhoneIcon />
+        {formatPhoneDisplay(SUPPORT_PHONE)}
+      </a>
+    </div>
+  );
+}
+
+// Generate WhatsApp share link
+const shareLink = getWhatsAppURL(
+  CHATBOT_PHONE,
+  "Olá! Vi o site da SVLentes e gostaria de saber mais sobre as assinaturas."
+);
+// Returns: "https://wa.me/5533999898026?text=Ol%C3%A1!%20Vi%20o%20site..."
+```
+
 ## Development Workflow
 
 ### Local Development
 1. Install dependencies: `npm install`
 2. Copy environment example: `cp .env.local.example .env.local`
-3. Configure Asaas sandbox keys in `.env.local`
-4. Configure database: Set `DATABASE_URL` in `.env.local`
-5. Run migrations: `npx prisma migrate dev`
-6. Generate Prisma client: `npx prisma generate`
-7. Start development server: `npm run dev`
-8. Access at http://localhost:3000
-9. Optional: Seed database with sample data: `npm run db:seed`
+3. Configure Firebase credentials in `.env.local`
+4. Configure Asaas sandbox keys in `.env.local`
+5. Configure database: Set `DATABASE_URL` in `.env.local`
+6. Run migrations: `npx prisma migrate dev`
+7. Generate Prisma client: `npx prisma generate`
+8. Start development server: `npm run dev`
+9. Access at http://localhost:3000
+10. Optional: Seed database with sample data: `npm run db:seed`
 
 ### Testing Before Deploy
 1. Run unit tests: `npm run test`
@@ -514,7 +1002,7 @@ curl https://svlentes.com.br/api/health-check
 ### Deployment Checklist
 - [ ] All tests passing (`npm run test && npm run test:resilience && npm run test:e2e`)
 - [ ] Production build successful (`npm run build`)
-- [ ] Environment variables configured
+- [ ] Environment variables configured (especially Firebase credentials)
 - [ ] Asaas production keys active
 - [ ] SendPulse integration configured
 - [ ] SSL certificates valid (Let's Encrypt via Certbot)
@@ -536,6 +1024,13 @@ curl https://svlentes.com.br/api/health-check
 - `POST /api/webhooks/sendpulse` - SendPulse WhatsApp webhook
 - `GET /api/whatsapp-redirect` - WhatsApp contact redirect
 
+### Protected Subscriber Endpoints (Firebase Auth Required)
+- `GET /api/assinante/subscription` - Fetch active subscription
+- `PUT /api/assinante/subscription` - Update subscription details
+- `GET /api/assinante/orders` - List order history
+- `GET /api/assinante/invoices` - List invoices/receipts
+- `POST /api/assinante/register` - User registration
+
 ### Monitoring Endpoints
 - `GET /api/monitoring/performance` - Performance metrics
 - `GET /api/monitoring/errors` - Error logs
@@ -544,6 +1039,69 @@ curl https://svlentes.com.br/api/health-check
 ### Privacy/LGPD Endpoints
 - `POST /api/privacy/consent-log` - Log user consent
 - `POST /api/privacy/data-request` - Data access/deletion requests
+
+## Key File Locations
+
+### Authentication
+- **Firebase Client**: `src/lib/firebase.ts` - Client SDK configuration
+- **Firebase Admin**: `src/lib/firebase-admin.ts` - Server SDK for token verification
+- **Middleware Auth**: `src/middleware.ts:280-404` - Route protection logic
+- **Rate Limiting**: `src/lib/rate-limiter.ts` - API rate limit configuration
+
+### Business Logic
+- **Payment Processing**: `src/lib/asaas.ts` - Asaas API client
+- **WhatsApp Chatbot**: `src/lib/sendpulse-client.ts` - SendPulse API
+- **Chatbot Auth**: `src/lib/chatbot-auth-handler.ts` - Phone-based authentication
+- **Calculator Logic**: `src/lib/calculator.ts` - Savings calculations
+- **Validation Schemas**: `src/lib/validation-schemas.ts` - Zod schemas
+
+### Database
+- **Prisma Client**: `src/lib/prisma.ts` - Singleton Prisma instance
+- **Schema**: `prisma/schema.prisma` - Database models and relations
+- **Migrations**: `prisma/migrations/` - Schema version history
+- **Seed**: `prisma/seed.ts` - Test data generation
+
+### Utilities
+- **Phone Utils**: `src/lib/phone-utils.ts` - Phone number management
+- **General Utils**: `src/lib/utils.ts` - Utility functions (cn, etc.)
+- **Formatters**: `src/lib/formatters.ts` - Data formatting helpers
+- **Validators**: `src/lib/validators.ts` - Input validation
+
+### Configuration
+- **Next.js**: `next.config.js` - Build config, security headers, image optimization
+- **TypeScript**: `tsconfig.json` - Path aliases, compiler options
+- **Tailwind**: `tailwind.config.js` - Custom theme, colors, animations
+- **Prisma**: `prisma/schema.prisma` - Database schema
+- **Environment**: `.env.local` - Local development variables
+
+### Testing
+- **Unit Tests**: `src/__tests__/` - Jest unit tests
+- **E2E Tests**: `e2e/` - Playwright E2E tests
+- **Test Helpers**: `e2e/helpers/` - Shared test utilities
+- **Fixtures**: `e2e/fixtures/` - Test data fixtures
+- **Config**: `playwright.config.ts` - Playwright configuration
+
+### Component Organization
+- **UI Components**: `src/components/ui/` - shadcn/ui base components
+- **Layout**: `src/components/layout/` - Header, Footer, Navigation
+- **Forms**: `src/components/forms/` - Validation-enabled forms
+- **Sections**: `src/components/sections/` - Landing page sections
+- **Subscriber**: `src/components/assinante/` - Dashboard components
+
+### Data Configuration
+- **Pricing Plans**: `src/data/pricing-plans.ts` - Subscription tiers
+- **Calculator Data**: `src/data/calculator-data.ts` - Lens cost presets
+- **Medical Info**: `src/data/doctor-info.ts` - Dr. Philipe's credentials
+- **FAQ Content**: `src/data/faq-data.ts` - Support Q&A
+
+### Import Aliases (configured in tsconfig.json)
+```typescript
+@/components/*  → src/components/*
+@/lib/*         → src/lib/*
+@/types/*       → src/types/*
+@/data/*        → src/data/*
+@/hooks/*       → src/hooks/*
+```
 
 ## Regulatory Requirements
 
@@ -579,24 +1137,18 @@ curl https://svlentes.com.br/api/health-check
 - **WhatsApp Chatbot**: +55 33 99989-8026 (5533999898026)
   - **Format**: (33) 99989-8026
   - **Environment Variable**: `NEXT_PUBLIC_WHATSAPP_NUMBER`
-  - This is the SendPulse chatbot number for automated customer support
-  - Users send messages to this number for subscription management
+  - SendPulse chatbot for automated customer support
+  - Users send messages for subscription management
+
 - **Direct Support (Human)**: +55 33 98606-1427 (5533986061427)
   - **Format**: (33) 98606-1427
   - **Environment Variable**: `NEXT_PUBLIC_SUPPORT_PHONE`
-  - This is the SaraivaVision team contact for direct human support
+  - SaraivaVision team for direct human support
   - Used for escalations and complex issues
+
 - **Email**: saraivavision@gmail.com
 - **Website**: svlentes.shop
 - **Responsible Physician**: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
-
-**Phone Number Management**:
-All phone numbers throughout the codebase are managed centrally via `src/lib/phone-utils.ts`, which provides:
-- Centralized phone number constants from environment variables
-- Formatting utilities for display (Brazilian format: `(33) 99989-8026`)
-- URL generation for WhatsApp (`https://wa.me/...`) and tel (`tel:+55...`)
-- Phone number validation and context helpers
-- Type-safe approach with proper TypeScript types
 
 ## Nginx Reverse Proxy Configuration
 
@@ -736,6 +1288,7 @@ npm run test:mcp        # Test MCP server connectivity
 
 # Test WhatsApp functionality
 npm run test:send       # Send test WhatsApp message
+npm run test:chatbot    # Test WhatsApp chatbot status
 
 # Database debugging
 npx prisma studio        # Visual database browser
@@ -773,16 +1326,24 @@ npm run test:all                # Complete resilience test suite
 
 ### Build Failures
 - Check TypeScript errors: `npm run lint`
-- Verify all environment variables are set
+- Verify all environment variables are set (especially Firebase credentials)
 - Ensure Prisma client is generated: `npx prisma generate`
 - Clear Next.js cache: `rm -rf .next`
 - Check Node.js version (requires 20+): `node --version`
+
+### Authentication Issues
+- Verify Firebase credentials in environment variables
+- Check Firebase Admin SDK service account key format
+- Test token generation: use Firebase console to verify user exists
+- Monitor middleware logs: `journalctl -u svlentes-nextjs -f | grep Auth`
+- Verify token is being sent in Authorization header or cookie
 
 ### Payment Integration Issues
 - Verify Asaas API keys in environment variables
 - Check webhook token matches Asaas dashboard
 - Monitor webhook logs: `journalctl -u svlentes-nextjs -f`
 - Test in sandbox environment first
+- Verify webhook endpoint is publicly accessible
 
 ### WhatsApp/SendPulse Issues
 - Verify SendPulse credentials in `.env.sendpulse`
@@ -790,12 +1351,7 @@ npm run test:all                # Complete resilience test suite
 - Monitor webhook logs for incoming messages
 - Test AI response generation locally
 - Verify database has WhatsApp tables: `npx prisma studio`
-
-### Performance Issues
-- Check monitoring endpoints: `/api/monitoring/performance`
-- Review Lighthouse CI reports
-- Verify image optimization settings
-- Check Next.js build output for large bundles
+- Check chatbot authentication: test with registered phone number
 
 ### Database Issues
 - Check DATABASE_URL connection string
@@ -818,82 +1374,41 @@ npm run test:all                # Complete resilience test suite
 - Verify error recovery: test network disconnection scenarios
 - Check MCP integration: `npm run test:mcp`
 
-### WhatsApp/SendPulse Issues
-- Verify SendPulse credentials in `.env.sendpulse`
-- Check webhook endpoint is publicly accessible
-- Monitor webhook logs for incoming messages
-- Test AI response generation locally
-- Verify database has WhatsApp tables: `npx prisma studio`
-- Check chatbot authentication: test with registered phone number
-
-## Key File Locations & Patterns
-
-### Configuration Files
-- **Next.js**: `next.config.js` - Build optimization, security headers, image config
-- **TypeScript**: `tsconfig.json` - Path aliases, strict type checking
-- **Tailwind**: `tailwind.config.js` - Custom theme, colors, animations
-- **Prisma**: `prisma/schema.prisma` - Database schema and relations
-- **Environment**: `.env.local` - Local development variables
-
-### Key Business Logic Files
-- **Calculator**: `src/lib/calculator.ts` - Savings calculation algorithms
-- **Payments**: `src/lib/asaas.ts` - Asaas API integration
-- **WhatsApp**: `src/lib/sendpulse-client.ts` - SendPulse API client
-- **AI Support**: `src/lib/langchain-support-processor.ts` - NLP processing
-- **Authentication**: `src/lib/chatbot-auth-handler.ts` - WhatsApp chatbot auth
-
-### Data Configuration
-- **Pricing Plans**: `src/data/pricing-plans.ts` - Subscription tiers and pricing
-- **Calculator Data**: `src/data/calculator-data.ts` - Lens cost presets
-- **Medical Info**: `src/data/doctor-info.ts` - Dr. Philipe's credentials
-- **FAQ Content**: `src/data/faq-data.ts` - Support questions and answers
-
-### Component Architecture
-- **UI Components**: `src/components/ui/` - shadcn/ui base components
-- **Layout**: `src/components/layout/` - Header, Footer, Navigation
-- **Forms**: `src/components/forms/` - Validation-enabled form components
-- **Sections**: `src/components/sections/` - Landing page sections
-- **Subscriber Area**: `src/components/assinante/` - Dashboard components
-
-### API Route Patterns
-- **CRUD Operations**: RESTful patterns in `/api/v1/`
-- **Webhooks**: `/api/webhooks/{provider}` for external integrations
-- **Admin**: `/api/admin/` for management operations
-- **Health**: `/api/health-check` and `/api/monitoring/` for system status
-
-### Import Aliases (configured in tsconfig.json)
-```typescript
-@/components/*  → src/components/*
-@/lib/*         → src/lib/*
-@/types/*       → src/types/*
-@/data/*        → src/data/*
-@/hooks/*       → src/hooks/*
-```
+### Rate Limiting Issues
+- Check rate limit headers in API responses
+- Verify Upstash Redis connection (if configured)
+- Monitor rate limit logs: `journalctl -u svlentes-nextjs -f | grep "Rate limit"`
+- Test with different IP addresses or user IDs
+- Verify rate limiter is using correct identifier (IP vs UID)
 
 ## Code Patterns & Conventions
 
 ### Form Validation
 - **Library**: React Hook Form + Zod schemas
 - **Pattern**: Define Zod schema first, then pass to React Hook Form resolver
-- **Files**: Look for `*-schema.ts` files for validation definitions
+- **Files**: Look for `*-schema.ts` or `validation-schemas.ts` files
+- **Brazilian Validations**: CPF, CEP, phone number formats
 
 ### Error Handling
 - **API Errors**: Structured error responses with proper HTTP status codes
 - **Client Errors**: User-friendly error messages with actionable next steps
 - **Logging**: Centralized error logging for debugging and monitoring
+- **Firebase Auth Errors**: Handle token expiration, invalid token, etc.
 
 ### Database Patterns
-- **Prisma Client**: Singleton instance in `src/lib/prisma.ts`
-- **Migrations**: Version-controlled schema changes
+- **Prisma Client**: Always import singleton instance from `src/lib/prisma.ts`
+- **Migrations**: Version-controlled schema changes via `npx prisma migrate`
 - **Seeding**: Test data generation via `prisma/seed.ts`
+- **Transactions**: Use `prisma.$transaction()` for atomic operations
 
 ### Styling Patterns
 - **Component-First**: Each component has its own styles using Tailwind classes
 - **Design System**: Consistent color palette and spacing via Tailwind config
-- **Responsive**: Mobile-first design with breakpoint utilities
+- **Responsive**: Mobile-first design with breakpoint utilities (`sm:`, `md:`, `lg:`)
 
 ### Security Patterns
 - **Environment Variables**: Sensitive data never hardcoded
 - **Input Validation**: All user inputs validated on both client and server
-- **CSP Headers**: Content Security Policy configured in Next.js
-- **API Authentication**: Token-based authentication for sensitive endpoints
+- **CSP Headers**: Content Security Policy configured in `next.config.js`
+- **API Authentication**: Firebase token validation on all protected endpoints
+- **Rate Limiting**: API rate limits on all routes via middleware

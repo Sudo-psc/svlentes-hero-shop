@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { adminAuth } from '@/lib/firebase-admin'
+import { prisma } from '@/lib/prisma'
 
 /**
  * API Route: Create Stripe Customer Portal Session
@@ -76,8 +77,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}))
     const { returnUrl } = body
 
-    // 3. Get or find Stripe customer ID
-    // First, try to get customer from Firebase user metadata
+    // 3. Get or find Stripe customer ID with auto-create
     let stripeCustomerId = decodedToken.stripeCustomerId
 
     if (!stripeCustomerId) {
@@ -89,14 +89,54 @@ export async function POST(request: NextRequest) {
 
       if (customers.data.length > 0) {
         stripeCustomerId = customers.data[0].id
+
+        // Update Firebase user with Stripe customer ID for future lookups
+        try {
+          await adminAuth.setCustomUserClaims(decodedToken.uid, {
+            ...decodedToken,
+            stripeCustomerId
+          })
+        } catch (err) {
+          console.error('[FIREBASE_UPDATE_ERROR]', err)
+        }
       } else {
-        return NextResponse.json(
-          { 
-            error: 'Cliente não encontrado no Stripe',
-            message: 'Você ainda não possui uma assinatura ativa. Por favor, assine um plano primeiro.'
-          },
-          { status: 404 }
-        )
+        // ✅ FIX: Auto-create customer if not found
+        console.log('[STRIPE_CUSTOMER_AUTO_CREATE]', {
+          email: decodedToken.email,
+          uid: decodedToken.uid
+        })
+
+        const newCustomer = await stripe.customers.create({
+          email: decodedToken.email,
+          name: decodedToken.name || undefined,
+          metadata: {
+            firebaseUid: decodedToken.uid,
+            createdVia: 'customer-portal-auto-create',
+            createdAt: new Date().toISOString()
+          }
+        })
+
+        stripeCustomerId = newCustomer.id
+
+        // Update Firebase user claims
+        try {
+          await adminAuth.setCustomUserClaims(decodedToken.uid, {
+            ...decodedToken,
+            stripeCustomerId
+          })
+        } catch (err) {
+          console.error('[FIREBASE_UPDATE_ERROR]', err)
+        }
+
+        // Update Prisma user if exists
+        try {
+          await prisma.user.update({
+            where: { firebaseUid: decodedToken.uid },
+            data: { stripeCustomerId }
+          })
+        } catch (err) {
+          console.error('[PRISMA_UPDATE_ERROR]', err)
+        }
       }
     }
 

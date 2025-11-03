@@ -63,11 +63,11 @@ async function getRedisClient(): Promise<Redis | null> {
  */
 class MemoryRateLimiter {
   private storage = new Map<string, { count: number; resetAt: number }>();
-  private readonly limit: number;
+  private readonly maxRequests: number;
   private readonly windowMs: number;
 
   constructor(limit: number, windowMs: number) {
-    this.limit = limit;
+    this.maxRequests = limit;
     this.windowMs = windowMs;
 
     // Clean up expired entries every minute
@@ -100,17 +100,17 @@ class MemoryRateLimiter {
       this.storage.set(identifier, { count: 1, resetAt });
       return {
         success: true,
-        limit: this.limit,
-        remaining: this.limit - 1,
+        limit: this.maxRequests,
+        remaining: this.maxRequests - 1,
         reset: resetAt,
       };
     }
 
     // Check if limit exceeded
-    if (entry.count >= this.limit) {
+    if (entry.count >= this.maxRequests) {
       return {
         success: false,
-        limit: this.limit,
+        limit: this.maxRequests,
         remaining: 0,
         reset: entry.resetAt,
       };
@@ -122,8 +122,8 @@ class MemoryRateLimiter {
 
     return {
       success: true,
-      limit: this.limit,
-      remaining: this.limit - entry.count,
+      limit: this.maxRequests,
+      remaining: this.maxRequests - entry.count,
       reset: entry.resetAt,
     };
   }
@@ -265,16 +265,16 @@ export const defaultRateLimiter = { async get() { return await getDefaultRateLim
  */
 export async function selectRateLimiter(pathname: string) {
   if (pathname.startsWith('/api/assinante/')) {
-    return await subscriberRateLimiter.get();
+    return await getSubscriberRateLimiter();
   }
   if (pathname.startsWith('/api/webhooks/')) {
-    return await webhookRateLimiter.get();
+    return await getWebhookRateLimiter();
   }
   if (pathname.startsWith('/api/asaas/')) {
-    return await paymentRateLimiter.get();
+    return await getPaymentRateLimiter();
   }
   if (pathname.startsWith('/api/')) {
-    return await defaultRateLimiter.get();
+    return await getDefaultRateLimiter();
   }
   return null;
 }
@@ -313,6 +313,21 @@ export async function checkRateLimit(
   reset: number;
 }> {
   try {
+    // Validate limiter has limit method
+    if (!limiter || typeof limiter.limit !== 'function') {
+      console.error('[RateLimit] Invalid limiter object - missing limit method');
+      console.error('[RateLimit] Limiter type:', typeof limiter);
+      console.error('[RateLimit] Limiter keys:', limiter ? Object.keys(limiter) : 'null');
+      console.error('[RateLimit] Limiter has get?:', limiter && typeof limiter.get);
+      // Fail open - allow request
+      return {
+        success: true,
+        limit: 0,
+        remaining: 0,
+        reset: Date.now(),
+      };
+    }
+
     const result = await limiter.limit(identifier);
     return result;
   } catch (error) {

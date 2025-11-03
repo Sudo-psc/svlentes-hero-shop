@@ -7,6 +7,7 @@ import { createVerificationToken } from '@/lib/tokens'
 import { sendVerificationEmail } from '@/lib/email'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import { csrfProtection } from '@/lib/csrf'
+import { logAudit, AuditAction } from '@/lib/audit-logger'
 /**
  * Schema de validação para registro de usuário
  */
@@ -80,6 +81,24 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       }
     })
+
+    // === LGPD AUDIT LOG ===
+    // Registrar criação de conta (LGPD Art. 37 - registro de operações)
+    await logAudit({
+      userId: user.id,
+      action: AuditAction.CREATE_ACCOUNT,
+      entityType: 'User',
+      entityId: user.id,
+      oldValue: null,
+      newValue: {
+        name: user.name,
+        email: user.email,
+        role: 'subscriber',
+        // Senha NUNCA é logada (sanitização automática)
+      },
+      request,
+    })
+
     // Enviar email de verificação (não-bloqueante)
     try {
       const verificationToken = await createVerificationToken(email)
