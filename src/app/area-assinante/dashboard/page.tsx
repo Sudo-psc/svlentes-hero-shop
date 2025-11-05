@@ -45,6 +45,7 @@ import { UpdatePaymentModal } from '@/components/assinante/UpdatePaymentModal'
 import { OrdersModal } from '@/components/assinante/OrdersModal'
 import { InvoicesModal } from '@/components/assinante/InvoicesModal'
 import { SubscriptionHistoryTimeline } from '@/components/assinante/SubscriptionHistoryTimeline'
+import { StripePortalButton } from '@/components/assinante/StripePortalButton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -53,7 +54,6 @@ import { Separator } from '@/components/ui/separator'
 
 import { formatCurrency, formatDate } from '@/lib/formatters'
 import { getSubscriptionStatusColor, getSubscriptionStatusLabel } from '@/lib/subscription-helpers'
-import { STRIPE_BILLING_PORTAL_URL } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 function DashboardContent() {
@@ -282,13 +282,6 @@ function DashboardContent() {
     } finally {
       setIsLoading(false)
     }
-  }
-  const handlePortalAccess = () => {
-    if (!STRIPE_BILLING_PORTAL_URL) {
-      showError('Portal indisponível', 'Configuração do portal de pagamento não encontrada. Entre em contato com o suporte.')
-      return
-    }
-    window.open(STRIPE_BILLING_PORTAL_URL, '_blank', 'noopener,noreferrer')
   }
   const handleSupportWhatsApp = () => {
     const phone = '5533986061427'
@@ -542,9 +535,13 @@ function DashboardContent() {
                             <Button className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-700 hover:to-cyan-600 shadow-md hover:shadow-lg transition-all duration-300" onClick={() => openModal('changePlan')}>
                               <Layers className="h-4 w-4 mr-2" /> Alterar plano
                             </Button>
-                            <Button variant="ghost" className="hover:bg-gray-100 transition-all duration-300" onClick={handlePortalAccess}>
-                              <CreditCard className="h-4 w-4 mr-2" /> Portal de pagamento
-                            </Button>
+                            <StripePortalButton
+                              variant="ghost"
+                              className="hover:bg-gray-100 transition-all duration-300"
+                              returnUrl="/area-assinante/dashboard"
+                            >
+                              Portal de pagamento
+                            </StripePortalButton>
                           </div>
                         </CardContent>
                       </Card>
