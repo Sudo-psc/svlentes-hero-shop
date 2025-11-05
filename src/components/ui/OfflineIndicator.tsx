@@ -5,29 +5,44 @@
  * Shows visual indicator when user is offline
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { WifiOff, Wifi } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(true)
   const [showIndicator, setShowIndicator] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Initial state
-    setIsOnline(navigator.onLine)
+    // Set initial state and show indicator if offline on load
+    const initiallyOnline = navigator.onLine
+    setIsOnline(initiallyOnline)
+    if (!initiallyOnline) {
+      setShowIndicator(true)
+    }
 
     const handleOnline = () => {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      
       setIsOnline(true)
       setShowIndicator(true)
 
       // Hide "back online" message after 3 seconds
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setShowIndicator(false)
       }, 3000)
     }
 
     const handleOffline = () => {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      
       setIsOnline(false)
       setShowIndicator(true)
     }
@@ -36,6 +51,10 @@ export function OfflineIndicator() {
     window.addEventListener('offline', handleOffline)
 
     return () => {
+      // Clean up timeout on unmount
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
@@ -61,18 +80,18 @@ export function OfflineIndicator() {
             {isOnline ? (
               <>
                 <Wifi className="h-5 w-5" aria-hidden="true" />
-                <span className="font-medium">You are back online</span>
+                <span className="font-medium">Você está online novamente</span>
               </>
             ) : (
               <>
                 <WifiOff className="h-5 w-5" aria-hidden="true" />
-                <span className="font-medium">You are offline</span>
+                <span className="font-medium">Você está offline</span>
               </>
             )}
           </div>
           {!isOnline && (
             <p className="mt-1 text-sm opacity-90">
-              Some features may be limited
+              Alguns recursos podem estar limitados
             </p>
           )}
         </motion.div>

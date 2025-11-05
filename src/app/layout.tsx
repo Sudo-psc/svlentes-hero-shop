@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import dynamic from 'next/dynamic'
 // CSP headers gerenciado pelo next.config.js - sem import necessário
 // Temporariamente desabilitado Google Fonts devido a problema de rede
 // import { Inter, Poppins } from 'next/font/google'
@@ -10,8 +11,6 @@ import { WhatsAppFloat } from '@/components/layout/WhatsAppFloat'
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor'
 import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
 import { ServiceWorkerCleanup } from '@/components/performance/ServiceWorkerCleanup'
-import { ServiceWorkerRegistration } from '@/components/performance/ServiceWorkerRegistration'
-import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 import { initializeChunkErrorHandler } from '@/lib/chunk-error-handler'
 import { CookieConsent } from '@/components/privacy/CookieConsent'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
@@ -23,6 +22,16 @@ import {
     generateOrganizationStructuredData,
     generateWebSiteStructuredData
 } from '@/lib/seo'
+
+// Dynamic imports for client-only components that use browser APIs
+const ServiceWorkerRegistration = dynamic(
+    () => import('@/components/performance/ServiceWorkerRegistration').then(mod => ({ default: mod.ServiceWorkerRegistration })),
+    { ssr: false }
+)
+const OfflineIndicator = dynamic(
+    () => import('@/components/ui/OfflineIndicator').then(mod => ({ default: mod.OfflineIndicator })),
+    { ssr: false }
+)
 // Temporariamente desabilitado Google Fonts devido a problema de rede
 // const inter = Inter({
 //     subsets: ['latin'],

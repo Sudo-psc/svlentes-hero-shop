@@ -25,41 +25,53 @@ export function ServiceWorkerRegistration() {
             return
         }
 
+        let intervalId: ReturnType<typeof setInterval> | undefined
+        let registration: ServiceWorkerRegistration | undefined
+        
+        // Handler para atualização encontrada
+        const handleUpdateFound = () => {
+            const newWorker = registration?.installing
+
+            if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                    if (
+                        newWorker.state === 'installed' &&
+                        navigator.serviceWorker.controller
+                    ) {
+                        // Nova versão disponível
+                        console.log('[SW] Nova versão do Service Worker disponível')
+                        setUpdateAvailable(true)
+
+                        // Notificar usuário com evento customizado (não bloqueante)
+                        // O componente pai ou um toast system pode escutar este evento
+                        window.dispatchEvent(
+                            new CustomEvent('sw-update-available', {
+                                detail: { reload: () => window.location.reload() }
+                            })
+                        )
+                        
+                        // Log para desenvolvedores
+                        console.log('[SW] Dispatched sw-update-available event. Use toast/banner to notify user.')
+                    }
+                })
+            }
+        }
+
         // Registrar Service Worker
         const registerServiceWorker = async () => {
             try {
-                const registration = await navigator.serviceWorker.register('/sw.js', {
+                registration = await navigator.serviceWorker.register('/sw.js', {
                     scope: '/',
                 })
 
                 console.log('[SW] Service Worker registrado com sucesso:', registration.scope)
 
                 // Verificar atualizações
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing
-
-                    if (newWorker) {
-                        newWorker.addEventListener('statechange', () => {
-                            if (
-                                newWorker.state === 'installed' &&
-                                navigator.serviceWorker.controller
-                            ) {
-                                // Nova versão disponível
-                                console.log('[SW] Nova versão do Service Worker disponível')
-                                setUpdateAvailable(true)
-
-                                // Notificar usuário
-                                if (window.confirm('Nova versão disponível. Atualizar agora?')) {
-                                    window.location.reload()
-                                }
-                            }
-                        })
-                    }
-                })
+                registration.addEventListener('updatefound', handleUpdateFound)
 
                 // Verificar por atualizações a cada 1 hora
-                setInterval(() => {
-                    registration.update()
+                intervalId = setInterval(() => {
+                    registration?.update()
                 }, 60 * 60 * 1000)
 
                 // Verificar imediatamente se há uma atualização
@@ -74,7 +86,17 @@ export function ServiceWorkerRegistration() {
             registerServiceWorker()
         } else {
             window.addEventListener('load', registerServiceWorker)
-            return () => window.removeEventListener('load', registerServiceWorker)
+        }
+
+        // Cleanup function
+        return () => {
+            window.removeEventListener('load', registerServiceWorker)
+            if (intervalId) {
+                clearInterval(intervalId)
+            }
+            if (registration) {
+                registration.removeEventListener('updatefound', handleUpdateFound)
+            }
         }
     }, [])
 
