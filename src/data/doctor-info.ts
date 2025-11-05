@@ -51,6 +51,8 @@ const hardcodedDoctorInfo = {
     ],
     experience: 'Especialista em oftalmologia',
     bio: 'Dr. Philipe Saraiva Cruz é pioneiro no Brasil em serviços de assinatura de lentes de contato com acompanhamento médico especializado, dedicando-se a proporcionar cuidado oftalmológico personalizado e acessível.',
+    quote: 'Como oftalmologista, acredito que o acesso facilitado a lentes de contato de qualidade, aliado ao acompanhamento médico contínuo, transforma a vida dos pacientes. É por isso que criamos a SVLentes.',
+    curriculumUrl: '/sobre-o-medico',
     contact: {
         whatsapp: PHONE_NUMBERS.chatbot,
         email: 'dr.philipe@svlentes.com.br',
