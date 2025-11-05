@@ -206,7 +206,13 @@ model User {
 model Subscription {
   id                   String             @id @default(cuid())
   userId               String             @map("user_id")
+
+  // Payment Gateway IDs
   asaasSubscriptionId  String?            @unique @map("asaas_subscription_id") @db.VarChar(255)
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id") @db.VarChar(255)
+  stripeCustomerId     String?            @map("stripe_customer_id") @db.VarChar(255)
+  stripePriceId        String?            @map("stripe_price_id") @db.VarChar(255)
+
   planType             String             @map("plan_type") @db.VarChar(100)
   status               SubscriptionStatus @default(ACTIVE)
   monthlyValue         Decimal            @map("monthly_value") @db.Decimal(10, 2)
@@ -250,20 +256,28 @@ model Subscription {
 
   @@index([userId], name: "idx_subscriptions_user_id")
   @@index([asaasSubscriptionId], name: "idx_subscriptions_asaas_id")
+  @@index([stripeSubscriptionId], name: "idx_subscriptions_stripe_id")
+  @@index([stripeCustomerId], name: "idx_subscriptions_stripe_customer")
   @@index([status], name: "idx_subscriptions_status")
   @@map("subscriptions")
 }
 
-// Payment Model - Track individual payments from Asaas webhooks
+// Payment Model - Track individual payments from Asaas and Stripe webhooks
 model Payment {
   id                String         @id @default(cuid())
   userId            String         @map("user_id")
   subscriptionId    String         @map("subscription_id")
 
-  // Asaas References (required for webhook idempotency)
-  asaasPaymentId    String         @unique @map("asaas_payment_id") @db.VarChar(255)
-  asaasCustomerId   String         @map("asaas_customer_id") @db.VarChar(255)
+  // Payment Gateway References (for webhook idempotency)
+  // Asaas
+  asaasPaymentId    String?        @unique @map("asaas_payment_id") @db.VarChar(255)
+  asaasCustomerId   String?        @map("asaas_customer_id") @db.VarChar(255)
   asaasSubscriptionId String?      @map("asaas_subscription_id") @db.VarChar(255)
+
+  // Stripe
+  stripePaymentId   String?        @unique @map("stripe_payment_id") @db.VarChar(255)
+  stripeInvoiceId   String?        @map("stripe_invoice_id") @db.VarChar(255)
+  stripeCustomerId  String?        @map("stripe_customer_id") @db.VarChar(255)
 
   // Core Payment Data
   amount            Decimal        @map("amount") @db.Decimal(10, 2)
@@ -324,6 +338,9 @@ model Payment {
   @@index([subscriptionId], name: "idx_payments_subscription_id")
   @@index([asaasPaymentId], name: "idx_payments_asaas_id")
   @@index([asaasCustomerId], name: "idx_payments_customer_id")
+  @@index([stripePaymentId], name: "idx_payments_stripe_id")
+  @@index([stripeInvoiceId], name: "idx_payments_stripe_invoice")
+  @@index([stripeCustomerId], name: "idx_payments_stripe_customer")
   @@index([status], name: "idx_payments_status")
   @@index([dueDate], name: "idx_payments_due_date")
   @@index([paymentDate], name: "idx_payments_payment_date")
