@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabItem } from '@/components/ui/tabs'
 import { Icon } from '@/components/ui/Icon'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
-import { howItWorksSteps, processTimeline, serviceFeatures } from '@/data/how-it-works'
+import { howItWorksSteps, processTimeline, serviceFeatures, type IconName } from '@/data/how-it-works'
 import { openWhatsAppWithContext } from '@/lib/whatsapp'
 import { trackEvent } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/utils'
@@ -22,8 +23,26 @@ import {
     Heart,
     Shield,
     Award,
-    Users
+    Users,
+    Stethoscope,
+    ClipboardCheck,
+    Package,
+    Smartphone,
+    Search,
+    Hospital
 } from 'lucide-react'
+
+// Helper para mapear nomes de ícones aos componentes do Lucide React
+const iconMap: Record<IconName, React.ComponentType<{ className?: string }>> = {
+    stethoscope: Stethoscope,
+    clipboardCheck: ClipboardCheck,
+    package: Package,
+    smartphone: Smartphone,
+    search: Search,
+    calendar: Calendar,
+    truck: Truck,
+    hospital: Hospital
+}
 interface HowItWorksSectionProps {
     className?: string
 }
@@ -50,59 +69,120 @@ export function HowItWorksSection({ className = '' }: HowItWorksSectionProps) {
             badge: 'Flexível',
             content: (
                 <div className="space-y-8">
-                    {/* Steps */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {howItWorksSteps.monthly.map((step, index) => (
-                            <div
-                                key={step.number}
-                                className="relative bg-white rounded-2xl shadow-md border border-primary-100/50 p-6 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 transition-all duration-500 ease-out group overflow-hidden"
-                                style={{ animationDelay: `${index * 0.1}s` }}
-                            >
-                                {/* Material Design 3 Surface Tint */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                                
-                                {/* Step Number - Material Design 3 Badge */}
-                                <div className="absolute -top-3 -left-3 w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-full flex items-center justify-center font-bold text-base shadow-lg shadow-primary-500/30 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary-500/40 transition-all duration-300">
-                                    {step.number}
-                                </div>
-                                
-                                {/* Icon with Material Design 3 Container */}
-                                <div className="relative w-14 h-14 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl flex items-center justify-center mb-5 group-hover:from-primary-100 group-hover:to-primary-200 transition-all duration-300 shadow-sm">
-                                    <span className="text-3xl transform group-hover:scale-110 transition-transform duration-300">{step.icon}</span>
-                                </div>
-                                
-                                {/* Content */}
-                                <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors duration-300">
-                                    {step.title}
-                                </h4>
-                                <p className="text-gray-600 text-sm mb-5 leading-relaxed">
-                                    {step.description}
-                                </p>
-                                
-                                {/* Cost & Economy - Material Design 3 Chips */}
-                                <div className="space-y-2.5">
-                                    <div className="flex items-center justify-between text-sm bg-primary-50/50 rounded-lg px-3 py-2 border border-primary-100/50">
-                                        <span className="text-gray-700 font-medium">Custo:</span>
-                                        <span className="font-semibold text-primary-700">{step.cost}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm bg-success-50/50 rounded-lg px-3 py-2 border border-success-100/50">
-                                        <span className="text-gray-700 font-medium">Economia:</span>
-                                        <span className="font-semibold text-success-700">{step.economy}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                                        <span className="text-gray-600 font-medium">Tempo:</span>
-                                        <span className="font-semibold text-gray-900">{step.duration}</span>
-                                    </div>
-                                </div>
-                                
-                                {/* Arrow for connection (except last) */}
-                                {index < howItWorksSteps.monthly.length - 1 && (
-                                    <div className="hidden lg:block absolute -right-3 top-1/2 transform -translate-y-1/2 text-primary-400 animate-pulse">
-                                        <ArrowRight className="w-7 h-7 drop-shadow-md" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                    {/* Steps with Progress Line */}
+                    <div className="relative">
+                        {/* Progress Line - Desktop only */}
+                        <div className="hidden lg:block absolute top-20 left-0 right-0 h-1 bg-gradient-to-r from-primary-200 via-primary-300 to-primary-200 mx-auto" style={{ width: 'calc(100% - 120px)', left: '60px' }}>
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/50"
+                                initial={{ width: '0%' }}
+                                whileInView={{ width: '100%' }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 2, ease: 'easeInOut' }}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {howItWorksSteps.monthly.map((step, index) => {
+                                const IconComponent = iconMap[step.icon]
+
+                                return (
+                                    <motion.div
+                                        key={step.number}
+                                        className="relative bg-white rounded-2xl shadow-lg border border-primary-100/50 p-6 hover:shadow-2xl hover:shadow-primary-500/20 group overflow-hidden"
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true, margin: '-50px' }}
+                                        transition={{
+                                            duration: 0.5,
+                                            delay: index * 0.15,
+                                            ease: 'easeOut'
+                                        }}
+                                        whileHover={{
+                                            y: -8,
+                                            transition: { duration: 0.3 }
+                                        }}
+                                    >
+                                        {/* Material Design 3 Surface Tint */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                                        {/* Step Number - Material Design 3 Badge */}
+                                        <motion.div
+                                            className="absolute -top-3 -left-3 w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg shadow-primary-500/30 z-10"
+                                            whileHover={{ scale: 1.15, rotate: 5 }}
+                                            transition={{ type: 'spring', stiffness: 300 }}
+                                        >
+                                            {step.number}
+                                        </motion.div>
+
+                                        {/* Icon with Material Design 3 Container */}
+                                        <motion.div
+                                            className="relative w-16 h-16 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl flex items-center justify-center mb-5 shadow-sm"
+                                            whileHover={{
+                                                scale: 1.1,
+                                                rotate: [0, -5, 5, 0],
+                                                transition: { duration: 0.5 }
+                                            }}
+                                        >
+                                            {IconComponent && (
+                                                <IconComponent className="w-8 h-8 text-primary-600 group-hover:text-primary-700 transition-colors duration-300" />
+                                            )}
+                                        </motion.div>
+
+                                        {/* Content */}
+                                        <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors duration-300">
+                                            {step.title}
+                                        </h4>
+                                        <p className="text-gray-600 text-sm mb-5 leading-relaxed">
+                                            {step.description}
+                                        </p>
+
+                                        {/* Cost & Economy - Material Design 3 Chips */}
+                                        <div className="space-y-2.5">
+                                            <motion.div
+                                                className="flex items-center justify-between text-sm bg-primary-50/50 rounded-lg px-3 py-2 border border-primary-100/50"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                <span className="text-gray-700 font-medium">Custo:</span>
+                                                <span className="font-semibold text-primary-700">{step.cost}</span>
+                                            </motion.div>
+                                            <motion.div
+                                                className="flex items-center justify-between text-sm bg-success-50/50 rounded-lg px-3 py-2 border border-success-100/50"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                <span className="text-gray-700 font-medium">Economia:</span>
+                                                <span className="font-semibold text-success-700">{step.economy}</span>
+                                            </motion.div>
+                                            <motion.div
+                                                className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                <span className="text-gray-600 font-medium">Tempo:</span>
+                                                <span className="font-semibold text-gray-900">{step.duration}</span>
+                                            </motion.div>
+                                        </div>
+
+                                        {/* Arrow for connection (except last) */}
+                                        {index < howItWorksSteps.monthly.length - 1 && (
+                                            <motion.div
+                                                className="hidden lg:block absolute -right-3 top-1/2 transform -translate-y-1/2 text-primary-500 z-10"
+                                                animate={{
+                                                    x: [0, 5, 0],
+                                                    opacity: [0.5, 1, 0.5]
+                                                }}
+                                                transition={{
+                                                    duration: 2,
+                                                    repeat: Infinity,
+                                                    ease: 'easeInOut'
+                                                }}
+                                            >
+                                                <ArrowRight className="w-8 h-8 drop-shadow-lg" />
+                                            </motion.div>
+                                        )}
+                                    </motion.div>
+                                )
+                            })}
+                        </div>
                     </div>
                     {/* Timeline Summary - Material Design 3 Card */}
                     <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 border border-primary-200/50 rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-500">
@@ -148,59 +228,120 @@ export function HowItWorksSection({ className = '' }: HowItWorksSectionProps) {
             badge: '2 meses grátis',
             content: (
                 <div className="space-y-8">
-                    {/* Steps */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {howItWorksSteps.annual.map((step, index) => (
-                            <div
-                                key={step.number}
-                                className="relative bg-white rounded-2xl shadow-md border border-primary-100/50 p-6 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 transition-all duration-500 ease-out group overflow-hidden"
-                                style={{ animationDelay: `${index * 0.1}s` }}
-                            >
-                                {/* Material Design 3 Surface Tint with Gold Accent for Annual */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-warning-50/40 via-primary-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                                
-                                {/* Step Number - Premium Badge for Annual Plan */}
-                                <div className="absolute -top-3 -left-3 w-10 h-10 bg-gradient-to-br from-warning-500 to-primary-600 text-white rounded-full flex items-center justify-center font-bold text-base shadow-lg shadow-warning-500/30 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-warning-500/40 transition-all duration-300">
-                                    {step.number}
-                                </div>
-                                
-                                {/* Icon with Material Design 3 Container - Premium Style */}
-                                <div className="relative w-14 h-14 bg-gradient-to-br from-warning-50 to-primary-100 rounded-2xl flex items-center justify-center mb-5 group-hover:from-warning-100 group-hover:to-primary-200 transition-all duration-300 shadow-sm">
-                                    <span className="text-3xl transform group-hover:scale-110 transition-transform duration-300">{step.icon}</span>
-                                </div>
-                                
-                                {/* Content */}
-                                <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors duration-300">
-                                    {step.title}
-                                </h4>
-                                <p className="text-gray-600 text-sm mb-5 leading-relaxed">
-                                    {step.description}
-                                </p>
-                                
-                                {/* Cost & Economy - Material Design 3 Chips with Premium Styling */}
-                                <div className="space-y-2.5">
-                                    <div className="flex items-center justify-between text-sm bg-gradient-to-r from-warning-50/60 to-primary-50/60 rounded-lg px-3 py-2 border border-warning-100/50">
-                                        <span className="text-gray-700 font-medium">Benefício:</span>
-                                        <span className="font-semibold text-warning-700">{step.cost}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm bg-success-50/50 rounded-lg px-3 py-2 border border-success-100/50">
-                                        <span className="text-gray-700 font-medium">Economia:</span>
-                                        <span className="font-semibold text-success-700">{step.economy}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-                                        <span className="text-gray-600 font-medium">Duração:</span>
-                                        <span className="font-semibold text-gray-900">{step.duration}</span>
-                                    </div>
-                                </div>
-                                
-                                {/* Arrow for connection (except last) */}
-                                {index < howItWorksSteps.annual.length - 1 && (
-                                    <div className="hidden lg:block absolute -right-3 top-1/2 transform -translate-y-1/2 text-warning-400 animate-pulse">
-                                        <ArrowRight className="w-7 h-7 drop-shadow-md" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                    {/* Steps with Progress Line - Annual Plan */}
+                    <div className="relative">
+                        {/* Progress Line - Desktop only - Premium Gold Gradient */}
+                        <div className="hidden lg:block absolute top-20 left-0 right-0 h-1 bg-gradient-to-r from-warning-200 via-warning-300 to-warning-200 mx-auto" style={{ width: 'calc(100% - 120px)', left: '60px' }}>
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-warning-500 via-primary-500 to-warning-500 shadow-lg shadow-warning-500/50"
+                                initial={{ width: '0%' }}
+                                whileInView={{ width: '100%' }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 2, ease: 'easeInOut' }}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {howItWorksSteps.annual.map((step, index) => {
+                                const IconComponent = iconMap[step.icon]
+
+                                return (
+                                    <motion.div
+                                        key={step.number}
+                                        className="relative bg-white rounded-2xl shadow-lg border border-warning-100/50 p-6 hover:shadow-2xl hover:shadow-warning-500/20 group overflow-hidden"
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true, margin: '-50px' }}
+                                        transition={{
+                                            duration: 0.5,
+                                            delay: index * 0.15,
+                                            ease: 'easeOut'
+                                        }}
+                                        whileHover={{
+                                            y: -8,
+                                            transition: { duration: 0.3 }
+                                        }}
+                                    >
+                                        {/* Material Design 3 Surface Tint with Gold Accent for Annual */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-warning-50/40 via-primary-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                                        {/* Step Number - Premium Badge for Annual Plan */}
+                                        <motion.div
+                                            className="absolute -top-3 -left-3 w-12 h-12 bg-gradient-to-br from-warning-500 to-primary-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg shadow-warning-500/30 z-10"
+                                            whileHover={{ scale: 1.15, rotate: 5 }}
+                                            transition={{ type: 'spring', stiffness: 300 }}
+                                        >
+                                            {step.number}
+                                        </motion.div>
+
+                                        {/* Icon with Material Design 3 Container - Premium Style */}
+                                        <motion.div
+                                            className="relative w-16 h-16 bg-gradient-to-br from-warning-50 to-primary-100 rounded-2xl flex items-center justify-center mb-5 shadow-sm"
+                                            whileHover={{
+                                                scale: 1.1,
+                                                rotate: [0, -5, 5, 0],
+                                                transition: { duration: 0.5 }
+                                            }}
+                                        >
+                                            {IconComponent && (
+                                                <IconComponent className="w-8 h-8 text-warning-600 group-hover:text-warning-700 transition-colors duration-300" />
+                                            )}
+                                        </motion.div>
+
+                                        {/* Content */}
+                                        <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-warning-700 transition-colors duration-300">
+                                            {step.title}
+                                        </h4>
+                                        <p className="text-gray-600 text-sm mb-5 leading-relaxed">
+                                            {step.description}
+                                        </p>
+
+                                        {/* Cost & Economy - Material Design 3 Chips with Premium Styling */}
+                                        <div className="space-y-2.5">
+                                            <motion.div
+                                                className="flex items-center justify-between text-sm bg-gradient-to-r from-warning-50/60 to-primary-50/60 rounded-lg px-3 py-2 border border-warning-100/50"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                <span className="text-gray-700 font-medium">Benefício:</span>
+                                                <span className="font-semibold text-warning-700">{step.cost}</span>
+                                            </motion.div>
+                                            <motion.div
+                                                className="flex items-center justify-between text-sm bg-success-50/50 rounded-lg px-3 py-2 border border-success-100/50"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                <span className="text-gray-700 font-medium">Economia:</span>
+                                                <span className="font-semibold text-success-700">{step.economy}</span>
+                                            </motion.div>
+                                            <motion.div
+                                                className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2 border border-gray-100"
+                                                whileHover={{ scale: 1.02 }}
+                                            >
+                                                <span className="text-gray-600 font-medium">Duração:</span>
+                                                <span className="font-semibold text-gray-900">{step.duration}</span>
+                                            </motion.div>
+                                        </div>
+
+                                        {/* Arrow for connection (except last) */}
+                                        {index < howItWorksSteps.annual.length - 1 && (
+                                            <motion.div
+                                                className="hidden lg:block absolute -right-3 top-1/2 transform -translate-y-1/2 text-warning-500 z-10"
+                                                animate={{
+                                                    x: [0, 5, 0],
+                                                    opacity: [0.5, 1, 0.5]
+                                                }}
+                                                transition={{
+                                                    duration: 2,
+                                                    repeat: Infinity,
+                                                    ease: 'easeInOut'
+                                                }}
+                                            >
+                                                <ArrowRight className="w-8 h-8 drop-shadow-lg" />
+                                            </motion.div>
+                                        )}
+                                    </motion.div>
+                                )
+                            })}
+                        </div>
                     </div>
                     {/* Annual Benefits - Material Design 3 Premium Card */}
                     <div className="bg-gradient-to-br from-warning-50 via-primary-50 to-success-50 border border-warning-200/50 rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-500">
