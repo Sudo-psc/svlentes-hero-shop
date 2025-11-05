@@ -46,16 +46,20 @@ export function scrollToSection(sectionId: string) {
 }
 // Função para gerar link do WhatsApp
 export function generateWhatsAppLink(
-    phone: string,
-    message: string,
+    phone: string = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5533999898026',
+    message: string = 'Olá! Gostaria de saber mais sobre o SVLentes.',
     userData?: {
         nome?: string
         email?: string
         planInterest?: string
     }
 ) {
-    const cleanPhone = phone.replace(/\D/g, '')
-    let finalMessage = message
+    // Guard: validação defensiva para phone e message
+    const safePhone = phone || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5533999898026'
+    const safeMessage = message || 'Olá! Gostaria de saber mais sobre o SVLentes.'
+
+    const cleanPhone = safePhone.replace(/\D/g, '')
+    let finalMessage = safeMessage
     if (userData) {
         if (userData.nome) {
             finalMessage += `\n\nNome: ${userData.nome}`

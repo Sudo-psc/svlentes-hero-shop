@@ -39,7 +39,8 @@ export default function HomePage() {
             </section>
 
             {/* Technical Responsible Section - Responsável Técnico em Destaque */}
-            <TechnicalResponsibleSection />
+            {/* Temporariamente desabilitado para debug */}
+            {/* <TechnicalResponsibleSection /> */}
 
             {/* Seção com opções de calculadora e assinatura direta */}
             <HomeLazySections />
