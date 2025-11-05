@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
@@ -28,6 +29,8 @@ export function DoctorCard({
     showCTA = true,
     className = ''
 }: DoctorCardProps) {
+    const router = useRouter()
+    
     const handleConsultation = () => {
         openWhatsAppWithContext('consultation', {
             page: 'landing-page',
@@ -271,7 +274,7 @@ export function DoctorCard({
                                         variant="ghost"
                                         size="lg"
                                         className="flex items-center justify-center gap-2 text-primary-700 hover:text-primary-800"
-                                        onClick={() => window.location.href = doctorInfo.curriculumUrl}
+                                        onClick={() => router.push(doctorInfo.curriculumUrl)}
                                     >
                                         <ExternalLink className="w-4 h-4" />
                                         <span>Ver Currículo Completo</span>
