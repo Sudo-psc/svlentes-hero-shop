@@ -12,6 +12,8 @@ import { PhysicianSchema } from '@/components/seo/PhysicianSchema'
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor'
 import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
 import { ServiceWorkerCleanup } from '@/components/performance/ServiceWorkerCleanup'
+import { ServiceWorkerRegistration } from '@/components/performance/ServiceWorkerRegistration'
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
 import { initializeChunkErrorHandler } from '@/lib/chunk-error-handler'
 import { CookieConsent } from '@/components/privacy/CookieConsent'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
@@ -83,6 +85,8 @@ export default function RootLayout({
             <body className="antialiased">
                 <ClientProviders>
                     <ServiceWorkerCleanup />
+                    <ServiceWorkerRegistration />
+                    <OfflineIndicator />
                     <PerformanceMonitor />
                     <ResourcePreloader />
                     <Header />
