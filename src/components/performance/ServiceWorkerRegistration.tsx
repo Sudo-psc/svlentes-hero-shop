@@ -70,9 +70,9 @@ export function ServiceWorkerRegistration() {
         }
 
         // Aguardar o evento load para não atrasar o carregamento inicial
-        if (document.readyState === 'complete') {
+        if (typeof document !== 'undefined' && document.readyState === 'complete') {
             registerServiceWorker()
-        } else {
+        } else if (typeof window !== 'undefined') {
             window.addEventListener('load', registerServiceWorker)
             return () => window.removeEventListener('load', registerServiceWorker)
         }

@@ -24,6 +24,9 @@ const nextConfig = {
     generateBuildId: async () => {
         return 'build-' + Date.now()
     },
+    // Turbopack configuration (Next.js 16+)
+    // Empty config to silence Turbopack warning while maintaining webpack compatibility
+    turbopack: {},
     // Webpack configuration
     webpack: (config, { isServer }) => {
         if (!isServer) {

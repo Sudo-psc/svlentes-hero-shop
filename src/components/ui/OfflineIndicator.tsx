@@ -14,6 +14,11 @@ export function OfflineIndicator() {
   const [showIndicator, setShowIndicator] = useState(false)
 
   useEffect(() => {
+    // SSR guard - só executar no browser
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return
+    }
+
     // Initial state
     setIsOnline(navigator.onLine)
 
@@ -61,18 +66,18 @@ export function OfflineIndicator() {
             {isOnline ? (
               <>
                 <Wifi className="h-5 w-5" aria-hidden="true" />
-                <span className="font-medium">You are back online</span>
+                <span className="font-medium">Você está online novamente</span>
               </>
             ) : (
               <>
                 <WifiOff className="h-5 w-5" aria-hidden="true" />
-                <span className="font-medium">You are offline</span>
+                <span className="font-medium">Você está offline</span>
               </>
             )}
           </div>
           {!isOnline && (
             <p className="mt-1 text-sm opacity-90">
-              Some features may be limited
+              Alguns recursos podem estar limitados
             </p>
           )}
         </motion.div>
