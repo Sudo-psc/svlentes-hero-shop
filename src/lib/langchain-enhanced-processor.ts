@@ -18,6 +18,11 @@ import { botMemory, ConversationSummary } from './langchain-memory'
 import { getLangSmithConfig, getLangSmithRunConfig } from './langsmith-config'
 import { logger, LogCategory } from './logger'
 import { responseCache } from './response-cache'
+
+export interface EnhancedLangChainProcessorContract {
+  getStats(): Promise<any>
+}
+
 // Enhanced type definitions
 export interface EnhancedIntent {
   name: string
@@ -119,7 +124,7 @@ const IntentSchema = z.object({
 /**
  * Enhanced LangChain Processor with Memory Integration
  */
-export class EnhancedLangChainProcessor {
+export class EnhancedLangChainProcessor implements EnhancedLangChainProcessorContract {
   private llm: ChatOpenAI
   private memory: typeof botMemory
   private langsmithConfig: any
@@ -804,5 +809,28 @@ Pedimos desculpas pelo inconveniente.`
     }
   }
 }
-// Export singleton instance
-export const enhancedLangChainProcessor = new EnhancedLangChainProcessor()
+
+const createDisabledEnhancedProcessor = (): EnhancedLangChainProcessorContract => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('Enhanced LangChain processor disabled: missing OPENAI_API_KEY')
+  }
+  return {
+    async getStats(): Promise<any> {
+      return {
+        enabled: false,
+        features: {
+          enhancedIntentClassification: false,
+          contextAwareResponses: false,
+          emergencyDetection: false,
+          responseCaching: false,
+          langSmithIntegration: false,
+          persistentMemory: false
+        }
+      }
+    }
+  }
+}
+
+export const enhancedLangChainProcessor: EnhancedLangChainProcessorContract = process.env.OPENAI_API_KEY
+  ? new EnhancedLangChainProcessor()
+  : createDisabledEnhancedProcessor()

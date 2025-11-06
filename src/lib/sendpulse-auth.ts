@@ -9,8 +9,8 @@ interface TokenResponse {
   expires_in: number
 }
 export class SendPulseAuth {
-  private appId: string
-  private appSecret: string
+  private appId = ''
+  private appSecret = ''
   private tokenUrl = 'https://api.sendpulse.com/oauth/access_token'
   private cachedToken: string | null = null
   private tokenExpiry: number = 0
@@ -20,14 +20,13 @@ export class SendPulseAuth {
   private retryAttempts: number = 3
   private retryDelayMs: number = 1000
   constructor() {
-    // C2: Validate required credentials at startup
     const appId = process.env.SENDPULSE_APP_ID
     const appSecret = process.env.SENDPULSE_APP_SECRET
     if (!appId || !appSecret) {
-      throw new Error(
-        'SendPulse credentials not configured. Required environment variables: ' +
-        'SENDPULSE_APP_ID and SENDPULSE_APP_SECRET'
-      )
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('SendPulse integration disabled: missing SENDPULSE_APP_ID or SENDPULSE_APP_SECRET')
+      }
+      return
     }
     this.appId = appId
     this.appSecret = appSecret

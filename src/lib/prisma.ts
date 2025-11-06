@@ -1,34 +1,52 @@
 import { PrismaClient } from '@prisma/client'
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
-// TODO: [DATABASE] Implement connection pool monitoring and health checks
-// Current Prisma setup lacks visibility into connection exhaustion issues
-// Add metrics for: active connections, query performance, connection timeout errors
-// Consider implementing: connection pool size limits, health check endpoint, metrics export
-// P3: Database connection pooling configuration
-export const prisma =
-  globalForPrisma.prisma ??
+
+const databaseUrl = process.env.DATABASE_URL
+
+const createClient = () =>
   new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-    // P3: Connection pool optimization for serverless
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: databaseUrl
+      }
+    }
+  })
+
+const prismaClient = databaseUrl ? globalForPrisma.prisma ?? createClient() : undefined
+
+const unavailableMessage = 'DATABASE_URL is not configured. Prisma Client is unavailable.'
+
+export const prisma =
+  prismaClient ??
+  (new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(unavailableMessage)
       },
-    },
-  })
-// P3: Graceful shutdown - disconnect on process termination
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
-} else {
-  // Production: handle cleanup on shutdown
-  process.on('SIGINT', async () => {
-    await prisma.$disconnect()
-    process.exit(0)
-  })
-  process.on('SIGTERM', async () => {
-    await prisma.$disconnect()
-    process.exit(0)
-  })
+      apply() {
+        throw new Error(unavailableMessage)
+      }
+    }
+  ) as PrismaClient)
+
+if (prismaClient) {
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = prismaClient
+  } else {
+    process.on('SIGINT', async () => {
+      await prismaClient.$disconnect()
+      process.exit(0)
+    })
+    process.on('SIGTERM', async () => {
+      await prismaClient.$disconnect()
+      process.exit(0)
+    })
+  }
+} else if (process.env.NODE_ENV !== 'production') {
+  console.warn(unavailableMessage)
 }

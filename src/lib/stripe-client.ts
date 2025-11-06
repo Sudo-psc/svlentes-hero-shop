@@ -11,7 +11,7 @@ import Stripe from 'stripe'
 
 // Configuration constants
 const STRIPE_API_VERSION = '2024-11-20.acacia' as const
-const STRIPE_TIMEOUT_MS = 10000 // 10 seconds
+const STRIPE_TIMEOUT_MS = 10000
 const STRIPE_MAX_RETRIES = 2
 
 /**
@@ -26,13 +26,14 @@ const STRIPE_MAX_RETRIES = 2
  * @throws {Error} If STRIPE_SECRET_KEY is not configured
  * @returns {Stripe} Configured Stripe client instance
  */
-export function createStripeClient(): Stripe {
+export function createStripeClient(): Stripe | null {
   const secretKey = process.env.STRIPE_SECRET_KEY
 
   if (!secretKey) {
-    throw new Error(
-      'STRIPE_SECRET_KEY is not configured. Please set this environment variable.'
-    )
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Stripe integration disabled: missing STRIPE_SECRET_KEY')
+    }
+    return null
   }
 
   return new Stripe(secretKey, {
@@ -40,7 +41,7 @@ export function createStripeClient(): Stripe {
     typescript: true,
     timeout: STRIPE_TIMEOUT_MS,
     maxNetworkRetries: STRIPE_MAX_RETRIES,
-    telemetry: false, // Disable telemetry for privacy
+    telemetry: false,
   })
 }
 
@@ -48,13 +49,13 @@ export function createStripeClient(): Stripe {
  * Singleton Stripe client instance
  * Reuses the same client across API routes for better performance
  */
-let stripeInstance: Stripe | null = null
+let stripeInstance: Stripe | null | undefined
 
-export function getStripeClient(): Stripe {
-  if (!stripeInstance) {
+export function getStripeClient(): Stripe | null {
+  if (stripeInstance === undefined) {
     stripeInstance = createStripeClient()
   }
-  return stripeInstance
+  return stripeInstance ?? null
 }
 
 /**

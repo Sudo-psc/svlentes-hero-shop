@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe, handleStripeError } from '@/lib/stripe-client'
+import { getStripeClient } from '@/lib/stripe-client'
 import { verifyAuthToken, logAccess } from '@/lib/api-auth'
 
 /**
@@ -28,6 +28,15 @@ import { verifyAuthToken, logAccess } from '@/lib/api-auth'
 
 export async function GET(request: NextRequest) {
   try {
+    const stripeClient = getStripeClient()
+    if (!stripeClient) {
+      return NextResponse.json(
+        {
+          error: 'Stripe não está configurado. Entre em contato com o suporte.'
+        },
+        { status: 503 }
+      )
+    }
     // 1. Verify authentication
     const auth = await verifyAuthToken(request)
     if (!auth.success || !auth.user) {
@@ -41,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     if (!stripeCustomerId) {
       // Search for customer by email
-      const customers = await stripe.customers.list({
+      const customers = await stripeClient.customers.list({
         email: decodedToken.email,
         limit: 1,
       })
@@ -60,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 3. Fetch active subscriptions for this customer
-    const subscriptions = await stripe.subscriptions.list({
+    const subscriptions = await stripeClient.subscriptions.list({
       customer: stripeCustomerId,
       status: 'active',
       expand: ['data.default_payment_method', 'data.items.data.price.product'],
