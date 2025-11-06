@@ -112,124 +112,100 @@ export function EnhancedSubscriptionCard({
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow duration-300"
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-6 border-b">
+      <div className="bg-gray-50 p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <motion.div
-              animate={{ rotate: isActive ? [0, 360] : 0 }}
-              transition={{ duration: 2, ease: 'linear', repeat: isActive ? Infinity : 0 }}
-            >
-              {statusIcon[status]}
-            </motion.div>
             <div>
-              <h3 className="font-bold text-gray-900 text-lg">Status da Assinatura</h3>
+              {statusIcon[status]}
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Status da Assinatura</h3>
               <p className="text-sm text-gray-600">
                 {planName} • {billingCycle === 'monthly' ? 'Mensal' : 'Anual'}
               </p>
             </div>
           </div>
-          <motion.div
+          <div
             className={cn(
-              'px-3 py-1 text-xs rounded-full font-medium',
+              'px-3 py-1 text-xs rounded-md font-medium',
               getSubscriptionStatusColor(status)
             )}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             {getSubscriptionStatusLabel(status)}
-          </motion.div>
+          </div>
         </div>
         {/* Price Display */}
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-cyan-600">
+          <span className="text-2xl font-semibold text-gray-900">
             {formatCurrency(price)}
           </span>
           <span className="text-gray-500">/{billingCycleLabel}</span>
-          {isActive && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="ml-auto text-sm text-gray-600"
-            >
+          {isActive && timeUntilBilling && (
+            <div className="ml-auto text-sm text-gray-600">
               Próxima cobrança: {timeUntilBilling}
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
       {/* Status Messages */}
       <AnimatePresence>
         {status === 'pending' && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="px-6 py-4 bg-blue-50 border-b border-blue-200"
-          >
+          <div className="px-6 py-3 bg-blue-50 border-b border-gray-200">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-blue-900">Pagamento em processamento</p>
                 <p className="text-xs text-blue-700 mt-1">
-                  Seu pagamento está sendo processado. Você receberá uma confirmação em breve.
+                  Aguardando confirmação do pagamento.
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
         {status === 'cancelled' && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="px-6 py-4 bg-red-50 border-b border-red-200"
-          >
+          <div className="px-6 py-3 bg-red-50 border-b border-gray-200">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-red-900">Assinatura cancelada</p>
                 <p className="text-xs text-red-700 mt-1">
-                  Sua assinatura foi cancelada. Você pode reativá-la a qualquer momento.
+                  Você pode reativá-la a qualquer momento.
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
         {status === 'paused' && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="px-6 py-4 bg-yellow-50 border-b border-yellow-200"
-          >
+          <div className="px-6 py-3 bg-yellow-50 border-b border-gray-200">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-yellow-900">Assinatura pausada</p>
                 <p className="text-xs text-yellow-700 mt-1">
-                  Sua assinatura está temporariamente pausada. Reative quando desejar retomar.
+                  Reative quando desejar retomar.
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
       {/* Main Content */}
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-4">
         {/* Next Billing Date */}
         {isActive && nextBillingDate && (
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-gray-400" />
+              <Calendar className="h-4 w-4 text-gray-500" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Próxima cobrança</p>
                 <p className="text-xs text-gray-600">{formatDateLong(nextBillingDate)}</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-cyan-600">{formatCurrency(price)}</p>
+              <p className="text-base font-semibold text-gray-900">{formatCurrency(price)}</p>
               <p className="text-xs text-gray-500">em {timeUntilBilling}</p>
             </div>
           </div>
@@ -239,10 +215,10 @@ export function EnhancedSubscriptionCard({
           <div>
             <button
               onClick={() => setExpandedSection(expandedSection === 'payment' ? null : 'payment')}
-              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-gray-400" />
+                <CreditCard className="h-4 w-4 text-gray-500" />
                 <div className="text-left">
                   <p className="text-sm font-medium text-gray-900">Forma de Pagamento</p>
                   <p className="text-xs text-gray-600 capitalize">
@@ -322,13 +298,10 @@ export function EnhancedSubscriptionCard({
         {/* Plan Features */}
         <div>
           <h4 className="text-sm font-medium text-gray-900 mb-3">Benefícios do Plano</h4>
-          <div className="grid grid-cols-2 gap-3">
-            {planFeatures.map((feature, index) => (
-              <motion.div
+          <div className="grid grid-cols-2 gap-2">
+            {planFeatures.map((feature) => (
+              <div
                 key={feature.label}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
                 className={cn(
                   'flex items-center gap-2 p-3 rounded-lg border',
                   feature.available
@@ -338,13 +311,13 @@ export function EnhancedSubscriptionCard({
               >
                 {feature.icon}
                 <span className="text-xs font-medium">{feature.label}</span>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
         {/* Action Buttons */}
-        <div className="space-y-3 pt-4 border-t">
-          <div className="flex gap-3">
+        <div className="space-y-2 pt-4 border-t border-gray-200">
+          <div className="flex gap-2">
             {isActive && (
               <>
                 <Button
@@ -372,7 +345,7 @@ export function EnhancedSubscriptionCard({
               <Button
                 size="sm"
                 onClick={onReactivate}
-                className="w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 Reativar Assinatura
               </Button>
@@ -383,10 +356,10 @@ export function EnhancedSubscriptionCard({
             variant="default"
             size="sm"
             fullWidth
-            className="bg-cyan-600 hover:bg-cyan-700"
+            className="bg-blue-600 hover:bg-blue-700"
             returnUrl="/area-assinante/dashboard"
           >
-            Gerenciar Assinatura no Stripe
+            Gerenciar no Stripe
           </StripePortalButton>
         </div>
       </div>
