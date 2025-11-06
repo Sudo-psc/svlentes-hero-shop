@@ -29,6 +29,14 @@ export function ServiceWorkerRegistration() {
         let registration: ServiceWorkerRegistration | undefined
         let newWorker: ServiceWorker | undefined
         
+        // Helper para limpar listener do worker
+        const cleanupWorkerListener = () => {
+            if (newWorker) {
+                newWorker.removeEventListener('statechange', handleStateChange)
+                newWorker = undefined
+            }
+        }
+        
         // Handler para mudança de estado do service worker
         const handleStateChange = () => {
             if (
@@ -55,10 +63,8 @@ export function ServiceWorkerRegistration() {
         
         // Handler para atualização encontrada
         const handleUpdateFound = () => {
-            // Remove listener do worker anterior se existir
-            if (newWorker) {
-                newWorker.removeEventListener('statechange', handleStateChange)
-            }
+            // Limpa listener do worker anterior se existir
+            cleanupWorkerListener()
             
             newWorker = registration?.installing
 
@@ -107,9 +113,7 @@ export function ServiceWorkerRegistration() {
             if (registration) {
                 registration.removeEventListener('updatefound', handleUpdateFound)
             }
-            if (newWorker) {
-                newWorker.removeEventListener('statechange', handleStateChange)
-            }
+            cleanupWorkerListener()
         }
     }, [])
 
