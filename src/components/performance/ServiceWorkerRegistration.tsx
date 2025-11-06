@@ -27,33 +27,38 @@ export function ServiceWorkerRegistration() {
 
         let intervalId: ReturnType<typeof setInterval> | undefined
         let registration: ServiceWorkerRegistration | undefined
+        let newWorker: ServiceWorker | undefined
+        
+        // Handler para mudança de estado do service worker
+        const handleStateChange = () => {
+            if (
+                newWorker &&
+                newWorker.state === 'installed' &&
+                navigator.serviceWorker.controller
+            ) {
+                // Nova versão disponível
+                console.log('[SW] Nova versão do Service Worker disponível')
+                setUpdateAvailable(true)
+
+                // Notificar usuário com evento customizado (não bloqueante)
+                // O componente pai ou um toast system pode escutar este evento
+                window.dispatchEvent(
+                    new CustomEvent('sw-update-available', {
+                        detail: { reload: () => window.location.reload() }
+                    })
+                )
+                
+                // Log para desenvolvedores
+                console.log('[SW] Dispatched sw-update-available event. Use toast/banner to notify user.')
+            }
+        }
         
         // Handler para atualização encontrada
         const handleUpdateFound = () => {
-            const newWorker = registration?.installing
+            newWorker = registration?.installing
 
             if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                    if (
-                        newWorker.state === 'installed' &&
-                        navigator.serviceWorker.controller
-                    ) {
-                        // Nova versão disponível
-                        console.log('[SW] Nova versão do Service Worker disponível')
-                        setUpdateAvailable(true)
-
-                        // Notificar usuário com evento customizado (não bloqueante)
-                        // O componente pai ou um toast system pode escutar este evento
-                        window.dispatchEvent(
-                            new CustomEvent('sw-update-available', {
-                                detail: { reload: () => window.location.reload() }
-                            })
-                        )
-                        
-                        // Log para desenvolvedores
-                        console.log('[SW] Dispatched sw-update-available event. Use toast/banner to notify user.')
-                    }
-                })
+                newWorker.addEventListener('statechange', handleStateChange)
             }
         }
 
@@ -96,6 +101,9 @@ export function ServiceWorkerRegistration() {
             }
             if (registration) {
                 registration.removeEventListener('updatefound', handleUpdateFound)
+            }
+            if (newWorker) {
+                newWorker.removeEventListener('statechange', handleStateChange)
             }
         }
     }, [])
