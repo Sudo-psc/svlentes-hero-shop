@@ -47,7 +47,8 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: string
   className?: string
 }
-export function DataTable<TData, TValue>({
+
+function DataTableComponent<TData, TValue>({
   columns,
   data,
   searchPlaceholder = 'Buscar...',
@@ -80,13 +81,18 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
   })
+  
+  // Memoize selected rows to avoid recalculation on every render
+  const selectedRows = React.useMemo(() => {
+    return table.getFilteredSelectedRowModel().rows.map(row => row.original)
+  }, [table, rowSelection])
+
   // Handle row selection change
   React.useEffect(() => {
     if (enableRowSelection && onRowSelectionChange) {
-      const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original)
       onRowSelectionChange(selectedRows)
     }
-  }, [rowSelection, enableRowSelection, onRowSelectionChange, table])
+  }, [selectedRows, enableRowSelection, onRowSelectionChange])
   return (
     <div className={cn('space-y-4', className)}>
       {/* Filters and Search */}
@@ -266,6 +272,10 @@ export function DataTable<TData, TValue>({
     </div>
   )
 }
+
+// Memoized export to prevent unnecessary re-renders
+export const DataTable = React.memo(DataTableComponent) as typeof DataTableComponent
+
 // Column helpers for common use cases
 export const createBooleanColumn = <TData, TValue>(
   accessorKey: string,

@@ -34,6 +34,7 @@ interface CacheEntry {
   etag?: string
   lastModified?: string
   accessCount: number
+  lastAccessed: number
 }
 
 interface PendingRequest {
@@ -45,6 +46,7 @@ interface PendingRequest {
 class APICache {
   private cache = new Map<string, CacheEntry>()
   private pendingRequests = new Map<string, PendingRequest>()
+  private accessOrder: string[] = []
   private defaultOptions: CacheOptions = {
     maxAge: 300, // 5 minutes default
     sMaxAge: 3600, // 1 hour CDN default
@@ -86,16 +88,17 @@ class APICache {
   }
 
   /**
-   * Simple hash function
+   * Fast hash function using FNV-1a algorithm
+   * More efficient and better distribution than simple hash
    */
   private hashString(str: string): string {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
+    let hash = 2166136261
+    const len = str.length
+    for (let i = 0; i < len; i++) {
+      hash ^= str.charCodeAt(i)
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)
     }
-    return Math.abs(hash).toString(36)
+    return (hash >>> 0).toString(36)
   }
 
   /**
@@ -139,6 +142,7 @@ class APICache {
 
   /**
    * Clean up expired entries and pending requests
+   * Optimized to use LRU tracking instead of sorting on every cleanup
    */
   private cleanup(): void {
     const now = Date.now()
@@ -148,6 +152,7 @@ class APICache {
     for (const [key, entry] of this.cache.entries()) {
       if (now > entry.expiresAt) {
         this.cache.delete(key)
+        this.removeFromAccessOrder(key)
         cleanedCount++
       }
     }
@@ -161,14 +166,16 @@ class APICache {
       }
     }
 
-    // Enforce size limit
+    // Enforce size limit using LRU (Least Recently Used)
     if (this.cache.size > this.maxSize) {
-      const entries = Array.from(this.cache.entries())
-        .sort(([, a], [, b]) => a[1].timestamp - b[1].timestamp)
-
-      const toDelete = entries.slice(0, entries.length - this.maxSize)
-      toDelete.forEach(([key]) => this.cache.delete(key))
-      cleanedCount += toDelete.length
+      const toDeleteCount = this.cache.size - this.maxSize
+      // Remove oldest entries from accessOrder
+      const toDelete = this.accessOrder.slice(0, toDeleteCount)
+      toDelete.forEach((key) => {
+        this.cache.delete(key)
+        cleanedCount++
+      })
+      this.accessOrder = this.accessOrder.slice(toDeleteCount)
     }
 
     if (cleanedCount > 0) {
@@ -178,6 +185,24 @@ class APICache {
         pendingRequests: this.pendingRequests.size
       })
     }
+  }
+
+  /**
+   * Remove key from access order tracking
+   */
+  private removeFromAccessOrder(key: string): void {
+    const index = this.accessOrder.indexOf(key)
+    if (index > -1) {
+      this.accessOrder.splice(index, 1)
+    }
+  }
+
+  /**
+   * Update access order for LRU tracking
+   */
+  private updateAccessOrder(key: string): void {
+    this.removeFromAccessOrder(key)
+    this.accessOrder.push(key)
   }
 
   /**
@@ -206,8 +231,13 @@ class APICache {
     const allowStale = options.staleWhileRevalidate
     if (!this.isValid(entry, allowStale)) {
       this.cache.delete(key)
+      this.removeFromAccessOrder(key)
       return null
     }
+
+    // Update LRU tracking
+    this.updateAccessOrder(key)
+    entry.lastAccessed = Date.now()
 
     // Create response from cached data
     const response = new NextResponse(JSON.stringify(entry.data), {
@@ -265,7 +295,8 @@ class APICache {
       },
       etag,
       lastModified,
-      accessCount: 1
+      accessCount: 1,
+      lastAccessed: now
     }
 
     // Enforce size limit
@@ -274,6 +305,7 @@ class APICache {
     }
 
     this.cache.set(key, entry)
+    this.updateAccessOrder(key)
 
     logger.debug(LogCategory.CACHE, 'API response cached', {
       key,
@@ -291,6 +323,7 @@ class APICache {
     for (const [key, entry] of this.cache.entries()) {
       if (entry.headers['Cache-Tag']?.includes(tag)) {
         this.cache.delete(key)
+        this.removeFromAccessOrder(key)
         invalidatedCount++
       }
     }
@@ -312,6 +345,7 @@ class APICache {
     for (const [key] of this.cache.entries()) {
       if (regex.test(key)) {
         this.cache.delete(key)
+        this.removeFromAccessOrder(key)
         invalidatedCount++
       }
     }
@@ -361,6 +395,7 @@ class APICache {
   clear(): void {
     this.cache.clear()
     this.pendingRequests.clear()
+    this.accessOrder = []
     logger.info(LogCategory.CACHE, 'API cache cleared')
   }
 
