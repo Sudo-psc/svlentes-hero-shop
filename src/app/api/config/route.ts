@@ -1,132 +1,96 @@
-// @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
 /**
- * Configuration API
- * Serves centralized configuration data to client components
+ * API Endpoint for Configuration
+ * Provides configuration data for client-side components
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { config } from '@/config/loader'
-import { DEFAULT_CLIENT_CONFIG } from '@/lib/use-server-config'
-import { withCache } from '@/lib/api-cache'
-import { ApiErrorHandler, generateRequestId, ErrorType } from '@/lib/api-error-handler'
+import { DEFAULT_CLIENT_CONFIG, type ServerConfigData } from '@/lib/use-server-config'
 
-// Force dynamic rendering for this route
-export const dynamic = 'force-dynamic'
+export const runtime = 'edge'
+export const preferredRegion = ['gru1', 'iad1']
 
-export async function GET(request: NextRequest) {
-  const requestId = generateRequestId()
-  const { searchParams } = new URL(request.url)
-  const section = searchParams.get('section') // 'site', 'content', 'contact', etc.
-  const locale = searchParams.get('locale') || 'pt-BR'
+interface ConfigResponse {
+  success: boolean
+  data: ServerConfigData
+  error?: string
+  fallback?: boolean
+}
 
-  const context = {
-    api: '/api/config',
-    requestId,
-    timestamp: new Date(),
-    metadata: { section, locale }
-  }
+export async function GET(request: NextRequest): Promise<NextResponse<ConfigResponse>> {
+  try {
+    const { searchParams } = new URL(request.url)
+    const section = searchParams.get('section')
+    const locale = searchParams.get('locale') || 'pt-BR'
 
-  return ApiErrorHandler.wrapApiHandler(async () => {
-    return withCache(async (request) => {
-    // Only allow certain sections to be accessed via API
-    const allowedSections = ['site', 'content', 'contact', 'i18n']
-    if (section && !allowedSections.includes(section)) {
-      return NextResponse.json(
-        { error: 'Invalid section requested' },
-        { status: 400 }
-      )
-    }
-    try {
-      const configData = config.get()
-      let responseData
-      if (section) {
-        if (section === 'i18n') {
-          responseData = {
-            i18n: {
-              ...configData.i18n,
-              translations: {
-                'footer.about': 'Sobre',
-                'footer.contact': 'Contato',
-                'footer.legal': 'Legal',
-                'footer.privacy': 'Política de Privacidade',
-                'footer.terms': 'Termos de Uso',
-                'footer.rights': 'Todos os direitos reservados',
-                'loading': 'Carregando...',
-                'error.required': 'Este campo é obrigatório',
-                'error.email': 'Email inválido',
-                'error.phone': 'Telefone inválido (formato: (XX) 9XXXX-XXXX)',
-                'success.message': 'Mensagem enviada com sucesso!',
-                'button.send': 'Enviar',
-                'button.cancel': 'Cancelar',
-                'hero.title.line1': configData.content?.hero?.title?.line1 || 'Assinatura com acompanhamento médico especializado.',
-                'hero.title.line2': configData.content?.hero?.title?.line2 || 'Nunca mais fique sem lentes',
-                'hero.title.line3': configData.content?.hero?.title?.line3 || 'Receba no conforto da sua casa',
-                'hero.subtitle': configData.content?.hero?.subtitle || 'Lentes de contato de qualidade com entrega mensal e suporte dedicado.',
-                'hero.cta.primary': configData.content?.hero?.cta?.primary || 'Agendar consulta com oftalmologista',
-                'hero.cta.secondary': configData.content?.hero?.cta?.secondary || 'Calculadora de Economia'
-              }
-            }
-          }
-        } else {
-          responseData = {
-            [section]: configData[section] || DEFAULT_CLIENT_CONFIG[section]
-          }
-        }
-      } else {
-        // Return all safe configuration data
-        responseData = {
-          site: configData.site,
-          i18n: {
-            ...configData.i18n,
-            translations: {
-              'footer.about': 'Sobre',
-              'footer.contact': 'Contato',
-              'footer.legal': 'Legal',
-              'footer.privacy': 'Política de Privacidade',
-              'footer.terms': 'Termos de Uso',
-              'footer.rights': 'Todos os direitos reservados',
-              'loading': 'Carregando...',
-              'error.required': 'Este campo é obrigatório',
-              'error.email': 'Email inválido',
-              'error.phone': 'Telefone inválido (formato: (XX) 9XXXX-XXXX)',
-              'success.message': 'Mensagem enviada com sucesso!',
-              'button.send': 'Enviar',
-              'button.cancel': 'Cancelar',
-              'hero.title.line1': configData.content?.hero?.title?.line1 || 'Assinatura com acompanhamento médico especializado.',
-              'hero.title.line2': configData.content?.hero?.title?.line2 || 'Nunca mais fique sem lentes',
-              'hero.title.line3': configData.content?.hero?.title?.line3 || 'Receba no conforto da sua casa',
-              'hero.subtitle': configData.content?.hero?.subtitle || 'Lentes de contato de qualidade com entrega mensal e suporte dedicado.',
-              'hero.cta.primary': configData.content?.hero?.cta?.primary || 'Agendar consulta com oftalmologista',
-              'hero.cta.secondary': configData.content?.hero?.cta?.secondary || 'Calculadora de Economia'
-            }
-          },
-          content: configData.content || DEFAULT_CLIENT_CONFIG.content,
-          contact: configData.contact || DEFAULT_CLIENT_CONFIG.contact
-        }
+    // Log para debugging
+    console.log(`[CONFIG] Request received - section: ${section}, locale: ${locale}`)
+
+    // Retorna configuração padrão (pode ser expandido para buscar do banco/env)
+    let configData = { ...DEFAULT_CLIENT_CONFIG }
+
+    // Se uma seção específica foi solicitada, retorna apenas essa seção
+    if (section) {
+      const sectionData = configData[section as keyof ServerConfigData]
+      if (!sectionData) {
+        return NextResponse.json({
+          success: false,
+          error: `Configuration section '${section}' not found`,
+          data: DEFAULT_CLIENT_CONFIG,
+          fallback: true
+        }, { status: 404 })
       }
-      return NextResponse.json({
-        success: true,
-        data: responseData,
-        timestamp: new Date().toISOString()
-      })
-    } catch (configError) {
-      // If config fails to load, return default config
-      console.warn('Configuration loading failed, using defaults:', configError)
-      const responseData = section
-        ? { [section]: DEFAULT_CLIENT_CONFIG[section] }
-        : DEFAULT_CLIENT_CONFIG
-      return NextResponse.json({
-        success: true,
-        data: responseData,
-        fallback: true,
-        timestamp: new Date().toISOString()
-      })
+
+      configData = {
+        ...DEFAULT_CLIENT_CONFIG,
+        [section]: sectionData
+      } as ServerConfigData
     }
-  }, {
-    maxAge: 600, // 10 minutes cache for config data
-    sMaxAge: 3600, // 1 hour CDN cache
-    tags: ['config', section ? `config-${section}` : 'config-full'],
-    deduplicate: true,
-    staleWhileRevalidate: true
-  })(request)
-    }, context)
+
+    // Adiciona informações de locale se necessário
+    const response: ConfigResponse = {
+      success: true,
+      data: configData
+    }
+
+    // Cache headers
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    })
+
+    return new NextResponse(JSON.stringify(response), {
+      status: 200,
+      headers
+    })
+
+  } catch (error) {
+    console.error('[CONFIG] Error:', error)
+
+    // Retorna fallback em caso de erro
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      data: DEFAULT_CLIENT_CONFIG,
+      fallback: true
+    }, {
+      status: 500,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    })
+  }
+}
+
+// Suporte para CORS preflight
+export async function OPTIONS(): Promise<NextResponse> {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+  })
 }

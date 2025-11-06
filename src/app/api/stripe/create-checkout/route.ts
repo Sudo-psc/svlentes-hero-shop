@@ -1,16 +1,12 @@
 // @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { logger, LogCategory } from '@/lib/logger'
 import { pricingPlans } from '@/data/pricing-plans'
 import { z } from 'zod'
-// Initialize Stripe with secret key (if available)
-let stripe: Stripe | null = null
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-09-30.clover',
-  })
-}
+import { getStripeClient, handleStripeError } from '@/lib/stripe-client'
+
+// Get Stripe client with proper timeout configuration
+const stripe = getStripeClient()
 // Simplified schema - only accept planId and customerEmail from client
 const checkoutRequestSchema = z.object({
   planId: z.string().min(1, 'ID do plano é obrigatório'),

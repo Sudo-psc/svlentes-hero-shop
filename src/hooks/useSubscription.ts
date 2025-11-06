@@ -38,6 +38,7 @@ export function useSubscription(): UseSubscriptionReturn {
       return
     }
 
+    // Check memory cache first
     const cached = subscriptionCache.get(cacheKey)
     if (cached) {
       setSubscription(cached.subscription)
@@ -48,18 +49,49 @@ export function useSubscription(): UseSubscriptionReturn {
       return
     }
 
+    // Check persistent cache (localStorage)
+    if (typeof window !== 'undefined') {
+      try {
+        const persistentCache = localStorage.getItem(`subscription_cache_${cacheKey}`)
+        if (persistentCache) {
+          const { data, timestamp } = JSON.parse(persistentCache)
+          // Use cache if less than 5 minutes old
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            subscriptionCache.set(cacheKey, data)
+            setSubscription(data.subscription)
+            setUser(data.user)
+            setStatus('authenticated')
+            setError(null)
+            setLoading(false)
+            console.log('[useSubscription] Using persistent cache')
+            return
+          }
+        }
+      } catch (e) {
+        console.warn('[useSubscription] Persistent cache error:', e)
+      }
+    }
+
     try {
       setIsFetching(true)
       setLoading(true)
       setError(null)
 
       const token = await authUser.getIdToken()
+
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
+
       const response = await fetch('/api/assinante/subscription', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       // Handle different response statuses
       if (response.status === 401) {
@@ -101,7 +133,20 @@ export function useSubscription(): UseSubscriptionReturn {
 
       // Success - parse successful response
       const data: SubscriptionResponse = await response.json()
+
+      // Update both memory and persistent cache
       subscriptionCache.set(cacheKey, data)
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`subscription_cache_${cacheKey}`, JSON.stringify({
+            data,
+            timestamp: Date.now()
+          }))
+        } catch (e) {
+          console.warn('[useSubscription] Failed to save persistent cache:', e)
+        }
+      }
+
       setSubscription(data.subscription)
       setUser(data.user)
       setStatus('authenticated')
@@ -113,12 +158,47 @@ export function useSubscription(): UseSubscriptionReturn {
         message: err.message,
         status: err.status,
         retryCount,
-        cacheKey
+        cacheKey,
+        name: err.name
       })
+
+      // Handle AbortController timeout
+      if (err.name === 'AbortError') {
+        const errorMessage = 'Tempo esgotado na requisição. Tentando novamente...'
+        setError(errorMessage)
+        setStatus('error')
+
+        // Retry immediately on timeout (don't count towards maxRetries)
+        if (retryCount < maxRetries) {
+          console.log(`[useSubscription] Timeout detected, retrying immediately (attempt ${retryCount + 1}/${maxRetries})`)
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1)
+          }, 1000) // Brief delay before timeout retry
+          return
+        }
+      }
 
       const errorMessage = err.message || 'Erro interno do servidor'
       setError(errorMessage)
       setStatus('error')
+
+      // Try to use stale cache if available
+      if (typeof window !== 'undefined' && retryCount >= maxRetries - 1) {
+        try {
+          const staleCache = localStorage.getItem(`subscription_cache_${cacheKey}`)
+          if (staleCache) {
+            const { data } = JSON.parse(staleCache)
+            console.warn('[useSubscription] Using stale cache as fallback')
+            setSubscription(data.subscription)
+            setUser(data.user)
+            setStatus('authenticated')
+            setError('Modo offline: dados podem estar desatualizados')
+            return
+          }
+        } catch (e) {
+          console.warn('[useSubscription] Stale cache unavailable')
+        }
+      }
 
       // Retry logic com exponential backoff - only for non-auth errors
       if (retryCount < maxRetries && !errorMessage.includes('autentic')) {
@@ -129,7 +209,8 @@ export function useSubscription(): UseSubscriptionReturn {
           setRetryCount(prev => prev + 1)
         }, delay)
       } else if (retryCount >= maxRetries) {
-        console.error('[useSubscription] Max retries reached')
+        console.error('[useSubscription] Max retries reached - using fallback mode')
+
         // Send to monitoring/analytics (Sentry, etc.)
         if (typeof window !== 'undefined' && (window as any).Sentry) {
           (window as any).Sentry.captureException(err, {
@@ -137,6 +218,11 @@ export function useSubscription(): UseSubscriptionReturn {
             contexts: { user: { authUser: authUser?.uid } }
           })
         }
+
+        // Set user to null to prevent infinite loading
+        setSubscription(null)
+        setUser(null)
+        setError('Serviço temporariamente indisponível. Tente novamente mais tarde.')
       }
     } finally {
       setLoading(false)

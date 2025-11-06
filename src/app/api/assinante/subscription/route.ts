@@ -1,7 +1,8 @@
 // @ts-nocheck - Prisma type mismatches - requires schema regeneration or type fixes
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { adminAuth } from '@/lib/firebase-admin'
+import { adminAuth, isFirebaseAdminInitialized } from '@/lib/firebase-admin'
+import { authenticateRequest, createAuthErrorResponse } from '@/lib/auth-handler'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import { csrfProtection } from '@/lib/csrf'
@@ -32,42 +33,19 @@ export async function GET(request: NextRequest) {
     return rateLimitResult
   }
   try {
-    // Verificar se Firebase Admin está inicializado
-    if (!adminAuth) {
-      console.warn('[API /api/assinante/subscription] Firebase Admin não configurado - funcionalidade desabilitada')
-      return NextResponse.json(
-        {
-          error: 'SERVICE_UNAVAILABLE',
-          message: 'Serviço de autenticação temporariamente indisponível',
-          subscription: null
-        },
-        { status: 503 }
-      )
+    // Firebase Admin agora sempre disponível com fallback
+    if (!isFirebaseAdminInitialized) {
+      console.warn('[API /api/assinante/subscription] Firebase Admin em modo desenvolvimento')
     }
-    // Verificar token Firebase do header Authorization
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Token de autenticação não fornecido' },
-        { status: 401 }
-      )
+
+    // Autenticar requisição usando handler unificado
+    const auth = await authenticateRequest(request)
+    if (auth.error || !auth.user) {
+      const errorResponse = createAuthErrorResponse(auth.error || 'UNAUTHORIZED', auth.statusCode || 401)
+      return NextResponse.json(errorResponse, { status: auth.statusCode || 401 })
     }
-    const token = authHeader.split('Bearer ')[1]
-    let firebaseUser
-    try {
-      firebaseUser = await adminAuth.verifyIdToken(token)
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Token inválido ou expirado' },
-        { status: 401 }
-      )
-    }
-    if (!firebaseUser || !firebaseUser.uid) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Usuário não autenticado' },
-        { status: 401 }
-      )
-    }
+
+    const firebaseUser = auth.user
     // Buscar usuário com assinaturas ativas usando o UID do Firebase
     // OWNERSHIP: Busca é feita pelo firebaseUid, garantindo que só dados do próprio usuário sejam retornados
     const user = await prisma.user.findUnique({
@@ -170,42 +148,19 @@ export async function PUT(request: NextRequest) {
     return rateLimitResult
   }
   try {
-    // Verificar se Firebase Admin está inicializado
-    if (!adminAuth) {
-      console.warn('[API /api/assinante/subscription] Firebase Admin não configurado - funcionalidade desabilitada')
-      return NextResponse.json(
-        {
-          error: 'SERVICE_UNAVAILABLE',
-          message: 'Serviço de autenticação temporariamente indisponível',
-          subscription: null
-        },
-        { status: 503 }
-      )
+    // Firebase Admin agora sempre disponível com fallback
+    if (!isFirebaseAdminInitialized) {
+      console.warn('[API /api/assinante/subscription] Firebase Admin em modo desenvolvimento')
     }
-    // Verificar token Firebase do header Authorization
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Token de autenticação não fornecido' },
-        { status: 401 }
-      )
+
+    // Autenticar requisição usando handler unificado
+    const auth = await authenticateRequest(request)
+    if (auth.error || !auth.user) {
+      const errorResponse = createAuthErrorResponse(auth.error || 'UNAUTHORIZED', auth.statusCode || 401)
+      return NextResponse.json(errorResponse, { status: auth.statusCode || 401 })
     }
-    const token = authHeader.split('Bearer ')[1]
-    let firebaseUser
-    try {
-      firebaseUser = await adminAuth.verifyIdToken(token)
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Token inválido ou expirado' },
-        { status: 401 }
-      )
-    }
-    if (!firebaseUser || !firebaseUser.uid) {
-      return NextResponse.json(
-        { error: 'UNAUTHORIZED', message: 'Usuário não autenticado' },
-        { status: 401 }
-      )
-    }
+
+    const firebaseUser = auth.user
     // Parse e validar request body
     let body
     try {

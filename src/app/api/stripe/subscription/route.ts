@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import Stripe from 'stripe'
-import { adminAuth } from '@/lib/firebase-admin'
+import { stripe, handleStripeError } from '@/lib/stripe-client'
+import { verifyAuthToken, logAccess } from '@/lib/api-auth'
 
 /**
  * API Route: Get User's Active Stripe Subscription
@@ -27,42 +26,15 @@ import { adminAuth } from '@/lib/firebase-admin'
  * @author Dr. Philipe Saraiva Cruz
  */
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-  typescript: true,
-})
-
 export async function GET(request: NextRequest) {
   try {
     // 1. Verify authentication
-    const headersList = await headers()
-    const authorization = headersList.get('authorization')
-
-    if (!authorization?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Token de autenticação inválido' },
-        { status: 401 }
-      )
+    const auth = await verifyAuthToken(request)
+    if (!auth.success || !auth.user) {
+      return NextResponse.json(auth.error, { status: auth.error!.statusCode })
     }
 
-    const token = authorization.split('Bearer ')[1]
-
-    if (!adminAuth) {
-      return NextResponse.json(
-        { error: 'Firebase Admin não inicializado' },
-        { status: 500 }
-      )
-    }
-
-    const decodedToken = await adminAuth.verifyIdToken(token)
-
-    if (!decodedToken?.uid) {
-      return NextResponse.json(
-        { error: 'Usuário não autenticado' },
-        { status: 401 }
-      )
-    }
+    const decodedToken = auth.user
 
     // 2. Get Stripe customer ID
     let stripeCustomerId = decodedToken.stripeCustomerId
@@ -167,11 +139,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 6. Log access for audit (LGPD compliance)
-    console.log('[STRIPE_SUBSCRIPTION_ACCESS]', {
-      userId: decodedToken.uid,
-      email: decodedToken.email,
+    logAccess(decodedToken.uid, decodedToken.email, 'STRIPE_SUBSCRIPTION_ACCESS', {
       subscriptionId: subscription.id,
-      timestamp: new Date().toISOString(),
     })
 
     return NextResponse.json({

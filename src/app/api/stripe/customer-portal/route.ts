@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import Stripe from 'stripe'
-import { adminAuth } from '@/lib/firebase-admin'
+import { stripe, handleStripeError } from '@/lib/stripe-client'
+import { verifyAuthToken, logAccess } from '@/lib/api-auth'
 
 /**
  * API Route: Create Stripe Customer Portal Session
- * 
+ *
  * Generates a secure session URL for customers to manage their subscriptions,
  * payment methods, and billing information in the Stripe Customer Portal.
- * 
+ *
  * @route POST /api/stripe/customer-portal
  * @access Protected (requires Firebase auth token)
- * 
+ *
  * @body {string} [returnUrl] - Optional URL to return to after portal session
- * 
+ *
  * @returns {object} { url: string } - Stripe Customer Portal session URL
- * 
+ *
  * @example
  * ```typescript
  * const response = await fetch('/api/stripe/customer-portal', {
@@ -31,46 +30,19 @@ import { adminAuth } from '@/lib/firebase-admin'
  * const { url } = await response.json()
  * window.location.href = url
  * ```
- * 
+ *
  * @author Dr. Philipe Saraiva Cruz
  */
-
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-  typescript: true,
-})
 
 export async function POST(request: NextRequest) {
   try {
     // 1. Verify authentication
-    const headersList = await headers()
-    const authorization = headersList.get('authorization')
-    
-    if (!authorization?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Token de autenticação inválido' },
-        { status: 401 }
-      )
+    const auth = await verifyAuthToken(request)
+    if (!auth.success || !auth.user) {
+      return NextResponse.json(auth.error, { status: auth.error!.statusCode })
     }
 
-    const token = authorization.split('Bearer ')[1]
-    
-    if (!adminAuth) {
-      return NextResponse.json(
-        { error: 'Firebase Admin não inicializado' },
-        { status: 500 }
-      )
-    }
-    
-    const decodedToken = await adminAuth.verifyIdToken(token)
-    
-    if (!decodedToken?.uid) {
-      return NextResponse.json(
-        { error: 'Usuário não autenticado' },
-        { status: 401 }
-      )
-    }
+    const decodedToken = auth.user
 
     // 2. Parse request body
     const body = await request.json().catch(() => ({}))
@@ -110,11 +82,8 @@ export async function POST(request: NextRequest) {
     })
 
     // 5. Log access for audit (LGPD compliance)
-    console.log('[STRIPE_PORTAL_ACCESS]', {
-      userId: decodedToken.uid,
-      email: decodedToken.email,
+    logAccess(decodedToken.uid, decodedToken.email, 'STRIPE_PORTAL_ACCESS', {
       stripeCustomerId,
-      timestamp: new Date().toISOString(),
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
     })
 
