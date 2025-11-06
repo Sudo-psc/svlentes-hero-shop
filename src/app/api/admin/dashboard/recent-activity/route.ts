@@ -335,16 +335,20 @@ export async function GET(request: NextRequest) {
     const sortedActivities = activities
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit)
-    // Calcular resumo
+    
+    // Calcular resumo em uma única passagem
     const summary = {
       total: sortedActivities.length,
-      byType: {
-        customer: sortedActivities.filter(a => a.type === 'customer').length,
-        subscription: sortedActivities.filter(a => a.type === 'subscription').length,
-        order: sortedActivities.filter(a => a.type === 'order').length,
-        payment: sortedActivities.filter(a => a.type === 'payment').length,
-        support: sortedActivities.filter(a => a.type === 'support').length
-      }
+      byType: sortedActivities.reduce((acc, activity) => {
+        acc[activity.type] = (acc[activity.type] || 0) + 1
+        return acc
+      }, {
+        customer: 0,
+        subscription: 0,
+        order: 0,
+        payment: 0,
+        support: 0
+      } as Record<string, number>)
     }
     return createSuccessResponse({
       activities: sortedActivities,

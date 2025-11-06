@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Calculator, TrendingDown, Save, ArrowRight, Activity, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { calculateEconomy, formatCurrency } from '@/lib/calculator'
@@ -13,12 +13,9 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
     const [usagePattern, setUsagePattern] = useState<'occasional' | 'regular' | 'daily'>('regular')
     const [annualContactLensCost, setAnnualContactLensCost] = useState<number>(1200)
     const [annualConsultationCost, setAnnualConsultationCost] = useState<number>(400)
-    const [result, setResult] = useState<CalculatorResult | null>(null)
-    // Calcular automaticamente quando mudar qualquer valor
-    useEffect(() => {
-        calculateResults()
-    }, [lensType, usagePattern, annualContactLensCost, annualConsultationCost])
-    const calculateResults = () => {
+    
+    // Memoize calculation to avoid unnecessary recalculations
+    const result = useMemo(() => {
         const input: CalculatorInput = {
             lensType,
             usagePattern,
@@ -26,17 +23,18 @@ export function ImprovedCalculator({ onSaveResult }: ImprovedCalculatorProps) {
             annualConsultationCost
         }
         try {
-            const calculationResult = calculateEconomy(input)
-            setResult(calculationResult)
+            return calculateEconomy(input)
         } catch (error) {
             console.error('Erro ao calcular economia:', error)
+            return null
         }
-    }
-    const handleSaveResult = () => {
+    }, [lensType, usagePattern, annualContactLensCost, annualConsultationCost])
+
+    const handleSaveResult = useCallback(() => {
         if (result && onSaveResult) {
             onSaveResult(result)
         }
-    }
+    }, [result, onSaveResult])
     return (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
             {/* Header */}

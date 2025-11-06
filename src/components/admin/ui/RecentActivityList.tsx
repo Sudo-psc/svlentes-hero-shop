@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -117,28 +117,28 @@ export function RecentActivityList({
   onActivityClick,
   onRefresh
 }: RecentActivityListProps) {
-  const [filteredActivities, setFilteredActivities] = useState<ActivityItem[]>([])
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [lastRefresh, setLastRefresh] = useState(new Date())
-  useEffect(() => {
-    if (activities) {
-      let filtered = [...activities]
-      // Aplicar filtros de tipo
-      if (selectedTypes.length > 0) {
-        filtered = filtered.filter(activity => selectedTypes.includes(activity.type))
-      }
-      // Aplicar filtros de status
-      if (selectedStatuses.length > 0) {
-        filtered = filtered.filter(activity => selectedStatuses.includes(activity.status))
-      }
-      // Ordenar por timestamp (mais recentes primeiro)
-      filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      // Limitar número de itens
-      filtered = filtered.slice(0, maxItems)
-      setFilteredActivities(filtered)
+  
+  // Memoize filtered activities to avoid recalculation on every render
+  const filteredActivities = useMemo(() => {
+    if (!activities) return []
+    
+    let filtered = [...activities]
+    // Aplicar filtros de tipo
+    if (selectedTypes.length > 0) {
+      filtered = filtered.filter(activity => selectedTypes.includes(activity.type))
     }
+    // Aplicar filtros de status
+    if (selectedStatuses.length > 0) {
+      filtered = filtered.filter(activity => selectedStatuses.includes(activity.status))
+    }
+    // Ordenar por timestamp (mais recentes primeiro)
+    filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    // Limitar número de itens
+    return filtered.slice(0, maxItems)
   }, [activities, selectedTypes, selectedStatuses, maxItems])
   // Auto-refresh
   useEffect(() => {
@@ -158,7 +158,7 @@ export function RecentActivityList({
       setIsLoading(false)
     }
   }
-  const formatRelativeTime = (date: Date) => {
+  const formatRelativeTime = useCallback((date: Date) => {
     const now = new Date()
     const diffInMs = now.getTime() - date.getTime()
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
@@ -172,25 +172,28 @@ export function RecentActivityList({
       day: 'numeric',
       month: 'short'
     })
-  }
-  const toggleTypeFilter = (type: string) => {
+  }, [])
+  
+  const toggleTypeFilter = useCallback((type: string) => {
     setSelectedTypes(prev =>
       prev.includes(type)
         ? prev.filter(t => t !== type)
         : [...prev, type]
     )
-  }
-  const toggleStatusFilter = (status: string) => {
+  }, [])
+  
+  const toggleStatusFilter = useCallback((status: string) => {
     setSelectedStatuses(prev =>
       prev.includes(status)
         ? prev.filter(s => s !== status)
         : [...prev, status]
     )
-  }
-  const clearFilters = () => {
+  }, [])
+  
+  const clearFilters = useCallback(() => {
     setSelectedTypes([])
     setSelectedStatuses([])
-  }
+  }, [])
   const hasActiveFilters = selectedTypes.length > 0 || selectedStatuses.length > 0
   // Dados mock se não houver atividades
   const mockActivities: ActivityItem[] = [

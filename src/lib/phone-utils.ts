@@ -36,6 +36,9 @@ export const PHONE_NUMBERS = {
  * formatPhoneDisplay('5533986061427') // Returns: '(33) 98606-1427'
  */
 export function formatPhoneDisplay(phone: string): string {
+  // Guard: return empty string if phone is undefined/null
+  if (!phone) return ''
+
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '')
 
@@ -66,6 +69,9 @@ export function formatPhoneDisplay(phone: string): string {
  * formatPhoneWhatsApp('+55 33 99989-8026') // Returns: '5533999898026'
  */
 export function formatPhoneWhatsApp(phone: string): string {
+  // Guard: return fallback if phone is undefined/null
+  if (!phone) return PHONE_NUMBERS.chatbot
+
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '')
 
@@ -143,6 +149,9 @@ export function createTelUrl(phone: string = PHONE_NUMBERS.support): string {
  * isValidPhone('123456') // Returns: false
  */
 export function isValidPhone(phone: string): boolean {
+  // Guard: return false if phone is undefined/null
+  if (!phone) return false
+
   const cleaned = phone.replace(/\D/g, '')
 
   // Brazilian mobile: 55 (country) + 2 digits (area) + 9 digits (mobile)
@@ -165,6 +174,15 @@ export function getPhoneContext(phone: string): {
   description: string
   recommended: boolean
 } {
+  // Guard: return unknown if phone is undefined/null
+  if (!phone) {
+    return {
+      type: 'unknown',
+      description: 'Número não especificado',
+      recommended: false
+    }
+  }
+
   const cleaned = phone.replace(/\D/g, '')
 
   if (cleaned.includes('99989') || cleaned === PHONE_NUMBERS.chatbot) {

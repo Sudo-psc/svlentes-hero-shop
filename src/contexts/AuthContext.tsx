@@ -133,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await manager?.handleAuthStateChange(user)
 
       // Store Firebase token securely via server-side API
+      // CRITICAL: Only set loading to false AFTER cookie is set to prevent redirect loop
       if (user) {
         devLog.auth('user-signed-in', { uid: user.uid, email: user.email })
         try {
@@ -149,8 +150,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             devLog.auth('token-stored')
           }
+
+          // FIXED: Only set loading to false AFTER token is stored
+          // This ensures the middleware can verify the cookie before redirects happen
+          setLoading(false)
         } catch (error) {
           console.error('[AUTH] Failed to get ID token:', error)
+          // Still set loading to false even on error to prevent infinite loading
+          setLoading(false)
         }
       } else {
         devLog.auth('user-signed-out')
@@ -165,13 +172,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('[AUTH] Failed to clear token:', error)
         }
+        // Set loading to false after clearing token
+        setLoading(false)
       }
-
-      setLoading(false)
     }, (error) => {
       console.error('[AUTH] Auth state change error:', error)
       setLoading(false)
     })
+
+    return unsubscribe
   }, [auth, manager])
 
   const signIn = async (email: string, password: string) => {

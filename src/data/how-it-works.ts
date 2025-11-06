@@ -1,4 +1,15 @@
 // Dados para a seção "Como Funciona"
+// Tipo para os ícones - serão renderizados como componentes no React
+export type IconName =
+    | 'stethoscope'
+    | 'clipboardCheck'
+    | 'package'
+    | 'smartphone'
+    | 'search'
+    | 'calendar'
+    | 'truck'
+    | 'hospital'
+
 export const howItWorksSteps = {
     monthly: [
         {
@@ -7,7 +18,7 @@ export const howItWorksSteps = {
             description: 'Agende sua consulta com Dr. Philipe para avaliar suas necessidades',
             cost: 'Incluído no plano',
             economy: 'Economize R$ 150',
-            icon: '👨‍⚕️',
+            icon: 'stethoscope' as IconName,
             duration: '1 hora'
         },
         {
@@ -16,7 +27,7 @@ export const howItWorksSteps = {
             description: 'Selecione o plano ideal baseado no seu uso e necessidades',
             cost: 'A partir de R$ 89,90/mês',
             economy: 'Até 40% de economia',
-            icon: '📋',
+            icon: 'clipboardCheck' as IconName,
             duration: '5 minutos'
         },
         {
@@ -25,7 +36,7 @@ export const howItWorksSteps = {
             description: 'Suas lentes chegam automaticamente, sem você se preocupar',
             cost: 'Frete grátis',
             economy: 'Economize tempo e dinheiro',
-            icon: '📦',
+            icon: 'package' as IconName,
             duration: '2-3 dias úteis'
         },
         {
@@ -34,7 +45,7 @@ export const howItWorksSteps = {
             description: 'Dr. Philipe monitora sua saúde ocular e ajusta quando necessário',
             cost: 'Incluído no plano',
             economy: 'Prevenção é economia',
-            icon: '📱',
+            icon: 'smartphone' as IconName,
             duration: 'Sempre disponível'
         }
     ],
@@ -45,7 +56,7 @@ export const howItWorksSteps = {
             description: 'Consulta detalhada + exames para definir o melhor plano anual',
             cost: 'Incluído no plano anual',
             economy: 'Economize R$ 300 em consultas',
-            icon: '🔍',
+            icon: 'search' as IconName,
             duration: '1h30min'
         },
         {
@@ -54,7 +65,7 @@ export const howItWorksSteps = {
             description: 'Receba 2 meses grátis e desconto progressivo',
             cost: '2 meses grátis',
             economy: 'Economize até R$ 600/ano',
-            icon: '📅',
+            icon: 'calendar' as IconName,
             duration: 'Válido por 12 meses'
         },
         {
@@ -63,7 +74,7 @@ export const howItWorksSteps = {
             description: 'Cronograma anual de entregas otimizado para seu uso',
             cost: 'Frete grátis o ano todo',
             economy: 'R$ 200 em frete economizado',
-            icon: '🚚',
+            icon: 'truck' as IconName,
             duration: 'Entregas automáticas'
         },
         {
@@ -72,7 +83,7 @@ export const howItWorksSteps = {
             description: 'Consultas regulares, exames e ajustes incluídos no plano',
             cost: 'Tudo incluído',
             economy: 'R$ 800 em serviços médicos',
-            icon: '🏥',
+            icon: 'hospital' as IconName,
             duration: 'Cobertura anual completa'
         }
     ]
