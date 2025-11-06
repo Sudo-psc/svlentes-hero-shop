@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { VideoHeroSection } from '@/components/sections/VideoHeroSection'
 import { TrustStrip } from '@/components/trust/TrustStrip'
-import { TechnicalResponsibleSection } from '@/components/sections/TechnicalResponsibleSection'
+import { DoctorCard } from '@/components/trust/DoctorCard'
 import { HomeLazySections } from '@/components/sections/HomeLazySections'
 export const metadata: Metadata = {
     title: 'SV Lentes Caratinga MG | Assinatura Lentes com Dr. Philipe Saraiva Cruz',
@@ -37,10 +37,14 @@ export default function HomePage() {
                     <TrustStrip />
                 </div>
             </section>
-
-            {/* Technical Responsible Section - Responsável Técnico em Destaque */}
-            <TechnicalResponsibleSection />
-
+            
+            {/* Responsável Técnico - Seção destacada */}
+            <section id="responsavel-tecnico" className="bg-gradient-to-b from-gray-50 to-white py-12 lg:py-16">
+                <div className="container-custom">
+                    <DoctorCard variant="prominent" showCTA={true} />
+                </div>
+            </section>
+            
             {/* Seção com opções de calculadora e assinatura direta */}
             <HomeLazySections />
         </div>

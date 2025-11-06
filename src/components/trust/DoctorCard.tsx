@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { OptimizedImage } from '@/components/ui/OptimizedImage'
@@ -14,10 +15,12 @@ import {
     Users,
     Clock,
     MessageCircle,
-    Phone
+    Phone,
+    Quote,
+    ExternalLink
 } from 'lucide-react'
 interface DoctorCardProps {
-    variant?: 'hero' | 'full' | 'compact'
+    variant?: 'hero' | 'full' | 'compact' | 'prominent'
     showCTA?: boolean
     className?: string
 }
@@ -26,6 +29,8 @@ export function DoctorCard({
     showCTA = true,
     className = ''
 }: DoctorCardProps) {
+    const router = useRouter()
+    
     const handleConsultation = () => {
         openWhatsAppWithContext('consultation', {
             page: 'landing-page',
@@ -162,6 +167,127 @@ export function DoctorCard({
             </div>
         )
     }
+
+    if (variant === 'prominent') {
+        return (
+            <div className={`bg-gradient-to-br from-white via-primary-50/30 to-secondary-50/30 rounded-3xl shadow-2xl border-2 border-primary-200/50 overflow-hidden ${className}`}>
+                {/* Decorative header bar */}
+                <div className="h-2 bg-gradient-to-r from-primary-500 via-primary-600 to-secondary-500"></div>
+                
+                <div className="p-8 lg:p-12">
+                    <div className="flex flex-col lg:flex-row gap-8 items-start">
+                        {/* Left: Doctor Photo and Basic Info */}
+                        <div className="flex-shrink-0 text-center lg:text-left">
+                            <div className="relative inline-block">
+                                <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl ring-4 ring-primary-100/50">
+                                    <OptimizedImage
+                                        src={doctorInfo.photo}
+                                        alt={`Foto do ${doctorInfo.name}`}
+                                        width={160}
+                                        height={160}
+                                        quality={90}
+                                        priority={true}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                {/* Verification Badge */}
+                                <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center border-4 border-white shadow-lg shadow-green-500/50">
+                                    <Award className="w-6 h-6 text-white drop-shadow-sm" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right: Info, Quote and CTA */}
+                        <div className="flex-1 space-y-6">
+                            {/* Header */}
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                                        {doctorInfo.name}
+                                    </h2>
+                                    <Badge variant="default" className="bg-primary-600 text-white">
+                                        Responsável Técnico
+                                    </Badge>
+                                </div>
+                                <p className="text-primary-700 font-semibold text-lg">
+                                    {doctorInfo.crm} | {doctorInfo.specialty}
+                                </p>
+                                <p className="text-gray-600 mt-1">{doctorInfo.experience}</p>
+                            </div>
+
+                            {/* Professional Quote */}
+                            {doctorInfo.quote && (
+                                <div className="relative bg-white/80 rounded-2xl p-6 shadow-lg border border-primary-100">
+                                    <Quote className="absolute top-4 left-4 w-8 h-8 text-primary-200" aria-hidden="true" />
+                                    <blockquote className="relative pl-8">
+                                        <p className="text-gray-700 italic leading-relaxed text-base lg:text-lg">
+                                            "{doctorInfo.quote}"
+                                        </p>
+                                        <cite className="block mt-3 text-sm font-semibold text-primary-700 not-italic">
+                                            — {doctorInfo.name}
+                                        </cite>
+                                    </blockquote>
+                                </div>
+                            )}
+
+                            {/* Key Credentials */}
+                            <div className="flex flex-wrap gap-2">
+                                <Badge variant="secondary" className="bg-success-50 text-success-700 border-success-200">
+                                    <Heart className="w-3 h-3 mr-1" />
+                                    Membro SBO
+                                </Badge>
+                                <Badge variant="secondary" className="bg-primary-50 text-primary-700 border-primary-200">
+                                    <GraduationCap className="w-3 h-3 mr-1" />
+                                    Especialista
+                                </Badge>
+                                <Badge variant="secondary" className="bg-secondary-50 text-secondary-700 border-secondary-200">
+                                    <Users className="w-3 h-3 mr-1" />
+                                    5000+ pacientes
+                                </Badge>
+                            </div>
+
+                            {/* CTAs */}
+                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                {showCTA && (
+                                    <>
+                                        <Button
+                                            onClick={handleConsultation}
+                                            size="lg"
+                                            className="flex items-center justify-center gap-2"
+                                        >
+                                            <Phone className="w-4 h-4" />
+                                            <span>Agendar Consulta</span>
+                                        </Button>
+                                        <Button
+                                            onClick={handleWhatsApp}
+                                            variant="outline"
+                                            size="lg"
+                                            className="flex items-center justify-center gap-2"
+                                        >
+                                            <MessageCircle className="w-4 h-4" />
+                                            <span>Tirar Dúvidas</span>
+                                        </Button>
+                                    </>
+                                )}
+                                {doctorInfo.curriculumUrl && (
+                                    <Button
+                                        variant="ghost"
+                                        size="lg"
+                                        className="flex items-center justify-center gap-2 text-primary-700 hover:text-primary-800"
+                                        onClick={() => router.push(doctorInfo.curriculumUrl)}
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        <span>Ver Currículo Completo</span>
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+    
     // Default: hero variant
     return (
         <div className={`bg-white/95 backdrop-blur-md rounded-3xl shadow-glass-lg border border-white/30 p-6 transform hover:scale-105 hover:shadow-glass-lg transition-all duration-300 ${className}`}>

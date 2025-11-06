@@ -13,7 +13,10 @@ jest.mock('@/data/doctor-info', () => ({
         crm: 'CRM 69.870',
         specialty: 'Oftalmologia',
         experience: 'Especialista em oftalmologia',
+        photo: '/icones/drphilipe_perfil.jpeg',
         bio: 'Especialista em lentes de contato com formação completa em oftalmologia.',
+        quote: 'Como oftalmologista, acredito que o acesso facilitado a lentes de contato de qualidade, aliado ao acompanhamento médico contínuo, transforma a vida dos pacientes.',
+        curriculumUrl: '/sobre-o-medico',
         credentials: [
             'Graduação em Medicina - UFMT',
             'Residência em Oftalmologia - UNIFESP',
@@ -53,16 +56,6 @@ describe('DoctorCard', () => {
             expect(screen.getByText('SBO')).toBeInTheDocument()
             expect(screen.getByText('Especialista')).toBeInTheDocument()
             expect(screen.getByText('5000+ pacientes')).toBeInTheDocument()
-        })
-
-        it('shows quick stats', () => {
-            render(<DoctorCard />)
-
-            // Check for satisfaction and support stats
-            expect(screen.getByText('98%')).toBeInTheDocument()
-            expect(screen.getByText('Satisfação')).toBeInTheDocument()
-            expect(screen.getByText('24/7')).toBeInTheDocument()
-            expect(screen.getByText('Suporte')).toBeInTheDocument()
         })
 
         it('renders CTA button when showCTA is true', () => {
@@ -168,7 +161,7 @@ describe('DoctorCard', () => {
             render(<DoctorCard variant="full" showCTA={true} />)
 
             expect(screen.getByRole('button', { name: /Agendar Consulta/i })).toBeInTheDocument()
-            expect(screen.getByRole('button', { name: /Conversar no WhatsApp/i })).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: /Tirar dúvidas no WhatsApp/i })).toBeInTheDocument()
         })
 
         it('calls correct WhatsApp integration for each button', () => {
@@ -187,7 +180,7 @@ describe('DoctorCard', () => {
             })
 
             // Test WhatsApp button
-            const whatsappButton = screen.getByRole('button', { name: /Conversar no WhatsApp/i })
+            const whatsappButton = screen.getByRole('button', { name: /Tirar dúvidas no WhatsApp/i })
             fireEvent.click(whatsappButton)
 
             expect(mockOpenWhatsApp).toHaveBeenCalledWith('hero', {
@@ -203,7 +196,6 @@ describe('DoctorCard', () => {
 
             const ctaButton = screen.getByRole('button', { name: /Agendar Consulta/i })
             expect(ctaButton).toBeInTheDocument()
-            expect(ctaButton).toHaveAttribute('type', 'button')
         })
 
         it('has proper heading structure in full variant', () => {
@@ -227,9 +219,100 @@ describe('DoctorCard', () => {
         it('shows verification badge', () => {
             const { container } = render(<DoctorCard />)
 
-            // Should have verification badge (Award icon)
-            const verificationBadge = container.querySelector('.bg-green-500')
+            // Should have verification badge (Award icon) - updated class name for gradient
+            const verificationBadge = container.querySelector('.bg-gradient-to-br.from-green-400')
             expect(verificationBadge).toBeInTheDocument()
+        })
+    })
+
+    describe('Prominent variant', () => {
+        it('renders doctor information with enhanced styling', () => {
+            render(<DoctorCard variant="prominent" />)
+
+            expect(screen.getByText('Dr. Philipe Saraiva Cruz')).toBeInTheDocument()
+            expect(screen.getByText('Responsável Técnico')).toBeInTheDocument()
+            expect(screen.getByText('CRM 69.870 | Oftalmologia')).toBeInTheDocument()
+            expect(screen.getByText('Especialista em oftalmologia')).toBeInTheDocument()
+        })
+
+        it('displays professional quote', () => {
+            render(<DoctorCard variant="prominent" />)
+
+            expect(screen.getByText(/Como oftalmologista, acredito que o acesso facilitado/)).toBeInTheDocument()
+            expect(screen.getByText(/— Dr. Philipe Saraiva Cruz/)).toBeInTheDocument()
+        })
+
+        it('shows credential badges', () => {
+            render(<DoctorCard variant="prominent" />)
+
+            expect(screen.getByText('Membro SBO')).toBeInTheDocument()
+            expect(screen.getByText('Especialista')).toBeInTheDocument()
+            expect(screen.getByText('5000+ pacientes')).toBeInTheDocument()
+        })
+
+        it('renders all CTAs when showCTA is true', () => {
+            render(<DoctorCard variant="prominent" showCTA={true} />)
+
+            expect(screen.getByRole('button', { name: /Agendar Consulta/i })).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: /Tirar Dúvidas/i })).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: /Ver Currículo Completo/i })).toBeInTheDocument()
+        })
+
+        it('does not render CTAs when showCTA is false', () => {
+            render(<DoctorCard variant="prominent" showCTA={false} />)
+
+            expect(screen.queryByRole('button', { name: /Agendar Consulta/i })).not.toBeInTheDocument()
+            expect(screen.queryByRole('button', { name: /Tirar Dúvidas/i })).not.toBeInTheDocument()
+            // Curriculum link should still be visible
+            expect(screen.getByRole('button', { name: /Ver Currículo Completo/i })).toBeInTheDocument()
+        })
+
+        it('calls WhatsApp integration for consultation button', () => {
+            render(<DoctorCard variant="prominent" showCTA={true} />)
+
+            const consultationButton = screen.getByRole('button', { name: /Agendar Consulta/i })
+            fireEvent.click(consultationButton)
+
+            expect(mockOpenWhatsApp).toHaveBeenCalledWith('consultation', {
+                page: 'landing-page',
+                section: 'doctor-card',
+                userInfo: {
+                    nome: 'Interessado via Doctor Card'
+                }
+            })
+        })
+
+        it('calls WhatsApp integration for questions button', () => {
+            render(<DoctorCard variant="prominent" showCTA={true} />)
+
+            const questionsButton = screen.getByRole('button', { name: /Tirar Dúvidas/i })
+            fireEvent.click(questionsButton)
+
+            expect(mockOpenWhatsApp).toHaveBeenCalledWith('hero', {
+                page: 'landing-page',
+                section: 'doctor-card-whatsapp'
+            })
+        })
+
+        it('has decorative header bar', () => {
+            const { container } = render(<DoctorCard variant="prominent" />)
+
+            const decorativeBar = container.querySelector('.h-2.bg-gradient-to-r')
+            expect(decorativeBar).toBeInTheDocument()
+        })
+
+        it('shows verification badge with doctor photo', () => {
+            const { container } = render(<DoctorCard variant="prominent" />)
+
+            const verificationBadge = container.querySelector('.bg-gradient-to-br.from-green-400')
+            expect(verificationBadge).toBeInTheDocument()
+        })
+
+        it('applies custom className', () => {
+            const customClass = 'my-custom-class'
+            const { container } = render(<DoctorCard variant="prominent" className={customClass} />)
+
+            expect(container.firstChild).toHaveClass(customClass)
         })
     })
 })
