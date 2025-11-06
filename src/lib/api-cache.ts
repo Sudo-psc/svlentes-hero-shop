@@ -34,6 +34,7 @@ interface CacheEntry {
   etag?: string
   lastModified?: string
   accessCount: number
+  lastAccessed: number
 }
 
 interface PendingRequest {
@@ -86,16 +87,17 @@ class APICache {
   }
 
   /**
-   * Simple hash function
+   * Fast hash function using FNV-1a algorithm
+   * More efficient and better distribution than simple hash
    */
   private hashString(str: string): string {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
+    let hash = 2166136261
+    const len = str.length
+    for (let i = 0; i < len; i++) {
+      hash ^= str.charCodeAt(i)
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)
     }
-    return Math.abs(hash).toString(36)
+    return (hash >>> 0).toString(36)
   }
 
   /**
@@ -139,6 +141,7 @@ class APICache {
 
   /**
    * Clean up expired entries and pending requests
+   * Uses Map's insertion order for efficient LRU eviction
    */
   private cleanup(): void {
     const now = Date.now()
@@ -161,14 +164,16 @@ class APICache {
       }
     }
 
-    // Enforce size limit
+    // Enforce size limit using LRU based on lastAccessed timestamp
     if (this.cache.size > this.maxSize) {
       const entries = Array.from(this.cache.entries())
-        .sort(([, a], [, b]) => a[1].timestamp - b[1].timestamp)
-
-      const toDelete = entries.slice(0, entries.length - this.maxSize)
-      toDelete.forEach(([key]) => this.cache.delete(key))
-      cleanedCount += toDelete.length
+        .sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed)
+      
+      const toDeleteCount = this.cache.size - this.maxSize
+      for (let i = 0; i < toDeleteCount; i++) {
+        this.cache.delete(entries[i][0])
+        cleanedCount++
+      }
     }
 
     if (cleanedCount > 0) {
@@ -177,6 +182,17 @@ class APICache {
         remainingEntries: this.cache.size,
         pendingRequests: this.pendingRequests.size
       })
+    }
+  }
+
+  /**
+   * Move entry to end of Map for LRU tracking (O(1) operation)
+   */
+  private updateAccessOrder(key: string): void {
+    const entry = this.cache.get(key)
+    if (entry) {
+      this.cache.delete(key)
+      this.cache.set(key, entry)
     }
   }
 
@@ -208,6 +224,10 @@ class APICache {
       this.cache.delete(key)
       return null
     }
+
+    // Update LRU tracking and access timestamp
+    entry.lastAccessed = Date.now()
+    this.updateAccessOrder(key)
 
     // Create response from cached data
     const response = new NextResponse(JSON.stringify(entry.data), {
@@ -265,7 +285,8 @@ class APICache {
       },
       etag,
       lastModified,
-      accessCount: 1
+      accessCount: 1,
+      lastAccessed: now
     }
 
     // Enforce size limit
@@ -274,6 +295,7 @@ class APICache {
     }
 
     this.cache.set(key, entry)
+    this.updateAccessOrder(key)
 
     logger.debug(LogCategory.CACHE, 'API response cached', {
       key,
