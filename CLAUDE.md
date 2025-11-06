@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Responsible Physician: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
 - LGPD-compliant (Brazilian data protection law)
 - Production domains: **svlentes.com.br** (primary) / **svlentes.shop** (alternative)
-- Payment processor: **Asaas API v3** (Brazilian gateway - PIX, Boleto, Cartão de Crédito)
+- Payment processor: **Stripe** (International gateway with Customer Portal)
 - WhatsApp integration: **SendPulse** for customer support automation
 
 ## Development Commands
@@ -97,7 +97,7 @@ npm run lighthouse       # Run Lighthouse CI performance audit
 - 📄 **InvoicesModal**: Invoice download and payment history
 - 🔄 **ChangePlanModal**: Visual plan comparison and instant switching
 - 📍 **UpdateAddressModal**: CEP lookup and address validation
-- 💳 **UpdatePaymentModal**: Secure payment updates via Asaas
+- 💳 **UpdatePaymentModal**: Secure payment updates via Stripe
 - 🚨 **EmergencyContact**: Healthcare compliance with Dr. Philipe's info
 - 📅 **SubscriptionHistoryTimeline**: Visual event timeline
 
@@ -129,9 +129,8 @@ src/
 │   │   │   ├── invoices/  # Invoice download
 │   │   │   └── register/  # User registration
 │   │   ├── webhooks/      # Webhook handlers
-│   │   │   ├── asaas/     # Asaas payment webhooks
+│   │   │   ├── stripe/    # Stripe payment webhooks
 │   │   │   └── sendpulse/ # SendPulse WhatsApp webhooks
-│   │   ├── asaas/         # Payment creation endpoints
 │   │   ├── whatsapp/      # WhatsApp conversation management
 │   │   ├── sendpulse/     # SendPulse integration
 │   │   ├── monitoring/    # Health and performance endpoints
@@ -176,7 +175,7 @@ src/
 - **React Hook Form** with Zod validation
 - **Framer Motion** for animations
 - **Clerk** for modern authentication (alongside Firebase)
-- **Asaas API v3** for payment processing (Brazilian market)
+- **Stripe** for payment processing with Customer Portal functionality
 - **SendPulse** for WhatsApp Business integration
 - **LangChain + OpenAI** for AI-powered customer support
 - **Prisma** for database ORM (PostgreSQL)
@@ -185,21 +184,25 @@ src/
 - **Playwright** for E2E testing
 - **Lighthouse CI** for performance monitoring
 
-### Payment Integration
+### Stripe Integration (Primary Payment System)
 
-**Asaas Payment Gateway (Primary):**
-- Brazilian payment processor (PIX, Boleto, Cartão de Crédito)
-- API endpoint: `/api/asaas/create-payment`
-- Webhook endpoint: `/api/webhooks/asaas`
-- Supports recurring subscriptions
-- Production and sandbox environments
-- Webhook events: `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_OVERDUE`
-- Authentication via `ASAAS_API_KEY_PROD` and `ASAAS_WEBHOOK_TOKEN`
-
-**Stripe (Legacy/Backup):**
-- Secondary payment processor
-- Checkout sessions via `/api/create-checkout`
+**Stripe Payment Gateway (Primary):**
+- International payment processor with extensive feature set
+- API endpoints: `/api/stripe/subscription`, `/api/stripe/customer-portal`, `/api/stripe/create-checkout`
 - Webhook endpoint: `/api/webhooks/stripe`
+- Customer Portal for self-service subscription management
+- Production and test environments with full feature parity
+- Webhook events: `invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.created`, etc.
+- Authentication via Firebase ID tokens and Stripe API keys
+
+**Stripe Customer Portal:**
+- Self-service subscription management (cancel, pause, upgrade/downgrade)
+- Payment method updates (add/remove cards, update billing info)
+- Invoice history and download access
+- Tax form management and receipts
+- Configuration via Stripe Dashboard with full customization
+- Integrated via `/api/stripe/customer-portal` endpoint
+
 
 ### WhatsApp Integration
 
@@ -258,8 +261,8 @@ src/
 
 **Core Models:**
 - `User` - User accounts with Google OAuth and Firebase integration
-- `Subscription` - Subscription plans with Asaas integration
-- `Payment` - Individual payment records from Asaas webhooks
+- `Subscription` - Subscription plans with Stripe integration
+- `Payment` - Individual payment records from Stripe webhooks
 - `Order` - Lens delivery orders with tracking
 - `SupportTicket` - Customer support tickets with escalation
 
@@ -305,7 +308,7 @@ src/
 
 **Next.js Security Headers (next.config.js:59-122):**
 - **HSTS**: Strict-Transport-Security with preload
-- **CSP**: Content Security Policy optimized for Asaas, Google OAuth
+- **CSP**: Content Security Policy optimized for Stripe, Google OAuth
 - **X-Frame-Options**: SAMEORIGIN
 - **X-Content-Type-Options**: nosniff
 - **X-XSS-Protection**: enabled with block mode
@@ -321,7 +324,7 @@ src/
 - SVG support with sandboxing
 
 **API Security:**
-- Asaas webhook token validation
+- Stripe webhook signature validation
 - SendPulse webhook authentication
 - CORS configuration for payment providers
 - **Rate Limiting**: Comprehensive rate limiting on all API routes (see Rate Limiting section below)
@@ -338,7 +341,6 @@ src/
 **Rate Limits by Endpoint:**
 - `/api/assinante/*` - 100 requests/hour per authenticated user
 - `/api/webhooks/*` - 1000 requests/hour per webhook source (IP or token)
-- `/api/asaas/*` - 50 requests/hour per IP address
 - All other `/api/*` - 200 requests/hour per IP
 
 **Rate Limit Headers:**
@@ -384,11 +386,11 @@ NEXT_PUBLIC_APP_URL=https://svlentes.shop
 NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026  # Chatbot: (33) 99989-8026
 NEXT_PUBLIC_SUPPORT_PHONE=5533986061427     # Direct Support: (33) 98606-1427
 
-# Asaas Payment (Required for production)
-ASAAS_ENV=production
-ASAAS_API_KEY_PROD=<production-key>
-ASAAS_API_KEY_SANDBOX=<sandbox-key>
-ASAAS_WEBHOOK_TOKEN=<webhook-secret>
+# Stripe Payment Integration (Primary)
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
 
 # SendPulse WhatsApp Integration
 SENDPULSE_USER_ID=<user-id>
@@ -428,14 +430,26 @@ NEXTAUTH_URL=https://svlentes.shop
 - **Resilience Tests**: Vitest for offline functionality, backup systems, error recovery
 - **Integration Tests**: Vitest for API endpoint testing and database operations
 - **E2E Tests**: Playwright covering critical user flows
-  - Subscription flow
+  - Stripe subscription flow and portal access
+  - Customer portal management (cancel, upgrade, payment methods)
   - Calculator interaction
   - Form validation
-  - Payment integration
+  - Payment integration (Stripe)
   - Consultation scheduling
   - WhatsApp chatbot interaction
 - **Component Tests**: UI components and sections
 - **Performance**: Lighthouse CI for web vitals monitoring with automated audits
+
+**Stripe Testing Commands:**
+```bash
+# Test Stripe integration in development
+npm run test:stripe           # Run Stripe-specific tests
+npm run test:e2e:stripe      # E2E tests for Stripe flows
+
+# Test webhook processing
+npm run test:webhooks         # Stripe webhook event handling
+npm run test:portal          # Customer portal functionality
+```
 
 ### Critical Business Logic
 
@@ -478,7 +492,7 @@ NEXTAUTH_URL=https://svlentes.shop
 ### Local Development
 1. Install dependencies: `npm install`
 2. Copy environment example: `cp .env.local.example .env.local`
-3. Configure Asaas sandbox keys in `.env.local`
+3. Configure Stripe test keys in `.env.local`
 4. Configure database: Set `DATABASE_URL` in `.env.local`
 5. Run migrations: `npx prisma migrate dev`
 6. Generate Prisma client: `npx prisma generate`
@@ -515,8 +529,9 @@ curl https://svlentes.com.br/api/health-check
 - [ ] All tests passing (`npm run test && npm run test:resilience && npm run test:e2e`)
 - [ ] Production build successful (`npm run build`)
 - [ ] Environment variables configured
-- [ ] Asaas production keys active
+- [ ] Stripe production keys active
 - [ ] SendPulse integration configured
+- [ ] Stripe Customer Portal configured in dashboard
 - [ ] SSL certificates valid (Let's Encrypt via Certbot)
 - [ ] Nginx configuration tested (`nginx -t`)
 - [ ] Health check endpoint responding
@@ -528,11 +543,17 @@ curl https://svlentes.com.br/api/health-check
 
 ## API Endpoints
 
+### Stripe Payment Endpoints (Primary)
+- `GET /api/stripe/subscription` - Fetch user's active Stripe subscription
+- `POST /api/stripe/customer-portal` - Create Stripe Customer Portal session
+- `POST /api/stripe/create-checkout` - Create Stripe checkout session
+- `GET /api/stripe/products` - List available products and pricing
+- `POST /api/webhooks/stripe` - Stripe webhook handler (subscription events)
+
+
 ### Public Endpoints
 - `GET /api/health-check` - Application health status
 - `POST /api/schedule-consultation` - Book medical consultation
-- `POST /api/asaas/create-payment` - Create Asaas payment
-- `POST /api/webhooks/asaas` - Asaas webhook handler
 - `POST /api/webhooks/sendpulse` - SendPulse WhatsApp webhook
 - `GET /api/whatsapp-redirect` - WhatsApp contact redirect
 
@@ -564,10 +585,10 @@ curl https://svlentes.com.br/api/health-check
 ## Domain-Specific Knowledge
 
 ### Brazilian Payment Market
-- **PIX**: Instant payment method (preferred by users)
-- **Boleto Bancário**: Traditional bank slip payment
-- **Cartão de Crédito**: Credit card with installment options (parcelamento)
-- **Asaas**: Specialized Brazilian payment gateway with local expertise
+- **PIX**: Instant payment method (preferred by users) - Available via Stripe
+- **Boleto Bancário**: Traditional bank slip payment - Available via Stripe
+- **Cartão de Crédito**: Credit card with installment options (parcelamento) - Available via Stripe
+- **Stripe**: International payment processor with full Brazilian market support
 
 ### Healthcare in Brazil
 - **CRM**: Conselho Regional de Medicina (state medical council registration)
@@ -779,10 +800,12 @@ npm run test:all                # Complete resilience test suite
 - Check Node.js version (requires 20+): `node --version`
 
 ### Payment Integration Issues
-- Verify Asaas API keys in environment variables
-- Check webhook token matches Asaas dashboard
-- Monitor webhook logs: `journalctl -u svlentes-nextjs -f`
-- Test in sandbox environment first
+- **Stripe**: Verify Stripe API keys (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`)
+- **Stripe Webhooks**: Ensure `STRIPE_WEBHOOK_SECRET` matches Stripe dashboard configuration
+- **Customer Portal**: Check Stripe Dashboard > Settings > Customer Portal configuration
+- **Firebase Integration**: Verify Firebase users have `stripeCustomerId` in custom claims
+- **Webhook Monitoring**: Check logs: `journalctl -u svlentes-nextjs -f | grep STRIPE`
+- **Test Environment**: Always test in Stripe test mode first using test cards
 
 ### WhatsApp/SendPulse Issues
 - Verify SendPulse credentials in `.env.sendpulse`
@@ -837,7 +860,12 @@ npm run test:all                # Complete resilience test suite
 
 ### Key Business Logic Files
 - **Calculator**: `src/lib/calculator.ts` - Savings calculation algorithms
-- **Payments**: `src/lib/asaas.ts` - Asaas API integration
+- **Stripe Integration**: `src/app/api/stripe/` - Complete Stripe API suite
+  - `subscription/route.ts` - Active subscription management
+  - `customer-portal/route.ts` - Customer portal session creation
+  - `create-checkout/route.ts` - Checkout session generation
+- **Stripe Client Components**: `src/components/assinante/StripePortalButton.tsx` - Portal access UI
+- **Stripe Hooks**: `src/hooks/useStripePortal.ts`, `src/hooks/useStripeSubscription.ts` - React integration
 - **WhatsApp**: `src/lib/sendpulse-client.ts` - SendPulse API client
 - **AI Support**: `src/lib/langchain-support-processor.ts` - NLP processing
 - **Authentication**: `src/lib/chatbot-auth-handler.ts` - WhatsApp chatbot auth

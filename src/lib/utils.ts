@@ -44,6 +44,9 @@ export function scrollToSection(sectionId: string) {
         }
     }, 500)
 }
+// TODO: [CONFIG] Create centralized environment variable validation
+// Current fallback to hardcoded values masks configuration errors
+// Implement startup validation that fails fast when required env vars are missing
 // Função para gerar link do WhatsApp
 export function generateWhatsAppLink(
     phone: string = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5533999898026',

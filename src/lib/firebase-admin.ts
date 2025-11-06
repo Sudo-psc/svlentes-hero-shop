@@ -1,5 +1,8 @@
 import * as admin from 'firebase-admin'
 // Initialize Firebase Admin SDK (singleton pattern)
+// TODO: [SECURITY] Implement Firebase Admin SDK credential validation at startup
+// Current silent failure masks configuration issues that could cause runtime errors
+// Add validation: test database connectivity, verify service account permissions, check auth state
 // Only initialize if we have credentials (skip during build)
 const hasCredentials =
   process.env.FIREBASE_SERVICE_ACCOUNT_KEY ||

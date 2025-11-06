@@ -7,16 +7,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { config } from '@/config/loader'
 import { DEFAULT_CLIENT_CONFIG } from '@/lib/use-server-config'
 import { withCache } from '@/lib/api-cache'
+import { ApiErrorHandler, generateRequestId, ErrorType } from '@/lib/api-error-handler'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
 
-export function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {
+  const requestId = generateRequestId()
   const { searchParams } = new URL(request.url)
   const section = searchParams.get('section') // 'site', 'content', 'contact', etc.
   const locale = searchParams.get('locale') || 'pt-BR'
 
-  return withCache(async (request) => {
+  const context = {
+    api: '/api/config',
+    requestId,
+    timestamp: new Date(),
+    metadata: { section, locale }
+  }
+
+  return ApiErrorHandler.wrapApiHandler(async () => {
+    return withCache(async (request) => {
     // Only allow certain sections to be accessed via API
     const allowedSections = ['site', 'content', 'contact', 'i18n']
     if (section && !allowedSections.includes(section)) {
@@ -118,4 +128,5 @@ export function GET(request: NextRequest) {
     deduplicate: true,
     staleWhileRevalidate: true
   })(request)
+    }, context)
 }

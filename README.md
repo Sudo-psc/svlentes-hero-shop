@@ -11,7 +11,7 @@ Landing page para assinatura de lentes de contato com acompanhamento médico esp
 - **Next.js 15** - Framework React com App Router
 - **TypeScript** - Tipagem estática
 - **Tailwind CSS v4** - Framework CSS utilitário
-- **Asaas API v3** - Gateway de pagamento brasileiro (PIX, Boleto, Cartão de Crédito)
+- **Stripe** - Gateway de pagamento internacional (Cartão de Crédito, PIX, Boleto)
 - **Zod** - Validação de schemas
 - **React Hook Form** - Gerenciamento de formulários
 - **Framer Motion** - Animações
@@ -21,7 +21,7 @@ Landing page para assinatura de lentes de contato com acompanhamento médico esp
 
 - Node.js 18+
 - npm (gerenciador de pacotes padrão do projeto)
-- Conta no Asaas (para pagamentos - [asaas.com](https://www.asaas.com))
+- Conta no Stripe (para pagamentos - [stripe.com](https://www.stripe.com))
 
 ## 🛠️ Instalação
 
@@ -41,12 +41,12 @@ npm install
 cp .env.local.example .env.local
 ```
 
-4. Edite o arquivo `.env.local` com suas chaves do Asaas e outras configurações:
+4. Edite o arquivo `.env.local` com suas chaves do Stripe e outras configurações:
 ```bash
-# Asaas Payment Gateway
-ASAAS_ENV=sandbox
-ASAAS_API_KEY_SANDBOX=$aact_hmlg_your_sandbox_key
-ASAAS_API_KEY_PROD=$aact_prod_your_production_key
+# Stripe Payment Gateway
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 
 # Application URLs
 NEXT_PUBLIC_APP_URL=https://svlentes.com.br
@@ -91,7 +91,7 @@ src/
 - [x] Tipagem TypeScript completa
 - [x] Hero Section com formulário de leads
 - [x] Seção de planos e preços
-- [x] Integração com Asaas (PIX, Boleto, Cartão)
+- [x] Integração com Stripe (Cartão de Crédito, PIX, Boleto)
 - [x] Calculadora de economia
 - [x] FAQ interativo
 - [x] Sistema de testes (Jest + Playwright)

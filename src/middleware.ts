@@ -183,6 +183,9 @@ function calculateRiskScore(request: NextRequest): number {
   }
 
   // Rate limiting baseado em IP (simplificado)
+  // TODO: [SECURITY] Implement user-based rate limiting for authenticated routes
+  // Current IP-based limiting can be bypassed by VPNs and affects legitimate users
+  // Consider implementing: rate limiting by Firebase UID for /api/assinante/* endpoints
   const ip = getClientIP(request);
   if (ip === 'unknown') risk += 25;
 
@@ -282,12 +285,13 @@ export async function middleware(request: NextRequest) {
   const { start, logData, riskScore, sessionId } = await performLoggingAndMonitoring(request);
 
   // Rate limiting for API routes
-  // FIXED (2025-10-30): Refactored rate-limiter.ts to use lazy initialization
-  // Skip rate limiting during build time (when request is from static generation)
+  // TEMPORARILY DISABLED (2025-11-06): Edge Runtime compilation issue
+  // TODO: Re-enable after investigating Edge Runtime caching
   const pathname = request.nextUrl.pathname;
   const isBuildTime = !request.headers.get('user-agent'); // Build requests don't have user-agent
 
-  if (pathname.startsWith('/api/') && !isBuildTime) {
+  // Rate limiting temporarily disabled due to Edge Runtime compilation issues
+  if (false && pathname.startsWith('/api/') && !isBuildTime) {
     try {
       const {
         selectRateLimiter,
@@ -297,7 +301,7 @@ export async function middleware(request: NextRequest) {
         logRateLimitViolation,
       } = await import('./lib/rate-limiter');
 
-      const limiter = selectRateLimiter(pathname);
+      const limiter = await selectRateLimiter(pathname);
 
       if (limiter) {
         // Get user ID from token if available (for subscriber routes)
@@ -407,9 +411,9 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // Add rate limit headers to successful API responses
-  // FIXED (2025-10-30): Rate limiting now enabled with lazy initialization
+  // TEMPORARILY DISABLED (2025-11-06): Edge Runtime compilation issue
   // Skip during build time to avoid static generation issues
-  if (pathname.startsWith('/api/') && !isBuildTime) {
+  if (false && pathname.startsWith('/api/') && !isBuildTime) {
     try {
       const {
         selectRateLimiter,
@@ -417,7 +421,7 @@ export async function middleware(request: NextRequest) {
         checkRateLimit,
       } = await import('./lib/rate-limiter');
 
-      const limiter = selectRateLimiter(pathname);
+      const limiter = await selectRateLimiter(pathname);
 
       if (limiter) {
         // Get user ID and IP (same logic as above)

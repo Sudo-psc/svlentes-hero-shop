@@ -181,6 +181,10 @@ async function handleAsaasWebhook(request: NextRequest): Promise<NextResponse> {
     try {
         const asaasToken = request.headers.get('asaas-access-token')
         const expectedToken = process.env.ASAAS_WEBHOOK_TOKEN
+        // TODO: [SECURITY] Implement webhook signature validation instead of simple token
+        // Asaas supports webhook signatures for cryptographic verification
+        // Current token validation is vulnerable to token reuse and interception
+        // Migration plan: 1) Add signature validation 2) Keep token as fallback 3) Monitor failures
         if (expectedToken && asaasToken !== expectedToken) {
             console.error('ASAAS_WEBHOOK_AUTH_FAILED: Invalid token')
             return NextResponse.json(

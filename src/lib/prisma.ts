@@ -2,6 +2,10 @@ import { PrismaClient } from '@prisma/client'
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
+// TODO: [DATABASE] Implement connection pool monitoring and health checks
+// Current Prisma setup lacks visibility into connection exhaustion issues
+// Add metrics for: active connections, query performance, connection timeout errors
+// Consider implementing: connection pool size limits, health check endpoint, metrics export
 // P3: Database connection pooling configuration
 export const prisma =
   globalForPrisma.prisma ??

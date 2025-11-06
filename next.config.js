@@ -95,7 +95,7 @@ const nextConfig = {
         const cspDirectives = isDev
             ? [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-eval' 'unsafe-inline' data: *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com www.googletagmanager.com www.google-analytics.com checkout.stripe.com *.clerk.accounts.dev *.clerk.com clerk.svlentes.com.br",
+                "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'trusted-types' data: *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com www.googletagmanager.com www.google-analytics.com checkout.stripe.com *.clerk.accounts.dev *.clerk.com clerk.svlentes.com.br",
                 "style-src 'self' 'unsafe-inline' data: r2cdn.perplexity.ai *.googleapis.com fonts.googleapis.com *.clerk.accounts.dev *.clerk.com",
                 "img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com *.clerk.accounts.dev *.clerk.com img.clerk.com",
                 "font-src 'self' data: r2cdn.perplexity.ai *.gstatic.com *.googleapis.com fonts.gstatic.com",
@@ -108,7 +108,7 @@ const nextConfig = {
             ]
             : [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com www.googletagmanager.com www.google-analytics.com checkout.stripe.com *.clerk.accounts.dev *.clerk.com clerk.svlentes.com.br",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'trusted-types' *.asaas.com accounts.google.com apis.google.com *.gstatic.com js.stripe.com *.facebook.com *.facebook.net securetoken.googleapis.com firebase.googleapis.com www.googletagmanager.com www.google-analytics.com checkout.stripe.com *.clerk.accounts.dev *.clerk.com clerk.svlentes.com.br",
                 "style-src 'self' 'unsafe-inline' r2cdn.perplexity.ai *.googleapis.com fonts.googleapis.com *.clerk.accounts.dev *.clerk.com",
                 "img-src 'self' data: https: blob: *.googleusercontent.com *.fbcdn.net *.google.com *.googleapis.com *.gstatic.com *.facebook.com *.clerk.accounts.dev *.clerk.com img.clerk.com",
                 "font-src 'self' data: r2cdn.perplexity.ai *.gstatic.com *.googleapis.com fonts.gstatic.com",

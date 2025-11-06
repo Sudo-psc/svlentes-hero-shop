@@ -239,8 +239,10 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
 
     // In production, send alert to monitoring system
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Send alert to Sentry/monitoring service
-      // This is a compliance risk and needs immediate attention
+      // TODO: [MONITORING] Implement audit logging failure alerts
+      // CRITICAL: Audit logging failures must be immediately investigated
+      // Integration needed: Sentry, DataDog, or custom webhook alerts
+      // Include context: action, userId, error details for compliance reporting
     }
 
     // DO NOT throw - audit failures should not break user operations

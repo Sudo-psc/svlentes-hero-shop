@@ -28,6 +28,8 @@
         "deploy:production": "./scripts/deploy.sh production",
         "deploy:rollback": "./scripts/deploy.sh rollback",
         "health-check": "curl -f http://localhost:3000/api/health-check",
+        "security:audit": "npm audit && npx audit-ci --moderate",
+        "security:deps-check": "npm outdated && npm ls --depth=0",
         "lighthouse": "lhci autorun",
         "optimize:icons": "node scripts/optimize-icons.js",
         "optimize:logo": "node scripts/optimize-logo.js",

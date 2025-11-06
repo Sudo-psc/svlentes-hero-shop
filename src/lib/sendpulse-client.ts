@@ -45,6 +45,9 @@ export class SendPulseClient {
   private baseUrl: string
   private botId: string | null = null
   constructor() {
+    // TODO: [SECURITY] Validate WhatsApp API credentials at startup
+    // Missing credentials should fail fast rather than silently default to empty strings
+    // Implement validation: check required env vars, test API connectivity, validate bot ID
     this.webhookToken = process.env.SENDPULSE_WEBHOOK_TOKEN || ''
     this.baseUrl = 'https://api.sendpulse.com/whatsapp'
     this.botId = process.env.SENDPULSE_BOT_ID || null
