@@ -12,6 +12,21 @@ import { supportTicketManager, TicketCategory, TicketPriority } from './support-
 import { getLangSmithConfig, logLangSmithStatus, getLangSmithRunConfig } from './langsmith-config'
 import { responseCache } from './response-cache'
 import { logger } from './logger'
+
+export interface LangChainSupportProcessorContract {
+  processSupportMessage(
+    message: string,
+    context: SupportContext
+  ): Promise<{
+    intent: SupportIntent
+    response: string
+    quickReplies: string[]
+    escalationRequired: boolean
+    ticketCreated: boolean
+    actions: string[]
+    cacheHit: boolean
+  }>
+}
 interface SupportIntent {
   name: string
   confidence: number
@@ -78,7 +93,7 @@ function sanitizeHistory(history: string[], maxItems: number = 10): string[] {
     .map(msg => sanitizeUserInput(msg, 500)) // Shorter limit for history
     .filter(msg => msg.length > 0) // Remove empty messages
 }
-export class LangChainSupportProcessor {
+export class LangChainSupportProcessor implements LangChainSupportProcessorContract {
   private llm: ChatOpenAI
   private knowledgeBase: SupportKnowledgeBase
   // Support-specific intent classification template
@@ -815,5 +830,50 @@ Sua visão é prioridade absoluta. Não adie o atendimento médico!`
     return data.join(' | ') || 'Novo cliente'
   }
 }
-// Singleton instance
-export const langchainSupportProcessor = new LangChainSupportProcessor()
+
+const createDisabledSupportProcessor = (): LangChainSupportProcessorContract => {
+  const responseMessage =
+    'Atendimento inteligente indisponível no momento. Encaminharemos sua mensagem para um especialista.'
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('LangChain support processor disabled: missing OPENAI_API_KEY')
+  }
+  return {
+    async processSupportMessage(): Promise<{
+      intent: SupportIntent
+      response: string
+      quickReplies: string[]
+      escalationRequired: boolean
+      ticketCreated: boolean
+      actions: string[]
+      cacheHit: boolean
+    }> {
+      return {
+        intent: {
+          name: 'manual_support_required',
+          confidence: 0,
+          category: TicketCategory.TECHNICAL,
+          priority: TicketPriority.HIGH,
+          escalationRequired: true,
+          entities: {
+            sentiment: 'neutral',
+            urgency: 'high',
+            emotions: [],
+            keywords: []
+          },
+          suggestedActions: ['route_to_human'],
+          responseStrategy: 'agent_required'
+        },
+        response: responseMessage,
+        quickReplies: ['Falar com atendente'],
+        escalationRequired: true,
+        ticketCreated: false,
+        actions: ['escalate_to_human'],
+        cacheHit: false
+      }
+    }
+  }
+}
+
+export const langchainSupportProcessor: LangChainSupportProcessorContract = process.env.OPENAI_API_KEY
+  ? new LangChainSupportProcessor()
+  : createDisabledSupportProcessor()

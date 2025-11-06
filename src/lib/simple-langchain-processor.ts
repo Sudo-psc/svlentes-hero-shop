@@ -12,7 +12,12 @@ import { z } from 'zod'
 import { getLangSmithConfig, getLangSmithRunConfig } from './langsmith-config'
 import { logger, LogCategory } from './logger'
 import { responseCache } from './response-cache'
-// Simplified types
+
+export interface SimpleLangChainProcessorContract {
+  processMessage(userMessage: string, context: SimpleContext): Promise<SimpleProcessingResult>
+  getStats(): Promise<any>
+}
+
 export interface SimpleIntent {
   name: string
   confidence: number
@@ -74,7 +79,7 @@ const SimpleIntentSchema = z.object({
 /**
  * Simplified but powerful LangChain processor
  */
-export class SimpleLangChainProcessor {
+export class SimpleLangChainProcessor implements SimpleLangChainProcessorContract {
   private llm: ChatOpenAI
   private langsmithConfig: any
   // Simplified but effective templates
@@ -599,5 +604,59 @@ Se precisar de ajuda imediata:
     }
   }
 }
-// Export singleton instance
-export const simpleLangChainProcessor = new SimpleLangChainProcessor()
+
+const createDisabledProcessor = (): SimpleLangChainProcessorContract => {
+  const message =
+    'Processamento automatizado indisponível temporariamente. Um atendente entrará em contato em breve.'
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('Simple LangChain processor disabled: missing OPENAI_API_KEY')
+  }
+  return {
+    async processMessage(): Promise<SimpleProcessingResult> {
+      return {
+        intent: {
+          name: 'manual_support_required',
+          confidence: 0,
+          category: 'TECHNICAL',
+          priority: 'HIGH',
+          escalationRequired: true,
+          sentiment: 'neutral',
+          urgency: 'high',
+          suggestedActions: ['route_to_human'],
+          responseStrategy: 'agent_required'
+        },
+        response: message,
+        quickReplies: ['Falar com atendente'],
+        escalationRequired: true,
+        ticketCreated: false,
+        actions: ['escalate_to_human'],
+        processingTime: 0,
+        confidence: 0,
+        tokensUsed: 0,
+        estimatedCost: 0
+      }
+    },
+    async getStats(): Promise<any> {
+      return {
+        enabled: false,
+        langsmith: {
+          enabled: false,
+          project: null,
+          endpoint: null
+        },
+        llm: null,
+        features: {
+          enhancedIntentClassification: false,
+          contextAwareResponses: false,
+          emergencyDetection: false,
+          responseCaching: false,
+          langSmithIntegration: false
+        }
+      }
+    }
+  }
+}
+
+export const simpleLangChainProcessor: SimpleLangChainProcessorContract = process.env.OPENAI_API_KEY
+  ? new SimpleLangChainProcessor()
+  : createDisabledProcessor()

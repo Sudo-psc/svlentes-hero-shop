@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe, handleStripeError } from '@/lib/stripe-client'
+import { getStripeClient } from '@/lib/stripe-client'
 
 /**
  * API Route: List Stripe Products and Prices
@@ -23,14 +23,23 @@ import { stripe, handleStripeError } from '@/lib/stripe-client'
 
 export async function GET(request: NextRequest) {
   try {
+    const stripeClient = getStripeClient()
+    if (!stripeClient) {
+      return NextResponse.json(
+        {
+          error: 'Stripe não está configurado. Entre em contato com o suporte.'
+        },
+        { status: 503 }
+      )
+    }
     // 1. Fetch all active products with prices
-    const products = await stripe.products.list({
+    const products = await stripeClient.products.list({
       active: true,
       expand: ['data.default_price'],
     })
 
     // 2. Fetch all active prices for these products
-    const prices = await stripe.prices.list({
+    const prices = await stripeClient.prices.list({
       active: true,
       expand: ['data.product'],
     })

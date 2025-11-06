@@ -6,6 +6,23 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { TicketPriority, TicketStatus, AgentSpecialization } from './support-ticket-manager'
 import { langchainSupportProcessor } from './langchain-support-processor'
+
+export interface SupportEscalationSystemContract {
+  processEscalation(
+    ticketId: string,
+    reason: EscalationReason,
+    context: any,
+    requestedBy?: string
+  ): Promise<{
+    escalationId: string
+    assigned: boolean
+    agentId?: string
+    estimatedResponseTime?: string
+    nextSteps: string[]
+  }>
+  getActiveEscalations(): Promise<any[]>
+  resolveEscalation(escalationId: string, resolution: string, resolvedBy: string): Promise<void>
+}
 // Escalation Reasons
 export enum EscalationReason {
   EMERGENCY = 'emergency',
@@ -71,7 +88,7 @@ export const agentAvailabilitySchema = z.object({
   nextAvailable: z.date().optional()
 })
 export type AgentAvailability = z.infer<typeof agentAvailabilitySchema>
-export class SupportEscalationSystem {
+export class SupportEscalationSystem implements SupportEscalationSystemContract {
   private escalationQueue: Map<string, EscalationRequest> = new Map()
   private agentAvailability: Map<string, AgentAvailability> = new Map()
   private escalationRules: Map<string, any> = new Map()
@@ -599,5 +616,34 @@ export class SupportEscalationSystem {
     }
   }
 }
-// Singleton instance
-export const supportEscalationSystem = new SupportEscalationSystem()
+
+const createDisabledEscalationSystem = (): SupportEscalationSystemContract => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn('Support escalation system disabled: missing DATABASE_URL')
+  }
+  return {
+    async processEscalation(): Promise<{
+      escalationId: string
+      assigned: boolean
+      agentId?: string
+      estimatedResponseTime?: string
+      nextSteps: string[]
+    }> {
+      return {
+        escalationId: '',
+        assigned: false,
+        nextSteps: ['Encaminhar para atendimento manual'],
+      }
+    },
+    async getActiveEscalations(): Promise<any[]> {
+      return []
+    },
+    async resolveEscalation(): Promise<void> {
+      return
+    }
+  }
+}
+
+export const supportEscalationSystem: SupportEscalationSystemContract = process.env.DATABASE_URL
+  ? new SupportEscalationSystem()
+  : createDisabledEscalationSystem()
