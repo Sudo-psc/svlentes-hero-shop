@@ -1,0 +1,22 @@
+[Unit]
+Description=SV Lentes Next.js Service
+After=network.target
+Wants=nginx.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Environment=NODE_ENV=production
+Environment=PORT=5000
+WorkingDirectory=/var/www/svlentes-hero-shop/shared/current
+ExecStart=/usr/bin/env node .next/standalone/server.js
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+StandardOutput=append:/var/www/svlentes-hero-shop/shared/logs/nextjs.out.log
+StandardError=append:/var/www/svlentes-hero-shop/shared/logs/nextjs.err.log
+EnvironmentFile=/var/www/svlentes-hero-shop/shared/.env
+
+[Install]
+WantedBy=multi-user.target
