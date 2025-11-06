@@ -20,6 +20,7 @@ import { SmoothScroll } from '@/components/ui/SmoothScroll'
 import { CriticalCSS } from '@/components/performance/CriticalCSS'
 import { StripeScript } from '@/components/payment/StripeScript'
 import { ClientProviders } from '@/components/providers/ClientProviders'
+import { ConfigMonitor } from '@/components/ConfigMonitor'
 import {
     baseMetadata,
     generateOrganizationStructuredData,
@@ -98,6 +99,7 @@ export default function RootLayout({
                     <WhatsAppFloat />
                     <SmoothScroll />
                     <StripeScript publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} />
+                    <ConfigMonitor />
                 </ClientProviders>
             </body>
         </html>
