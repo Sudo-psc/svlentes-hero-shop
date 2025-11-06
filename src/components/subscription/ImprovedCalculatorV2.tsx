@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { Calculator, TrendingDown, Save, ArrowRight, Activity, Eye, Sparkles, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { calculateEconomy, formatCurrency } from '@/lib/calculator'
@@ -16,7 +16,7 @@ export function ImprovedCalculatorV2({ onSaveResult }: ImprovedCalculatorProps) 
     const [usagePattern, setUsagePattern] = useState<'occasional' | 'regular' | 'daily'>('regular')
     const [annualContactLensCost, setAnnualContactLensCost] = useState<number>(1200)
     const [annualConsultationCost, setAnnualConsultationCost] = useState<number>(400)
-    const [prevSavings, setPrevSavings] = useState<number>(0)
+    const prevSavingsRef = React.useRef<number>(0)
 
     // Memoize calculation to avoid unnecessary recalculations
     const result = useMemo(() => {
@@ -35,12 +35,11 @@ export function ImprovedCalculatorV2({ onSaveResult }: ImprovedCalculatorProps) 
         }
     }, [lensType, usagePattern, annualContactLensCost, annualConsultationCost])
 
-    // Update prevSavings when result changes
-    useEffect(() => {
-        if (result) {
-            setPrevSavings(result.totalAnnualSavings || 0)
-        }
-    }, [result])
+    // Get previous savings for animation, without causing re-render
+    const prevSavings = prevSavingsRef.current
+    if (result) {
+        prevSavingsRef.current = result.totalAnnualSavings || 0
+    }
 
     const handleSaveResult = useCallback(() => {
         if (result && onSaveResult) {

@@ -46,7 +46,6 @@ interface PendingRequest {
 class APICache {
   private cache = new Map<string, CacheEntry>()
   private pendingRequests = new Map<string, PendingRequest>()
-  private accessOrder: string[] = []
   private defaultOptions: CacheOptions = {
     maxAge: 300, // 5 minutes default
     sMaxAge: 3600, // 1 hour CDN default
@@ -142,7 +141,7 @@ class APICache {
 
   /**
    * Clean up expired entries and pending requests
-   * Optimized to use LRU tracking instead of sorting on every cleanup
+   * Uses Map's insertion order for efficient LRU eviction
    */
   private cleanup(): void {
     const now = Date.now()
@@ -152,7 +151,6 @@ class APICache {
     for (const [key, entry] of this.cache.entries()) {
       if (now > entry.expiresAt) {
         this.cache.delete(key)
-        this.removeFromAccessOrder(key)
         cleanedCount++
       }
     }
@@ -166,16 +164,16 @@ class APICache {
       }
     }
 
-    // Enforce size limit using LRU (Least Recently Used)
+    // Enforce size limit using LRU based on lastAccessed timestamp
     if (this.cache.size > this.maxSize) {
+      const entries = Array.from(this.cache.entries())
+        .sort(([, a], [, b]) => a.lastAccessed - b.lastAccessed)
+      
       const toDeleteCount = this.cache.size - this.maxSize
-      // Remove oldest entries from accessOrder
-      const toDelete = this.accessOrder.slice(0, toDeleteCount)
-      toDelete.forEach((key) => {
-        this.cache.delete(key)
+      for (let i = 0; i < toDeleteCount; i++) {
+        this.cache.delete(entries[i][0])
         cleanedCount++
-      })
-      this.accessOrder = this.accessOrder.slice(toDeleteCount)
+      }
     }
 
     if (cleanedCount > 0) {
@@ -188,21 +186,14 @@ class APICache {
   }
 
   /**
-   * Remove key from access order tracking
-   */
-  private removeFromAccessOrder(key: string): void {
-    const index = this.accessOrder.indexOf(key)
-    if (index > -1) {
-      this.accessOrder.splice(index, 1)
-    }
-  }
-
-  /**
-   * Update access order for LRU tracking
+   * Move entry to end of Map for LRU tracking (O(1) operation)
    */
   private updateAccessOrder(key: string): void {
-    this.removeFromAccessOrder(key)
-    this.accessOrder.push(key)
+    const entry = this.cache.get(key)
+    if (entry) {
+      this.cache.delete(key)
+      this.cache.set(key, entry)
+    }
   }
 
   /**
@@ -231,13 +222,12 @@ class APICache {
     const allowStale = options.staleWhileRevalidate
     if (!this.isValid(entry, allowStale)) {
       this.cache.delete(key)
-      this.removeFromAccessOrder(key)
       return null
     }
 
-    // Update LRU tracking
-    this.updateAccessOrder(key)
+    // Update LRU tracking and access timestamp
     entry.lastAccessed = Date.now()
+    this.updateAccessOrder(key)
 
     // Create response from cached data
     const response = new NextResponse(JSON.stringify(entry.data), {
@@ -323,7 +313,6 @@ class APICache {
     for (const [key, entry] of this.cache.entries()) {
       if (entry.headers['Cache-Tag']?.includes(tag)) {
         this.cache.delete(key)
-        this.removeFromAccessOrder(key)
         invalidatedCount++
       }
     }
@@ -345,7 +334,6 @@ class APICache {
     for (const [key] of this.cache.entries()) {
       if (regex.test(key)) {
         this.cache.delete(key)
-        this.removeFromAccessOrder(key)
         invalidatedCount++
       }
     }
@@ -395,7 +383,6 @@ class APICache {
   clear(): void {
     this.cache.clear()
     this.pendingRequests.clear()
-    this.accessOrder = []
     logger.info(LogCategory.CACHE, 'API cache cleared')
   }
 
