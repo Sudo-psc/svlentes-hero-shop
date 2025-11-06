@@ -55,6 +55,11 @@ export function ServiceWorkerRegistration() {
         
         // Handler para atualização encontrada
         const handleUpdateFound = () => {
+            // Remove listener do worker anterior se existir
+            if (newWorker) {
+                newWorker.removeEventListener('statechange', handleStateChange)
+            }
+            
             newWorker = registration?.installing
 
             if (newWorker) {
