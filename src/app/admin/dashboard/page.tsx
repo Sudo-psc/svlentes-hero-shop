@@ -143,14 +143,14 @@ export default function AdminDashboard() {
   const analyticsMetrics: AnalyticsMetrics = {
     dailyRevenue: Array.from({ length: 30 }, (_, i) => ({
       date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      revenue: Math.floor(Math.random() * 5000) + 2000,
-      orders: Math.floor(Math.random() * 50) + 20
+      revenue: 2000 + (i * 100) + ((i % 7) * 300),
+      orders: 20 + (i % 30)
     })),
     subscriptionGrowth: Array.from({ length: 12 }, (_, i) => ({
       date: new Date(Date.now() - (11 - i) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      active: Math.floor(Math.random() * 100) + 900,
-      new: Math.floor(Math.random() * 20) + 10,
-      churned: Math.floor(Math.random() * 10) + 5
+      active: 900 + (i * 10) + ((i % 3) * 20),
+      new: 10 + (i % 20),
+      churned: 5 + (i % 10)
     })),
     planDistribution: [
       { plan: 'Básico', count: 456, percentage: 36.6 },

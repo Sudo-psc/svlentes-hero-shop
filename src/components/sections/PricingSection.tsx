@@ -213,7 +213,7 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                     <div className="overflow-hidden shadow-xl ring-1 ring-black ring-opacity-5 rounded-2xl">
                         <table className="min-w-full divide-y divide-gray-300">
                             {/* Table Header */}
-                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                            <thead className="bg-gradient-to-r from-white to-gray-50">
                                 <tr>
                                     <th className="px-8 py-6 text-left text-sm font-semibold text-gray-900 w-1/4">
                                         <div className="flex items-center">
@@ -266,9 +266,9 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                                 {planComparison.map((comparison, index) => (
                                     <tr key={index} className={cn(
                                         'transition-colors hover:bg-gray-50',
-                                        index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
+                                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                                     )}>
-                                        <td className="px-8 py-4 text-sm font-medium text-gray-900 bg-gray-50">
+                                        <td className="px-8 py-4 text-sm font-medium text-gray-900 bg-white">
                                             <div className="flex items-center">
                                                 <div className="w-2 h-2 bg-primary-400 rounded-full mr-3"></div>
                                                 {comparison.feature}
@@ -315,7 +315,7 @@ function ComparisonTable({ plans, features, planComparison, isAnnual }: Comparis
                                     </tr>
                                 ))}
                                 {/* CTA Row */}
-                                <tr className="bg-gray-50">
+                                <tr className="bg-white">
                                     <td className="px-8 py-6 text-sm font-semibold text-gray-900">
                                         <div className="flex items-center">
                                             <svg className="w-5 h-5 text-primary-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -420,7 +420,7 @@ export default function PricingSection({
         }
     ]
     return (
-        <section id="planos-precos" className="py-20 bg-gray-50">
+        <section id="planos-precos" className="py-20 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="text-center mb-12">

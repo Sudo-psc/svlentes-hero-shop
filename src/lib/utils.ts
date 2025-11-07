@@ -44,7 +44,13 @@ export function scrollToSection(sectionId: string) {
         }
     }, 500)
 }
-// TODO: [CONFIG] Create centralized environment variable validation
+// TODO: [MEDIUM PRIORITY] Create centralized environment variable validation
+// Location: Multiple files access process.env directly without validation
+// Examples: e2e files use process.env.TEST_USER_EMAIL, process.env.TEST_USER_PASSWORD
+// Impact: Runtime errors when environment variables are missing, silent failures
+// Solution: Create validation utility that checks required env vars at startup
+// Template: src/lib/env-validator.ts with validateEnvVars() function
+// Severity: MEDIUM | Timeline: Next development cycle
 // Current fallback to hardcoded values masks configuration errors
 // Implement startup validation that fails fast when required env vars are missing
 // Função para gerar link do WhatsApp

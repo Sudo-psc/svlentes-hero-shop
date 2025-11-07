@@ -1,4 +1,6 @@
 // @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
+
+export const dynamic = 'force-dynamic'
 /**
  * LangChain Enhanced Processor Monitoring API
  * Provides detailed statistics and health information about the AI system

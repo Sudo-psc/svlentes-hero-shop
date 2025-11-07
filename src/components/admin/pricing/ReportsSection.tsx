@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUserDisplayName } from '@/lib/use-admin-user'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -70,11 +70,19 @@ export function ReportsSection({ planos, configCustos }: ReportsSectionProps) {
   const currentUser = useUserDisplayName()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     tipo: 'rentabilidade_por_plano',
-    periodoInicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    periodoFim: new Date().toISOString().split('T')[0],
+    periodoInicio: '',
+    periodoFim: '',
     planosSelecionados: planos.map(p => p.id),
     cenario: 'realista'
   })
+  
+  useEffect(() => {
+    setReportConfig(prev => ({
+      ...prev,
+      periodoInicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      periodoFim: new Date().toISOString().split('T')[0]
+    }))
+  }, [])
   const [generating, setGenerating] = useState(false)
   const [generatedReports, setGeneratedReports] = useState<RelatorioAnalitico[]>([])
   const [showPreview, setShowPreview] = useState(false)
@@ -170,8 +178,8 @@ export function ReportsSection({ planos, configCustos }: ReportsSectionProps) {
   }
 
   const generateRentabilidadeReport = (planos: PlanoAssinatura[], periodo: any): DadosRelatorio => {
-    const analises: AnaliseRentabilidade[] = planos.map(plano => {
-      const assinaturasAtivas = Math.floor(Math.random() * 100) + 20 // Simulação
+    const analises: AnaliseRentabilidade[] = planos.map((plano, index) => {
+      const assinaturasAtivas = 20 + (index * 15) + (planos.length * 5)
       return calcularAnaliseRentabilidade(plano, assinaturasAtivas, periodo)
     })
 

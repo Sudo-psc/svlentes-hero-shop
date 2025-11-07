@@ -14,13 +14,15 @@ import { ResourcePreloader } from '@/components/performance/ResourcePreloader'
 import { ServiceWorkerCleanup } from '@/components/performance/ServiceWorkerCleanup'
 import { ServiceWorkerRegistration } from '@/components/performance/ServiceWorkerRegistration'
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator'
-import { initializeChunkErrorHandler } from '@/lib/chunk-error-handler'
+import { setupGlobalErrorHandlers, setupNetworkMonitoring } from '@/lib/error-handler'
 import { CookieConsent } from '@/components/privacy/CookieConsent'
 import { SmoothScroll } from '@/components/ui/SmoothScroll'
 import { CriticalCSS } from '@/components/performance/CriticalCSS'
 import { StripeScript } from '@/components/payment/StripeScript'
 import { ClientProviders } from '@/components/providers/ClientProviders'
 import { ConfigMonitor } from '@/components/ConfigMonitor'
+
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
     baseMetadata,
     generateOrganizationStructuredData,
@@ -84,6 +86,7 @@ export default function RootLayout({
                 <PhysicianSchema />
             </head>
             <body className="antialiased">
+                <ErrorBoundary>
                 <ClientProviders>
                     <ServiceWorkerCleanup />
                     <ServiceWorkerRegistration />
@@ -91,7 +94,11 @@ export default function RootLayout({
                     <PerformanceMonitor />
                     <ResourcePreloader />
                     <Header />
-                    <main className="pt-16 lg:pt-20">
+                    {/* Skip link for keyboard navigation accessibility */}
+                    <a href="#main-content" className="skip-link">
+                        Pular para o conteúdo principal
+                    </a>
+                    <main id="main-content" className="pt-16 lg:pt-20" role="main">
                         {children}
                     </main>
                     <Footer />
@@ -101,6 +108,7 @@ export default function RootLayout({
                     <StripeScript publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY} />
                     <ConfigMonitor />
                 </ClientProviders>
+                </ErrorBoundary>
             </body>
         </html>
     )

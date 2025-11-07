@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { OAuthErrorHelper } from './OAuthErrorHelper'
 interface SocialLoginButtonsProps {
   onError?: (error: string) => void
 }
@@ -12,6 +13,7 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
   const [loadingFacebook, setLoadingFacebook] = useState(false)
   const [loadingGitHub, setLoadingGitHub] = useState(false)
   const [isGitHubEnabled, setIsGitHubEnabled] = useState(false)
+  const [lastError, setLastError] = useState<{ code?: string; message?: string } | undefined>(undefined)
   // Check if GitHub auth is enabled via feature flag
   useEffect(() => {
     const enabled = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === 'true'
@@ -19,12 +21,18 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
   }, [])
   const handleGoogleLogin = async () => {
     setLoadingGoogle(true)
+    setLastError(undefined)
     try {
       await signInWithGoogle()
       router.push('/area-assinante/dashboard')
       router.refresh()
     } catch (error: any) {
       console.error('[SOCIAL_LOGIN] Google error:', error)
+      const errorData = {
+        code: error.code,
+        message: error.message
+      }
+      setLastError(errorData)
       onError?.(error.message || 'Erro ao fazer login com Google')
     } finally {
       setLoadingGoogle(false)
@@ -56,15 +64,23 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
       setLoadingGitHub(false)
     }
   }
+  const handleRetryGoogleLogin = async () => {
+    setLastError(undefined)
+    await handleGoogleLogin()
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* OAuth Error Helper */}
+      <OAuthErrorHelper error={lastError} onRetry={handleRetryGoogleLogin} />
+
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
+          <div className="w-full border-t border-gray-200"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Ou continue com</span>
+          <span className="px-3 bg-white text-gray-500 font-medium">Ou continue com</span>
         </div>
       </div>
       {/* Social Login Buttons */}
@@ -74,7 +90,7 @@ export function SocialLoginButtons({ onError }: SocialLoginButtonsProps) {
           type="button"
           onClick={handleGoogleLogin}
           disabled={loadingGoogle || loadingFacebook || loadingGitHub}
-          className="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full inline-flex items-center justify-center px-4 py-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 group"
         >
           {loadingGoogle ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>

@@ -53,12 +53,17 @@ export async function GET(request: NextRequest) {
           : price.product.id === product.id
       )
 
-      // Sort prices by amount (lowest first)
-      const sortedPrices = productPrices.sort((a, b) => {
-        const amountA = a.unit_amount || 0
-        const amountB = b.unit_amount || 0
-        return amountA - amountB
-      })
+      // Separate recurring and one-time prices
+      const recurringPrices = productPrices.filter(p => p.recurring)
+      const oneTimePrices = productPrices.filter(p => !p.recurring)
+
+      // Sort each category by amount (lowest first)
+      const sortedRecurring = recurringPrices.sort((a, b) => (a.unit_amount || 0) - (b.unit_amount || 0))
+      const sortedOneTime = oneTimePrices.sort((a, b) => (a.unit_amount || 0) - (b.unit_amount || 0))
+
+      // Prefer recurring prices, fallback to one-time
+      const preferredPrices = sortedRecurring.length > 0 ? sortedRecurring : sortedOneTime
+      const sortedPrices = [...sortedRecurring, ...sortedOneTime]
 
       return {
         id: product.id,
@@ -78,12 +83,15 @@ export async function GET(request: NextRequest) {
           type: price.type,
           active: price.active,
         })),
-        // Get the default/lowest price
-        defaultPrice: sortedPrices[0] ? {
-          id: sortedPrices[0].id,
-          amount: sortedPrices[0].unit_amount || 0,
-          currency: sortedPrices[0].currency,
-          recurring: sortedPrices[0].recurring,
+        // Get the preferred price (recurring first, then one-time)
+        defaultPrice: preferredPrices[0] ? {
+          id: preferredPrices[0].id,
+          amount: preferredPrices[0].unit_amount || 0,
+          currency: preferredPrices[0].currency,
+          recurring: preferredPrices[0].recurring ? {
+            interval: preferredPrices[0].recurring.interval,
+            interval_count: preferredPrices[0].recurring.interval_count,
+          } : null,
         } : null,
       }
     })

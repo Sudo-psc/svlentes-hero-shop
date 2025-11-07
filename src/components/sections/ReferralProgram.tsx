@@ -91,7 +91,7 @@ export default function ReferralProgram() {
         try {
             // Simulate API call to generate referral link
             await new Promise(resolve => setTimeout(resolve, 1000))
-            const mockLink = `https://svlentes.com.br/ref/${Math.random().toString(36).substr(2, 9)}`
+            const mockLink = `https://svlentes.com.br/ref/${Date.now().toString(36)}`
             setReferralLink(mockLink)
             // Track analytics event
             trackEvent('referral_link_generated', {

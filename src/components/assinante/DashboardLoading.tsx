@@ -148,10 +148,10 @@ export function ShippingAddressLoading() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-4 bg-gray-200 rounded animate-pulse"
-                 style={{ width: `${Math.random() * 40 + 60}%` }}></div>
-          ))}
+          <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
           <div className="h-8 bg-gray-200 rounded w-32 mt-4 animate-pulse"></div>
         </div>
       </CardContent>

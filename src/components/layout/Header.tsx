@@ -90,7 +90,7 @@ export function Header({ className }: HeaderProps) {
         setIsMenuOpen(false)
     }
     const handleLogin = () => {
-        router.push('/area-assinante')
+        router.push('/area-assinante/login')
         setIsMenuOpen(false)
     }
     const handleLogout = useCallback(async () => {
@@ -100,8 +100,8 @@ export function Header({ className }: HeaderProps) {
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
-                : 'bg-white shadow-sm'
+                ? 'bg-white/98 backdrop-blur-xl shadow-lg border-b border-silver-200/60'
+                : 'bg-white shadow-md border-b border-silver-100/50'
                 } ${className}`}
         >
             <div className="container-custom">
@@ -109,13 +109,13 @@ export function Header({ className }: HeaderProps) {
                     {/* Logo */}
                     <a
                         href="/"
-                        className="inline-flex h-[80px] w-[80px] items-center justify-center overflow-hidden rounded-xl transition-opacity hover:opacity-90 flex-shrink-0"
+                        className="inline-flex h-[80px] w-[80px] items-center justify-center overflow-hidden rounded-xl transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] flex-shrink-0 shadow-sm hover:shadow-md"
                         aria-label="SV Lentes - Voltar para a página inicial"
                     >
                         <LogoHeader className="h-full w-full" />
                     </a>
                     {/* Navigation Desktop */}
-                    <nav className="hidden md:flex items-center space-x-8">
+                    <nav className="hidden md:flex items-center space-x-8" aria-label="Navegação principal">
                         {navigation.map((item: any) => (
                             item.isAnchor ? (
                                 <a
@@ -125,19 +125,19 @@ export function Header({ className }: HeaderProps) {
                                         e.preventDefault()
                                         handleNavClick(item.href)
                                     }}
-                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                    className="text-silver-700 hover:text-cyan-600 font-medium transition-all duration-200 relative group py-2 px-1 rounded-md hover:bg-cyan-50/50 focus-visible:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                                 >
                                     {item.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
+                                    <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-cyan-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
                                 </a>
                             ) : (
                                 <a
                                     key={item.name}
                                     href={item.href}
-                                    className="text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200 relative group"
+                                    className="text-silver-700 hover:text-cyan-600 font-medium transition-all duration-200 relative group py-2 px-1 rounded-md hover:bg-cyan-50/50 focus-visible:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                                 >
                                     {item.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-200 group-hover:w-full"></span>
+                                    <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-cyan-600 transition-all duration-300 group-hover:w-full rounded-full"></span>
                                 </a>
                             )
                         ))}
@@ -149,19 +149,19 @@ export function Header({ className }: HeaderProps) {
                                 <Button
                                     onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                     variant="outline"
-                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-700 hover:shadow-md"
                                     size="default"
                                 >
-                                    <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                    <LayoutDashboard className="w-4 h-4" />
                                     <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogout}
-                                    variant="ghost"
-                                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+                                    variant="ghost-primary"
+                                    className="flex items-center space-x-2"
                                     size="default"
                                 >
-                                    <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                    <LogOut className="w-4 h-4" />
                                     <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                 </Button>
                             </>
@@ -169,19 +169,20 @@ export function Header({ className }: HeaderProps) {
                             <>
                                 <Button
                                     onClick={handleAgendarConsulta}
-                                    className="flex items-center space-x-2 bg-cyan-600 hover:bg-cyan-700"
+                                    variant="primary"
+                                    className="flex items-center space-x-2 shadow-md hover:shadow-lg"
                                     size="default"
                                 >
-                                    <Phone className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                    <Phone className="w-4 h-4" />
                                     <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                 </Button>
                                 <Button
                                     onClick={handleLogin}
                                     variant="outline"
-                                    className="flex items-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                                    className="flex items-center space-x-2 hover:shadow-md"
                                     size="default"
                                 >
-                                    <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                    <User className="w-4 h-4" />
                                     <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                 </Button>
                             </>
@@ -190,15 +191,15 @@ export function Header({ className }: HeaderProps) {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="md:hidden p-3 rounded-lg text-silver-700 hover:bg-silver-100 hover:text-silver-900 transition-all duration-200 focus-visible:bg-silver-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 active:scale-[0.95]"
                         aria-label={isMenuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
                         aria-expanded={isMenuOpen}
                         aria-controls="mobile-menu"
                     >
                         {isMenuOpen ? (
-                            <X className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
+                            <X className="w-6 h-6" />
                         ) : (
-                            <Menu className="w-6 h-6" style={{ display: 'block', width: '1.5rem', height: '1.5rem' }} />
+                            <Menu className="w-6 h-6" />
                         )}
                     </button>
                 </div>
@@ -206,11 +207,11 @@ export function Header({ className }: HeaderProps) {
                 {isMenuOpen && (
                     <div
                         id="mobile-menu"
-                        className="md:hidden border-t border-gray-200 bg-white"
+                        className="md:hidden border-t border-silver-200 bg-white/95 backdrop-blur-sm shadow-lg"
                         role="navigation"
                         aria-label="Menu de navegação mobile"
                     >
-                        <div className="py-4 space-y-4">
+                        <div className="py-4 space-y-2">
                             {navigation.map((item: any) => (
                                 item.isAnchor ? (
                                     <a
@@ -220,7 +221,7 @@ export function Header({ className }: HeaderProps) {
                                             e.preventDefault()
                                             handleNavClick(item.href)
                                         }}
-                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        className="block px-6 py-3 text-silver-700 hover:text-cyan-600 hover:bg-cyan-50 font-medium transition-all duration-200 rounded-lg mx-2 focus-visible:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                                         role="menuitem"
                                     >
                                         {item.name}
@@ -229,7 +230,7 @@ export function Header({ className }: HeaderProps) {
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="block px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors duration-200"
+                                        className="block px-6 py-3 text-silver-700 hover:text-cyan-600 hover:bg-cyan-50 font-medium transition-all duration-200 rounded-lg mx-2 focus-visible:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                                         role="menuitem"
                                     >
                                         {item.name}
@@ -237,25 +238,25 @@ export function Header({ className }: HeaderProps) {
                                 )
                             ))}
                             {/* Mobile CTA */}
-                            <div className="px-4 pt-4 border-t border-gray-200 space-y-3" role="menu">
+                            <div className="px-4 pt-4 border-t border-silver-200 space-y-3" role="menu">
                                 {user ? (
                                     <>
                                         <Button
                                             onClick={() => router.push(ctaConfig?.authenticated.dashboard.href || '/area-assinante/dashboard')}
                                             variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                                            className="w-full flex items-center justify-center space-x-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
-                                            <LayoutDashboard className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                            <LayoutDashboard className="w-4 h-4" />
                                             <span>{ctaConfig?.authenticated.dashboard.label || 'Meu Painel'}</span>
                                         </Button>
                                         <Button
                                             onClick={handleLogout}
-                                            variant="ghost"
-                                            className="w-full flex items-center justify-center space-x-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                                            variant="ghost-primary"
+                                            className="w-full flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
-                                            <LogOut className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                            <LogOut className="w-4 h-4" />
                                             <span>{ctaConfig?.authenticated.logout.label || 'Sair'}</span>
                                         </Button>
                                     </>
@@ -263,19 +264,20 @@ export function Header({ className }: HeaderProps) {
                                     <>
                                         <Button
                                             onClick={handleAgendarConsulta}
-                                            className="w-full flex items-center justify-center space-x-2 bg-cyan-600 hover:bg-cyan-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                                            variant="primary"
+                                            className="w-full flex items-center justify-center space-x-2 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
-                                            <Phone className="w-4 h-4 transition-transform group-hover:rotate-12" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                            <Phone className="w-4 h-4 transition-transform group-hover:rotate-12" />
                                             <span>{ctaConfig?.unauthenticated.schedule.label || 'Agendar Consulta'}</span>
                                         </Button>
                                         <Button
                                             onClick={handleLogin}
                                             variant="outline"
-                                            className="w-full flex items-center justify-center space-x-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-700 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                                            className="w-full flex items-center justify-center space-x-2 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                                             size="default"
                                         >
-                                            <User className="w-4 h-4" style={{ display: 'block', width: '1rem', height: '1rem' }} />
+                                            <User className="w-4 h-4" />
                                             <span>{ctaConfig?.unauthenticated.login.label || 'Área do Assinante'}</span>
                                         </Button>
                                     </>

@@ -10,7 +10,7 @@
 import Stripe from 'stripe'
 
 // Configuration constants
-const STRIPE_API_VERSION = '2024-11-20.acacia' as const
+const STRIPE_API_VERSION = '2025-09-30.clover' as const
 const STRIPE_TIMEOUT_MS = 10000
 const STRIPE_MAX_RETRIES = 2
 
@@ -64,89 +64,157 @@ export function getStripeClient(): Stripe | null {
  * @param error - Error from Stripe API
  * @returns Structured error response
  */
+/**
+ * Secure Stripe Error Handler
+ *
+ * SECURITY ENHANCEMENTS:
+ * - Prevents information disclosure in error messages
+ * - Logs detailed errors securely for debugging
+ * - Returns safe, generic error messages to clients
+ * - Maintains security error codes for proper handling
+ */
 export function handleStripeError(error: unknown): {
   error: string
   message: string
   code?: string
   statusCode: number
+  secure: boolean
 } {
-  // Stripe-specific errors
+  // Log detailed error for debugging (never expose to client)
+  const logError = (details: Record<string, any>) => {
+    console.error('[Stripe Error]', {
+      timestamp: new Date().toISOString(),
+      ...details,
+      // Never log raw error data that might contain sensitive information
+    })
+  }
+
+  // Stripe-specific errors with secure handling
   if (error && typeof error === 'object' && 'type' in error) {
     const stripeError = error as Stripe.StripeError
+
+    // Log detailed error for debugging
+    logError({
+      type: stripeError.type,
+      code: stripeError.code,
+      statusCode: stripeError.statusCode,
+      requestId: stripeError.requestId
+    })
 
     switch (stripeError.type) {
       case 'StripeCardError':
         return {
-          error: 'Erro no cartão',
-          message: stripeError.message || 'Cartão recusado pela operadora.',
-          code: stripeError.code,
+          error: 'payment_failed',
+          message: 'Não foi possível processar o pagamento. Verifique os dados do cartão.',
+          // Keep code for client handling but don't expose specific reason
+          code: 'payment_declined',
           statusCode: 402,
+          secure: true
         }
 
       case 'StripeRateLimitError':
         return {
-          error: 'Limite de requisições excedido',
-          message: 'Muitas requisições. Tente novamente em alguns segundos.',
-          code: stripeError.code,
+          error: 'rate_limit_exceeded',
+          message: 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.',
+          code: 'rate_limit',
           statusCode: 429,
+          secure: true
         }
 
       case 'StripeInvalidRequestError':
+        // Never expose request details that might help attackers
         return {
-          error: 'Requisição inválida',
-          message: stripeError.message || 'Dados inválidos enviados para o Stripe.',
-          code: stripeError.code,
+          error: 'invalid_request',
+          message: 'Requisição inválida. Verifique os dados e tente novamente.',
+          code: 'validation_error',
           statusCode: 400,
+          secure: true
         }
 
       case 'StripeAPIError':
         return {
-          error: 'Erro no Stripe',
-          message: 'Erro de comunicação com o Stripe. Tente novamente.',
-          code: stripeError.code,
+          error: 'service_error',
+          message: 'Serviço temporariamente indisponível. Tente novamente em alguns instantes.',
+          code: 'service_unavailable',
           statusCode: 502,
+          secure: true
         }
 
       case 'StripeConnectionError':
         return {
-          error: 'Erro de conexão',
-          message: 'Não foi possível conectar ao Stripe. Verifique sua conexão.',
-          code: stripeError.code,
+          error: 'connection_error',
+          message: 'Não foi possível conectar ao serviço de pagamento. Verifique sua conexão.',
+          code: 'connection_failed',
           statusCode: 503,
+          secure: true
         }
 
       case 'StripeAuthenticationError':
+        // Never reveal authentication issues to users
         return {
-          error: 'Erro de autenticação',
-          message: 'Credenciais do Stripe inválidas. Contate o suporte.',
-          code: stripeError.code,
-          statusCode: 401,
+          error: 'service_error',
+          message: 'Serviço temporariamente indisponível. Contate o suporte.',
+          code: 'service_error',
+          statusCode: 503,
+          secure: true
         }
 
       default:
         return {
-          error: 'Erro no processamento',
-          message: stripeError.message || 'Erro desconhecido do Stripe.',
-          code: stripeError.code,
+          error: 'processing_error',
+          message: 'Ocorreu um erro ao processar sua solicitação. Tente novamente.',
+          code: 'unknown_error',
           statusCode: 500,
+          secure: true
         }
     }
   }
 
-  // Generic errors
+  // Generic errors - never expose error details
   if (error instanceof Error) {
+    logError({
+      message: error.message,
+      stack: error.stack ? 'stack_present' : 'no_stack'
+    })
+
     return {
-      error: 'Erro interno',
-      message: error.message || 'Ocorreu um erro ao processar sua solicitação.',
+      error: 'system_error',
+      message: 'Ocorreu um erro inesperado. Tente novamente.',
+      code: 'system_error',
       statusCode: 500,
+      secure: true
     }
   }
 
   // Unknown errors
+  logError({
+    type: 'unknown_error',
+    dataType: typeof error
+  })
+
   return {
-    error: 'Erro desconhecido',
+    error: 'unknown_error',
     message: 'Ocorreu um erro inesperado. Tente novamente.',
+    code: 'unknown_error',
     statusCode: 500,
+    secure: true
+  }
+}
+
+/**
+ * Create secure error response for APIs
+ */
+export function createSecureErrorResponse(errorResult: ReturnType<typeof handleStripeError>) {
+  return {
+    success: false,
+    error: errorResult.error,
+    message: errorResult.message,
+    // Only include code if it's safe for client handling
+    ...(errorResult.code && ['payment_declined', 'rate_limit', 'validation_error'].includes(errorResult.code) && {
+      code: errorResult.code
+    }),
+    timestamp: new Date().toISOString(),
+    // Never include stack traces or internal error details
   }
 }
 

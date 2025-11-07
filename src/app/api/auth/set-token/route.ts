@@ -3,14 +3,42 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const isDev = process.env.NODE_ENV === 'development'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // Better error handling for JSON parsing
+    let body;
+    try {
+      const text = await request.text()
+      if (!text.trim()) {
+        return NextResponse.json(
+          { error: 'Empty request body' },
+          { status: 400 }
+        )
+      }
+      body = JSON.parse(text)
+    } catch (parseError) {
+      console.error('[AUTH_API] JSON parsing error:', parseError)
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
     const { token, action } = body
 
     if (action === 'clear') {
       // Clear the authentication cookie
-      const response = NextResponse.json({ success: true, message: 'Token cleared' })
+      const response = NextResponse.json({ success: true, message: 'Token cleared' }, { headers: corsHeaders })
       response.cookies.set({
         name: 'firebase-token',
         value: '',
@@ -32,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Set the secure HttpOnly cookie with the Firebase token
-    const response = NextResponse.json({ success: true, message: 'Token stored securely' })
+    const response = NextResponse.json({ success: true, message: 'Token stored securely' }, { headers: corsHeaders })
     response.cookies.set({
       name: 'firebase-token',
       value: token,

@@ -10,6 +10,7 @@
 import { NextRequest } from 'next/server'
 import { headers } from 'next/headers'
 import { adminAuth } from '@/lib/firebase-admin'
+import { validateToken } from '@/lib/token-cache'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 
 /**
@@ -86,74 +87,53 @@ export async function verifyAuthToken(
       }
     }
 
-    // 2. Verify Firebase Admin is initialized
-    if (!adminAuth) {
-      return {
-        success: false,
-        error: {
-          error: 'Firebase Admin não inicializado',
-          message: 'Erro de configuração do servidor. Contate o suporte.',
-          statusCode: 500,
-          timestamp: new Date().toISOString(),
-        },
+    // 2. Enhanced token validation with caching
+    const validation = await validateToken(token)
+
+    if (!validation.valid) {
+      // Determine appropriate error code based on validation error
+      let statusCode = 401
+      let errorCode = 'auth/invalid-token'
+
+      if (validation.error?.includes('expired')) {
+        errorCode = 'auth/id-token-expired'
+      } else if (validation.error?.includes('revoked')) {
+        errorCode = 'auth/id-token-revoked'
+      } else if (validation.error?.includes('future')) {
+        errorCode = 'auth/invalid-credential'
       }
-    }
 
-    // 3. Verify ID token with Firebase
-    const decodedToken = await adminAuth.verifyIdToken(token)
-
-    if (!decodedToken?.uid) {
       return {
         success: false,
         error: {
           error: 'Token inválido',
-          message: 'O token de autenticação não contém informações válidas.',
-          statusCode: 401,
+          message: 'Não foi possível validar sua autenticação.',
+          code: errorCode,
+          statusCode,
           timestamp: new Date().toISOString(),
         },
       }
     }
 
-    // 4. Return success with user data
+    // 3. Return success with validated user data
     return {
       success: true,
-      user: decodedToken,
+      user: validation.decodedToken,
     }
   } catch (error: any) {
-    // Handle Firebase Auth specific errors
-    if (error.code === 'auth/invalid-credential' || error.code === 'auth/id-token-expired') {
-      return {
-        success: false,
-        error: {
-          error: 'Sessão expirada',
-          message: 'Sua sessão expirou. Por favor, faça login novamente.',
-          code: error.code,
-          statusCode: 401,
-          timestamp: new Date().toISOString(),
-        },
-      }
-    }
+    // Enhanced error handling with security logging
+    console.error('[API Auth] Token verification failed', {
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      // Never log the actual token
+    })
 
-    if (error.code === 'auth/id-token-revoked') {
-      return {
-        success: false,
-        error: {
-          error: 'Token revogado',
-          message: 'Seu token de acesso foi revogado. Faça login novamente.',
-          code: error.code,
-          statusCode: 401,
-          timestamp: new Date().toISOString(),
-        },
-      }
-    }
-
-    // Generic authentication error
+    // Generic authentication error (avoid information disclosure)
     return {
       success: false,
       error: {
         error: 'Erro de autenticação',
-        message: error.message || 'Não foi possível verificar suas credenciais.',
-        code: error.code,
+        message: 'Não foi possível verificar suas credenciais.',
         statusCode: 401,
         timestamp: new Date().toISOString(),
       },

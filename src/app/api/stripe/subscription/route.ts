@@ -26,24 +26,19 @@ import { verifyAuthToken, logAccess } from '@/lib/api-auth'
  * @author Dr. Philipe Saraiva Cruz
  */
 
-export async function GET(request: NextRequest) {
+import { withAuth } from '@/lib/auth-middleware'
+
+export const GET = withAuth(async (request, { user, security }) => {
   try {
     const stripeClient = getStripeClient()
     if (!stripeClient) {
       return NextResponse.json(
-        {
-          error: 'Stripe não está configurado. Entre em contato com o suporte.'
-        },
+        { error: 'Serviço de pagamento temporariamente indisponível.' },
         { status: 503 }
       )
     }
-    // 1. Verify authentication
-    const auth = await verifyAuthToken(request)
-    if (!auth.success || !auth.user) {
-      return NextResponse.json(auth.error, { status: auth.error!.statusCode })
-    }
 
-    const decodedToken = auth.user
+    const decodedToken = user
 
     // 2. Get Stripe customer ID
     let stripeCustomerId = decodedToken.stripeCustomerId
@@ -150,6 +145,7 @@ export async function GET(request: NextRequest) {
     // 6. Log access for audit (LGPD compliance)
     logAccess(decodedToken.uid, decodedToken.email, 'STRIPE_SUBSCRIPTION_ACCESS', {
       subscriptionId: subscription.id,
+      requestId: security.requestId
     })
 
     return NextResponse.json({
@@ -157,37 +153,24 @@ export async function GET(request: NextRequest) {
     }, { status: 200 })
 
   } catch (error: any) {
-    console.error('[STRIPE_SUBSCRIPTION_ERROR]', error)
+    console.error('[STRIPE_SUBSCRIPTION_ERROR]', {
+      error: error.message,
+      userId: decodedToken.uid,
+      requestId: security.requestId,
+      timestamp: new Date().toISOString()
+    })
 
-    // Handle authentication errors
-    if (error.code === 'auth/invalid-credential' || error.code === 'auth/id-token-expired') {
-      return NextResponse.json(
-        { error: 'Sessão expirada. Por favor, faça login novamente.' },
-        { status: 401 }
-      )
-    }
+    // Use secure error handling
+    const { createSecureErrorResponse } = await import('@/lib/stripe-client')
+    const errorResult = createSecureErrorResponse({
+      error: 'system_error',
+      message: 'Erro ao processar solicitação',
+      statusCode: 500
+    } as any)
 
-    // Handle Stripe-specific errors
-    if (error.type === 'StripeInvalidRequestError') {
-      return NextResponse.json(
-        {
-          error: 'Erro ao buscar assinatura',
-          message: 'Não foi possível acessar os dados da assinatura.'
-        },
-        { status: 400 }
-      )
-    }
-
-    // Generic error
-    return NextResponse.json(
-      {
-        error: 'Erro interno do servidor',
-        message: 'Ocorreu um erro ao processar sua solicitação. Tente novamente.'
-      },
-      { status: 500 }
-    )
+    return NextResponse.json(errorResult, { status: 500 })
   }
-}
+}, { requireAuth: true })
 
 // OPTIONS handler for CORS preflight
 export async function OPTIONS(request: NextRequest) {

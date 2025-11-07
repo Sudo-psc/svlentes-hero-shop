@@ -45,7 +45,7 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
             {/* Vídeo em largura total */}
             <video
                 ref={videoRef}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover scale-105"
                 autoPlay
                 muted
                 loop
@@ -56,18 +56,20 @@ export function VideoHeroSection({ className = '' }: VideoHeroSectionProps) {
                 Seu navegador não suporta vídeos HTML5.
             </video>
             {/* Overlay escuro para melhorar legibilidade do texto */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60" />
             {/* Conteúdo sobreposto */}
             <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6 sm:px-8 lg:px-12">
                 {/* Texto principal */}
                 <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-fade-in">
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] drop-shadow-2xl tracking-tight">
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-white leading-[1.1] drop-shadow-2xl tracking-tight">
                         Nunca mais fique
                         <br />
-                        <span className="bg-gradient-to-r from-primary-400 to-cyan-300 bg-clip-text text-transparent inline-block mt-2">sem lentes</span>
+                        <span className="bg-gradient-to-r from-cyan-300 to-cyan-200 bg-clip-text text-transparent inline-block mt-2 font-black">sem lentes</span>
                     </h1>
-                    <p className="text-lg sm:text-xl md:text-2xl text-white leading-relaxed max-w-3xl mx-auto drop-shadow-lg">
+                    <p className="text-xl sm:text-2xl md:text-3xl text-white leading-relaxed max-w-4xl mx-auto drop-shadow-lg font-light">
                         Assinatura de lentes com acompanhamento do Dr. Philipe Saraiva Cruz
+                        <br />
+                        <span className="text-lg sm:text-xl md:text-2xl text-cyan-100">CRM-MG 69.870</span>
                     </p>
 
                     {/* CTA Buttons */}

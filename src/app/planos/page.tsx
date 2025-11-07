@@ -1,16 +1,61 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { StripePricingTable } from '@/components/payment/StripePricingTable';
+import { StripeFallback } from '@/components/payment/StripeFallback';
 import { CoverageSection } from '@/components/pricing/CoverageSection';
 import { BenefitsGrid } from '@/components/pricing/BenefitsGrid';
 import { PricingFAQ } from '@/components/pricing/PricingFAQ';
 import { serviceBenefits, coverageInfo, pricingFAQ } from '@/data/pricing-plans';
 export default function PlanosPage() {
+  const [useFallback, setUseFallback] = useState(false)
+  const [stripeError, setStripeError] = useState<string | null>(null)
+
   // Set page metadata dynamically using Head or next/head for client components
   React.useEffect(() => {
     document.title = 'Planos de Assinatura de Lentes de Contato | SV Lentes';
   }, []);
+
+  // Handle fallback activation
+  const handleFallbackActivation = () => {
+    setUseFallback(true)
+    console.log('[PLANOS] Activating fallback pricing table')
+  }
+
+  // Monitor Stripe script loading errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.message && event.message.includes('Stripe')) {
+        console.error('[PLANOS] Stripe error detected:', event.message)
+        setStripeError(event.message)
+        handleFallbackActivation()
+      }
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && event.reason.message && event.reason.message.includes('Stripe')) {
+        console.error('[PLANOS] Stripe rejection detected:', event.reason.message)
+        setStripeError(event.reason.message)
+        handleFallbackActivation()
+      }
+    }
+
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
+  }, [])
+
+  const handleContactUs = () => {
+    window.location.href = '/agendar-consulta'
+  }
+
+  const handleWhatsApp = () => {
+    window.open('https://wa.me/5533999898026?text=Olá! Gostaria de saber mais sobre os planos de assinatura da SV Lentes.', '_blank')
+  }
   return (
     <div className="min-h-screen">
       {/* Compact Hero Section */}
@@ -52,7 +97,7 @@ export default function PlanosPage() {
         </div>
       </section>
       {/* Pricing Cards Section - MOVED UP */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-gradient-to-br from-blue-50 via-blue-100 to-cyan-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
@@ -62,14 +107,40 @@ export default function PlanosPage() {
               Planos mensais com entrega em todo o Brasil e acompanhamento médico
             </p>
           </div>
-          {/* Stripe Pricing Table */}
+          {/* Pricing Table - Stripe or Fallback */}
           <div id="pricing-table" className="max-w-7xl mx-auto px-2 md:px-4">
-            <StripePricingTable
-              pricingTableId="prctbl_1SK1U5Ls8MC0aCdjGBBODqjW"
-              publishableKey={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
-              className="w-full"
-            />
+            {!useFallback ? (
+              <StripePricingTable
+                pricingTableId="prctbl_1SK1U5Ls8MC0aCdjGBBODqjW"
+                onFallbackActivate={handleFallbackActivation}
+                className="w-full"
+              />
+            ) : (
+              <StripeFallback
+                onContactUs={handleContactUs}
+                onWhatsApp={handleWhatsApp}
+                className="w-full"
+              />
+            )}
           </div>
+
+          {/* Fallback Toggle (for development/debugging) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="max-w-7xl mx-auto px-2 md:px-4 mt-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                <p className="text-sm text-yellow-800 mb-2">
+                  {stripeError && <span>Erro detectado: {stripeError}</span>}
+                  {!stripeError && <span>Modo: {useFallback ? 'Fallback' : 'Stripe'}</span>}
+                </p>
+                <button
+                  onClick={() => setUseFallback(!useFallback)}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+                >
+                  Alternar para {useFallback ? 'Stripe' : 'Fallback'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
       {/* Compact Location Toggle Section - MOVED DOWN */}

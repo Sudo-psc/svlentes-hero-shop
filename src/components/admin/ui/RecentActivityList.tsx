@@ -120,7 +120,11 @@ export function RecentActivityList({
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [lastRefresh, setLastRefresh] = useState(new Date())
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  
+  useEffect(() => {
+    setLastRefresh(new Date())
+  }, [])
   
   // Memoize filtered activities to avoid recalculation on every render
   const filteredActivities = useMemo(() => {

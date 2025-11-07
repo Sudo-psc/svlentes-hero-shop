@@ -69,11 +69,11 @@ const ERROR_RESOLUTIONS: Record<string, AuthErrorResolution> = {
   },
   'auth/network-request-failed': {
     code: 'auth/network-request-failed',
-    label: 'Rede indisponível',
-    message: 'Não conseguimos conectar ao Firebase. Verifique sua conexão ou continue em modo offline.',
+    label: 'Erro de conexão OAuth',
+    message: 'Não foi possível conectar ao serviço de autenticação Google. Verifique se as configurações OAuth estão corretas ou tente novamente.',
     category: 'network',
-    severity: 'warning',
-    suggestedActions: ['activate-offline-mode', 'retry']
+    severity: 'error',
+    suggestedActions: ['check-oauth-config', 'retry', 'contact-support']
   },
   'auth/internal-error': {
     code: 'auth/internal-error',

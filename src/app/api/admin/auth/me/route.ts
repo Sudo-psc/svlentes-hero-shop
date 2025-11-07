@@ -5,6 +5,7 @@
  *
  * Retorna dados do usuário administrativo autenticado
  */
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, createSuccessResponse } from '@/lib/admin-auth'
 /**

@@ -1,6 +1,7 @@
 // @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
 // API Route: /api/v1/analytics/engagement
 // Get engagement analytics
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { analyticsService } from '@/lib/reminders'
 export const runtime = 'nodejs'

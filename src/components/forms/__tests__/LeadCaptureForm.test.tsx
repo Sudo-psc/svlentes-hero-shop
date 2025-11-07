@@ -7,6 +7,11 @@ import { openWhatsAppWithContext } from '@/lib/whatsapp'
 jest.mock('@/lib/whatsapp')
 const mockOpenWhatsApp = openWhatsAppWithContext as jest.MockedFunction<typeof openWhatsAppWithContext>
 
+// TODO: [HIGH PRIORITY] Fix test failure - Checkbox component rendering error
+// Error: "The above error occurred in the <input> component" in checkbox.tsx:9
+// Impact: Test suite failing, blocking development workflow
+// Solution: Debug checkbox component props compatibility with React Testing Library
+// Severity: HIGH | Timeline: Immediate - required for test suite to pass
 describe('LeadCaptureForm', () => {
     beforeEach(() => {
         jest.clearAllMocks()

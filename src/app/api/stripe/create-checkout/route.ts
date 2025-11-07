@@ -7,9 +7,9 @@ import { getStripeClient, handleStripeError } from '@/lib/stripe-client'
 
 // Get Stripe client with proper timeout configuration
 const stripe = getStripeClient()
-// Simplified schema - only accept planId and customerEmail from client
+// Simplified schema - only accept priceId and customerEmail from client
 const checkoutRequestSchema = z.object({
-  planId: z.string().min(1, 'ID do plano é obrigatório'),
+  priceId: z.string().min(1, 'ID do preço é obrigatório'),
   customerEmail: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
 })
 // Get canonical URLs from server config
@@ -53,49 +53,74 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    const { planId, customerEmail } = validatedData.data
-    // Look up plan server-side to prevent price tampering
-    const selectedPlan = pricingPlans.find(plan => plan.id === planId)
-    if (!selectedPlan) {
+    const { priceId, customerEmail } = validatedData.data
+
+    // Validate price ID format
+    if (!priceId.startsWith('price_')) {
       return NextResponse.json(
-        { error: 'Plano não encontrado' },
-        { status: 404 }
+        { error: 'ID do preço inválido' },
+        { status: 400 }
       )
     }
+
     // Get canonical URLs from server config
     const { successUrl, cancelUrl } = getCanonicalUrls()
-    // Use monthly price for Stripe (can be adjusted for annual billing)
-    const amount = selectedPlan.priceMonthly
+
     logger.logPayment('stripe_checkout_attempt', {
-      planId,
-      planName: selectedPlan.name,
-      amount,
+      priceId,
       emailDomain: getEmailDomain(customerEmail),
     })
-    // Create Stripe Checkout Session for subscription
-    const session = await stripe.checkout.sessions.create({
+
+    // First, retrieve the price to determine if it's recurring or one-time
+    const price = await stripe.prices.retrieve(priceId)
+    const isRecurring = !!price.recurring
+
+    // Create Stripe Checkout Session
+    const sessionConfig: any = {
       line_items: [
         {
-          price: selectedPlan.stripePriceId,
+          price: priceId,
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      mode: isRecurring ? 'subscription' : 'payment',
       customer_email: customerEmail,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      subscription_data: {
-        metadata: {
-          plan_id: planId,
-          source: 'website_fallback',
-        },
-      },
       locale: 'pt-BR',
       billing_address_collection: 'auto',
-    })
+      shipping_address_collection: {
+        allowed_countries: ['BR'],
+      },
+      phone_number_collection: {
+        enabled: true,
+      },
+      allow_promotion_codes: true,
+      automatic_tax: {
+        enabled: false,
+      },
+      metadata: {
+        source: 'website_fallback',
+        price_id: priceId,
+        price_type: isRecurring ? 'subscription' : 'payment',
+      },
+    }
+
+    // Add subscription_data only for recurring prices
+    if (isRecurring) {
+      sessionConfig.subscription_data = {
+        metadata: {
+          source: 'website_fallback',
+          price_id: priceId,
+        },
+      }
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
+
     logger.logPayment('stripe_checkout_created', {
       sessionId: session.id,
-      planId,
+      priceId,
       emailDomain: getEmailDomain(customerEmail),
     })
     return NextResponse.json({

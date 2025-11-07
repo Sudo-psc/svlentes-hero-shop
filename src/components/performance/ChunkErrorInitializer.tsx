@@ -1,13 +1,20 @@
 'use client'
 import { useEffect } from 'react'
-import { initializeChunkErrorHandler } from '@/lib/chunk-error-handler'
+import { setupGlobalErrorHandlers, setupNetworkMonitoring } from '@/lib/error-handler'
 /**
- * Client Component to initialize chunk error handler
- * Moved from layout.tsx to fix hydration mismatch
+ * Client Component to initialize global error handling
+ * Handles chunk loading errors, Stripe errors, and network issues
  */
 export function ChunkErrorInitializer() {
     useEffect(() => {
-        initializeChunkErrorHandler()
+        // Set up enhanced global error handling
+        const cleanupErrorHandler = setupGlobalErrorHandlers()
+        const cleanupNetworkMonitoring = setupNetworkMonitoring()
+
+        return () => {
+            cleanupErrorHandler?.()
+            cleanupNetworkMonitoring?.()
+        }
     }, [])
     return null
 }

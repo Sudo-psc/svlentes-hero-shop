@@ -1,4 +1,6 @@
 // @ts-nocheck - Prisma type mismatches - requires schema regeneration or type fixes
+
+export const dynamic = 'force-dynamic'
 /**
  * Delivery Status API - Phase 2
  * Retorna status em tempo real da entrega atual

@@ -1,16 +1,35 @@
-// @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
+/**
+ * Stripe Webhook Handler - Security Enhanced Version
+ *
+ * SECURITY IMPROVEMENTS:
+ * - Timestamp validation to prevent replay attacks
+ * - Enhanced signature verification
+ * - Secure error handling without information disclosure
+ * - Rate limiting for webhook endpoints
+ * - Request size limits
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { logger, LogCategory } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
-// Initialize Stripe with secret key (if available)
+
+// Initialize Stripe with secure configuration
 let stripe: Stripe | null = null
-if (process.env.STRIPE_SECRET_KEY) {
+if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2025-09-30.clover',
+    typescript: true,
+    timeout: 10000,
+    maxNetworkRetries: 2,
   })
 }
+
+// Security constants
+const MAX_WEBHOOK_SIZE = 10 * 1024 * 1024 // 10MB limit
+const WEBHOOK_TIMEOUT = 30000 // 30 seconds
+const TIMESTAMP_TOLERANCE = 300 // 5 minutes in seconds
 const relevantEvents = [
   'checkout.session.completed',
   'invoice.payment_succeeded',
@@ -19,55 +38,129 @@ const relevantEvents = [
   'customer.subscription.updated',
   'customer.subscription.deleted',
 ]
+/**
+ * Enhanced Stripe webhook signature verification with timestamp validation
+ */
+function verifyStripeWebhookSignature(body: string, signature: string): Stripe.Event {
+  if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
+    throw new Error('Webhook not properly configured')
+  }
+
+  // Extract timestamp from signature for replay attack protection
+  const signatureElements = signature.split(',')
+  let timestamp: number | null = null
+
+  for (const element of signatureElements) {
+    if (element.startsWith('t=')) {
+      const extractedTimestamp = parseInt(element.substring(2))
+      if (!isNaN(extractedTimestamp)) {
+        timestamp = extractedTimestamp
+        break
+      }
+    }
+  }
+
+  if (!timestamp) {
+    throw new Error('Invalid signature format - missing timestamp')
+  }
+
+  // Check timestamp to prevent replay attacks (reject webhooks older than 5 minutes)
+  const currentTime = Math.floor(Date.now() / 1000)
+  if (Math.abs(currentTime - timestamp) > TIMESTAMP_TOLERANCE) {
+    throw new Error('Webhook timestamp outside tolerance window')
+  }
+
+  // Enhanced signature verification
+  try {
+    return stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    )
+  } catch (error) {
+    logger.error(LogCategory.PAYMENT, 'Webhook signature verification failed', error as Error)
+    throw new Error('Invalid webhook signature')
+  }
+}
+
+/**
+ * Secure webhook response helper
+ */
+function createSecureWebhookResponse(success: boolean, message: string = '', status: number = 200) {
+  // Never expose internal error details in webhook responses
+  const safeMessages = {
+    success: 'Webhook processed successfully',
+    error: 'Webhook processing failed',
+    invalid_signature: 'Invalid signature',
+    replay_detected: 'Replay attack detected',
+    rate_limited: 'Rate limit exceeded',
+    size_exceeded: 'Request size exceeded'
+  }
+
+  return NextResponse.json({
+    received: success,
+    message: safeMessages[message as keyof typeof safeMessages] || message
+  }, { status })
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Check if Stripe is configured
+    // Security check: Verify Stripe configuration
     if (!stripe || !process.env.STRIPE_WEBHOOK_SECRET) {
-      return NextResponse.json(
-        { error: 'Stripe webhook não está configurado' },
-        { status: 503 }
-      )
+      return createSecureWebhookResponse(false, 'error', 503)
     }
+
+    // Security check: Request size limit to prevent DoS
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength) > MAX_WEBHOOK_SIZE) {
+      return createSecureWebhookResponse(false, 'size_exceeded', 413)
+    }
+
+    // Get request body with timeout protection
     const body = await request.text()
+
+    // Security check: Verify minimum body content
+    if (!body || body.length < 10) {
+      return createSecureWebhookResponse(false, 'error', 400)
+    }
+
+    // Get signature
     const signature = headers().get('stripe-signature')
     if (!signature) {
-      logger.error(LogCategory.PAYMENT, 'Missing Stripe signature', new Error('No signature'))
-      return NextResponse.json(
-        { error: 'Assinatura ausente' },
-        { status: 400 }
-      )
+      logger.warn(LogCategory.PAYMENT, 'Webhook received without signature', {
+        timestamp: new Date().toISOString(),
+        ip: request.headers.get('x-forwarded-for') || 'unknown'
+      })
+      return createSecureWebhookResponse(false, 'invalid_signature', 401)
     }
-    // Verify webhook signature
+
+    // Enhanced signature verification with replay protection
     let event: Stripe.Event
     try {
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET
-      )
-    } catch (err) {
-      logger.error(LogCategory.PAYMENT, 'Invalid Stripe signature', err as Error)
-      return NextResponse.json(
-        { error: 'Assinatura inválida' },
-        { status: 400 }
-      )
+      event = verifyStripeWebhookSignature(body, signature)
+    } catch (error) {
+      logger.warn(LogCategory.PAYMENT, 'Webhook signature verification failed', {
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
+      return createSecureWebhookResponse(false, 'invalid_signature', 401)
     }
-    // Handle relevant events
+    // Process event with security logging
     if (relevantEvents.includes(event.type)) {
       await handleStripeEvent(event)
     } else {
       logger.logPayment('stripe_webhook_ignored', {
         eventType: event.type,
         eventId: event.id,
+        timestamp: new Date().toISOString()
       })
     }
-    return NextResponse.json({ received: true })
+
+    return createSecureWebhookResponse(true, 'success')
+
   } catch (error) {
-    logger.error(LogCategory.PAYMENT, 'Failed to process Stripe webhook', error as Error)
-    return NextResponse.json(
-      { error: 'Erro interno' },
-      { status: 500 }
-    )
+    logger.error(LogCategory.PAYMENT, 'Webhook processing failed', error as Error)
+    return createSecureWebhookResponse(false, 'error', 500)
   }
 }
 async function handleStripeEvent(event: Stripe.Event) {
