@@ -1,297 +1,194 @@
 #!/bin/bash
 
-# SVlentes Landing Page Deployment Script
-# This script handles deployment to Vercel with proper checks and monitoring
+set -euo pipefail
 
-set -e  # Exit on any error
+APP_NAME="svlentes-hero-shop"
+SERVICE_NAME="nextjs"
+PM2_PROCESS_NAME="svlentes-next"
+NODE_PORT=5000
+RELEASES_DIR="/var/www/${APP_NAME}/releases"
+SHARED_DIR="/var/www/${APP_NAME}/shared"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ENVIRONMENT="${1:-staging}"
+TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+RELEASE_PATH="${RELEASES_DIR}/${TIMESTAMP}"
+LOCK_FILE="${SHARED_DIR}/deploy.lock"
+HEALTH_ENDPOINT="https://svlentes.com.br/api/health-check"
 
-echo "🚀 Starting SVlentes Landing Page Deployment..."
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Configuration
-PROJECT_NAME="svlentes-landing-page"
-VERCEL_ORG="your-vercel-org"
-PRODUCTION_DOMAIN="svlentes-landing.vercel.app"
-
-# Functions
-log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+log() {
+    local level="$1"
+    local message="$2"
+    printf '%s [%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "${level}" "${message}"
 }
 
-log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+abort() {
+    log "ERROR" "$1"
+    exit 1
 }
 
-log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+ensure_prerequisites() {
+    log "INFO" "Validating prerequisites"
+
+    command -v node >/dev/null 2>&1 || abort "Node.js is required"
+    command -v npm >/dev/null 2>&1 || abort "npm is required"
+    command -v rsync >/dev/null 2>&1 || abort "rsync is required"
+    command -v tar >/dev/null 2>&1 || abort "tar is required"
+
+    local node_major
+    node_major="$(node -p "process.versions.node.split('.') [0]")"
+    if (( node_major < 20 )); then
+        abort "Node.js 20+ is required"
+    fi
+
+    mkdir -p "${RELEASES_DIR}" "${SHARED_DIR}/logs" "${SHARED_DIR}/backups"
 }
 
-log_error() {
-    echo -e "${RED}❌ $1${NC}"
+acquire_lock() {
+    if [[ -f "${LOCK_FILE}" ]]; then
+        abort "Deployment already in progress (lock file present)"
+    fi
+    echo "${TIMESTAMP}" > "${LOCK_FILE}"
 }
 
-# Check prerequisites
-check_prerequisites() {
-    log_info "Checking prerequisites..."
-    
-    # Check if Vercel CLI is installed
-    if ! command -v vercel &> /dev/null; then
-        log_error "Vercel CLI is not installed. Please install it with: npm i -g vercel"
-        exit 1
-    fi
-    
-    # Check if we're logged in to Vercel
-    if ! vercel whoami &> /dev/null; then
-        log_error "Not logged in to Vercel. Please run: vercel login"
-        exit 1
-    fi
-    
-    # Check if Node.js is installed
-    if ! command -v node &> /dev/null; then
-        log_error "Node.js is not installed"
-        exit 1
-    fi
-    
-    # Check if npm is installed
-    if ! command -v npm &> /dev/null; then
-        log_error "npm is not installed"
-        exit 1
-    fi
-    
-    log_success "Prerequisites check passed"
+release_lock() {
+    rm -f "${LOCK_FILE}"
 }
 
-# Run tests
-run_tests() {
-    log_info "Running tests..."
-    
-    # Install dependencies
-    npm ci
-    
-    # Run unit tests
-    if npm run test -- --watchAll=false --coverage; then
-        log_success "Unit tests passed"
-    else
-        log_error "Unit tests failed"
-        exit 1
-    fi
-    
-    # Run integration tests
-    if npm run test -- --testPathPattern=integration --watchAll=false; then
-        log_success "Integration tests passed"
-    else
-        log_error "Integration tests failed"
-        exit 1
-    fi
-    
-    # Build the project
-    if npm run build; then
-        log_success "Build successful"
-    else
-        log_error "Build failed"
-        exit 1
-    fi
-}
-
-# Run E2E tests (optional, requires running server)
-run_e2e_tests() {
-    log_info "Running E2E tests..."
-    
-    # Start the development server in background
-    npm run dev &
-    DEV_SERVER_PID=$!
-    
-    # Wait for server to start
-    sleep 10
-    
-    # Run E2E tests
-    if npx playwright test --reporter=line; then
-        log_success "E2E tests passed"
-    else
-        log_warning "E2E tests failed (continuing with deployment)"
-    fi
-    
-    # Kill the development server
-    kill $DEV_SERVER_PID 2>/dev/null || true
-}
-
-# Deploy to staging
-deploy_staging() {
-    log_info "Deploying to staging..."
-    
-    # Deploy to Vercel (preview)
-    STAGING_URL=$(vercel --yes --token=$VERCEL_TOKEN 2>&1 | grep -o 'https://[^[:space:]]*')
-    
-    if [ -n "$STAGING_URL" ]; then
-        log_success "Staging deployment successful: $STAGING_URL"
-        
-        # Run smoke tests against staging
-        run_smoke_tests "$STAGING_URL"
-        
-        echo "$STAGING_URL" > .staging-url
-    else
-        log_error "Staging deployment failed"
-        exit 1
-    fi
-}
-
-# Deploy to production
-deploy_production() {
-    log_info "Deploying to production..."
-    
-    # Deploy to production
-    if vercel --prod --yes --token=$VERCEL_TOKEN; then
-        log_success "Production deployment successful: https://$PRODUCTION_DOMAIN"
-        
-        # Run smoke tests against production
-        run_smoke_tests "https://$PRODUCTION_DOMAIN"
-        
-        # Send deployment notification
-        send_deployment_notification "success" "https://$PRODUCTION_DOMAIN"
-    else
-        log_error "Production deployment failed"
-        send_deployment_notification "failure" ""
-        exit 1
-    fi
-}
-
-# Run smoke tests
-run_smoke_tests() {
-    local url=$1
-    log_info "Running smoke tests against $url..."
-    
-    # Wait for deployment to be ready
-    sleep 30
-    
-    # Test health check endpoint
-    if curl -f "$url/api/health-check" > /dev/null 2>&1; then
-        log_success "Health check passed"
-    else
-        log_warning "Health check failed"
-    fi
-    
-    # Test main page
-    if curl -f "$url" > /dev/null 2>&1; then
-        log_success "Main page accessible"
-    else
-        log_error "Main page not accessible"
-        return 1
-    fi
-    
-    # Test API endpoints
-    if curl -f "$url/api/create-checkout" -X POST -H "Content-Type: application/json" -d '{}' > /dev/null 2>&1; then
-        log_info "API endpoints responding (expected error for empty request)"
-    else
-        log_warning "API endpoints may have issues"
-    fi
-}
-
-# Send deployment notification
-send_deployment_notification() {
-    local status=$1
-    local url=$2
-    
-    if [ "$status" = "success" ]; then
-        local message="🚀 SVlentes Landing Page deployed successfully to production: $url"
-        local color="good"
-    else
-        local message="❌ SVlentes Landing Page deployment failed"
-        local color="danger"
-    fi
-    
-    # Send Slack notification if webhook is configured
-    if [ -n "$SLACK_WEBHOOK_URL" ]; then
-        curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"$message\", \"color\":\"$color\"}" \
-            "$SLACK_WEBHOOK_URL" || log_warning "Failed to send Slack notification"
-    fi
-    
-    # Send email notification if configured
-    if [ -n "$NOTIFICATION_EMAIL" ]; then
-        echo "$message" | mail -s "SVlentes Deployment $status" "$NOTIFICATION_EMAIL" || log_warning "Failed to send email notification"
-    fi
-}
-
-# Rollback function
-rollback() {
-    log_warning "Rolling back deployment..."
-    
-    # Get previous deployment
-    PREVIOUS_DEPLOYMENT=$(vercel ls --token=$VERCEL_TOKEN | grep "$PRODUCTION_DOMAIN" | head -2 | tail -1 | awk '{print $1}')
-    
-    if [ -n "$PREVIOUS_DEPLOYMENT" ]; then
-        vercel promote "$PREVIOUS_DEPLOYMENT" --token=$VERCEL_TOKEN
-        log_success "Rollback completed to $PREVIOUS_DEPLOYMENT"
-    else
-        log_error "No previous deployment found for rollback"
-    fi
-}
-
-# Main deployment flow
-main() {
-    local environment=${1:-staging}
-    
-    echo "🏗️  Deploying to: $environment"
-    
-    # Check prerequisites
-    check_prerequisites
-    
-    # Run tests
-    run_tests
-    
-    # Deploy based on environment
-    case $environment in
-        "staging")
-            deploy_staging
+load_env_file() {
+    local env_file
+    case "${ENVIRONMENT}" in
+        production)
+            env_file="${REPO_ROOT}/.env.production"
             ;;
-        "production")
-            # Run E2E tests before production deployment
-            if [ "$SKIP_E2E" != "true" ]; then
-                run_e2e_tests
-            fi
-            deploy_production
-            ;;
-        "rollback")
-            rollback
+        staging)
+            env_file="${REPO_ROOT}/.env.staging"
             ;;
         *)
-            log_error "Invalid environment: $environment. Use 'staging', 'production', or 'rollback'"
-            exit 1
+            env_file="${REPO_ROOT}/.env.${ENVIRONMENT}"
             ;;
     esac
-    
-    log_success "Deployment completed successfully! 🎉"
+
+    if [[ ! -f "${env_file}" ]]; then
+        abort "Environment file ${env_file} not found"
+    fi
+
+    log "INFO" "Using environment file ${env_file}"
+    set -a
+    # shellcheck disable=SC1090
+    source "${env_file}"
+    set +a
 }
 
-# Handle script arguments
-case "${1:-staging}" in
-    "staging"|"production"|"rollback")
-        main "$1"
-        ;;
-    "--help"|"-h")
-        echo "Usage: $0 [staging|production|rollback]"
-        echo ""
-        echo "Options:"
-        echo "  staging     Deploy to staging environment (default)"
-        echo "  production  Deploy to production environment"
-        echo "  rollback    Rollback to previous production deployment"
-        echo "  --help, -h  Show this help message"
-        echo ""
-        echo "Environment variables:"
-        echo "  VERCEL_TOKEN          Vercel authentication token"
-        echo "  SLACK_WEBHOOK_URL     Slack webhook for notifications"
-        echo "  NOTIFICATION_EMAIL    Email for deployment notifications"
-        echo "  SKIP_E2E             Skip E2E tests (set to 'true')"
-        ;;
-    *)
-        log_error "Invalid argument: $1"
-        echo "Use --help for usage information"
-        exit 1
-        ;;
-esac
+run_prechecks() {
+    log "INFO" "Running project validations"
+    pushd "${REPO_ROOT}" >/dev/null
+    npm ci --include=dev
+    npm run lint
+    npm run test -- --watchAll=false || abort "Unit tests failed"
+    npm run build
+    popd >/dev/null
+}
+
+create_backup() {
+    if [[ -L "${SHARED_DIR}/current" ]]; then
+        local current_release
+        current_release="$(readlink -f "${SHARED_DIR}/current")"
+        if [[ -d "${current_release}" ]]; then
+            local backup_file
+            backup_file="${SHARED_DIR}/backups/${TIMESTAMP}.tar.gz"
+            log "INFO" "Creating backup ${backup_file}"
+            tar -czf "${backup_file}" -C "${current_release}" .
+        fi
+    fi
+}
+
+publish_release() {
+    log "INFO" "Publishing release ${RELEASE_PATH}"
+    rsync -a --delete "${REPO_ROOT}/" "${RELEASE_PATH}/"
+    rm -rf "${RELEASE_PATH}/.git" "${RELEASE_PATH}/node_modules"
+    pushd "${RELEASE_PATH}" >/dev/null
+    npm ci --omit=dev
+    npm run build
+    ln -sfn "${SHARED_DIR}/logs" "${RELEASE_PATH}/logs"
+    if [[ ! -f "${SHARED_DIR}/.env" ]]; then
+        abort "Expected shared environment file at ${SHARED_DIR}/.env"
+    fi
+    ln -sfn "${SHARED_DIR}/.env" "${RELEASE_PATH}/.env.production"
+    popd >/dev/null
+    ln -sfn "${RELEASE_PATH}" "${SHARED_DIR}/current"
+}
+
+reload_process_manager() {
+    if command -v pm2 >/dev/null 2>&1; then
+        log "INFO" "Reloading PM2 process"
+        pm2 startOrReload "${REPO_ROOT}/ecosystem.config.js" --only "${PM2_PROCESS_NAME}" || pm2 restart "${PM2_PROCESS_NAME}" || true
+        pm2 save || true
+    else
+        log "INFO" "Reloading systemd service ${SERVICE_NAME}"
+        sudo systemctl daemon-reload
+        sudo systemctl restart "${SERVICE_NAME}.service"
+    fi
+}
+
+verify_services() {
+    log "INFO" "Running post-deploy health verification"
+    if ! "${REPO_ROOT}/scripts/health-check.sh" --once --url "${HEALTH_ENDPOINT}" --port "${NODE_PORT}"; then
+        abort "Health check failed"
+    fi
+}
+
+rollback_release() {
+    local previous_backup
+    previous_backup="$(ls -1 "${SHARED_DIR}/backups" | sort -r | sed -n '2p')"
+    if [[ -z "${previous_backup}" ]]; then
+        abort "No backup available for rollback"
+    fi
+
+    local target_dir
+    target_dir="${RELEASES_DIR}/rollback-${TIMESTAMP}"
+    mkdir -p "${target_dir}"
+    tar -xzf "${SHARED_DIR}/backups/${previous_backup}" -C "${target_dir}"
+    ln -sfn "${target_dir}" "${SHARED_DIR}/current"
+    reload_process_manager
+    verify_services
+}
+
+cleanup_releases() {
+    log "INFO" "Cleaning up old releases"
+    ls -1dt "${RELEASES_DIR}"/* | tail -n +6 | xargs -r rm -rf
+    ls -1t "${SHARED_DIR}/backups" | tail -n +8 | xargs -r -I {} rm -f "${SHARED_DIR}/backups/{}"
+}
+
+main() {
+    case "${ENVIRONMENT}" in
+        rollback)
+            ensure_prerequisites
+            acquire_lock
+            rollback_release
+            release_lock
+            return
+            ;;
+        staging|production)
+            ;;
+        *)
+            abort "Unsupported environment: ${ENVIRONMENT}"
+            ;;
+    esac
+
+    ensure_prerequisites
+    acquire_lock
+
+    trap release_lock EXIT
+
+    load_env_file
+    run_prechecks
+    create_backup
+    publish_release
+    reload_process_manager
+    verify_services
+    cleanup_releases
+
+    log "INFO" "Deployment completed successfully"
+}
+
+main "$@"
