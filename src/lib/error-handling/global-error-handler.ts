@@ -37,6 +37,10 @@ export class GlobalErrorHandler {
   private maxReports = 50;
   private isRecovering = false;
   private recoveryCallbacks: Map<string, () => Promise<boolean>> = new Map();
+  private recoveryAttempts = 0;
+  private maxRecoveryAttempts = 5;
+  private lastRecoveryTime = 0;
+  private recoveryCooldown = 5000; // 5 seconds
 
   private constructor() {
     if (typeof window === 'undefined') return;
@@ -311,8 +315,33 @@ export class GlobalErrorHandler {
   private async attemptRecovery(report: ErrorReport): Promise<void> {
     if (this.isRecovering) return;
 
+    // 🚨 INFINITE LOOP PREVENTION
+    const now = Date.now();
+
+    // Check if we're in cooldown period
+    if (now - this.lastRecoveryTime < this.recoveryCooldown) {
+      console.warn(`[ErrorHandler] Recovery blocked - cooldown active (${this.recoveryCooldown}ms)`);
+      return;
+    }
+
+    // Check if we've exceeded max recovery attempts
+    if (this.recoveryAttempts >= this.maxRecoveryAttempts) {
+      console.error(`[ErrorHandler] Recovery blocked - max attempts reached (${this.maxRecoveryAttempts})`);
+      this.createAlert('recovery_limit_exceeded', 'critical',
+        `Recovery system disabled due to too many attempts (${this.recoveryAttempts})`);
+      return;
+    }
+
     this.isRecovering = true;
+    this.recoveryAttempts++;
+    this.lastRecoveryTime = now;
     report.recoveryAttempted = true;
+
+    // Set a timeout to prevent hanging
+    const recoveryTimeout = setTimeout(() => {
+      this.isRecovering = false;
+      console.error('[ErrorHandler] Recovery timeout - possible infinite loop prevented');
+    }, 10000); // 10 second timeout
 
     try {
       let recovered = false;
@@ -331,6 +360,7 @@ export class GlobalErrorHandler {
 
       if (recovered) {
         console.log(`[ErrorHandler] Recuperação bem-sucedida para ${report.category}`);
+        this.recoveryAttempts = 0; // Reset counter on success
       } else {
         console.warn(`[ErrorHandler] Recuperação falhou para ${report.category}`);
       }
@@ -338,8 +368,14 @@ export class GlobalErrorHandler {
       console.error('[ErrorHandler] Erro durante tentativa de recuperação:', error);
       report.recoverySucceeded = false;
     } finally {
+      clearTimeout(recoveryTimeout);
       this.isRecovering = false;
     }
+  }
+
+  private createAlert(type: string, severity: string, message: string): void {
+    // Simple alert creation to prevent infinite recovery loops
+    console.warn(`[ErrorHandler] Alert: ${type} - ${message}`);
   }
 
   private logError(report: ErrorReport): void {
