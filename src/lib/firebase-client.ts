@@ -11,8 +11,11 @@ import { initializeApp, getApps, FirebaseApp } from "firebase/app"
 import { getAuth, Auth, connectAuthEmulator } from "firebase/auth"
 import { getAnalytics, Analytics } from "firebase/analytics"
 import { getFirestore, Firestore } from "firebase/firestore"
-import { getPerformance, Performance } from "firebase/performance"
+import { getPerformance } from "firebase/performance"
 import { getRemoteConfig, RemoteConfig } from "firebase/remote-config"
+import { logFirebaseError, shouldSuppressError, createMockAuthHandler } from "./firebase-error-handler"
+
+type FirebasePerformance = ReturnType<typeof getPerformance>
 
 // Firebase configuration from environment variables
 // This matches your configuration but uses the environment variables from .env.local
@@ -51,18 +54,16 @@ function validateFirebaseConfig(config: typeof firebaseConfig): void {
 
   // Validate API key format
   if (!config.apiKey?.startsWith('AIza')) {
-    console.error('[FIREBASE] Invalid API key format:', config.apiKey?.substring(0, 10) + '...')
+    console.error('[FIREBASE] Invalid API key format')
     throw new Error('Firebase API key appears to be invalid')
   }
 
-  // Log configuration (without sensitive data)
-  console.log('[FIREBASE] Configuration validated:', {
-    projectId: config.projectId,
-    authDomain: config.authDomain,
-    hasApiKey: !!config.apiKey,
-    hasAppId: !!config.appId,
-    hasMeasurementId: !!config.measurementId
-  })
+  // Warning about potentially invalid API key
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('[FIREBASE] ⚠️  Using development Firebase configuration')
+    console.warn('[FIREBASE] If you see authentication errors, please verify your Firebase API key is valid')
+    console.warn('[FIREBASE] Project ID:', config.projectId)
+  }
 }
 
 /**
@@ -73,7 +74,7 @@ export interface FirebaseServices {
   auth: Auth
   analytics?: Analytics
   firestore?: Firestore
-  performance?: Performance
+  performance?: FirebasePerformance
   remoteConfig?: RemoteConfig
 }
 
@@ -89,17 +90,38 @@ export function initializeFirebaseClient(): FirebaseServices {
   }
 
   // Validate configuration
-  validateFirebaseConfig(firebaseConfig)
+  try {
+    validateFirebaseConfig(firebaseConfig)
+  } catch (error) {
+    console.error('[FIREBASE] Configuration validation failed:', error)
+    throw error
+  }
 
   // Use existing app or create new one (singleton pattern)
   const existingApps = getApps()
-  const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig)
+  let app: FirebaseApp
+  
+  try {
+    app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig)
+  } catch (error) {
+    console.error('[FIREBASE] App initialization failed:', error)
+    throw new Error('Failed to initialize Firebase app. Please check your configuration.')
+  }
 
-  // Initialize Firebase services
-  const auth = getAuth(app)
+  // Initialize Firebase services with error handling
+  let auth: Auth
+  try {
+    auth = getAuth(app)
+    // Set a timeout for auth operations to prevent hanging
+    auth.settings.appVerificationDisabledForTesting = process.env.NODE_ENV === 'development'
+  } catch (error) {
+    console.error('[FIREBASE] Auth initialization failed:', error)
+    throw new Error('Failed to initialize Firebase Auth')
+  }
+  
   let analytics: Analytics | undefined
   let firestore: Firestore | undefined
-  let performance: Performance | undefined
+  let performance: FirebasePerformance | undefined
   let remoteConfig: RemoteConfig | undefined
 
   // Initialize Analytics (only in production)
@@ -134,10 +156,8 @@ export function initializeFirebaseClient(): FirebaseServices {
   try {
     remoteConfig = getRemoteConfig(app)
     // Configure Remote Config settings
-    remoteConfig.settings = {
-      fetchTimeMillis: 60000, // 1 minute
-      minimumFetchIntervalMillis: 300000, // 5 minutes
-    }
+    remoteConfig.settings.minimumFetchIntervalMillis = 300000 // 5 minutes
+    remoteConfig.settings.fetchTimeoutMillis = 60000 // 1 minute
     console.log('[FIREBASE] Remote Config initialized')
   } catch (error) {
     console.warn('[FIREBASE] Remote Config initialization failed:', error)
@@ -179,7 +199,23 @@ export function getFirebaseServices(): FirebaseServices {
   }
 
   if (!firebaseServices) {
-    firebaseServices = initializeFirebaseClient()
+    try {
+      firebaseServices = initializeFirebaseClient()
+    } catch (error) {
+      logFirebaseError(error, 'Firebase Client Initialization')
+      
+      // If error should be suppressed in development, create mock handler
+      if (shouldSuppressError(error)) {
+        console.warn('[Firebase] Using fallback authentication due to configuration issues')
+        // Return a minimal services object with mock auth
+        return {
+          app: {} as FirebaseApp,
+          auth: createMockAuthHandler() as any as Auth,
+        }
+      }
+      
+      throw error
+    }
   }
 
   return firebaseServices

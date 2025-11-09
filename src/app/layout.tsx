@@ -23,6 +23,7 @@ import { ClientProviders } from '@/components/providers/ClientProviders'
 import { ConfigMonitor } from '@/components/ConfigMonitor'
 
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ErrorSuppressor } from '@/components/ErrorSuppressor'
 import {
     baseMetadata,
     generateOrganizationStructuredData,
@@ -86,6 +87,7 @@ export default function RootLayout({
                 <PhysicianSchema />
             </head>
             <body className="antialiased">
+                <ErrorSuppressor />
                 <ErrorBoundary>
                 <ClientProviders>
                     <ServiceWorkerCleanup />
