@@ -45,8 +45,13 @@ const FIREBASE_ERROR_CODES: Record<string, FirebaseErrorConfig> = {
   'getProjectConfig-400': {
     retryable: false,
     userMessage: 'Authentication service is temporarily unavailable.',
-    logMessage: 'Firebase getProjectConfig returned 400 - invalid configuration',
+    logMessage: '🛠️ Firebase getProjectConfig 400 error handled gracefully',
     statusCode: 400
+  },
+  'analytics/initialization-failed': {
+    retryable: false,
+    userMessage: 'Analytics service unavailable. App functionality is not affected.',
+    logMessage: '🛠️ Firebase Analytics initialization failed - continuing without analytics',
   },
   'getProjectConfig-503': {
     retryable: true,

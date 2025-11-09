@@ -1,10 +1,25 @@
-// @ts-nocheck - Legacy API with type incompatibilities - needs refactoring
 /**
- * SendPulse Webhook Integration
- * Receives WhatsApp messages via SendPulse API and processes them
+ * 🛠️ Quick Win: Partially Type-Safe SendPulse Webhook
+ *
+ * This file is being incrementally improved for TypeScript support.
+ * The @ts-nocheck has been removed and type-safe wrappers are being used.
+ *
+ * @author Dr. Philipe Saraiva Cruz
  */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+
+// 🛠️ Import type-safe utilities
+import {
+  SendPulseWebhookValidator,
+  SendPulseMessageProcessor,
+  withTypeSafety,
+  parseWebhookBody,
+  WebhookResponses
+} from '@/lib/webhooks/sendpulse-wrapper'
+
+// Legacy imports - will be gradually typed
 import { simpleLangChainProcessor } from '@/lib/simple-langchain-processor'
 import { supportTicketManager } from '@/lib/support-ticket-manager'
 import { supportEscalationSystem } from '@/lib/support-escalation-system'
@@ -28,22 +43,26 @@ import {
   reactivateSubscriptionCommand,
   nextDeliveryCommand
 } from '@/lib/subscription-management-commands'
-// C6: Zod schemas for webhook payload validation
+
+// 🛠️ Type-safe validation schemas (migrated from legacy)
 const MessageTextSchema = z.object({
   body: z.string().max(5000).optional()
 })
+
 const InteractiveButtonReplySchema = z.object({
   type: z.literal('button_reply'),
   button_reply: z.object({
     title: z.string().max(200)
   })
 })
+
 const InteractiveListReplySchema = z.object({
   type: z.literal('list_reply'),
   list_reply: z.object({
     title: z.string().max(200)
   })
 })
+
 const InteractiveSchema = z.union([
   InteractiveButtonReplySchema,
   InteractiveListReplySchema
@@ -182,8 +201,8 @@ export async function GET(request: NextRequest) {
   // Return OK for health checks
   return NextResponse.json({ status: 'webhook_active', timestamp: new Date().toISOString() })
 }
-// Main webhook handler for SendPulse messages (Brazilian API)
-export async function POST(request: NextRequest) {
+// 🛠️ Quick Win: Type-safe main webhook handler
+export const POST = withTypeSafety(async (request: NextRequest) => {
   const timer = logger.startTimer()
   const requestId = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
   try {
@@ -454,7 +473,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+});
 /**
  * Process SendPulse native format message (array format)
  */

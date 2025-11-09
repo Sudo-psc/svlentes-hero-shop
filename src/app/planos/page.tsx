@@ -98,21 +98,31 @@ export default function PlanosPage() {
     window.addEventListener('offline-mode-activated', handleOfflineMode as EventListener);
     window.addEventListener('health-alert', handleHealthAlert as EventListener);
 
-    // Monitoramento periódico de saúde
-    const healthInterval = setInterval(async () => {
-      try {
-        const health = await healthMonitor.checkHealth();
-        setHealthStatus(health.status);
-      } catch (error) {
-        console.error('[PLANOS] Erro ao verificar saúde:', error);
-      }
-    }, 30000); // A cada 30 segundos
+    // 🛠️ Quick Win: Usar gerenciador de intervalos centralizado
+    let cleanupInterval: (() => void) | undefined;
+    
+    import('@/lib/utils/interval-manager').then(({ setManagedInterval, clearManagedByName }) => {
+      setManagedInterval(
+        'planos-health-monitor',
+        async () => {
+          try {
+            const health = await healthMonitor.checkHealth();
+            setHealthStatus(health.status);
+          } catch (error) {
+            console.error('[PLANOS] Erro ao verificar saúde:', error);
+          }
+        },
+        30000 // A cada 30 segundos
+      );
+      
+      cleanupInterval = () => clearManagedByName('planos-health-monitor');
+    });
 
     return () => {
       window.removeEventListener('fallback-activated', handleFallbackActivated as EventListener);
       window.removeEventListener('offline-mode-activated', handleOfflineMode as EventListener);
       window.removeEventListener('health-alert', handleHealthAlert as EventListener);
-      clearInterval(healthInterval);
+      if (cleanupInterval) cleanupInterval();
     };
   }, []);
 
@@ -240,6 +250,7 @@ export default function PlanosPage() {
               !useFallback ? (
                 <StripePricingTable
                   pricingTableId="prctbl_1SK1U5Ls8MC0aCdjGBBODqjW"
+                  publishableKey="pk_live_51OJdAcLs8MC0aCdjM8vdJBIjUzcRGXWLTlDFu4MyodwPfZOb34EgFjRSyq03XVdZlrvKeGps5Q3RgtR45sJ7kGsT00aOBbU6Jc"
                   onFallbackActivate={handleFallbackActivation}
                   className="w-full"
                 />

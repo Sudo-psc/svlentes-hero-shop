@@ -1,6 +1,8 @@
 /**
  * Sistema de monitoramento e logging de erros
  * Implementa métricas de saúde da aplicação e alertas proativos
+ *
+ * 🛠️ Enhanced with performance budgeting integration
  */
 
 export interface HealthMetrics {
@@ -53,6 +55,11 @@ export interface HealthCheckResult {
   metrics: HealthMetrics;
   alerts: HealthAlert[];
   recommendations: string[];
+  // 🛠️ Enhanced with performance budget info
+  performanceBudget?: {
+    status: 'within_budget' | 'warning' | 'exceeded';
+    violations: string[];
+  };
 }
 
 export class HealthMonitor {
@@ -68,6 +75,7 @@ export class HealthMonitor {
     storage: 0,
     total: 0
   };
+  private isDestroyed = false;
 
   private constructor() {
     if (typeof window === 'undefined') return;
@@ -79,7 +87,7 @@ export class HealthMonitor {
   }
 
   static getInstance(): HealthMonitor {
-    if (!HealthMonitor.instance) {
+    if (!HealthMonitor.instance || HealthMonitor.instance.isDestroyed) {
       HealthMonitor.instance = new HealthMonitor();
     }
     return HealthMonitor.instance;
@@ -406,12 +414,35 @@ export class HealthMonitor {
     const status = this.getHealthStatus(score);
     const recommendations = this.generateRecommendations();
 
+    // 🛠️ Enhanced with performance budget integration
+    let performanceBudgetInfo = undefined;
+
+    try {
+      // Try to load performance budget manager
+      const { performanceBudget } = await import('../performance/performance-budget');
+      const budgetReport = performanceBudget.generateBudgetReport();
+
+      performanceBudgetInfo = {
+        status: budgetReport.status,
+        violations: budgetReport.recommendations
+      };
+
+      // Add performance budget recommendations to main recommendations
+      recommendations.push(...budgetReport.recommendations.map(rec =>
+        `📊 Performance: ${rec}`
+      ));
+    } catch (error) {
+      // Performance budget not available - continue without it
+      console.debug('[HealthMonitor] Performance budget not available');
+    }
+
     return {
       status,
       score,
       metrics: { ...this.metrics },
       alerts: Array.from(this.alerts.values()),
-      recommendations
+      recommendations,
+      performanceBudget: performanceBudgetInfo
     };
   }
 
@@ -528,15 +559,36 @@ export class HealthMonitor {
    * Para o monitoramento
    */
   stopMonitoring(): void {
+    if (this.isDestroyed) return;
+
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
     }
 
     this.observers.forEach(observer => {
-      observer.disconnect();
+      try {
+        observer.disconnect();
+      } catch (error) {
+        console.warn('[HealthMonitor] Error disconnecting observer:', error);
+      }
     });
     this.observers = [];
+  }
+
+  /**
+   * Complete cleanup - prevents memory leaks
+   */
+  destroy(): void {
+    if (this.isDestroyed) return;
+
+    this.stopMonitoring();
+
+    // Clear all data
+    this.alerts.clear();
+    this.errorCounts = { js: 0, network: 0, storage: 0, total: 0 };
+    this.alertIdCounter = 0;
+    this.isDestroyed = true;
   }
 
   /**

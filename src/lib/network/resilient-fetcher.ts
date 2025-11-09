@@ -126,6 +126,12 @@ export class ResilientFetcher {
     error: Error | null,
     response?: Response
   ): boolean {
+    // 🚨 RATE LIMITING DETECTION - Don't retry on rate limit errors
+    if (this.isRateLimitError(error, response)) {
+      console.warn('[ResilientFetcher] Rate limit detected - preventing retry');
+      return false;
+    }
+
     // Retry em erros de rede
     if (error) {
       // Timeout
@@ -367,6 +373,53 @@ export class ResilientFetcher {
     }
 
     return results;
+  }
+
+  /**
+   * 🚨 RATE LIMITING DETECTION - Check if error/response indicates rate limiting
+   */
+  private static isRateLimitError(error: Error | null, response?: Response): boolean {
+    // Check HTTP status codes that indicate rate limiting
+    if (response) {
+      const rateLimitStatuses = [429, 503, 402]; // Too Many Requests, Service Unavailable, Payment Required
+      if (rateLimitStatuses.includes(response.status)) {
+        return true;
+      }
+
+      // Check Rate Limit headers
+      const rateLimitHeaders = [
+        'x-ratelimit-remaining',
+        'x-rate-limit-remaining',
+        'x-ratelimit-reset',
+        'x-rate-limit-reset',
+        'retry-after'
+      ];
+
+      for (const header of rateLimitHeaders) {
+        if (response.headers.get(header)) {
+          return true;
+        }
+      }
+    }
+
+    // Check error messages for rate limiting indicators
+    if (error) {
+      const rateLimitPatterns = [
+        'rate limit',
+        'rate-limit',
+        'too many requests',
+        'quota exceeded',
+        'api limit',
+        'throttled',
+        'retry after',
+        'service temporarily unavailable'
+      ];
+
+      const errorMessage = error.message.toLowerCase();
+      return rateLimitPatterns.some(pattern => errorMessage.includes(pattern));
+    }
+
+    return false;
   }
 }
 

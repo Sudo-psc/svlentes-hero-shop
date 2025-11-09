@@ -52,17 +52,17 @@ function validateFirebaseConfig(config: typeof firebaseConfig): void {
     throw new Error(`Firebase configuration error: missing ${missing.join(', ')}`)
   }
 
-  // Validate API key format
-  if (!config.apiKey?.startsWith('AIza')) {
-    console.error('[FIREBASE] Invalid API key format')
-    throw new Error('Firebase API key appears to be invalid')
+  // 🛠️ Fix: More lenient API key validation - some Firebase keys might not start with "AIza"
+  if (!config.apiKey || config.apiKey.length < 20) {
+    console.error('[FIREBASE] Invalid or missing API key')
+    throw new Error('Firebase API key is missing or too short')
   }
 
-  // Warning about potentially invalid API key
+  // Development warning with fallback capability
   if (process.env.NODE_ENV === 'development') {
     console.warn('[FIREBASE] ⚠️  Using development Firebase configuration')
-    console.warn('[FIREBASE] If you see authentication errors, please verify your Firebase API key is valid')
     console.warn('[FIREBASE] Project ID:', config.projectId)
+    console.warn('[FIREBASE] If you see 400 errors, Firebase API key might be invalid or project might not exist')
   }
 }
 
@@ -124,13 +124,20 @@ export function initializeFirebaseClient(): FirebaseServices {
   let performance: FirebasePerformance | undefined
   let remoteConfig: RemoteConfig | undefined
 
-  // Initialize Analytics (only in production)
+  // 🛠️ Fix: Initialize Analytics with better error handling for 400 errors
   if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
     try {
       analytics = getAnalytics(app)
       console.log('[FIREBASE] Analytics initialized')
     } catch (error) {
-      console.warn('[FIREBASE] Analytics initialization failed:', error)
+      const firebaseError = error as Error;
+      console.warn('[FIREBASE] Analytics initialization failed:', firebaseError.message)
+
+      // 🚨 Handle getProjectConfig 400 errors gracefully
+      if (firebaseError.message.includes('400') || firebaseError.message.includes('getProjectConfig')) {
+        console.warn('[FIREBASE] ⚠️ getProjectConfig 400 error detected - continuing without Analytics')
+        logFirebaseError('analytics', firebaseError, { configValid: false });
+      }
     }
   }
 
