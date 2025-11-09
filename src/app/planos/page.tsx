@@ -249,8 +249,6 @@ export default function PlanosPage() {
             {!isLoading && (
               !useFallback ? (
                 <StripePricingTable
-                  pricingTableId="prctbl_1SK1U5Ls8MC0aCdjGBBODqjW"
-                  publishableKey="pk_live_51OJdAcLs8MC0aCdjM8vdJBIjUzcRGXWLTlDFu4MyodwPfZOb34EgFjRSyq03XVdZlrvKeGps5Q3RgtR45sJ7kGsT00aOBbU6Jc"
                   onFallbackActivate={handleFallbackActivation}
                   className="w-full"
                 />
