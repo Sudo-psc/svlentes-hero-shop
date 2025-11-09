@@ -92,10 +92,10 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
   const isValidPublishableKey = effectivePublishableKey &&
     (effectivePublishableKey.startsWith('pk_live_') || effectivePublishableKey.startsWith('pk_test_'))
 
-  // Enhanced Stripe script loader - faster fallback for 503 errors
+  // Enhanced Stripe script loader - balanced timeout for better reliability
   const { StripeScriptLoaderComponent, scriptStatus, error: scriptError, isLoaded, isLoading, hasError } = useStripeScriptLoader({
-    maxRetries: 1, // Reduzir tentativas para ativar fallback mais rápido
-    timeout: 2000, // 2 segundos timeout para resposta mais rápida
+    maxRetries: 2, // Aumentar tentativas para dar mais chances de sucesso
+    timeout: 8000, // 8 segundos timeout para conexões mais lentas
     onFallbackActivated: () => {
       console.log('[STRIPE_PRICING_TABLE] Fallback activated due to network issues')
       fetchProducts()
@@ -312,30 +312,27 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
     return <div className="w-full p-4 text-center">Carregando planos...</div>
   }
 
-  // Activate fallback immediately if there are network issues detected
+  // Activate fallback if loading takes too long
   useEffect(() => {
-    // Check for immediate fallback conditions
-    const checkImmediateFallback = () => {
-      // If we've been loading for more than 1 second, activate fallback
-      const loadingTimer = setTimeout(() => {
-        if (isLoading) {
-          console.log('[STRIPE_PRICING_TABLE] Loading timeout (1s), activating fallback')
-          fetchProducts()
-        }
-      }, 1000)
-
-      return () => clearTimeout(loadingTimer)
-    }
-
-    // Monitor script status changes
+    // Monitor script status changes - only fetch products on error/fallback
     if (hasError || scriptStatus === 'fallback') {
       console.log('[STRIPE_PRICING_TABLE] Script error detected, activating fallback')
       fetchProducts()
+      return
     }
 
-    const cleanup = checkImmediateFallback()
-    return cleanup
-  }, [isLoading, hasError, scriptStatus, fetchProducts])
+    // Set timeout for loading state - fetch products if taking too long
+    if (isLoading) {
+      const loadingTimer = setTimeout(() => {
+        console.log('[STRIPE_PRICING_TABLE] Loading timeout (5s), activating fallback with products')
+        fetchProducts()
+        onFallbackActivate?.()
+      }, 5000)
+
+      return () => clearTimeout(loadingTimer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, hasError, scriptStatus])
 
   // Success - Render Stripe Pricing Table
   return (

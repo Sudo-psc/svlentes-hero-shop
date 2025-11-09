@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 
 interface StripeScriptLoaderProps {
   onScriptLoaded?: () => void
@@ -19,6 +19,7 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
 }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error' | 'fallback'>('loading')
   const [retryCount, setRetryCount] = useState(0)
+  const hasLoadedRef = useRef(false) // Prevent multiple load attempts
 
   const loadScriptWithTimeout = useCallback((
     src: string,
@@ -109,8 +110,13 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
   }, [retryCount, maxRetries, timeout, loadScriptWithTimeout, onScriptLoaded, onScriptError, onFallbackActivated])
 
   useEffect(() => {
-    loadScript()
-  }, [loadScript])
+    // Only load script once on mount
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true
+      loadScript()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Monitorar erros de rede específicos do Stripe - detectar 503 imediatamente
   useEffect(() => {
