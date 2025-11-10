@@ -1,5 +1,5 @@
 'use client'
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import {
   User,
   onAuthStateChanged,
@@ -67,6 +67,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [lastResolution, setLastResolution] = useState<AuthErrorResolution | null>(null)
 
   const fallbackManagerRef = useRef<EnhancedFallbackAuthManager | null>(null)
+  const tokenSyncStateRef = useRef<{
+    lastToken: string | null
+    lastAction: 'store' | 'clear'
+    lastSyncAt: number
+    inFlight: Promise<void> | null
+    lastErrorAt: number | null
+  }>({
+    lastToken: null,
+    lastAction: 'clear',
+    lastSyncAt: 0,
+    inFlight: null,
+    lastErrorAt: null
+  })
+
+  const syncTokenWithServer = useCallback(async (
+    action: 'store' | 'clear',
+    token?: string
+  ) => {
+    const state = tokenSyncStateRef.current
+    const now = Date.now()
+
+    if (action === 'store' && (!token || typeof token !== 'string')) {
+      console.warn('[AUTH] Ignorando sincronização: token inválido recebido')
+      return
+    }
+
+    if (state.lastErrorAt && now - state.lastErrorAt < 30 * 1000) {
+      devLog.auth('token-sync-skipped', { reason: 'recent-rate-limit' })
+      return
+    }
+
+    if (state.inFlight) {
+      if (
+        action === state.lastAction &&
+        ((action === 'store' && token === state.lastToken) || action === 'clear')
+      ) {
+        return state.inFlight
+      }
+    }
+
+    if (action === 'store') {
+      const recentlySynced =
+        state.lastAction === 'store' &&
+        token === state.lastToken &&
+        now - state.lastSyncAt < 10 * 60 * 1000
+
+      if (recentlySynced) {
+        devLog.auth('token-sync-skipped', { reason: 'recent-store', tokenHash: token.substring(0, 8) })
+        return
+      }
+    } else {
+      const recentlyCleared =
+        state.lastAction === 'clear' &&
+        now - state.lastSyncAt < 30 * 1000
+
+      if (recentlyCleared) {
+        devLog.auth('token-clear-skipped', { reason: 'throttled' })
+        return
+      }
+    }
+
+    const body = action === 'store' ? { token } : { action: 'clear' }
+
+    const requestPromise = (async () => {
+      const response = await fetch('/api/auth/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        const error = new Error(`Failed to ${action} token: HTTP ${response.status}`)
+        if (response.status === 429) {
+          console.warn('[AUTH] Rate limit detected while syncing token')
+          state.lastErrorAt = Date.now()
+        }
+        throw error
+      }
+    })()
+
+    state.inFlight = requestPromise
+
+    try {
+      await requestPromise
+      state.lastAction = action
+      state.lastToken = action === 'store' ? token ?? null : null
+      state.lastSyncAt = Date.now()
+      state.lastErrorAt = null
+    } finally {
+      state.inFlight = null
+    }
+  }, [])
 
   useEffect(() => {
     if (!auth) {
@@ -138,21 +230,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         devLog.auth('user-signed-in', { uid: user.uid, email: user.email })
         try {
           const token = await user.getIdToken()
-          // Send token to secure server-side endpoint for HttpOnly cookie storage
-          const response = await fetch('/api/auth/set-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-          })
-
-          if (!response.ok) {
-            console.error('[AUTH] Failed to store token securely')
-          } else {
+          try {
+            await syncTokenWithServer('store', token)
             devLog.auth('token-stored')
+          } catch (error) {
+            console.error('[AUTH] Failed to store token securely:', error)
           }
 
-          // FIXED: Only set loading to false AFTER token is stored
-          // This ensures the middleware can verify the cookie before redirects happen
           setLoading(false)
         } catch (error) {
           console.error('[AUTH] Failed to get ID token:', error)
@@ -163,11 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         devLog.auth('user-signed-out')
         // Clear cookie when user signs out via server-side API
         try {
-          await fetch('/api/auth/set-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'clear' }),
-          })
+          await syncTokenWithServer('clear')
           devLog.auth('token-cleared')
         } catch (error) {
           console.error('[AUTH] Failed to clear token:', error)
@@ -181,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return unsubscribe
-  }, [auth, manager])
+  }, [auth, manager, syncTokenWithServer])
 
   const signIn = async (email: string, password: string) => {
     if (!auth) {
@@ -257,11 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Clear the Firebase token cookie securely via server-side API
     try {
-      await fetch('/api/auth/set-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'clear' }),
-      })
+      await syncTokenWithServer('clear')
       devLog.auth('sign-out-token-cleared')
     } catch (error) {
       console.error('[AUTH] Failed to clear token on sign out:', error)
