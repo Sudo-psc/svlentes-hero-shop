@@ -17,24 +17,9 @@ const STATIC_ASSETS = [
   '/favicon.ico'
 ]
 
-// Sistemas de esquemas que não devem ser cacheados
-const BLOCKED_SCHEMES = [
-  'chrome-extension://',
-  'chrome://',
-  'moz-extension://',
-  'safari-extension://',
-  'edge://',
-  'opera://',
-  'brave://'
-]
-
 // Métodos HTTP que não devem ser cacheados
-const NON_CACHEABLE_METHODS = [
-  'POST',
-  'PUT',
-  'DELETE',
-  'PATCH'
-]
+const NON_CACHEABLE_METHODS = ['POST', 'PUT', 'DELETE', 'PATCH']
+const UNSUPPORTED_SCHEMES = ['chrome-extension', 'chrome', 'about', 'moz-extension', 'safari-extension', 'edge', 'opera', 'brave']
 
 // WebSocket configuration com retry
 class WebSocketManager {
@@ -117,11 +102,9 @@ function shouldIgnoreUrl(url) {
   const urlString = url.toString()
 
   // Bloquear esquemas não suportados
-  for (const scheme of BLOCKED_SCHEMES) {
-    if (urlString.startsWith(scheme)) {
-      console.log(`[SW] Ignoring blocked scheme: ${scheme}`)
-      return true
-    }
+  if (UNSUPPORTED_SCHEMES.includes(url.protocol.replace(':', ''))) {
+    console.log(`[SW] Ignoring blocked scheme: ${url.protocol}`)
+    return true
   }
 
   // Bloquear requisições para extensões
@@ -330,44 +313,37 @@ async function handleChunkRequest(request) {
   }
 }
 
-// Função para tratar requisições estáticas com filtros aprimorados
+// Função corrigida para tratar requisições estáticas
 async function handleStaticRequest(request) {
-  const url = new URL(request.url)
-
-  // Verificar se é uma requisição para fontes externas problemáticas
-  if (isProblematicExternalRequest(url)) {
-    console.log(`[SW] Handling problematic external request: ${request.url}`)
-    return handleExternalResourceFallback(request, url)
-  }
-
-  const cache = await caches.open(STATIC_CACHE)
-
   try {
-    // Cache first para assets estáticos
-    const cachedResponse = await cache.match(request)
-    if (cachedResponse) {
-      return cachedResponse
+    // Filtrar requisições que não podem ser cacheadas
+    const url = new URL(request.url);
+
+    // Não cachear se:
+    if (UNSUPPORTED_SCHEMES.includes(url.protocol.replace(':', '')) ||
+        NON_CACHEABLE_METHODS.includes(request.method)) {
+      return fetch(request);
     }
 
-    // Se não tem cache, buscar da rede
-    const networkResponse = await fetch(request)
+    const cache = await caches.open(STATIC_CACHE);
+    const cached = await cache.match(request);
 
-    if (networkResponse.ok) {
-      // Cache apenas se for bem-sucedido
-      cache.put(request, networkResponse.clone())
-      return networkResponse
+    if (cached) return cached;
+
+    const response = await fetch(request);
+
+    // Não cachear respostas parciais ou erros
+    if (response.status === 206 || response.status >= 400) {
+      return response;
     }
 
-    throw new Error(`Static asset not available: ${networkResponse.status}`)
+    // Clonar antes de cachear
+    cache.put(request, response.clone());
+    return response;
+
   } catch (error) {
-    console.error('[SW] Static request failed:', request.url, error.message)
-
-    // Retornar página de erro ou fallback
-    if (request.destination === 'document') {
-      return caches.match('/') || new Response('Offline', { status: 503 })
-    }
-
-    return new Response('Asset not available', { status: 503 })
+    console.error('[SW] Cache error:', error.message);
+    return fetch(request); // Fallback para network
   }
 }
 
