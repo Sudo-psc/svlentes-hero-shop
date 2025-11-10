@@ -163,3 +163,87 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     html,
   })
 }
+
+interface StripePortalEmailOptions {
+  email: string
+  name?: string | null
+  portalUrl: string
+  returnUrl: string
+  accessIp?: string
+}
+
+/**
+ * Envia confirmação de acesso ao portal de assinante do Stripe
+ */
+export async function sendStripePortalAccessEmail({
+  email,
+  name,
+  portalUrl,
+  returnUrl,
+  accessIp,
+}: StripePortalEmailOptions) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[EMAIL] RESEND_API_KEY ausente. Ignorando envio de notificação do portal Stripe.')
+    return null
+  }
+
+  const safeName = (name || 'Assinante').replace(/[<>]/g, '')
+  const formattedAccessIp = accessIp ? accessIp.split(',')[0]?.trim() : null
+  const subject = 'Gerencie sua assinatura com segurança - Portal Stripe'
+  const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Portal de assinante - SV Lentes</title>
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #f9fafb; color: #111827; margin: 0; padding: 0; }
+          .container { max-width: 640px; margin: 0 auto; padding: 24px; }
+          .card { background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08); }
+          .button { display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #0e7490 100%); color: #ffffff; padding: 14px 26px; border-radius: 999px; text-decoration: none; font-weight: 600; }
+          .muted { color: #6b7280; font-size: 14px; }
+          .footer { text-align: center; margin-top: 32px; color: #6b7280; font-size: 12px; }
+          .highlight { color: #0e7490; font-weight: 600; }
+          .code { display: inline-block; background: #f1f5f9; padding: 8px 12px; border-radius: 8px; font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 13px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="card">
+            <p class="muted" style="margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.08em;">Portal do assinante</p>
+            <h1 style="font-size: 24px; margin: 0 0 16px 0;">Olá, ${safeName} 👋</h1>
+            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+              Recebemos seu pedido para acessar o <strong>Portal do Cliente Stripe</strong> da SV Lentes. Lá você pode atualizar formas de pagamento, consultar histórico de cobranças e gerenciar sua assinatura com segurança.
+            </p>
+            <div style="text-align: center; margin-bottom: 32px;">
+              <a class="button" href="${portalUrl}" target="_blank" rel="noopener noreferrer">
+                Abrir portal agora
+              </a>
+            </div>
+            <p class="muted" style="margin-bottom: 20px;">
+              Este link é válido por tempo limitado e foi solicitado ${formattedAccessIp ? `a partir do IP <span class="highlight">${formattedAccessIp}</span>.` : 'recentemente.'}
+              Caso não tenha feito esta solicitação, recomendamos alterar sua senha e entrar em contato com nosso suporte imediatamente.
+            </p>
+            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 12px;">Ao finalizar no portal, você retornará automaticamente para:</p>
+            <p class="code">${returnUrl}</p>
+            <p class="muted" style="margin-top: 24px;">
+              Se o botão não funcionar, copie e cole o endereço abaixo no seu navegador:
+            </p>
+            <p class="code" style="word-break: break-all;">${portalUrl}</p>
+          </div>
+          <div class="footer">
+            <p>SV Lentes · Atendimento especializado em lentes de contato</p>
+            <p>Assistência 24/7 • Pagamentos seguros pelo Stripe</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+  })
+}
