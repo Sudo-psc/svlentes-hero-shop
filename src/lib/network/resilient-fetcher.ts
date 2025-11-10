@@ -329,45 +329,76 @@ export class ResilientFetcher {
     googleApis: boolean;
     cdnResources: boolean;
     errors: string[];
+    latency: Partial<Record<'stripe' | 'googleApis' | 'cdnResources', number>>;
   }> {
+    const getTimestamp = (): number => {
+      if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+        return performance.now();
+      }
+      return Date.now();
+    };
+
     const results = {
       stripe: false,
       googleApis: false,
       cdnResources: false,
-      errors: [] as string[]
+      errors: [] as string[],
+      latency: {} as Partial<Record<'stripe' | 'googleApis' | 'cdnResources', number>>
     };
 
-    // Verificar Stripe
+    // Verificar Stripe (sem injetar script na página)
     try {
-      const stripeScript = await this.loadExternalScript(
+      const start = getTimestamp();
+      const response = await this.fetchWithRetry(
         'https://js.stripe.com/v3/pricing-table.js',
-        { maxRetries: 1, timeout: 3000 }
+        { method: 'HEAD' },
+        { maxRetries: 1, timeout: 5000 }
       );
-      results.stripe = !!stripeScript;
+
+      results.stripe = response.ok;
+      if (response.ok) {
+        results.latency.stripe = getTimestamp() - start;
+      } else {
+        results.errors.push(`Stripe pricing-table.js responded with status ${response.status}`);
+      }
     } catch (error) {
       results.errors.push(`Stripe: ${(error as Error).message}`);
     }
 
     // Verificar Google APIs
     try {
+      const start = getTimestamp();
       const response = await this.fetchWithRetry(
         'https://apis.google.com/js/api.js',
         { method: 'HEAD' },
         { maxRetries: 1, timeout: 3000 }
       );
+
       results.googleApis = response.ok;
+      if (response.ok) {
+        results.latency.googleApis = getTimestamp() - start;
+      } else {
+        results.errors.push(`Google APIs responded with status ${response.status}`);
+      }
     } catch (error) {
       results.errors.push(`Google APIs: ${(error as Error).message}`);
     }
 
     // Verificar CDN geral
     try {
+      const start = getTimestamp();
       const response = await this.fetchWithRetry(
         'https://www.google.com',
         { method: 'HEAD' },
         { maxRetries: 1, timeout: 3000 }
       );
+
       results.cdnResources = response.ok;
+      if (response.ok) {
+        results.latency.cdnResources = getTimestamp() - start;
+      } else {
+        results.errors.push(`CDN responded with status ${response.status}`);
+      }
     } catch (error) {
       results.errors.push(`CDN: ${(error as Error).message}`);
     }
