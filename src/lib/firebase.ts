@@ -1,5 +1,5 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
-import { getAuth, Auth } from 'firebase/auth'
+import { getAuth, Auth, connectAuthEmulator } from 'firebase/auth'
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -9,6 +9,7 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
 // OAuth Client ID for Google Sign-In (from environment variable)
@@ -43,11 +44,25 @@ function initializeFirebase(): { app: FirebaseApp; auth: Auth } {
   // Validate configuration before initializing
   validateFirebaseConfig()
 
-  // Use existing app or create new one
-  const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig)
-  const auth = getAuth(app)
+  try {
+    // Use existing app or create new one
+    const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig)
+    const auth = getAuth(app)
 
-  return { app, auth }
+    // Log successful initialization (without sensitive data)
+    console.log('[FIREBASE] Initialized successfully', {
+      projectId: firebaseConfig.projectId,
+      authDomain: firebaseConfig.authDomain,
+    })
+
+    return { app, auth }
+  } catch (error: any) {
+    console.error('[FIREBASE] Initialization failed:', {
+      message: error?.message,
+      code: error?.code,
+    })
+    throw error
+  }
 }
 
 // Export initialized Firebase instances (lazy initialization)
