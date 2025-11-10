@@ -84,3 +84,9 @@ testsprite_tests/
 # Build log files
 *.log
 !**/logs/.gitkeep
+
+# Firebase Service Accounts (NEVER commit - contains sensitive credentials)
+*firebase-adminsdk*.json
+firebase-sa.json
+.firebase-keys/
+serviceAccountKey.json

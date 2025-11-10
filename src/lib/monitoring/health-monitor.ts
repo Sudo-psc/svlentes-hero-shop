@@ -418,19 +418,20 @@ export class HealthMonitor {
     let performanceBudgetInfo = undefined;
 
     try {
-      // Try to load performance budget manager
-      const { performanceBudget } = await import('../performance/performance-budget');
-      const budgetReport = performanceBudget.generateBudgetReport();
+      // Try to load performance budget manager (optional feature)
+      // TODO: Implement performance-budget module when available
+      // const { performanceBudget } = await import('../performance/performance-budget');
+      // const budgetReport = performanceBudget.generateBudgetReport();
 
-      performanceBudgetInfo = {
-        status: budgetReport.status,
-        violations: budgetReport.recommendations
-      };
+      // performanceBudgetInfo = {
+      //   status: budgetReport.status,
+      //   violations: budgetReport.recommendations
+      // };
 
       // Add performance budget recommendations to main recommendations
-      recommendations.push(...budgetReport.recommendations.map(rec =>
-        `📊 Performance: ${rec}`
-      ));
+      // recommendations.push(...budgetReport.recommendations.map(rec =>
+      //   `📊 Performance: ${rec}`
+      // ));
     } catch (error) {
       // Performance budget not available - continue without it
       console.debug('[HealthMonitor] Performance budget not available');

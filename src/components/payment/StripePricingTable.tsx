@@ -14,7 +14,7 @@
 
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useStripeScriptLoader } from './StripeScriptLoader'
 
 interface StripePrice {
@@ -69,6 +69,7 @@ interface StripePricingTableProps {
   customerSessionClientSecret?: string
   className?: string
   onFallbackActivate?: () => void
+  onReady?: () => void
 }
 
 export const StripePricingTable: React.FC<StripePricingTableProps> = ({
@@ -78,7 +79,8 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
   customerEmail,
   customerSessionClientSecret,
   className = "",
-  onFallbackActivate
+  onFallbackActivate,
+  onReady
 }) => {
   const [products, setProducts] = useState<StripeProduct[]>([])
   const [loadingProducts, setLoadingProducts] = useState(false)
@@ -102,6 +104,21 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
       onFallbackActivate?.()
     }
   })
+
+  const hasNotifiedReadyRef = useRef(false)
+
+  useEffect(() => {
+    if (scriptStatus === 'loading') {
+      hasNotifiedReadyRef.current = false
+    }
+  }, [scriptStatus])
+
+  useEffect(() => {
+    if (isLoaded && !hasError && !hasNotifiedReadyRef.current) {
+      hasNotifiedReadyRef.current = true
+      onReady?.()
+    }
+  }, [isLoaded, hasError, onReady])
 
   // Fetch products as fallback
   const fetchProducts = useCallback(async () => {

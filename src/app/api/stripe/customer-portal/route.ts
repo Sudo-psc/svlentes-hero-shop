@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripeClient } from '@/lib/stripe-client'
 import { verifyAuthToken, logAccess } from '@/lib/api-auth'
+import { sendStripePortalAccessEmail } from '@/lib/email'
 
 /**
  * API Route: Create Stripe Customer Portal Session
@@ -94,9 +95,23 @@ export async function POST(request: NextRequest) {
     logAccess(decodedToken.uid, decodedToken.email, 'STRIPE_PORTAL_ACCESS', {
       stripeCustomerId,
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
+      returnUrl: returnUrl || defaultReturnUrl,
     })
 
-    // 6. Return session URL
+    // 6. Send transactional email via Resend (fire and forget)
+    if (decodedToken.email && process.env.RESEND_API_KEY) {
+      void sendStripePortalAccessEmail({
+        email: decodedToken.email,
+        name: decodedToken.name || decodedToken.email?.split('@')[0] || 'Assinante',
+        portalUrl: session.url,
+        returnUrl: returnUrl || defaultReturnUrl,
+        accessIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      }).catch(emailError => {
+        console.error('[STRIPE_PORTAL_EMAIL_ERROR]', emailError)
+      })
+    }
+
+    // 7. Return session URL
     return NextResponse.json({
       url: session.url,
       customerId: stripeCustomerId,

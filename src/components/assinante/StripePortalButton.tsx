@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Settings, ExternalLink, Loader2, AlertCircle, CreditCard, Receipt } from 'lucide-react'
@@ -59,16 +59,23 @@ export function StripePortalButton({
 }: StripePortalButtonProps) {
   const { openPortal, isLoading, error, isAvailable } = useStripePortal()
   const [showError, setShowError] = useState(false)
+  useEffect(() => {
+    if (!error) {
+      setShowError(false)
+      return
+    }
+
+    setShowError(true)
+    const timeoutId = window.setTimeout(() => setShowError(false), 6000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [error])
 
   const handleClick = async () => {
     setShowError(false)
     await openPortal(returnUrl)
-    
-    // Show error if present after attempt
-    if (error) {
-      setShowError(true)
-      setTimeout(() => setShowError(false), 5000)
-    }
   }
 
   if (!isAvailable) {
@@ -135,6 +142,8 @@ export function StripePortalButton({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           className="absolute left-0 right-0 top-full mt-2 z-50"
+          role="alert"
+          aria-live="assertive"
         >
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 shadow-lg">
             <div className="flex items-start gap-2">

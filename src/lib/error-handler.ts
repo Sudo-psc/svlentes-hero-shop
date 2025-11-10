@@ -10,7 +10,7 @@
  */
 
 // Error type detection
-export const getErrorType = (error: ErrorEvent | string): 'chunk' | 'stripe' | 'network' | 'unknown' => {
+export const getErrorType = (error: ErrorEvent | string): 'chunk' | 'stripe' | 'network' | 'websocket' | 'chrome-extension' | 'unknown' => {
   const message = typeof error === 'string' ? error : error.message || ''
 
   if (message.includes('Loading chunk') || message.includes('chunk')) {
@@ -21,7 +21,15 @@ export const getErrorType = (error: ErrorEvent | string): 'chunk' | 'stripe' | '
     return 'stripe'
   }
 
-  if (message.includes('Failed to load resource') || message.includes('Network error')) {
+  if (message.includes('ws.jam.dev') || message.includes('WebSocket') || message.includes('handshake')) {
+    return 'websocket'
+  }
+
+  if (message.includes('chrome-extension') || message.includes('Request scheme \'chrome-extension\'')) {
+    return 'chrome-extension'
+  }
+
+  if (message.includes('Failed to load resource') || message.includes('Network error') || message.includes('Failed to fetch')) {
     return 'network'
   }
 
@@ -37,6 +45,10 @@ export const getErrorMessage = (errorType: string): string => {
       return 'Sistema de pagamento temporariamente indisponível. Usando catálogo seguro alternativo.'
     case 'network':
       return 'Conexão instável detectada. Carregando informações offline.'
+    case 'websocket':
+      return 'Serviço de WebSocket temporariamente indisponível. Usando modo alternativo.'
+    case 'chrome-extension':
+      return 'Extensão do navegador detectada. Ignorando para melhor desempenho.'
     default:
       return 'Ocorreu uma instabilidade. Usando modo alternativo para melhor experiência.'
   }
@@ -176,54 +188,54 @@ export const setupNetworkMonitoring = () => {
 
 // Legacy exports for compatibility
 export const handleNetworkError = (error: Error, context?: string) => {
-    console.error(`Network error${context ? ` in ${context}` : ''}:`, error)
-    // Don't throw errors for common network issues in production
-    if (process.env.NODE_ENV === 'production') {
-        return
-    }
-    // Log additional context in development
-    if (error.message.includes('NetworkMonitor') || error.message.includes('Timeout')) {
-        console.warn('Network monitoring timeout - this is usually safe to ignore')
-        return
-    }
-    if (error.message.includes('Failed to fetch')) {
-        console.warn('Fetch failed - check network connection or API endpoint')
-        return
-    }
+  console.error(`Network error${context ? ` in ${context}` : ''}:`, error)
+  // Don't throw errors for common network issues in production
+  if (process.env.NODE_ENV === 'production') {
+    return
+  }
+  // Log additional context in development
+  if (error.message.includes('NetworkMonitor') || error.message.includes('Timeout')) {
+    console.warn('Network monitoring timeout - this is usually safe to ignore')
+    return
+  }
+  if (error.message.includes('Failed to fetch')) {
+    console.warn('Fetch failed - check network connection or API endpoint')
+    return
+  }
 }
 
 export const setupGlobalErrorHandlers = () => {
-    if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') return
 
-    // Set up the new enhanced error handling
-    const cleanup = setupGlobalErrorHandling()
+  // Set up the new enhanced error handling
+  const cleanup = setupGlobalErrorHandling()
 
-    // Handle unhandled promise rejections with legacy compatibility
-    window.addEventListener('unhandledrejection', (event) => {
-        const error = event.reason
-        // Ignore common service worker and network errors
-        if (error?.message?.includes('NetworkMonitor') ||
-            error?.message?.includes('Failed to fetch') ||
-            error?.stack?.includes('sw.js')) {
-            event.preventDefault()
-            console.warn('Suppressed service worker error:', error.message)
-            return
-        }
-        handleNetworkError(error, 'unhandled promise rejection')
-    })
+  // Handle unhandled promise rejections with legacy compatibility
+  window.addEventListener('unhandledrejection', (event) => {
+    const error = event.reason
+    // Ignore common service worker and network errors
+    if (error?.message?.includes('NetworkMonitor') ||
+      error?.message?.includes('Failed to fetch') ||
+      error?.stack?.includes('sw.js')) {
+      event.preventDefault()
+      console.warn('Suppressed service worker error:', error.message)
+      return
+    }
+    handleNetworkError(error, 'unhandled promise rejection')
+  })
 
-    // Handle general errors with legacy compatibility
-    window.addEventListener('error', (event) => {
-        const error = event.error
-        // Ignore service worker errors
-        if (event.filename?.includes('sw.js') ||
-            error?.stack?.includes('sw.js')) {
-            event.preventDefault()
-            console.warn('Suppressed service worker error:', error?.message)
-            return
-        }
-        handleNetworkError(error, 'global error handler')
-    })
+  // Handle general errors with legacy compatibility
+  window.addEventListener('error', (event) => {
+    const error = event.error
+    // Ignore service worker errors
+    if (event.filename?.includes('sw.js') ||
+      error?.stack?.includes('sw.js')) {
+      event.preventDefault()
+      console.warn('Suppressed service worker error:', error?.message)
+      return
+    }
+    handleNetworkError(error, 'global error handler')
+  })
 
-    return cleanup
+  return cleanup
 }
