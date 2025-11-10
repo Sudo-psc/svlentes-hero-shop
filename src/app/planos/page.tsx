@@ -42,12 +42,13 @@ export default function PlanosPage() {
           userNotification.showPaymentServiceUnavailable();
         }
 
-        // Tentar carregar script do Stripe com retry
+        // Tentar carregar script do Stripe com retry - Fixed timeout
         if (resources.stripe) {
           try {
             await loadExternalScript('https://js.stripe.com/v3/pricing-table.js', {
-              maxRetries: 2,
-              timeout: 5000
+              maxRetries: 3,
+              timeout: 10000,
+              delay: 1000
             });
           } catch (error) {
             console.error('[PLANOS] Falha ao carregar script Stripe:', error);

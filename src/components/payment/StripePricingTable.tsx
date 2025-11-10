@@ -94,8 +94,8 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
 
   // Enhanced Stripe script loader - balanced timeout for better reliability
   const { StripeScriptLoaderComponent, scriptStatus, error: scriptError, isLoaded, isLoading, hasError } = useStripeScriptLoader({
-    maxRetries: 2, // Aumentar tentativas para dar mais chances de sucesso
-    timeout: 8000, // 8 segundos timeout para conexões mais lentas
+    maxRetries: 3, // Increased retries for better success rate
+    timeout: 12000, // 12 seconds timeout for slower connections
     onFallbackActivated: () => {
       console.log('[STRIPE_PRICING_TABLE] Fallback activated due to network issues')
       fetchProducts()
@@ -324,10 +324,10 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
     // Set timeout for loading state - fetch products if taking too long
     if (isLoading) {
       const loadingTimer = setTimeout(() => {
-        console.log('[STRIPE_PRICING_TABLE] Loading timeout (5s), activating fallback with products')
+        console.log('[STRIPE_PRICING_TABLE] Loading timeout (12s), activating fallback with products')
         fetchProducts()
         onFallbackActivate?.()
-      }, 5000)
+      }, 12000)
 
       return () => clearTimeout(loadingTimer)
     }
