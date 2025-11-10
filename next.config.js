@@ -53,7 +53,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://api.stripe.com https://js.stripe.com https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseapp.com https://*.googleapis.com",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://svlentes.firebaseapp.com https://*.firebaseapp.com https://accounts.google.com",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://svlentes.firebaseapp.com https://*.firebaseapp.com https://accounts.google.com https://svlentes.firebaseapp.com/__",
               "trusted-types nextjs nextjs#bundler nextjs#script gapi#gapi goog#html default stripe-js decodeHTMLEntitiesPolicy 'allow-duplicates'"
             ].join('; ')
           }

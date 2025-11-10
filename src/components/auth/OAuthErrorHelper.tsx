@@ -14,8 +14,9 @@ interface OAuthErrorHelperProps {
 export function OAuthErrorHelper({ error, onRetry }: OAuthErrorHelperProps) {
   const isOAuthError = error?.code === 'auth/network-request-failed'
   const isUnauthorizedDomain = error?.code === 'auth/unauthorized-domain'
+  const isInternalError = error?.code === 'auth/internal-error'
 
-  if (!isOAuthError && !isUnauthorizedDomain) {
+  if (!isOAuthError && !isUnauthorizedDomain && !isInternalError) {
     return null
   }
 
@@ -38,13 +39,15 @@ export function OAuthErrorHelper({ error, onRetry }: OAuthErrorHelperProps) {
             <p>
               {isOAuthError
                 ? "O sistema detectou um problema na configuração OAuth do Google. Isso geralmente ocorre quando o Client ID não está configurado corretamente no Google Cloud Console."
+                : isInternalError
+                ? "Erro interno do Firebase detectado. Isso geralmente indica que o OAuth Client ID está incorreto, as APIs necessárias não estão habilitadas, ou os domínios autorizados não estão configurados no Google Cloud Console."
                 : "O domínio atual não está autorizado no Firebase Authentication. É necessário adicionar este domínio à lista de domínios autorizados."
               }
             </p>
           </div>
 
           <div className="mt-4 space-y-3">
-            {isOAuthError && (
+            {(isOAuthError || isInternalError) && (
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={onRetry}
@@ -103,7 +106,7 @@ export function OAuthErrorHelper({ error, onRetry }: OAuthErrorHelperProps) {
               </ol>
             </div>
 
-            {isOAuthError && (
+            {(isOAuthError || isInternalError) && (
               <div className="flex items-center space-x-2 text-xs text-red-600">
                 <span>Erro específico:</span>
                 <code className="bg-red-100 px-2 py-1 rounded font-mono">

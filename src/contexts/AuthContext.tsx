@@ -366,6 +366,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Enhanced error message for network issues
         throw new Error('Erro de conexão com Google. Verifique se o OAuth Client ID está configurado corretamente no Google Cloud Console.')
       }
+      if (error.code === 'auth/internal-error') {
+        console.error('[GOOGLE_AUTH] Internal error details:', {
+          error,
+          stack: error.stack,
+          customData: error.customData,
+        })
+        throw new Error('Erro interno do Firebase. Verifique se o OAuth está configurado corretamente no Google Cloud Console e se os domínios autorizados incluem este site.')
+      }
 
       // For any other error, throw with detailed message
       throw new Error(`Erro de autenticação: ${error.code || error.message}`)
