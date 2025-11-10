@@ -1,0 +1,32 @@
+{
+  "name": "mcp-n8n-server",
+  "version": "1.0.0",
+  "description": "MCP Server for n8n workflow automation",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-n8n-server": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "n8n",
+    "workflow",
+    "automation"
+  ],
+  "author": "SV Lentes",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3"
+  }
+}
