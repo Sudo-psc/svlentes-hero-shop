@@ -105,10 +105,7 @@ export default function RootLayout({
                                 const blockPatterns = [
                                     'getprojectconfig',
                                     'trusted-types',
-                                    'trusted-types-checker',
-                                    'stripe',
-                                    '503',
-                                    'failed to load resource'
+                                    'trusted-types-checker'
                                 ];
 
                                 const shouldBlock = blockPatterns.some(pattern => message.includes(pattern.toLowerCase()));
@@ -121,7 +118,7 @@ export default function RootLayout({
                             // Also block warnings and logs that might contain these errors
                             console.warn = function(...args) {
                                 const message = args.join(' ').toLowerCase();
-                                const blockPatterns = ['getprojectconfig', 'trusted-types', 'stripe'];
+                                const blockPatterns = ['getprojectconfig', 'trusted-types'];
                                 const shouldBlock = blockPatterns.some(pattern => message.includes(pattern.toLowerCase()));
 
                                 if (!shouldBlock) {
@@ -138,11 +135,7 @@ export default function RootLayout({
                                 if (message.includes('getprojectconfig') ||
                                     message.includes('trusted-types') ||
                                     message.includes('trusted-types-checker') ||
-                                    message.includes('stripe') ||
-                                    filename.includes('trusted-types-checker') ||
-                                    filename.includes('stripe') ||
-                                    message.includes('503') ||
-                                    message.includes('failed to load resource')) {
+                                    filename.includes('trusted-types-checker')) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     return false;
@@ -154,9 +147,7 @@ export default function RootLayout({
                                 const message = e.reason ? e.reason.toString().toLowerCase() : '';
 
                                 if (message.includes('getprojectconfig') ||
-                                    message.includes('trusted-types') ||
-                                    message.includes('stripe') ||
-                                    message.includes('503')) {
+                                    message.includes('trusted-types')) {
                                     e.preventDefault();
                                     return false;
                                 }
@@ -170,8 +161,7 @@ export default function RootLayout({
                                         const message = error.message ? error.message.toLowerCase() : '';
 
                                         if (message.includes('getprojectconfig') ||
-                                            message.includes('trusted-types') ||
-                                            message.includes('stripe')) {
+                                            message.includes('trusted-types')) {
                                             // Return empty successful response
                                             return Promise.resolve(new Response('{}', {
                                                 status: 200,
@@ -193,8 +183,7 @@ export default function RootLayout({
 
                                 // Block requests to problematic URLs
                                 if (urlString.includes('getprojectconfig') ||
-                                    urlString.includes('trusted-types-checker') ||
-                                    urlString.includes('stripe')) {
+                                    urlString.includes('trusted-types-checker')) {
                                     this._blockError = true;
                                 }
 
