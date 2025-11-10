@@ -10,7 +10,7 @@ import { serviceBenefits, coverageInfo, pricingFAQ } from '@/data/pricing-plans'
 
 // Importar sistemas de resiliência
 import { userNotification } from '@/lib/ui/user-notifications';
-import { loadExternalScript, checkExternalResources } from '@/lib/network/resilient-fetcher';
+import { checkExternalResources } from '@/lib/network/resilient-fetcher';
 import { initializeStorage, subscriptionStorage } from '@/lib/storage/indexeddb-manager';
 import { healthMonitor } from '@/lib/monitoring/health-monitor';
 export default function PlanosPage() {
@@ -33,27 +33,26 @@ export default function PlanosPage() {
         const health = await healthMonitor.checkHealth();
         setHealthStatus(health.status);
 
-        // Verificar recursos externos
+        // Verificar recursos externos sem injetar scripts
         const resources = await checkExternalResources();
 
         if (!resources.stripe) {
-          console.warn('[PLANOS] Stripe indisponível, ativando fallback');
-          handleFallbackActivation();
+          const stripeMessage = resources.errors.find(error => error.toLowerCase().includes('stripe'))
+            || 'Serviço de pagamento indisponível no momento.';
+          console.warn('[PLANOS] Stripe indisponível, ativando fallback monitorado:', stripeMessage);
+          handleFallbackActivation(stripeMessage);
           userNotification.showPaymentServiceUnavailable();
+        } else {
+          setStripeError(null);
+          if (resources.latency.stripe) {
+            console.info(`[PLANOS] Stripe pricing table respondendo em ${Math.round(resources.latency.stripe)}ms`);
+          }
         }
 
-        // Tentar carregar script do Stripe com retry - Fixed timeout
-        if (resources.stripe) {
-          try {
-            await loadExternalScript('https://js.stripe.com/v3/pricing-table.js', {
-              maxRetries: 3,
-              timeout: 10000,
-              delay: 1000
-            });
-          } catch (error) {
-            console.error('[PLANOS] Falha ao carregar script Stripe:', error);
-            handleFallbackActivation();
-          }
+        if (resources.errors.length > 0) {
+          resources.errors.forEach(error => {
+            console.warn('[PLANOS] Diagnóstico de recurso externo:', error);
+          });
         }
 
         setIsLoading(false);
@@ -61,7 +60,7 @@ export default function PlanosPage() {
       } catch (error) {
         console.error('[PLANOS] Erro na inicialização:', error);
         setHealthStatus('critical');
-        handleFallbackActivation();
+        handleFallbackActivation('Erro crítico ao inicializar recursos do Stripe');
         setIsLoading(false);
       }
     };
@@ -73,8 +72,11 @@ export default function PlanosPage() {
   useEffect(() => {
     const handleFallbackActivated = (event: CustomEvent) => {
       console.log('[PLANOS] Fallback ativado:', event.detail);
-      if (event.detail.service === 'stripe') {
-        handleFallbackActivation();
+      if ((event.detail as any)?.service === 'stripe') {
+        const fallbackReason = typeof (event.detail as any)?.reason === 'string'
+          ? (event.detail as any).reason
+          : 'Fallback global ativado para Stripe';
+        handleFallbackActivation(fallbackReason);
       }
     };
 
@@ -128,13 +130,29 @@ export default function PlanosPage() {
   }, []);
 
   // Handle fallback activation
-  const handleFallbackActivation = () => {
+  const handleFallbackActivation = (reason?: string) => {
     setUseFallback(true)
     console.log('[PLANOS] Activating fallback pricing table')
+
+    if (reason) {
+      setStripeError(reason)
+    }
 
     // Salvar preferência de fallback no storage
     subscriptionStorage.set('pricing-fallback-active', true).catch(error => {
       console.warn('[PLANOS] Falha ao salvar preferência de fallback:', error);
+    });
+  }
+
+  const handleStripeReady = () => {
+    if (useFallback) {
+      setUseFallback(false)
+    }
+
+    setStripeError(null)
+
+    subscriptionStorage.set('pricing-fallback-active', false).catch(error => {
+      console.warn('[PLANOS] Falha ao limpar preferência de fallback:', error);
     });
   }
 
@@ -250,7 +268,8 @@ export default function PlanosPage() {
             {!isLoading && (
               !useFallback ? (
                 <StripePricingTable
-                  onFallbackActivate={handleFallbackActivation}
+                  onFallbackActivate={() => handleFallbackActivation('Falha ao carregar a tabela de preços do Stripe')}
+                  onReady={handleStripeReady}
                   className="w-full"
                 />
               ) : (
