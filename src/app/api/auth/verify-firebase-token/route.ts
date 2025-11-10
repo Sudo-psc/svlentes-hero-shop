@@ -14,7 +14,7 @@ const corsHeaders = {
 type ProfileSyncStatus = 'synced' | 'skipped' | 'failed'
 
 interface ProfileSyncResult {
-  record: any | null
+  record: User | null
   status: ProfileSyncStatus
   error?: Error
 }
