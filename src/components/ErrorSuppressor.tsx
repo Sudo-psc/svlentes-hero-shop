@@ -25,24 +25,46 @@ export function ErrorSuppressor() {
 
     // Store original console methods
     const originalError = console.error
+    const originalWarn = console.warn
 
     // Override console.error
-    const errorHandler = (...args: any[]) => {
+    const errorHandler = (...args: unknown[]) => {
       const message = args.join(' ')
       
       const shouldSuppress = suppressPatterns.some(pattern => 
         pattern.test(message)
       )
       
-      if (shouldSuppress && process.env.NODE_ENV === 'development') {
-        console.warn('ℹ️ Non-critical error suppressed:', message.substring(0, 100))
+      if (shouldSuppress) {
+        if (process.env.NODE_ENV === 'development') {
+          console.info('ℹ️ Non-critical error suppressed:', message.substring(0, 100))
+        }
         return
       }
       
       originalError.apply(console, args)
     }
 
+    // Override console.warn
+    const warnHandler = (...args: unknown[]) => {
+      const message = args.join(' ')
+      
+      const shouldSuppress = suppressPatterns.some(pattern => 
+        pattern.test(message)
+      )
+      
+      if (shouldSuppress) {
+        if (process.env.NODE_ENV === 'development') {
+          console.info('ℹ️ Non-critical warning suppressed:', message.substring(0, 100))
+        }
+        return
+      }
+      
+      originalWarn.apply(console, args)
+    }
+
     console.error = errorHandler
+    console.warn = warnHandler
 
     // Handle unhandled promise rejections
     const rejectionHandler = (event: PromiseRejectionEvent) => {
@@ -53,8 +75,10 @@ export function ErrorSuppressor() {
         pattern.test(message)
       )
       
-      if (isFirebaseConfigError && process.env.NODE_ENV === 'development') {
-        console.warn('ℹ️ Firebase configuration issue suppressed')
+      if (isFirebaseConfigError) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('ℹ️ Firebase configuration issue suppressed')
+        }
         event.preventDefault()
         return
       }
@@ -83,6 +107,7 @@ export function ErrorSuppressor() {
     // Cleanup
     return () => {
       console.error = originalError
+      console.warn = originalWarn
       window.removeEventListener('unhandledrejection', rejectionHandler)
       window.removeEventListener('error', globalErrorHandler)
     }
