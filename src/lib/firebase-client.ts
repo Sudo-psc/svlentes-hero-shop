@@ -130,13 +130,13 @@ export function initializeFirebaseClient(): FirebaseServices {
       analytics = getAnalytics(app)
       console.log('[FIREBASE] Analytics initialized')
     } catch (error) {
-      const firebaseError = error as Error;
+      const firebaseError = error as Error
       console.warn('[FIREBASE] Analytics initialization failed:', firebaseError.message)
 
       // 🚨 Handle getProjectConfig 400 errors gracefully
       if (firebaseError.message.includes('400') || firebaseError.message.includes('getProjectConfig')) {
         console.warn('[FIREBASE] ⚠️ getProjectConfig 400 error detected - continuing without Analytics')
-        logFirebaseError('analytics', firebaseError, { configValid: false });
+        logFirebaseError(firebaseError, 'Firebase Analytics')
       }
     }
   }
