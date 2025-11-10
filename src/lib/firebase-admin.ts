@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin'
+
 // Initialize Firebase Admin SDK (singleton pattern)
 // Only initialize if we have valid credentials (skip during build)
 const hasCredentials =
@@ -82,4 +83,12 @@ if (!admin.apps.length && hasCredentials) {
 export const adminAuth = admin.apps.length > 0 ? admin.auth() : null
 export const adminDb = admin.apps.length > 0 ? admin.firestore() : null
 export const adminMessaging = admin.apps.length > 0 ? admin.messaging() : null
+
+/**
+ * Boolean flag indicating whether Firebase Admin SDK is ready to be used.
+ * Consumers should rely on this helper instead of accessing admin.apps directly
+ * to avoid reference errors when credentials are missing.
+ */
+export const isFirebaseAdminInitialized = admin.apps.length > 0
+
 export default admin

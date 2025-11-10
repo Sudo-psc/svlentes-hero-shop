@@ -1,7 +1,7 @@
 // @ts-nocheck - Prisma type mismatches - requires schema regeneration or type fixes
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { adminAuth } from '@/lib/firebase-admin'
+import { adminAuth, isFirebaseAdminInitialized } from '@/lib/firebase-admin'
 import { authenticateRequest, createAuthErrorResponse } from '@/lib/auth-handler'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
