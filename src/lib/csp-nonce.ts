@@ -36,32 +36,25 @@ export function getNonce(): string | undefined {
 }
 
 /**
- * Generate nonce script tag with proper CSP nonce attribute
+ * Get nonce props for script tag with proper CSP nonce attribute
  * 
  * Usage:
  * ```tsx
- * import { NonceScript } from '@/lib/csp-nonce';
+ * import { getNonceScriptProps } from '@/lib/csp-nonce';
  * 
  * export default function Page() {
- *   return (
- *     <>
- *       <NonceScript>
- *         console.log('This script has CSP nonce');
- *       </NonceScript>
- *     </>
- *   );
+ *   const scriptProps = getNonceScriptProps('console.log("test");');
+ *   return <script {...scriptProps} />;
  * }
  * ```
  */
-export function NonceScript({ children }: { children: string }) {
+export function getNonceScriptProps(code: string): { nonce?: string; dangerouslySetInnerHTML: { __html: string } } {
   const nonce = getNonce();
   
-  return (
-    <script 
-      nonce={nonce}
-      dangerouslySetInnerHTML={{ __html: children }}
-    />
-  );
+  return {
+    nonce,
+    dangerouslySetInnerHTML: { __html: code }
+  };
 }
 
 /**
