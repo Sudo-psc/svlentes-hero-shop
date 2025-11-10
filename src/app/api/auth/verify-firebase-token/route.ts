@@ -34,7 +34,7 @@ async function syncUserProfile(decodedToken: DecodedIdToken): Promise<ProfileSyn
     const existingByUid = await prisma.user.findUnique({ where: { firebaseUid: uid } })
 
     if (existingByUid) {
-      const updateData: Record<string, any> = {
+      const updateData: Prisma.UserUpdateInput = {
         lastLoginAt,
       }
 
