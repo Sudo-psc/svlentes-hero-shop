@@ -51,9 +51,9 @@ function extractSecurityContext(request: NextRequest): SecurityContext {
   const userAgent = request.headers.get('user-agent') || 'unknown'
 
   const ipAddress = forwarded?.split(',')[0]?.trim() ||
-                   realIp ||
-                   request.ip ||
-                   'unknown'
+    realIp ||
+    request.ip ||
+    'unknown'
 
   return {
     clientId: generateClientId(request, ipAddress),
@@ -357,7 +357,7 @@ function securityHeaders(): Record<string, string> {
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com" "https://checkout.stripe.com" "https://api.stripe.com")',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   }
 }

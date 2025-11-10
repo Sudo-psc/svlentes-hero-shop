@@ -38,7 +38,7 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com" "https://checkout.stripe.com" "https://api.stripe.com")'
           }
           // 🛠️ Fix: Removed CSP temporarily to resolve trusted types checker 503 errors
           // If CSP is needed in the future, it must include proper 'trusted-types' policy
