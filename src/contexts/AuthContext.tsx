@@ -73,12 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastSyncAt: number
     inFlight: Promise<void> | null
     lastErrorAt: number | null
+    pendingAction: { action: 'store' | 'clear', token?: string } | null
   }>({
     lastToken: null,
     lastAction: 'clear',
     lastSyncAt: 0,
     inFlight: null,
-    lastErrorAt: null
+    lastErrorAt: null,
+    pendingAction: null
   })
 
   const syncTokenWithServer = useCallback(async (
@@ -98,11 +100,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    // If there's an in-flight request, handle based on action priority
     if (state.inFlight) {
+      // If the new action is the same as what's in flight and matches conditions, return existing promise
       if (
         action === state.lastAction &&
         ((action === 'store' && token === state.lastToken) || action === 'clear')
       ) {
+        return state.inFlight
+      }
+      
+      // If action is 'clear', we need to ensure it executes after the current request
+      // Queue it to run after the in-flight request completes
+      if (action === 'clear') {
+        state.pendingAction = { action: 'clear' }
+        return state.inFlight.then(() => {
+          // Execute the pending clear after the in-flight request completes
+          if (state.pendingAction?.action === 'clear') {
+            state.pendingAction = null
+            return syncTokenWithServer('clear')
+          }
+        })
+      }
+      
+      // For store actions, if there's already something in flight, just return the existing promise
+      if (action === 'store') {
         return state.inFlight
       }
     }
