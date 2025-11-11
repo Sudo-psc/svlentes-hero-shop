@@ -16,6 +16,16 @@ const customJestConfig = {
   ],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/components/(.*)$': '<rootDir>/src/components/$1',
+        '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+        '^@/types/(.*)$': '<rootDir>/src/types/$1',
+        '^@/data/(.*)$': '<rootDir>/src/data/$1',
+        '^@/vision/(.*)$': '<rootDir>/src/vision/$1',
+        '^@/vision-components/(.*)$': '<rootDir>/src/vision/components/$1',
+        '^@/vision-hooks/(.*)$': '<rootDir>/src/vision/hooks/$1',
+        '^@/vision-services/(.*)$': '<rootDir>/src/vision/services/$1',
+        '^@/vision-types/(.*)$': '<rootDir>/src/vision/types/$1',
+        '^@/vision-utils/(.*)$': '<rootDir>/src/vision/utils/$1',
     },
     testPathIgnorePatterns: [
         '<rootDir>/.next/',
