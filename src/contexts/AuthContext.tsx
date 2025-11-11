@@ -103,8 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         action === state.lastAction &&
         ((action === 'store' && token === state.lastToken) || action === 'clear')
       ) {
+        // Debounce identical concurrent requests by returning the existing promise.
         return state.inFlight
       }
+      // A different request is in flight. Await its completion to serialize
+      // operations and prevent race conditions.
+      await state.inFlight.catch(() => {
+        // Ignore failure of the previous request; the new one will proceed.
+      })
     }
 
     if (action === 'store') {
@@ -114,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         now - state.lastSyncAt < 10 * 60 * 1000
 
       if (recentlySynced) {
-        devLog.auth('token-sync-skipped', { reason: 'recent-store', tokenHash: token.substring(0, 8) })
+        devLog.auth('token-sync-skipped', { reason: 'recent-store', tokenHash: token!.substring(0, 8) })
         return
       }
     } else {
