@@ -81,6 +81,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastErrorAt: null
   })
 
+  // Helper: Validate token input for store actions
+  const isValidToken = (action: 'store' | 'clear', token?: string): boolean => {
+    if (action === 'store' && (!token || typeof token !== 'string')) {
+      console.warn('[AUTH] Ignorando sincronização: token inválido recebido')
+      return false
+    }
+    return true
+  }
+
+  // Helper: Check if we should skip due to recent rate limiting error
+  const shouldSkipDueToRateLimit = (state: typeof tokenSyncStateRef.current, now: number): boolean => {
+    if (state.lastErrorAt && now - state.lastErrorAt < 30 * 1000) {
+      devLog.auth('token-sync-skipped', { reason: 'recent-rate-limit' })
+      return true
+    }
+    return false
+  }
+
+  // Helper: Check if there's a duplicate in-flight request
+  const getDuplicateInFlightRequest = (
+    state: typeof tokenSyncStateRef.current,
+    action: 'store' | 'clear',
+    token?: string
+  ): Promise<void> | null => {
+    if (state.inFlight) {
+      const isDuplicate =
+        action === state.lastAction &&
+        ((action === 'store' && token === state.lastToken) || action === 'clear')
+      
+      if (isDuplicate) {
+        return state.inFlight
+      }
+    }
+    return null
+  }
+
+  // Helper: Check if store action should be throttled (recently synced same token)
+  const shouldThrottleStoreAction = (
+    state: typeof tokenSyncStateRef.current,
+    token: string,
+    now: number
+  ): boolean => {
+    const recentlySynced =
+      state.lastAction === 'store' &&
+      token === state.lastToken &&
+      now - state.lastSyncAt < 10 * 60 * 1000
+
+    if (recentlySynced) {
+      devLog.auth('token-sync-skipped', { reason: 'recent-store', tokenHash: token.substring(0, 8) })
+      return true
+    }
+    return false
+  }
+
+  // Helper: Check if clear action should be throttled (recently cleared)
+  const shouldThrottleClearAction = (
+    state: typeof tokenSyncStateRef.current,
+    now: number
+  ): boolean => {
+    const recentlyCleared =
+      state.lastAction === 'clear' &&
+      now - state.lastSyncAt < 30 * 1000
+
+    if (recentlyCleared) {
+      devLog.auth('token-clear-skipped', { reason: 'throttled' })
+      return true
+    }
+    return false
+  }
+
+  // Helper: Execute the token sync API request
+  const executeTokenSyncRequest = async (
+    state: typeof tokenSyncStateRef.current,
+    action: 'store' | 'clear',
+    token?: string
+  ): Promise<void> => {
+    const body = action === 'store' ? { token } : { action: 'clear' }
+
+    const response = await fetch('/api/auth/set-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      const error = new Error(`Failed to ${action} token: HTTP ${response.status}`)
+      if (response.status === 429) {
+        console.warn('[AUTH] Rate limit detected while syncing token')
+        state.lastErrorAt = Date.now()
+      }
+      throw error
+    }
+  }
+
   const syncTokenWithServer = useCallback(async (
     action: 'store' | 'clear',
     token?: string
@@ -88,65 +182,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const state = tokenSyncStateRef.current
     const now = Date.now()
 
-    if (action === 'store' && (!token || typeof token !== 'string')) {
-      console.warn('[AUTH] Ignorando sincronização: token inválido recebido')
+    // Guard: Validate token for store actions
+    if (!isValidToken(action, token)) {
       return
     }
 
-    if (state.lastErrorAt && now - state.lastErrorAt < 30 * 1000) {
-      devLog.auth('token-sync-skipped', { reason: 'recent-rate-limit' })
+    // Guard: Skip if recent rate limit error occurred
+    if (shouldSkipDueToRateLimit(state, now)) {
       return
     }
 
-    if (state.inFlight) {
-      if (
-        action === state.lastAction &&
-        ((action === 'store' && token === state.lastToken) || action === 'clear')
-      ) {
-        return state.inFlight
-      }
+    // Guard: Return existing in-flight request if duplicate
+    const duplicateRequest = getDuplicateInFlightRequest(state, action, token)
+    if (duplicateRequest) {
+      return duplicateRequest
     }
 
-    if (action === 'store') {
-      const recentlySynced =
-        state.lastAction === 'store' &&
-        token === state.lastToken &&
-        now - state.lastSyncAt < 10 * 60 * 1000
-
-      if (recentlySynced) {
-        devLog.auth('token-sync-skipped', { reason: 'recent-store', tokenHash: token.substring(0, 8) })
-        return
-      }
-    } else {
-      const recentlyCleared =
-        state.lastAction === 'clear' &&
-        now - state.lastSyncAt < 30 * 1000
-
-      if (recentlyCleared) {
-        devLog.auth('token-clear-skipped', { reason: 'throttled' })
-        return
-      }
+    // Guard: Throttle store action if recently synced same token
+    if (action === 'store' && token && shouldThrottleStoreAction(state, token, now)) {
+      return
     }
 
-    const body = action === 'store' ? { token } : { action: 'clear' }
+    // Guard: Throttle clear action if recently cleared
+    if (action === 'clear' && shouldThrottleClearAction(state, now)) {
+      return
+    }
 
-    const requestPromise = (async () => {
-      const response = await fetch('/api/auth/set-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!response.ok) {
-        const error = new Error(`Failed to ${action} token: HTTP ${response.status}`)
-        if (response.status === 429) {
-          console.warn('[AUTH] Rate limit detected while syncing token')
-          state.lastErrorAt = Date.now()
-        }
-        throw error
-      }
-    })()
-
+    // Execute the sync request
+    const requestPromise = executeTokenSyncRequest(state, action, token)
     state.inFlight = requestPromise
 
     try {
