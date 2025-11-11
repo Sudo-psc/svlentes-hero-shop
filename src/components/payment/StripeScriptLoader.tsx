@@ -15,7 +15,7 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
   onScriptError,
   onFallbackActivated,
   maxRetries = 3,
-  timeout = 15000 // 15 segundos timeout para evitar falsos 503
+  timeout = 10000 // 10 segundos timeout
 }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error' | 'fallback'>('loading')
   const [retryCount, setRetryCount] = useState(0)
@@ -78,12 +78,12 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
     } catch (error) {
       console.error('[STRIPE_SCRIPT_LOADER] Script loading failed:', error)
 
-      // Apenas ativar fallback para 503 reais, não timeouts
+      // Detectar erros 503 específicos e ativar fallback imediatamente
       const errorMessage = error instanceof Error ? error.message.toLowerCase() : ''
-      if (errorMessage.includes('503') && !errorMessage.includes('timeout') && !errorMessage.includes('service unavailable')) {
-        console.log('[STRIPE_SCRIPT_LOADER] Real 503 error detected, activating fallback')
+      if (errorMessage.includes('503') || errorMessage.includes('service unavailable') || errorMessage.includes('timeout')) {
+        console.log('[STRIPE_SCRIPT_LOADER] 503/timeout error detected, activating fallback immediately')
         setStatus('fallback')
-        const finalError = error instanceof Error ? error : new Error('Real 503 error')
+        const finalError = error instanceof Error ? error : new Error('Service unavailable (503)')
         onScriptError?.(finalError)
         onFallbackActivated?.()
         return
@@ -118,14 +118,12 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Monitorar erros de rede específicos do Stripe - menos agressivo
+  // Monitorar erros de rede específicos do Stripe - detectar 503 imediatamente
   useEffect(() => {
     const handleStripeError = (event: ErrorEvent) => {
       const message = event.message || ''
-
-      // Apenas ativar fallback para erros 503 reais, não timeouts
-      if (message.includes('503') && !message.includes('timeout')) {
-        console.error('[STRIPE_SCRIPT_LOADER] Real 503 error detected, activating fallback:', event)
+      if (message.includes('503') || message.includes('service unavailable')) {
+        console.error('[STRIPE_SCRIPT_LOADER] 503 error detected, activating fallback immediately:', event)
         if (status === 'loading' || status === 'loaded') {
           setStatus('fallback')
           onFallbackActivated?.()
@@ -133,15 +131,20 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
         return
       }
 
-      // Ignorar timeouts e outros erros temporários - só logar
       if (message && (
         message.includes('js.stripe.com') ||
         message.includes('api.js') ||
+        message.includes('getProjectConfig') ||
+        message.includes('trusted-types') ||
         message.includes('pricing-table.js') ||
-        message.includes('timeout') ||
-        message.includes('400')
+        message.includes('400') ||
+        message.includes('Failed to load resource')
       )) {
-        console.warn('[STRIPE_SCRIPT_LOADER] Stripe resource issue (not activating fallback):', message)
+        console.error('[STRIPE_SCRIPT_LOADER] Stripe network error detected:', event)
+        if (status === 'loading' || status === 'loaded') {
+          setStatus('fallback')
+          onFallbackActivated?.()
+        }
       }
     }
 
@@ -149,9 +152,8 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
       const reason = event.reason
       const message = reason?.message || reason?.toString() || ''
 
-      // Apenas ativar fallback para 503 reais
-      if (message.includes('503') && !message.includes('timeout')) {
-        console.error('[STRIPE_SCRIPT_LOADER] Real 503 promise rejection, activating fallback:', reason)
+      if (message.includes('503') || message.includes('service unavailable')) {
+        console.error('[STRIPE_SCRIPT_LOADER] 503 promise rejection detected, activating fallback immediately:', reason)
         event.preventDefault()
         if (status === 'loading' || status === 'loaded') {
           setStatus('fallback')
@@ -160,17 +162,19 @@ export const StripeScriptLoader: React.FC<StripeScriptLoaderProps> = ({
         return
       }
 
-      // Logar outros erros sem ativar fallback
       if (reason && (
         message.includes('js.stripe.com') ||
         message.includes('Stripe') ||
         message.includes('400') ||
         message.includes('pricing-table') ||
-        message.includes('Failed to load') ||
-        message.includes('timeout')
+        message.includes('Failed to load')
       )) {
-        console.warn('[STRIPE_SCRIPT_LOADER] Stripe resource issue (not activating fallback):', message)
+        console.error('[STRIPE_SCRIPT_LOADER] Stripe promise rejection:', reason)
         event.preventDefault()
+        if (status === 'loading' || status === 'loaded') {
+          setStatus('fallback')
+          onFallbackActivated?.()
+        }
       }
     }
 

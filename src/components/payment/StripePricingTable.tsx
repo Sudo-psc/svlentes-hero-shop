@@ -14,7 +14,7 @@
 
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useStripeScriptLoader } from './StripeScriptLoader'
 
 interface StripePrice {
@@ -69,7 +69,6 @@ interface StripePricingTableProps {
   customerSessionClientSecret?: string
   className?: string
   onFallbackActivate?: () => void
-  onReady?: () => void
 }
 
 export const StripePricingTable: React.FC<StripePricingTableProps> = ({
@@ -79,8 +78,7 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
   customerEmail,
   customerSessionClientSecret,
   className = "",
-  onFallbackActivate,
-  onReady
+  onFallbackActivate
 }) => {
   const [products, setProducts] = useState<StripeProduct[]>([])
   const [loadingProducts, setLoadingProducts] = useState(false)
@@ -96,29 +94,14 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
 
   // Enhanced Stripe script loader - balanced timeout for better reliability
   const { StripeScriptLoaderComponent, scriptStatus, error: scriptError, isLoaded, isLoading, hasError } = useStripeScriptLoader({
-    maxRetries: 3, // Increased retries for better success rate
-    timeout: 12000, // 12 seconds timeout for slower connections
+    maxRetries: 2, // Aumentar tentativas para dar mais chances de sucesso
+    timeout: 8000, // 8 segundos timeout para conexões mais lentas
     onFallbackActivated: () => {
       console.log('[STRIPE_PRICING_TABLE] Fallback activated due to network issues')
       fetchProducts()
       onFallbackActivate?.()
     }
   })
-
-  const hasNotifiedReadyRef = useRef(false)
-
-  useEffect(() => {
-    if (scriptStatus === 'loading') {
-      hasNotifiedReadyRef.current = false
-    }
-  }, [scriptStatus])
-
-  useEffect(() => {
-    if (isLoaded && !hasError && !hasNotifiedReadyRef.current) {
-      hasNotifiedReadyRef.current = true
-      onReady?.()
-    }
-  }, [isLoaded, hasError, onReady])
 
   // Fetch products as fallback
   const fetchProducts = useCallback(async () => {
@@ -341,10 +324,10 @@ export const StripePricingTable: React.FC<StripePricingTableProps> = ({
     // Set timeout for loading state - fetch products if taking too long
     if (isLoading) {
       const loadingTimer = setTimeout(() => {
-        console.log('[STRIPE_PRICING_TABLE] Loading timeout (12s), activating fallback with products')
+        console.log('[STRIPE_PRICING_TABLE] Loading timeout (5s), activating fallback with products')
         fetchProducts()
         onFallbackActivate?.()
-      }, 12000)
+      }, 5000)
 
       return () => clearTimeout(loadingTimer)
     }

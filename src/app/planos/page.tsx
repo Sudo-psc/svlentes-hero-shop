@@ -1,66 +1,32 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { StripePricingTable } from '@/components/payment/StripePricingTable';
-import { StripeFallback } from '@/components/payment/StripeFallback';
+import { StripePricingTableEmbed } from '@/components/pricing/StripePricingTableEmbed';
 import { CoverageSection } from '@/components/pricing/CoverageSection';
 import { BenefitsGrid } from '@/components/pricing/BenefitsGrid';
 import { PricingFAQ } from '@/components/pricing/PricingFAQ';
 import { serviceBenefits, coverageInfo, pricingFAQ } from '@/data/pricing-plans';
 
-// Importar sistemas de resiliência
-import { userNotification } from '@/lib/ui/user-notifications';
-import { checkExternalResources } from '@/lib/network/resilient-fetcher';
-import { initializeStorage, subscriptionStorage } from '@/lib/storage/indexeddb-manager';
-import { healthMonitor } from '@/lib/monitoring/health-monitor';
 export default function PlanosPage() {
-  const [useFallback, setUseFallback] = useState(false)
-  const [stripeError, setStripeError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [healthStatus, setHealthStatus] = useState<'loading' | 'healthy' | 'degraded' | 'critical'>('loading')
+  const [healthStatus, setHealthStatus] = useState<'loading' | 'healthy'>('loading')
 
-  // Inicialização dos sistemas de resiliência
+  // Inicialização simples
   useEffect(() => {
     const initializePage = async () => {
       try {
         // Set page metadata
         document.title = 'Planos de Assinatura de Lentes de Contato | SV Lentes';
 
-        // Inicializar storage
-        await initializeStorage();
-
-        // Verificar saúde do sistema
-        const health = await healthMonitor.checkHealth();
-        setHealthStatus(health.status);
-
-        // Verificar recursos externos sem injetar scripts
-        const resources = await checkExternalResources();
-
-        if (!resources.stripe) {
-          const stripeMessage = resources.errors.find(error => error.toLowerCase().includes('stripe'))
-            || 'Serviço de pagamento indisponível no momento.';
-          console.warn('[PLANOS] Stripe indisponível, ativando fallback monitorado:', stripeMessage);
-          handleFallbackActivation(stripeMessage);
-          userNotification.showPaymentServiceUnavailable();
-        } else {
-          setStripeError(null);
-          if (resources.latency.stripe) {
-            console.info(`[PLANOS] Stripe pricing table respondendo em ${Math.round(resources.latency.stripe)}ms`);
-          }
-        }
-
-        if (resources.errors.length > 0) {
-          resources.errors.forEach(error => {
-            console.warn('[PLANOS] Diagnóstico de recurso externo:', error);
-          });
-        }
+        // Aguardar um pouco para carregar recursos
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         setIsLoading(false);
+        setHealthStatus('healthy');
 
       } catch (error) {
         console.error('[PLANOS] Erro na inicialização:', error);
-        setHealthStatus('critical');
-        handleFallbackActivation('Erro crítico ao inicializar recursos do Stripe');
+        setHealthStatus('loading');
         setIsLoading(false);
       }
     };
@@ -68,100 +34,11 @@ export default function PlanosPage() {
     initializePage();
   }, []);
 
-  // Setup de listeners para eventos globais
-  useEffect(() => {
-    const handleFallbackActivated = (event: CustomEvent) => {
-      console.log('[PLANOS] Fallback ativado:', event.detail);
-      if ((event.detail as any)?.service === 'stripe') {
-        const fallbackReason = typeof (event.detail as any)?.reason === 'string'
-          ? (event.detail as any).reason
-          : 'Fallback global ativado para Stripe';
-        handleFallbackActivation(fallbackReason);
-      }
-    };
-
-    const handleOfflineMode = () => {
-      userNotification.showOfflineMode();
-      setHealthStatus('degraded');
-    };
-
-    const handleHealthAlert = (event: CustomEvent) => {
-      const alert = event.detail;
-      if (alert.severity === 'critical') {
-        userNotification.error(
-          'Problema Crítico Detectado',
-          alert.message,
-          { persistent: true }
-        );
-      }
-    };
-
-    // Adicionar listeners
-    window.addEventListener('fallback-activated', handleFallbackActivated as EventListener);
-    window.addEventListener('offline-mode-activated', handleOfflineMode as EventListener);
-    window.addEventListener('health-alert', handleHealthAlert as EventListener);
-
-    // 🛠️ Quick Win: Usar gerenciador de intervalos centralizado
-    let cleanupInterval: (() => void) | undefined;
-    
-    import('@/lib/utils/interval-manager').then(({ setManagedInterval, clearManagedByName }) => {
-      setManagedInterval(
-        'planos-health-monitor',
-        async () => {
-          try {
-            const health = await healthMonitor.checkHealth();
-            setHealthStatus(health.status);
-          } catch (error) {
-            console.error('[PLANOS] Erro ao verificar saúde:', error);
-          }
-        },
-        30000 // A cada 30 segundos
-      );
-      
-      cleanupInterval = () => clearManagedByName('planos-health-monitor');
-    });
-
-    return () => {
-      window.removeEventListener('fallback-activated', handleFallbackActivated as EventListener);
-      window.removeEventListener('offline-mode-activated', handleOfflineMode as EventListener);
-      window.removeEventListener('health-alert', handleHealthAlert as EventListener);
-      if (cleanupInterval) cleanupInterval();
-    };
-  }, []);
-
-  // Handle fallback activation
-  const handleFallbackActivation = (reason?: string) => {
-    setUseFallback(true)
-    console.log('[PLANOS] Activating fallback pricing table')
-
-    if (reason) {
-      setStripeError(reason)
-    }
-
-    // Salvar preferência de fallback no storage
-    subscriptionStorage.set('pricing-fallback-active', true).catch(error => {
-      console.warn('[PLANOS] Falha ao salvar preferência de fallback:', error);
-    });
-  }
-
-  const handleStripeReady = () => {
-    if (useFallback) {
-      setUseFallback(false)
-    }
-
-    setStripeError(null)
-
-    subscriptionStorage.set('pricing-fallback-active', false).catch(error => {
-      console.warn('[PLANOS] Falha ao limpar preferência de fallback:', error);
-    });
-  }
-
   const handleContactUs = () => {
     try {
       window.location.href = '/agendar-consulta'
     } catch (error) {
       console.error('[PLANOS] Erro ao navegar para agendamento:', error);
-      userNotification.error('Erro de Navegação', 'Não foi possível acessar a página de agendamento.');
     }
   }
 
@@ -170,7 +47,6 @@ export default function PlanosPage() {
       window.open('https://wa.me/5533999898026?text=Olá! Gostaria de saber mais sobre os planos de assinatura da SV Lentes.', '_blank')
     } catch (error) {
       console.error('[PLANOS] Erro ao abrir WhatsApp:', error);
-      userNotification.error('Erro de Comunicação', 'Não foi possível abrir o WhatsApp.');
     }
   }
 
@@ -263,25 +139,13 @@ export default function PlanosPage() {
               Planos mensais com entrega em todo o Brasil e acompanhamento médico
             </p>
           </div>
-          {/* Pricing Table - Stripe or Fallback */}
+          {/* Pricing Table - Stripe Embeddable */}
           <div id="pricing-table" className="max-w-7xl mx-auto px-2 md:px-4">
             {!isLoading && (
-              !useFallback ? (
-                <StripePricingTable
-                  onFallbackActivate={() => handleFallbackActivation('Falha ao carregar a tabela de preços do Stripe')}
-                  onReady={handleStripeReady}
-                  className="w-full"
-                />
-              ) : (
-                <StripeFallback
-                  onContactUs={handleContactUs}
-                  onWhatsApp={handleWhatsApp}
-                  className="w-full"
-                />
-              )
+              <StripePricingTableEmbed className="w-full" />
             )}
 
-            {/* Estado de carregamento ou erro */}
+            {/* Estado de carregamento */}
             {isLoading && (
               <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200 text-center">
                 <div className="w-12 h-12 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -289,24 +153,6 @@ export default function PlanosPage() {
               </div>
             )}
           </div>
-
-          {/* Fallback Toggle (for development/debugging) */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="max-w-7xl mx-auto px-2 md:px-4 mt-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                <p className="text-sm text-yellow-800 mb-2">
-                  {stripeError && <span>Erro detectado: {stripeError}</span>}
-                  {!stripeError && <span>Modo: {useFallback ? 'Fallback' : 'Stripe'}</span>}
-                </p>
-                <button
-                  onClick={() => setUseFallback(!useFallback)}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
-                >
-                  Alternar para {useFallback ? 'Stripe' : 'Fallback'}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
       {/* Compact Location Toggle Section - MOVED DOWN */}

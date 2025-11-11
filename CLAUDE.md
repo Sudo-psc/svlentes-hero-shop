@@ -4,300 +4,336 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SVLentes Landing Page** is a Next.js 15 application for a contact lens subscription service based in Caratinga/MG, Brazil. The platform serves Saraiva Vision clinic and provides automated lens renewal subscriptions with medical follow-up scheduling.
+**SV Lentes Landing Page** is a Next.js 14.2.33 application for a contact lens subscription service with medical oversight. This is a production healthcare platform serving Saraiva Vision clinic in Caratinga/MG, Brazil.
 
-**Technology Stack:**
-- **Framework**: Next.js 15 with App Router
-- **Frontend**: React 19, TypeScript, Tailwind CSS v4, shadcn/ui
-- **State Management**: React Hook Form + Zod validation
-- **Animations**: Framer Motion
-- **Authentication**: Firebase Auth + NextAuth
-- **Database**: PostgreSQL with Prisma ORM
-- **Testing**: Jest (unit), Vitest (integration), Playwright (E2E)
-- **Payments**: Stripe integration
-- **Deployments**: Production systemd service with Nginx reverse proxy
+**Business Context:**
+- Contact lens subscription service with ophthalmological monitoring
+- Responsible Physician: Dr. Philipe Saraiva Cruz (CRM-MG 69.870)
+- LGPD-compliant (Brazilian data protection law)
+- Production domains: **svlentes.com.br** (primary) / **svlentes.shop** (alternative)
+- Payment processor: **Stripe** (International gateway with Customer Portal) - PRIMARY
+- WhatsApp integration: **SendPulse** for customer support automation
 
 ## Essential Commands
 
-### Development Workflow
+### Core Development
 ```bash
-# Start development server
-npm run dev                    # Runs on http://localhost:3000
-
-# Build for production
-npm run build                  # Includes post-build optimizations
-
-# Start production server locally
-npm run start                  # Runs on http://localhost:5000
-
-# Code quality
-npm run lint                   # ESLint (NEEDS CONFIGURATION - prompts for setup)
-npm run lint:fix              # Auto-fix linting issues
+npm run dev              # Development server (port 3000)
+npm run build           # Production build
+npm run start           # Production server (port 5000)
+npm run lint            # ESLint checking
 ```
 
-### Testing Commands
+### Testing
 ```bash
-# Unit tests
-npm run test                   # Jest unit tests
-npm run test:watch            # Jest in watch mode
-npm run test:coverage         # Jest with coverage report
+npm run test            # Run Jest unit tests
+npm run test:watch      # Jest in watch mode
+npm run test:coverage   # Jest with coverage report
+npm run test:resilience # Run Vitest resilience tests
+npm run test:integration # Run Vitest integration tests
+npm run test:e2e        # Run Playwright E2E tests
+npm run test:e2e:ui     # Playwright with UI
+npm run test:e2e:headed # Playwright headed mode
+npm run test:e2e:debug  # Playwright debug mode
+npm run test:e2e:resilience # Playwright resilience tests
+npm run test:all        # Run all test suites (resilience + E2E)
+```
 
-# Integration tests
-npm run test:integration      # Vitest integration tests
-npm run test:resilience       # Specific resilience tests
+### Production Service Management (Systemd)
+```bash
+# Next.js Application Service
+systemctl status svlentes-nextjs    # Check service status
+systemctl restart svlentes-nextjs   # Restart after deployment
+journalctl -u svlentes-nextjs -f    # View live logs
 
-# E2E tests
-npm run test:e2e              # Playwright E2E tests
-npm run test:e2e:ui           # Playwright with UI mode
-npm run test:e2e:headed       # Playwright with headed browser
-npm run test:e2e:debug        # Playwright debug mode
-
-# Run all tests
-npm run test:all              # Resilience + E2E tests
+# Reverse Proxy (Nginx)
+systemctl status nginx              # Check Nginx status
+nginx -t                            # Test configuration validity
+systemctl reload nginx              # Reload without downtime
+journalctl -u nginx -f              # Real-time logs
 ```
 
 ### Database Operations
 ```bash
-# Database seeding
-npm run db:seed               # Seed production database
-npm run db:seed:test          # Seed test database
-npm run db:clear:test         # Clear test database
+npm run db:seed          # Seed database with initial data
+npx prisma generate      # Generate Prisma Client
+npx prisma migrate dev   # Run migrations in development
+npx prisma studio        # Open Prisma Studio GUI
+npx prisma db push       # Push schema to database
+npx prisma migrate reset # Reset database (destructive)
 ```
 
-### Deployment & Production
+### Health Monitoring
 ```bash
-# Deployment scripts (requires sudo)
-sudo ./scripts/deploy.sh              # Full deployment with tests
-sudo ./scripts/deploy.sh --skip-tests # Deploy without tests
-sudo ./scripts/deploy.sh --dry-run    # Simulation mode
-
-# Health checks
-npm run health-check          # Test local application health
-
-# Security audits
-npm run security:audit        # Check for vulnerabilities
-npm run security:deps-check   # Check outdated dependencies
+npm run health-check     # Check application health
+curl -f http://localhost:3000/api/health-check  # Manual health check
+npm run lighthouse       # Run Lighthouse CI performance audit
 ```
 
-## Architecture Overview
+## Architecture
 
-### Project Structure
-```
-src/
-├── app/                     # Next.js App Router pages
-│   ├── (auth)/             # Authentication routes
-│   ├── area-assinante/     # Subscriber dashboard area
-│   ├── api/                # API routes
-│   └── globals.css         # Global styles
-├── components/             # React components
-│   ├── ui/                # shadcn/ui base components
-│   ├── forms/             # Form components
-│   └── layout/            # Layout components
-├── lib/                   # Utility libraries
-│   ├── auth/              # Authentication utilities
-│   ├── db/                # Database configuration
-│   ├── email/             # Email services
-│   ├── payment/           # Payment processing
-│   └── utils/             # General utilities
-├── hooks/                 # Custom React hooks
-├── types/                 # TypeScript type definitions
-└── contexts/              # React contexts
-```
+### Multi-Domain Architecture
+The application serves three main business domains within a Next.js monolith:
 
-### Key Integrations
+**Public Area:**
+- Landing pages with pricing calculator
+- Consultation scheduling
+- Lead generation and contact forms
 
-**Firebase Authentication:**
-- Configuration in `src/lib/firebase/`
-- Admin SDK for server-side operations
-- Custom claims for role-based access
+**Subscriber Dashboard (`/area-assinante`):**
+- Subscription management via Stripe Customer Portal
+- Payment history and invoice downloads
+- Order tracking and delivery preferences
+- Emergency contact information (healthcare compliance)
 
-**Stripe Payments:**
-- Webhook handling at `/api/webhooks/stripe`
-- Subscription management logic
-- Pricing calculator with dynamic plans
+**Admin Area (`/admin`):**
+- Analytics and reporting dashboard
+- Customer management and support tickets
+- Pricing configuration and subscription monitoring
+- System health and performance metrics
 
-**Prisma Database:**
-- Schema at `prisma/schema.prisma`
-- Migration system in place
-- Connection pooling for production
+### Key Technology Stack
 
-**NextAuth.js:**
-- Session management
-- OAuth providers configuration
-- Custom callbacks for Firebase integration
+**Core Framework:**
+- **Next.js 14.2.33** with App Router and TypeScript (NOT 15)
+- **React 18** with concurrent features
+- **Tailwind CSS v3.4.17** with custom cyan/silver theme
+- **shadcn/ui** component library with Radix UI primitives
 
-### Component Architecture
+**Data & Validation:**
+- **React Hook Form** with **Zod** schemas for runtime validation
+- **Prisma ORM** with PostgreSQL database
+- **TypeScript** with strict mode enabled
 
-**UI Components:**
-- Built with shadcn/ui design system
-- Tailwind CSS for styling
-- Radix UI primitives for accessibility
-- Consistent `cn()` utility for class merging
+**Authentication & Payments:**
+- **Firebase Auth** (primary) with Google OAuth integration
+- **Clerk Authentication** (alternative/modern)
+- **Stripe Payments** (PRIMARY - international gateway)
+- **Asaas Payments** (legacy Brazilian gateway - deprecated)
 
-**Form Handling:**
-- React Hook Form with Zod schemas
-- Server-side validation
-- Error boundary integration
-- Optimistic UI updates
+**Communication & AI:**
+- **SendPulse** WhatsApp Business integration
+- **LangChain** + **OpenAI GPT** for automated customer support
+- **Email notifications** via Resend or SMTP
 
-**State Management:**
-- React Context for global state
-- Local state with useState/useReducer
-- Server state via API calls
-- Caching with React Query
+**Testing & Quality:**
+- **Jest** for unit testing
+- **Vitest** for resilience and integration testing
+- **Playwright** for E2E testing
+- **Lighthouse CI** for performance monitoring
 
-## Configuration Files
+### Critical Integrations
 
-### Build Configuration (`next.config.js`)
-- TypeScript errors ignored during builds (temporary)
-- ESLint errors ignored during builds (temporary)
-- Security headers configured
-- Static asset caching enabled
-- CSP disabled temporarily (fixes 503 errors)
+**Stripe Payment System (Primary):**
+- API endpoints: `/api/stripe/subscription`, `/api/stripe/customer-portal`, `/api/stripe/create-checkout`
+- Webhook endpoint: `/api/webhooks/stripe`
+- Customer Portal for self-service subscription management
+- Production and test environments with full feature parity
 
-### Testing Configuration
-- **Jest**: Unit testing with DOM environment
-- **Vitest**: Integration testing with fast execution
-- **Playwright**: E2E testing with multiple browsers
-- Base URL: `http://localhost:5000` for production-like testing
+**SendPulse WhatsApp Integration:**
+- Webhook endpoint: `/api/webhooks/sendpulse`
+- AI-powered intent detection and response generation
+- Conversation tracking and ticket escalation
+- 24-hour conversation window management
 
-### ESLint Configuration
-- **CRITICAL**: Needs proper configuration setup
-- Currently prompts for configuration when running `npm run lint`
-- Blocks CI/CD pipeline until configured
-- Recommended: Select "Strict (recommended)" when prompted
+**Authentication Systems:**
+- Firebase ID tokens for API authentication
+- Clerk middleware for route protection
+- Phone-based authentication for WhatsApp chatbot
+- Custom claims for role-based access control
 
-## Production Deployment
+### Business Logic Components
 
-### Service Management
+**Savings Calculator (`src/lib/calculator.ts`):**
+- Compares subscription cost vs individual lens purchases
+- Handles different lens types (daily, monthly)
+- Accounts for delivery frequency and consultation costs
+- Calculates annual savings projections with ROI analysis
+
+**WhatsApp Chatbot System:**
+- Automatic phone-based authentication (no OTP required)
+- Intent classification: subscription_inquiry, billing_support, delivery_status
+- Commands: "minha assinatura", "pausar assinatura", "reativar assinatura", "próxima entrega"
+- Session management with 24-hour validity windows
+
+**Subscription Management:**
+- Stripe Customer Portal integration for self-service management
+- Real-time subscription status tracking
+- Automated billing cycle management
+- LGPD-compliant data handling and audit trails
+
+## Configuration
+
+### Next.js Configuration (`next.config.js`)
+- Build optimization with standalone output
+- Security headers (HSTS, X-Frame-Options, X-Content-Type-Options)
+- Image optimization with WebP/AVIF support
+- CSP temporarily disabled for Stripe script loading
+- TypeScript/ESLint errors ignored during builds (temporary)
+
+### Production Deployment
+
+**Systemd Service (`svlentes-nextjs`):**
+- Runs on port 5000 with Node.js 20+
+- Automatic restart on failure
+- Resource limits and health monitoring
+- Build artifact management
+
+**Nginx Reverse Proxy:**
+- SSL/TLS termination with Let's Encrypt certificates
+- Static asset caching (`/_next/static` cached for 365 days)
+- Rate limiting and connection throttling
+- Security headers and CSP configuration
+
+**Critical Environment Variables:**
 ```bash
-# Check service status
-systemctl status svlentes-nextjs
-
-# View service logs
-journalctl -u svlentes-nextjs -f
-
-# Restart service
-systemctl restart svlentes-nextjs
-```
-
-### Nginx Configuration
-- SSL/TLS termination with Let's Encrypt
-- Reverse proxy to localhost:5000
-- Security headers (HSTS, CSP, X-Frame-Options)
-- Static asset caching
-
-### Backup Strategy
-- Automatic backups before deployments
-- Stored in `/root/svlentes-hero-shop/backups/`
-- Includes source, build artifacts, and configuration
-- 7-day retention policy
-
-## Environment Configuration
-
-### Critical Environment Variables
-```bash
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-FIREBASE_ADMIN_PROJECT_ID=
-
-# Stripe Configuration
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-
-# Database
-DATABASE_URL=
-
-# NextAuth
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=
-
 # Application
 NEXT_PUBLIC_SITE_URL=https://svlentes.shop
-NODE_ENV=production
+NEXT_PUBLIC_WHATSAPP_NUMBER=5533999898026
+NEXT_PUBLIC_SUPPORT_PHONE=5533986061427
+
+# Stripe Payment Integration (Primary)
+STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# SendPulse WhatsApp Integration
+SENDPULSE_USER_ID=<user-id>
+SENDPULSE_SECRET=<api-secret>
+SENDPULSE_ACCESS_TOKEN=<access-token>
+
+# Database (Prisma)
+DATABASE_URL=<postgresql-url>
+
+# Clerk Authentication (Alternative to Firebase)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<clerk-publishable-key>
+CLERK_SECRET_KEY=<clerk-secret-key>
 ```
 
-### Environment Files
-- `.env.local` - Local development (gitignored)
-- `.env.production` - Production configuration
-- `.env.example` - Template with required variables
+## Development Workflow
 
-## Development Guidelines
+### Local Development
+1. Install dependencies: `npm install`
+2. Configure environment: Copy `.env.local.example` to `.env.local`
+3. Set up database: Configure `DATABASE_URL` in `.env.local`
+4. Run migrations: `npx prisma migrate dev`
+5. Generate Prisma client: `npx prisma generate`
+6. Start development server: `npm run dev`
 
-### Code Style
-- TypeScript strict mode enabled
-- Prettier configuration for formatting
-- Component files use `.tsx` extension
-- Utility files use `.ts` extension
+### Testing Before Deploy
+1. Run unit tests: `npm run test`
+2. Run resilience tests: `npm run test:resilience`
+3. Run integration tests: `npm run test:integration`
+4. Run E2E tests: `npm run test:e2e`
+5. Build production: `npm run build`
+6. Health check: `npm run health-check`
 
-### Testing Requirements
-- Unit tests for business logic
-- Integration tests for API endpoints
-- E2E tests for critical user flows
-- Minimum 80% coverage target
+### Production Deployment
+```bash
+# 1. Build the application
+npm run build
 
-### Security Considerations
-- Input validation with Zod schemas
-- SQL injection prevention via Prisma
-- XSS protection with DOMPurify
-- CSRF protection via NextAuth
-- Rate limiting on API endpoints
+# 2. Emergency build (if ESLint errors block deployment)
+node build-quick.js  # Bypasses ESLint/TypeScript validation
+
+# 3. Restart production service
+systemctl restart svlentes-nextjs
+
+# 4. Verify deployment
+curl -I https://svlentes.com.br
+journalctl -u svlentes-nextjs -n 50
+```
 
 ## Troubleshooting
 
-### Common Issues
+### Build Failures
+- Check TypeScript errors: `npm run lint`
+- Verify all environment variables are set
+- Ensure Prisma client is generated: `npx prisma generate`
+- Clear Next.js cache: `rm -rf .next`
 
-**ESLint Configuration Missing:**
+**Emergency Build if ESLint Blocks Deployment:**
 ```bash
-npm run lint
-# Select "Strict (recommended)" when prompted
-# Or configure manually in .eslintrc.js
+node build-quick.js  # Bypasses ESLint/TypeScript validation
 ```
 
-**Build Failures:**
-- Check TypeScript errors: `npx tsc --noEmit`
-- Check environment variables: `cat .env.local`
-- Verify dependencies: `npm ls`
+### 500 Errors on Static Chunks
+**Symptoms**: All pages show 500 errors for .js files
+**Solution**:
+```bash
+# 1. Check service status
+systemctl status svlentes-nextjs
 
-**Service Not Starting:**
-- Check logs: `journalctl -u svlentes-nextjs -n 50`
-- Verify build: `npm run build`
-- Check port conflicts: `lsof -i :5000`
+# 2. Kill conflicting processes
+lsof -ti:5000 | xargs kill -9
 
-**Database Connection Issues:**
-- Verify DATABASE_URL format
-- Check PostgreSQL service: `systemctl status postgresql`
-- Test connection: `npx prisma db push`
+# 3. Emergency rebuild
+node build-quick.js
 
-### Performance Monitoring
-- Application logs: `journalctl -u svlentes-nextjs -f`
-- Nginx logs: `/var/log/nginx/svlentes.shop.access.log`
-- Error logs: `/var/log/nginx/error.log`
-- Deploy logs: `/var/log/deploy-svlentes.log`
+# 4. Restart service
+systemctl restart svlentes-nextjs
+```
 
-## Additional Resources
+### Payment Integration Issues
+- **Stripe**: Verify API keys and webhook secret configuration
+- **Customer Portal**: Check Stripe Dashboard > Settings > Customer Portal
+- **Firebase Integration**: Verify users have `stripeCustomerId` in custom claims
 
-### Documentation
-- `/root/svlentes-hero-shop/docs/` - Additional project documentation
-- `/root/svlentes-hero-shop/scripts/README.md` - Deployment scripts guide
-- Component documentation in respective `.md` files
+### WhatsApp/SendPulse Issues
+- Verify SendPulse credentials in `.env.sendpulse`
+- Check webhook endpoint is publicly accessible
+- Monitor webhook logs for incoming messages
 
-### Health Endpoints
-- Local: `http://localhost:3000/api/health-check`
-- Production: `https://svlentes.shop/api/health-check`
+## Security & Compliance
 
-### Database Management
-- Prisma Studio: `npx prisma studio`
-- Migrations: `npx prisma migrate dev`
-- Schema validation: `npx prisma validate`
+### LGPD Compliance Requirements
+- **Explicit Consent**: Required for all data collection
+- **Data Minimization**: Collect only essential data
+- **Right to Access**: Users can request data via `/api/privacy/data-request`
+- **Right to Deletion**: Implementation for data erasure requests
+- **Audit Trail**: All data access logged via `/api/privacy/consent-log`
+
+### Healthcare Compliance
+- Emergency contact information required throughout application
+- Medical responsibility clearly stated (Dr. Philipe Saraiva Cruz, CRM-MG 69.870)
+- Prescription validation mandatory for subscription changes
+- Professional credentials visible in all patient-facing areas
+
+### Security Headers (Currently Disabled CSP)
+```javascript
+// CSP temporarily disabled to allow Stripe script loading
+// Content-Security-Policy configured for:
+// - Stripe domains (js.stripe.com, checkout.stripe.com)
+// - Google OAuth domains
+// - Firebase domains
+// - Self-hosted resources
+```
 
 ## Important Notes
 
-- **Healthcare Application**: Handles medical data - comply with LGPD (Brazilian data protection law)
+- **Healthcare Platform**: Handles medical data - LGPD compliance mandatory
 - **Production Environment**: All services are customer-facing - test thoroughly
-- **ESLint Configuration**: Required before running linting - blocks workflow
-- **Service Dependencies**: Nginx depends on Next.js service
-- **Backup Strategy**: Automatic before deployments - verify regularly
-- **SSL Certificates**: Auto-renewed via Certbot - monitor expiry dates
+- **Payment Gateway**: Stripe is PRIMARY (Asaas deprecated)
+- **WhatsApp Business**: SendPulse integration with 24-hour conversation windows
+- **Emergency Procedures**: Use `build-quick.js` for critical deployment issues
+- **Service Dependencies**: Nginx depends on Next.js service on port 5000
+- **Monitoring**: Use `journalctl` and health endpoints for system status
+
+## Additional Resources
+
+### API Endpoints
+- **Health Check**: `/api/health-check`
+- **Stripe APIs**: `/api/stripe/subscription`, `/api/stripe/customer-portal`
+- **Webhooks**: `/api/webhooks/stripe`, `/api/webhooks/sendpulse`
+- **Admin APIs**: `/api/admin/dashboard/*`, `/api/admin/analytics/*`
+
+### Documentation Files
+- `/claudedocs/` - Technical documentation and implementation guides
+- `/e2e/` - E2E test documentation and coverage reports
+- `/scripts/` - Deployment and utility scripts
+
+### Performance Monitoring
+- Application logs: `journalctl -u svlentes-nextjs -f`
+- Nginx access logs: `/var/log/nginx/svlentes.com.br.access.log`
+- Error logs: `/var/log/nginx/error.log`
+- Lighthouse CI reports: Available via `npm run lighthouse`
