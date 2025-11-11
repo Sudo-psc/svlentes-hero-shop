@@ -51,6 +51,11 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Time duration constants for token sync throttling
+  const RATE_LIMIT_COOLDOWN_MS = 30 * 1000; // 30 seconds
+  const TOKEN_CACHE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+  const TOKEN_CLEAR_THROTTLE_MS = 30 * 1000; // 30 seconds
+
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -93,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    if (state.lastErrorAt && now - state.lastErrorAt < 30 * 1000) {
+    if (state.lastErrorAt && now - state.lastErrorAt < RATE_LIMIT_COOLDOWN_MS) {
       devLog.auth('token-sync-skipped', { reason: 'recent-rate-limit' })
       return
     }
@@ -111,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const recentlySynced =
         state.lastAction === 'store' &&
         token === state.lastToken &&
-        now - state.lastSyncAt < 10 * 60 * 1000
+        now - state.lastSyncAt < TOKEN_CACHE_DURATION_MS
 
       if (recentlySynced) {
         devLog.auth('token-sync-skipped', { reason: 'recent-store', tokenHash: token.substring(0, 8) })
@@ -120,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       const recentlyCleared =
         state.lastAction === 'clear' &&
-        now - state.lastSyncAt < 30 * 1000
+        now - state.lastSyncAt < TOKEN_CLEAR_THROTTLE_MS
 
       if (recentlyCleared) {
         devLog.auth('token-clear-skipped', { reason: 'throttled' })
